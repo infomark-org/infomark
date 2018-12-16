@@ -10,23 +10,56 @@ import (
 
 func UserOnly(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// ctx := r.Context()
-		// perm, ok := ctx.Value("acl.permission").(YourPermissionType)
-		// if !ok || !perm.IsAdmin() {
-		// 	http.Error(w, http.StatusText(403), 403)
-		// 	return
-		// }
 		next.ServeHTTP(w, r)
 	})
 }
 
+func AdminOnly(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		next.ServeHTTP(w, r)
+	})
+}
+
+func emptyHandler(w http.ResponseWriter, r *http.Request) {}
+
 func apiRouter() http.Handler {
 	r := chi.NewRouter()
 	r.Use(UserOnly)
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {})
+	r.Get("/", emptyHandler)
+
 	r.Get("/test", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("test"))
 	})
+
+	// user management
+	r.Route("/user", func(r chi.Router) {
+		r.Post("/token", emptyHandler)
+		r.Delete("/token", emptyHandler)
+	})
+
+	r.Route("/users", func(r chi.Router) {
+		r.Route("/{userID}", func(r chi.Router) {
+			r.Get("/", emptyHandler)
+			r.Put("/", emptyHandler)
+			r.Delete("/", emptyHandler)
+		})
+	})
+
+	// course management
+	r.Route("/course", func(r chi.Router) {
+		r.Route("/{courseID}", func(r chi.Router) {
+			// course globals
+			r.Get("/", emptyHandler)
+
+			// tasks
+			r.Route("/tasks/{taskID}", func(r chi.Router) {
+				r.Get("/", emptyHandler)
+				r.Put("/", emptyHandler)
+				r.Delete("/", emptyHandler)
+			})
+		})
+	})
+
 	return r
 }
 
@@ -43,8 +76,8 @@ func GetRouter() http.Handler {
 		w.Write([]byte("welcome"))
 	})
 
-	r.Get("/login", func(w http.ResponseWriter, r *http.Request) {})
-	r.Get("/logout", func(w http.ResponseWriter, r *http.Request) {})
+	r.Get("/login", emptyHandler)
+	r.Get("/logout", emptyHandler)
 
 	r.Mount("/api", apiRouter())
 

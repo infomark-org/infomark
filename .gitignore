@@ -11,4 +11,8 @@
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
+# binaries
 infomark-backend
+
+# generated code from go_generate
+models/
