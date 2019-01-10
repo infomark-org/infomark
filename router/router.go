@@ -3,9 +3,13 @@ package router
 import (
 	// "context"
 	// "fmt"
+	"net/http"
+
+	"github.com/cgtuebingen/infomark-backend/router/api"
+	"github.com/cgtuebingen/infomark-backend/router/helper"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
-	"net/http"
+	"github.com/go-chi/render"
 )
 
 func UserOnly(next http.Handler) http.Handler {
@@ -20,42 +24,37 @@ func AdminOnly(next http.Handler) http.Handler {
 	})
 }
 
-func emptyHandler(w http.ResponseWriter, r *http.Request) {}
-
 func apiRouter() http.Handler {
 	r := chi.NewRouter()
 	r.Use(UserOnly)
-	r.Get("/", emptyHandler)
 
-	r.Get("/test", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("test"))
+	r.Use(render.SetContentType(render.ContentTypeJSON))
+
+	r.Get("/", helper.EmptyHandler)
+
+	r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("pong"))
 	})
 
 	// user management
 	r.Route("/user", func(r chi.Router) {
-		r.Post("/token", emptyHandler)
-		r.Delete("/token", emptyHandler)
+		r.Post("/token", helper.EmptyHandler)
+		r.Delete("/token", helper.EmptyHandler)
 	})
 
-	r.Route("/users", func(r chi.Router) {
-		r.Route("/{userID}", func(r chi.Router) {
-			r.Get("/", emptyHandler)
-			r.Put("/", emptyHandler)
-			r.Delete("/", emptyHandler)
-		})
-	})
+	r.Mount("/users", api.UserRoutes())
 
 	// course management
 	r.Route("/course", func(r chi.Router) {
 		r.Route("/{courseID}", func(r chi.Router) {
 			// course globals
-			r.Get("/", emptyHandler)
+			r.Get("/", helper.EmptyHandler)
 
 			// tasks
 			r.Route("/tasks/{taskID}", func(r chi.Router) {
-				r.Get("/", emptyHandler)
-				r.Put("/", emptyHandler)
-				r.Delete("/", emptyHandler)
+				r.Get("/", helper.EmptyHandler)
+				r.Put("/", helper.EmptyHandler)
+				r.Delete("/", helper.EmptyHandler)
 			})
 		})
 	})
@@ -76,8 +75,8 @@ func GetRouter() http.Handler {
 		w.Write([]byte("welcome"))
 	})
 
-	r.Get("/login", emptyHandler)
-	r.Get("/logout", emptyHandler)
+	r.Get("/login", helper.EmptyHandler)
+	r.Get("/logout", helper.EmptyHandler)
 
 	r.Mount("/api", apiRouter())
 
