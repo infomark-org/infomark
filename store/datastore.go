@@ -30,6 +30,7 @@ const (
 )
 
 type Datastore interface {
+	// retrieve user model by id from url parameter
 	GetUserFromIdString(userID string) (*model.User, error)
 
 	ORM() *gorm.DB

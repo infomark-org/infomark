@@ -17,20 +17,20 @@
 package model
 
 import (
-	"errors"
+	"log"
 	"regexp"
 	"time"
+
+	"github.com/cgtuebingen/infomark-backend/validation"
 )
 
 // validate an email
 var reEmail = regexp.MustCompile(`(?m)[^@]+@(?:student\.|)uni-tuebingen.de`)
 
-var errUserInvalid = errors.New("Invalid User Login")
-
 // User represents a registered user.
 type User struct {
 	// the id for this user.
-	ID        uint       `gorm:"primary_key"`
+	ID        uint       `json:"id" gorm:"primary_key"`
 	CreatedAt time.Time  `json:"-"`
 	UpdatedAt time.Time  `json:"-"`
 	DeletedAt *time.Time `json:"-"`
@@ -54,21 +54,33 @@ type User struct {
 }
 
 // Validate validates the required fields and formats.
-func (u *User) Validate() error {
-	switch {
-	case len(u.FirstName) == 0:
-		return errUserInvalid
-	case len(u.FirstName) > 250:
-		return errUserInvalid
+func (u *User) Validate() (*validation.CheckResponses, error) {
 
-	case len(u.LastName) == 0:
-		return errUserInvalid
-	case len(u.LastName) > 250:
-		return errUserInvalid
+	log.Println(u)
 
-	case !reEmail.MatchString(u.Email):
-		return errUserInvalid
-	default:
-		return nil
+	vals := []validation.Check{
+		validation.Check{
+			Field: "last_name",
+			Value: u.LastName,
+			Rules: []validation.Rule{
+				&validation.LengthRule{Min: 1, Max: 250},
+			},
+		},
+		validation.Check{
+			Field: "first_name",
+			Value: u.FirstName,
+			Rules: []validation.Rule{
+				&validation.LengthRule{Min: 1, Max: 250},
+			},
+		},
+		validation.Check{
+			Field: "email",
+			Value: u.Email,
+			Rules: []validation.Rule{
+				&validation.MatchRule{Expr: reEmail},
+			},
+		},
 	}
+
+	return validation.Validate(vals)
 }
