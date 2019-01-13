@@ -17,8 +17,10 @@
 package helper
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/http"
+	"net/http/httptest"
 
 	"github.com/cgtuebingen/infomark-backend/validation"
 	"github.com/go-chi/render"
@@ -192,4 +194,16 @@ func HashPassword(password string) (string, error) {
 func CheckPasswordHash(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err == nil
+}
+
+//
+//
+func SimulateRequest(payload interface{}, api func(w http.ResponseWriter, r *http.Request)) *httptest.ResponseRecorder {
+
+	payload_json, _ := json.Marshal(payload)
+	r, _ := http.NewRequest("POST", "/users", bytes.NewBuffer(payload_json))
+	r.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	api(w, r)
+	return w
 }

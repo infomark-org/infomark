@@ -18,7 +18,6 @@ package api
 
 import (
 	"errors"
-	"log"
 	"net/http"
 
 	"github.com/cgtuebingen/infomark-backend/router/auth"
@@ -68,12 +67,13 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// find password for email
-	candidate, _ := store.DS().GetUserFromEmail(request_data.Email)
+	candidate, err := store.DS().GetUserFromEmail(request_data.Email)
 
-	if candidate.Email == "" {
+	if err != nil {
 		render.Render(w, r, helper.NewErrResponse(
-			http.StatusBadRequest,
-			errors.New("User is unkown.")))
+			http.StatusUnauthorized,
+			// errors.New("User is unkown.")))
+			err))
 		return
 	}
 
@@ -100,16 +100,8 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		render.Render(w, r, helper.NewErrResponse(
-			http.StatusBadRequest,
+			http.StatusUnauthorized,
 			errors.New("Invalid password.")))
 	}
-
-	log.Println(candidate)
-
-	// if err != nil{
-	// 	render.Render(w, r, helper.NewErrResponse(http.StatusBadRequest, "err"))
-	// }
-
-	// log.Println(request_data)
 
 }

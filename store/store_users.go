@@ -30,9 +30,7 @@ func (ds *datastore) CountUsers() (int, error) {
 
 // GetUserFromIdString retrieves the user from the database if exists
 func (ds *datastore) GetUserFromIdString(userID string) (user *model.User, err error) {
-
 	var uid int
-
 	user = &model.User{}
 
 	if userID != "" {
@@ -44,11 +42,9 @@ func (ds *datastore) GetUserFromIdString(userID string) (user *model.User, err e
 	return user, err
 }
 
-func (ds *datastore) GetUserFromEmail(email string) (user *model.User, err error) {
-
-	user = &model.User{}
-	err = ORM().Where("email = ?", email).First(&user).Error
-
+func (ds *datastore) GetUserFromEmail(email string) (*model.User, error) {
+	user := &model.User{}
+	err := ORM().Where("email = ?", email).First(&user).Error
 	return user, err
 
 }
