@@ -17,7 +17,6 @@
 package model
 
 import (
-	"log"
 	"regexp"
 	"time"
 
@@ -56,28 +55,33 @@ type User struct {
 // Validate validates the required fields and formats.
 func (u *User) Validate() (*validation.CheckResponses, error) {
 
-	log.Println(u)
-
 	vals := []validation.Check{
-		validation.Check{
+		{
 			Field: "last_name",
 			Value: u.LastName,
 			Rules: []validation.Rule{
 				&validation.LengthRule{Min: 1, Max: 250},
 			},
 		},
-		validation.Check{
+		{
 			Field: "first_name",
 			Value: u.FirstName,
 			Rules: []validation.Rule{
 				&validation.LengthRule{Min: 1, Max: 250},
 			},
 		},
-		validation.Check{
+		{
 			Field: "email",
 			Value: u.Email,
 			Rules: []validation.Rule{
 				&validation.MatchRule{Expr: reEmail},
+			},
+		},
+		{
+			Field: "password_hash",
+			Value: u.PasswordHash,
+			Rules: []validation.Rule{
+				&validation.LengthRule{Min: 8, Max: 500},
 			},
 		},
 	}

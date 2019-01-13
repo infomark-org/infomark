@@ -18,6 +18,7 @@ require (
 	github.com/volatiletech/inflect v0.0.0-20170731032912-e7201282ae8d // indirect
 	github.com/volatiletech/null v8.0.0+incompatible
 	github.com/volatiletech/sqlboiler v3.1.0+incompatible
+	golang.org/x/crypto v0.0.0-20181203042331-505ab145d0a9
 	golang.org/x/net v0.0.0-20181213202711-891ebc4b82d6 // indirect
 	gopkg.in/DATA-DOG/go-sqlmock.v1 v1.3.0 // indirect
 )

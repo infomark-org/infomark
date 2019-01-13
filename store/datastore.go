@@ -22,15 +22,12 @@ import (
 
 	"github.com/cgtuebingen/infomark-backend/model"
 	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/sqlite"
-)
-
-const (
-	DriverSqlite = "sqlite3"
+	_ "github.com/jinzhu/gorm/dialects/postgres"
 )
 
 type Datastore interface {
 	// retrieve user model by id from url parameter
+	CountUsers() (int, error)
 	GetUserFromIdString(userID string) (*model.User, error)
 
 	ORM() *gorm.DB
@@ -51,12 +48,12 @@ func ORM() *gorm.DB { return ds.ORM() }
 
 func newDatastore() Datastore {
 
-	db, err := gorm.Open(DriverSqlite, "test.db")
+	db, err := gorm.Open("postgres", "host=localhost user=infomark_user dbname=infomark_db password=infomark_password")
 	if err != nil {
 		log.Fatal("Failed to init db:", err)
 	}
 
-	db.LogMode(true)
+	// db.LogMode(true)
 
 	if err := db.AutoMigrate(&model.User{}).Error; err != nil {
 		txt := "AutoMigrate Users table failed"

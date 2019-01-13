@@ -17,11 +17,16 @@
 package store
 
 import (
-	"log"
 	"strconv"
 
 	"github.com/cgtuebingen/infomark-backend/model"
 )
+
+func (ds *datastore) CountUsers() (int, error) {
+	var count int
+	err := ORM().Table("users").Count(&count).Error
+	return count, err
+}
 
 // GetUserFromIdString retrieves the user from the database if exists
 func (ds *datastore) GetUserFromIdString(userID string) (user *model.User, err error) {
@@ -31,11 +36,8 @@ func (ds *datastore) GetUserFromIdString(userID string) (user *model.User, err e
 	user = &model.User{}
 
 	if userID != "" {
-		log.Println(userID)
 		if uid, err = strconv.Atoi(userID); err == nil {
-			log.Println(uid)
 			err = ORM().First(&user, uid).Error
-			log.Println(user)
 		}
 	}
 

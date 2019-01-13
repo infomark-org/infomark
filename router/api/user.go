@@ -70,7 +70,8 @@ func UserRoutes() chi.Router {
 // UserRequest is the request payload for User data model.
 type UserRequest struct {
 	*model.User
-	ProtectedId int `json:"id"`
+	ProtectedId   int    `json:"id"`
+	PlainPassword string `json:"password"`
 }
 
 // UserResponse is the response payload for the User data model.
@@ -88,7 +89,7 @@ func NewUserResponse(u *model.User) *UserResponse {
 func NewUserListResponse(users []model.User) []render.Renderer {
 	// https://stackoverflow.com/a/36463641/7443104
 	list := []render.Renderer{}
-	for k, _ := range users {
+	for k := range users {
 		list = append(list, NewUserResponse(&users[k]))
 	}
 
@@ -99,7 +100,13 @@ func NewUserListResponse(users []model.User) []render.Renderer {
 func (u *UserRequest) Bind(r *http.Request) error {
 	// sending the id via request is invalid as the id should be submitted in the url
 	u.ProtectedId = 0
-	return nil
+
+	// encrypt password
+	hash, err := helper.HashPassword(u.PlainPassword)
+
+	u.PasswordHash = hash
+
+	return err
 }
 
 // render user response

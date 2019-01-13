@@ -1,0 +1,10 @@
+-- drop table if exists users_courses;
+-- drop table if exists biddings;
+-- drop table if exists manuscripts;
+-- drop table if exists groups;
+-- drop table if exists gradings;
+-- drop table if exists submissions;
+-- drop table if exists tasks;
+-- drop table if exists sheets;
+-- drop table if exists courses;
+drop table if exists users;

@@ -35,7 +35,7 @@ create table courses (
   created_at timestamp not null,
   updated_at timestamp not null,
 
-  user_id int not null,
+  author_id int not null,
   foreign key (user_id) references users (id)
 );
 

@@ -22,6 +22,7 @@ import (
 
 	"github.com/cgtuebingen/infomark-backend/validation"
 	"github.com/go-chi/render"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // to omit fields in json structs
@@ -182,3 +183,13 @@ func ErrDatabaseResponse(err error) render.Renderer {
 // StatusLoopDetected                  = 508 // RFC 5842, 7.2
 // StatusNotExtended                   = 510 // RFC 2774, 7
 // StatusNetworkAuthenticationRequired = 511 // RFC 6585, 6
+
+func HashPassword(password string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	return string(bytes), err
+}
+
+func CheckPasswordHash(password, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	return err == nil
+}

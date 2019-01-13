@@ -18,7 +18,6 @@ package validation
 
 import (
   "errors"
-  "log"
 )
 
 // Hint contains information for the user
@@ -60,8 +59,6 @@ func Validate(vals []Check) (*CheckResponses, error) {
     cresp := &CheckResponse{Field: v.Field}
     for _, rule := range v.Rules {
       if err := rule.Validate(v.Value); err != nil {
-        log.Println("debug value ", v.Value)
-        log.Println("not passed", rule)
         cresp.Hints = append(cresp.Hints, &Hint{
           Validator: rule.Name(),
           Message:   err.Error(),
