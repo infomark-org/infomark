@@ -22,6 +22,7 @@ import (
 	"os"
 
 	"github.com/cgtuebingen/infomark-backend/router"
+	"github.com/cgtuebingen/infomark-backend/router/auth"
 	_ "github.com/lib/pq"
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
@@ -39,6 +40,12 @@ var flags = []cli.Flag{
 		Usage:  "server address",
 		Value:  ":3000",
 	},
+	cli.StringFlag{
+		EnvVar: "INFOMARK_SECRET",
+		Name:   "jwt-secret",
+		Usage:  "secret phrase",
+		Value:  "demo123",
+	},
 }
 
 func server(c *cli.Context) error {
@@ -47,8 +54,9 @@ func server(c *cli.Context) error {
 	} else {
 		logrus.SetLevel(logrus.WarnLevel)
 	}
-
+	auth.InitializeJWT(c.String("jwt-secret"))
 	logrus.Info("Infomark-server is listening at", c.String("server-addr"))
+
 	r := router.GetRouter()
 	http.ListenAndServe(c.String("server-addr"), r)
 

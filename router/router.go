@@ -3,46 +3,39 @@ package router
 import (
 	// "context"
 	// "fmt"
+
 	"net/http"
 
 	"github.com/cgtuebingen/infomark-backend/router/api"
+	"github.com/cgtuebingen/infomark-backend/router/auth"
 	"github.com/cgtuebingen/infomark-backend/router/helper"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/go-chi/jwtauth"
 	"github.com/go-chi/render"
 )
 
-func UserOnly(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		next.ServeHTTP(w, r)
-	})
-}
-
-func AdminOnly(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		next.ServeHTTP(w, r)
-	})
-}
+// JWT code
 
 func apiRouter() http.Handler {
+
+	tokenAuth := auth.GetTokenAuth()
+
 	r := chi.NewRouter()
-	r.Use(UserOnly)
+	// Seek, verify and validate JWT tokens
+	r.Use(jwtauth.Verifier(tokenAuth))
+
+	// Handle valid / invalid tokens. In this example, we use
+	// the provided authenticator middleware, but you can write your
+	// own very easily, look at the Authenticator method in jwtauth.go
+	// and tweak it, its not scary.
+	r.Use(auth.AuthenticatorCtx)
 
 	r.Use(render.SetContentType(render.ContentTypeJSON))
 
 	r.Get("/", helper.EmptyHandler)
 
-	r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("pong"))
-	})
-
-	// user management
-	r.Route("/user", func(r chi.Router) {
-		r.Post("/token", helper.EmptyHandler)
-		r.Delete("/token", helper.EmptyHandler)
-	})
-
-	r.Mount("/users", api.UserRoutes())
+	r.Mount("/users", api.UsersRoutes())
 
 	// course management
 	r.Route("/course", func(r chi.Router) {
@@ -63,6 +56,7 @@ func apiRouter() http.Handler {
 }
 
 func GetRouter() http.Handler {
+
 	r := chi.NewRouter()
 
 	// A good base middleware stack
@@ -75,10 +69,18 @@ func GetRouter() http.Handler {
 		w.Write([]byte("welcome"))
 	})
 
-	r.Get("/login", helper.EmptyHandler)
-	r.Get("/logout", helper.EmptyHandler)
+	// login (get JWT token)
+	r.Route("/login", func(r chi.Router) {
+		r.Use(render.SetContentType(render.ContentTypeJSON))
+		r.Post("/", api.Login)
+
+	})
 
 	r.Mount("/api", apiRouter())
+
+	r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("pong"))
+	})
 
 	return r
 }

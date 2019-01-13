@@ -43,3 +43,12 @@ func (ds *datastore) GetUserFromIdString(userID string) (user *model.User, err e
 
 	return user, err
 }
+
+func (ds *datastore) GetUserFromEmail(email string) (user *model.User, err error) {
+
+	user = &model.User{}
+	err = ORM().Where("email = ?", email).First(&user).Error
+
+	return user, err
+
+}

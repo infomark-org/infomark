@@ -29,10 +29,10 @@ import (
 
 // .............................................................................
 
-// UserCtx middleware is used to load an User object from
+// UsersCtx middleware is used to load an User object from
 // the URL parameters passed through as the request. In case
 // the User could not be found, we stop here and return a 404.
-func UserCtx(next http.Handler) http.Handler {
+func UsersCtx(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// TODO: check permission if inquirer of request is allowed to access this user
 
@@ -50,16 +50,16 @@ func UserCtx(next http.Handler) http.Handler {
 
 // .............................................................................
 
-func UserRoutes() chi.Router {
+func UsersRoutes() chi.Router {
 	r := chi.NewRouter()
 
-	r.Get("/", UsersIndex)  // curl -i -X GET http://localhost:3000/api/users
-	r.Post("/", UserCreate) // curl -i -X POST -d '{"id":33,"last_name":"awesomeness"}' http://localhost:3000/api/users/
+	r.Get("/", UsersIndex)   // curl -i -X GET http://localhost:3000/api/users
+	r.Post("/", UsersCreate) // curl -i -X POST -d '{"id":33,"last_name":"awesomeness"}' http://localhost:3000/api/users/
 	r.Route("/{userID}", func(r chi.Router) {
-		r.Use(UserCtx)
-		r.Get("/", UserGet)       // curl -i -X GET http://localhost:3000/api/users/1
-		r.Put("/", UserUpdate)    // curl -i -X PUT -d '{"first_name":"dude"}' http://localhost:3000/api/users/1
-		r.Delete("/", UserDelete) // curl -i -X DELETE http://localhost:3000/api/users/1
+		r.Use(UsersCtx)
+		r.Get("/", UsersGet)       // curl -i -X GET http://localhost:3000/api/users/1
+		r.Put("/", UsersUpdate)    // curl -i -X PUT -d '{"first_name":"dude"}' http://localhost:3000/api/users/1
+		r.Delete("/", UsersDelete) // curl -i -X DELETE http://localhost:3000/api/users/1
 	})
 
 	return r
@@ -67,22 +67,22 @@ func UserRoutes() chi.Router {
 
 // .............................................................................
 
-// UserRequest is the request payload for User data model.
-type UserRequest struct {
+// UsersRequest is the request payload for User data model.
+type UsersRequest struct {
 	*model.User
 	ProtectedId   int    `json:"id"`
 	PlainPassword string `json:"password"`
 }
 
-// UserResponse is the response payload for the User data model.
-type UserResponse struct {
+// UsersResponse is the response payload for the User data model.
+type UsersResponse struct {
 	*model.User
 }
 
-type UserListResponse []*UserResponse
+type UserListResponse []*UsersResponse
 
-func NewUserResponse(u *model.User) *UserResponse {
-	resp := &UserResponse{User: u}
+func NewUserResponse(u *model.User) *UsersResponse {
+	resp := &UsersResponse{User: u}
 	return resp
 }
 
@@ -97,20 +97,18 @@ func NewUserListResponse(users []model.User) []render.Renderer {
 }
 
 // Bind user request
-func (u *UserRequest) Bind(r *http.Request) error {
+func (u *UsersRequest) Bind(r *http.Request) error {
 	// sending the id via request is invalid as the id should be submitted in the url
 	u.ProtectedId = 0
 
 	// encrypt password
 	hash, err := helper.HashPassword(u.PlainPassword)
-
 	u.PasswordHash = hash
-
 	return err
 }
 
 // render user response
-func (u *UserResponse) Render(w http.ResponseWriter, r *http.Request) error {
+func (u *UsersResponse) Render(w http.ResponseWriter, r *http.Request) error {
 	// nothing to hide
 	return nil
 }
@@ -137,7 +135,7 @@ func UsersIndex(w http.ResponseWriter, r *http.Request) {
 
 // UserGet returns the specific User.
 // GET "/users/{userID}"
-func UserGet(w http.ResponseWriter, r *http.Request) {
+func UsersGet(w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value("user").(*model.User)
 
 	if err := render.Render(w, r, NewUserResponse(user)); err != nil {
@@ -150,8 +148,8 @@ func UserGet(w http.ResponseWriter, r *http.Request) {
 // UserCreate persists the posted User and returns it
 // back to the client as an acknowledgement.
 // POST "/users"
-func UserCreate(w http.ResponseWriter, r *http.Request) {
-	data := &UserRequest{}
+func UsersCreate(w http.ResponseWriter, r *http.Request) {
+	data := &UsersRequest{}
 
 	if err := render.Bind(r, data); err != nil {
 		render.Render(w, r, helper.NewErrResponse(http.StatusBadRequest, err))
@@ -177,10 +175,10 @@ func UserCreate(w http.ResponseWriter, r *http.Request) {
 
 // UserUpdate changes the user information for a given user.
 // PUT "/users/{userID}"
-func UserUpdate(w http.ResponseWriter, r *http.Request) {
+func UsersUpdate(w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value("user").(*model.User)
 
-	data := &UserRequest{User: user}
+	data := &UsersRequest{User: user}
 	if err := render.Bind(r, data); err != nil {
 		render.Render(w, r, helper.NewErrResponse(http.StatusBadRequest, err))
 		return
@@ -204,7 +202,7 @@ func UserUpdate(w http.ResponseWriter, r *http.Request) {
 
 // UserDelete removes an user from a database.
 // DELETE "/users/{userID}"
-func UserDelete(w http.ResponseWriter, r *http.Request) {
+func UsersDelete(w http.ResponseWriter, r *http.Request) {
 	user := r.Context().Value("user").(*model.User)
 
 	if err := store.ORM().Delete(&user).Error; err != nil {

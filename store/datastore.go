@@ -29,6 +29,7 @@ type Datastore interface {
 	// retrieve user model by id from url parameter
 	CountUsers() (int, error)
 	GetUserFromIdString(userID string) (*model.User, error)
+	GetUserFromEmail(email string) (*model.User, error)
 
 	ORM() *gorm.DB
 }
