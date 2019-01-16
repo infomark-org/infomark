@@ -1,9 +1,24 @@
+// InfoMark - a platform for managing courses with
+//            distributing exercise sheets and testing exercise submissions
+// Copyright (C) 2019  ComputerGraphics Tuebingen
+// Authors: Patrick Wieschollek
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 package router
 
 import (
-	// "context"
-	// "fmt"
-
 	"net/http"
 
 	"github.com/cgtuebingen/infomark-backend/router/api"
@@ -15,9 +30,7 @@ import (
 	"github.com/go-chi/render"
 )
 
-// JWT code
-
-func apiRouter() http.Handler {
+func apiV1Router() http.Handler {
 
 	tokenAuth := auth.GetTokenAuth()
 
@@ -25,16 +38,14 @@ func apiRouter() http.Handler {
 	// Seek, verify and validate JWT tokens
 	r.Use(jwtauth.Verifier(tokenAuth))
 
-	// Handle valid / invalid tokens. In this example, we use
-	// the provided authenticator middleware, but you can write your
-	// own very easily, look at the Authenticator method in jwtauth.go
-	// and tweak it, its not scary.
+	// Handle valid / invalid tokens.
 	r.Use(auth.AuthenticatorCtx)
 
 	r.Use(render.SetContentType(render.ContentTypeJSON))
 
 	r.Get("/", helper.EmptyHandler)
 
+	r.Mount("/login", api.LoginRoutes())
 	r.Mount("/users", api.UsersRoutes())
 
 	// course management
@@ -65,21 +76,14 @@ func GetRouter() http.Handler {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("welcome"))
-	})
+	r.Route("/api", func(r chi.Router) {
+		// Whoever's reading this: You'll thank me for that.
+		r.Mount("/v1", apiV1Router())
 
-	// login (get JWT token)
-	r.Route("/login", func(r chi.Router) {
-		r.Use(render.SetContentType(render.ContentTypeJSON))
-		r.Post("/", api.Login)
-
-	})
-
-	r.Mount("/api", apiRouter())
-
-	r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("pong"))
+		// Health status
+		r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("pong"))
+		})
 	})
 
 	return r

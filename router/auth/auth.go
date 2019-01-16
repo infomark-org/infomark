@@ -18,7 +18,9 @@ func GetTokenAuth() *jwtauth.JWTAuth {
   return tokenAuth
 }
 
-// InitializeJWT creates the internal state for JWT authentification
+// InitializeJWT creates the internal state for JWT authentification.
+// The `private_signing_key` is a secret to sign the token allowing to verify,
+// if we really issued the token.
 func InitializeJWT(private_signing_key string) {
   tokenAuth = jwtauth.New("HS256", []byte(private_signing_key), nil)
 
@@ -30,6 +32,7 @@ func InitializeJWT(private_signing_key string) {
   fmt.Printf("curl -H\"Authorization: BEARER \"  -i -X  %s\n\n", tokenString)
 }
 
+// CreateClaimsForUserID creates all necessary claims for our API.
 func CreateClaimsForUserID(userID int) jwtauth.Claims {
   // TODO: for now we kick out the user every 15min ;-)
   // https://security.stackexchange.com/q/119371/167975
@@ -44,7 +47,7 @@ func CreateClaimsForUserID(userID int) jwtauth.Claims {
 
 // EncodeClaims wraps the function to encode claims.
 // We mainly use `login_id` here only to store the user-id from the
-// authentificated user to keep the request small.
+// authentificated user to keep the request small. This is used by the login-API.
 func EncodeClaims(claims jwtauth.Claims) (tokenString string, err error) {
   _, tokenString, err = tokenAuth.Encode(claims)
   if err != nil {
@@ -62,27 +65,41 @@ func AuthenticatorCtx(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
     token, claims, err := jwtauth.FromContext(r.Context())
 
+    // can we parse the token?
     if err != nil {
-      http.Error(w, http.StatusText(401), 401)
+      http.Error(
+        w,
+        http.StatusText(http.StatusUnauthorized),
+        http.StatusUnauthorized,
+      )
       return
     }
 
+    // is the token still valid (not expired and correctly signed)?
     if token == nil || !token.Valid {
-      http.Error(w, http.StatusText(401), 401)
-      return
-    }
-    // Token is authenticated
-    login_id, ok := claims["login_id"].(float64)
-
-    if !ok {
-      http.Error(w, http.StatusText(401), 401)
+      http.Error(
+        w,
+        http.StatusText(http.StatusUnauthorized),
+        http.StatusUnauthorized,
+      )
       return
     }
 
-    // claim is also ok
+    // we trust the claims and extract the id of the user making the API call.
+    var login_id int
+    var ok bool
+
+    if login_id, ok = claims["login_id"].(int); !ok {
+      http.Error(
+        w,
+        http.StatusText(http.StatusUnauthorized),
+        http.StatusUnauthorized,
+      )
+      return
+    }
     log.Println("api-call with login_id:", login_id)
 
-    ctx := context.WithValue(r.Context(), "login_id", int(login_id))
+    ctx := context.WithValue(r.Context(), "login_id", login_id)
     next.ServeHTTP(w, r.WithContext(ctx))
 
   })

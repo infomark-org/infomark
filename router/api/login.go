@@ -1,18 +1,20 @@
-// Copyright 2019 ComputerGraphics Tuebingen. All Rights Reserved.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-// ==============================================================================
+// InfoMark - a platform for managing courses with
+//            distributing exercise sheets and testing exercise submissions
+// Copyright (C) 2019  ComputerGraphics Tuebingen
 // Authors: Patrick Wieschollek
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package api
 
@@ -23,19 +25,30 @@ import (
 	"github.com/cgtuebingen/infomark-backend/router/auth"
 	"github.com/cgtuebingen/infomark-backend/router/helper"
 	"github.com/cgtuebingen/infomark-backend/store"
+	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 )
 
 // .............................................................................
 
-// UserRequest is the request payload for User data model.
+func LoginRoutes() chi.Router {
+	r := chi.NewRouter()
+
+	r.Use(render.SetContentType(render.ContentTypeJSON))
+	r.Post("/", Login)
+
+	return r
+}
+
+// .............................................................................
+
+// LoginRequest is the request payload.
 type LoginRequest struct {
 	Email         string `json:"email"`
 	PlainPassword string `json:"password"`
-	// PasswordHash  string `json:"-"`
 }
 
-// LoginResponse is the response payload for the User data model.
+// LoginResponse is the response payload.
 type LoginResponse struct {
 	Success bool   `json:"success"`
 	Token   string `json:"token"`
@@ -66,19 +79,19 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// find password for email
+	// find password for an email
 	candidate, err := store.DS().GetUserFromEmail(request_data.Email)
 
 	if err != nil {
 		render.Render(w, r, helper.NewErrResponse(
 			http.StatusUnauthorized,
-			// errors.New("User is unkown.")))
-			err))
+			errors.New("User is unkown."),
+			// err
+		))
 		return
 	}
 
 	// user exists let verify the password
-
 	if helper.CheckPasswordHash(request_data.PlainPassword, candidate.PasswordHash) {
 		// ok
 		success := true
