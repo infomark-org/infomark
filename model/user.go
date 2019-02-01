@@ -25,28 +25,24 @@ import (
 	null "gopkg.in/guregu/null.v3"
 )
 
-type UserInfo struct {
-	FirstName     string      `json:"first_name"     db:"first_name"`
-	LastName      string      `json:"last_name"      db:"last_name"`
-	AvatarUrl     null.String `json:"avatar_url"     db:"avatar_url"`
-	Email         string      `json:"email"          db:"email"`
-	StudentNumber string      `json:"student_number" db:"student_number"`
-	Semester      int         `json:"semester"       db:"semester"`
-	Subject       string      `json:"subject"        db:"subject"`
-}
-
 // User holds specific application settings linked to an entity, who can login.
 type User struct {
-	ID        int64     `json:"id"                      db:"id"`
-	CreatedAt time.Time `json:"created_at,omitempty"    db:"created_at,omitempty"`
-	UpdatedAt time.Time `json:"updated_at,omitempty"    db:"updated_at,omitempty"`
+	ID        int64     `json:"id" db:"id"`
+	CreatedAt time.Time `json:"-" db:"created_at,omitempty"`
+	UpdatedAt time.Time `json:"-" db:"updated_at,omitempty"`
 
-	UserInfo
+	FirstName     string      `json:"first_name" db:"first_name"`
+	LastName      string      `json:"last_name" db:"last_name"`
+	AvatarUrl     null.String `json:"avatar_url" db:"avatar_url"`
+	Email         string      `json:"email" db:"email"`
+	StudentNumber string      `json:"student_number" db:"student_number"`
+	Semester      int         `json:"semester" db:"semester"`
+	Subject       string      `json:"subject" db:"subject"`
 
-	EncryptedPassword  string      `json:"-"         db:"encrypted_password"`
-	ResetPasswordToken null.String `json:"-"         db:"reset_password_token"`
-	ConfirmEmailToken  null.String `json:"-"         db:"confirm_email_token"`
-	Root               bool        `json:"-"         db:"root"`
+	EncryptedPassword  string      `json:"-" db:"encrypted_password"`
+	ResetPasswordToken null.String `json:"-" db:"reset_password_token"`
+	ConfirmEmailToken  null.String `json:"-" db:"confirm_email_token"`
+	Root               bool        `json:"-" db:"root"`
 }
 
 func (d *User) Validate() error {
@@ -76,7 +72,6 @@ func (d *User) Validate() error {
 		validation.Field(
 			&d.Subject,
 			validation.Required,
-			validation.Min(1),
 		),
 	)
 

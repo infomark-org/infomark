@@ -36,7 +36,8 @@ const (
 
 // API provides application resources and handlers.
 type API struct {
-  User *UserResource
+  User    *UserResource
+  Account *AccountResource
 }
 
 // NewAPI configures and returns application API.
@@ -46,9 +47,11 @@ func NewAPI(db *sqlx.DB) (*API, error) {
 
   userStore := database.NewUserStore(db)
   user := NewUserResource(userStore)
+  account := NewAccountResource(userStore)
 
   api := &API{
-    User: user,
+    User:    user,
+    Account: account,
   }
   return api, nil
 }

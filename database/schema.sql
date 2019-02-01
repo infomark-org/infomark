@@ -1,5 +1,4 @@
-drop table if exists users;
-
+-- http://localhost:8081/#
 drop table if exists users;
 
 create table users (
@@ -10,17 +9,16 @@ create table users (
   first_name text not null,
   last_name text not null,
   avatar_url text,
-  email text not null,
+  email text not null unique,
   student_number text not null,
-  semester text not null,
+  semester int not null,
   subject text not null,
 
   encrypted_password text not null,
-  reset_password_token text not null,
-  confirm_email_token text not null,
-  root boolean not null
+  reset_password_token text,
+  confirm_email_token text,
+  root boolean not null default false
 );
 
-
-add_index "users", ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true, using: :btree
-add_index "users", ["email"], name: "index_users_on_email", unique: true, using: :btree
+-- add_index "users", ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true, using: :btree
+-- add_index "users", ["email"], name: "index_users_on_email", unique: true, using: :btree

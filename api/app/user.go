@@ -29,18 +29,20 @@ import (
   "github.com/go-chi/render"
 )
 
+// UserStore specifies required database queries for user management.
 type UserStore interface {
   Get(userID int64) (*model.User, error)
   Update(p *model.User) error
   GetAll() ([]model.User, error)
+  Create(p *model.User) (*model.User, error)
 }
 
-// UserResource implements user management handler.
+// UserResource specifies user management handler.
 type UserResource struct {
   UserStore UserStore
 }
 
-// NewUserResource creates and returns a user resource.
+// NewUserResource create and returns a UserResource.
 func NewUserResource(userStore UserStore) *UserResource {
   return &UserResource{
     UserStore: userStore,
@@ -49,24 +51,26 @@ func NewUserResource(userStore UserStore) *UserResource {
 
 // .............................................................................
 
-// UsersRequest is the request payload for User data model.
+// userRequest is the request payload for User data model.
 type userRequest struct {
   *model.User
   ProtectedID   int64  `json:"id"`
   PlainPassword string `json:"plain_password"`
 }
 
-// UsersResponse is the response payload for the User data model.
+// userResponse is the response payload for the User data model.
 type userResponse struct {
   *model.User
 }
 
+// newUserResponse creates a response from a user model.
 func newUserResponse(p *model.User) *userResponse {
   return &userResponse{
     User: p,
   }
 }
 
+// newUserListResponse creates a response from a list of user models.
 func newUserListResponse(users []model.User) []render.Renderer {
   // https://stackoverflow.com/a/36463641/7443104
   list := []render.Renderer{}
@@ -77,62 +81,77 @@ func newUserListResponse(users []model.User) []render.Renderer {
   return list
 }
 
-// Bind user request
+// Bind preprocesses a userRequest.
 func (d *userRequest) Bind(r *http.Request) error {
-  // sending the id via request is invalid as the id should be submitted in the url
+  // Sending the id via request-body is invalid.
+  // The id should be submitted in the url.
   d.ProtectedID = 0
 
-  // encrypt password
+  // Encrypt plain password
   hash, err := auth.HashPassword(d.PlainPassword)
   d.EncryptedPassword = hash
 
   return err
 }
 
-// render user response
+// Render post-processes a userResponse.
 func (u *userResponse) Render(w http.ResponseWriter, r *http.Request) error {
   // nothing to hide
   return nil
 }
 
-// render user response
-
-// get all users
+// Index is the enpoint for retrieving all users.
 func (rs *UserResource) Index(w http.ResponseWriter, r *http.Request) {
+  // fetch collection of users from database
   users, err := rs.UserStore.GetAll()
 
+  // render JSON reponse
   if err = render.RenderList(w, r, newUserListResponse(users)); err != nil {
     render.Render(w, r, ErrRender(err))
     return
   }
 }
 
-// get a user by id
+// Get is the enpoint for retrieving a specific user.
 func (rs *UserResource) Get(w http.ResponseWriter, r *http.Request) {
+  // `user` is retrieved via middle-ware
   user := r.Context().Value("user").(*model.User)
 
+  // render JSON reponse
   if err := render.Render(w, r, newUserResponse(user)); err != nil {
     render.Render(w, r, ErrRender(err))
     return
   }
-
 }
 
-// update the user with given id
-func (rs *UserResource) Patch(w http.ResponseWriter, r *http.Request) {
-
+// bindValidate jointly binds data from json request and validates the model.
+func (rs *UserResource) bindValidate(w http.ResponseWriter, r *http.Request) (*userRequest, error) {
+  // get user from middle-ware context
   data := &userRequest{User: r.Context().Value("user").(*model.User)}
 
+  // parse JSON request into struct
   if err := render.Bind(r, data); err != nil {
-    render.Render(w, r, ErrBadRequest)
-    return
+    return nil, err
   }
 
+  // validate final model
   if err := data.User.Validate(); err != nil {
+    return nil, err
+  }
+
+  return data, nil
+}
+
+// Patch is the endpoint fro updating a specific user with given id.
+func (rs *UserResource) Patch(w http.ResponseWriter, r *http.Request) {
+
+  data, err := rs.bindValidate(w, r)
+  if err != nil {
     render.Render(w, r, ErrBadRequest)
     return
   }
 
+  // update database entry
   if err := rs.UserStore.Update(data.User); err != nil {
     render.Render(w, r, ErrInternalServerError)
     return
@@ -142,27 +161,31 @@ func (rs *UserResource) Patch(w http.ResponseWriter, r *http.Request) {
 }
 
 // .............................................................................
-// UsersCtx middleware is used to load an User object from
-// the URL parameters passed through as the request. In case
+// Context middleware is used to load an User object from
+// the URL parameter `userID` passed through as the request. In case
 // the User could not be found, we stop here and return a 404.
+// We do NOT check whether the user is authorized to get this user.
 func (d *UserResource) Context(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
     // TODO: check permission if inquirer of request is allowed to access this user
+    // Should be done via another middleware
     var user_id int64
     var err error
 
+    // try to get id from URL
     if user_id, err = strconv.ParseInt(chi.URLParam(r, "userID"), 10, 64); err != nil {
       render.Render(w, r, ErrNotFound)
       return
     }
 
+    // find specific user in database
     user, err := d.UserStore.Get(user_id)
-
     if err != nil {
       render.Render(w, r, ErrNotFound)
       return
     }
 
+    // serve next
     ctx := context.WithValue(r.Context(), "user", user)
     next.ServeHTTP(w, r.WithContext(ctx))
   })

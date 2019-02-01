@@ -46,7 +46,7 @@ func WriteJSON(w http.ResponseWriter, obj interface{}) error {
 }
 
 func EmptyHandler(w http.ResponseWriter, r *http.Request) {
-  WriteJSON(w, H{"response": "empty"})
+  WriteJSON(w, H{"EmptyHandler": "Not Implemented Yet"})
 }
 
 // New configures application resources and routes.
@@ -88,9 +88,9 @@ func New() (*chi.Mux, error) {
     })
     // login
     r.Route("/account", func(r chi.Router) {
-      r.Get("/", EmptyHandler)
+      r.Get("/", appAPI.Account.Get)
       r.Patch("/", EmptyHandler)
-      r.Post("/", EmptyHandler)
+      r.Post("/", appAPI.Account.Post)
     })
 
     // r.Route("/account", func(r chi.Router) {
