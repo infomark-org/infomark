@@ -51,14 +51,14 @@ func NewUserResource(userStore UserStore) *UserResource {
 
 // .............................................................................
 
-// userRequest is the request payload for User data model.
+// userRequest is the request payload for user management.
 type userRequest struct {
   *model.User
   ProtectedID   int64  `json:"id"`
   PlainPassword string `json:"plain_password"`
 }
 
-// userResponse is the response payload for the User data model.
+// userResponse is the response payload for user management.
 type userResponse struct {
   *model.User
 }
@@ -100,6 +100,24 @@ func (u *userResponse) Render(w http.ResponseWriter, r *http.Request) error {
   return nil
 }
 
+// bindValidate jointly binds data from json request and validates the model.
+func (rs *UserResource) bindValidate(w http.ResponseWriter, r *http.Request) (*userRequest, error) {
+  // get user from middle-ware context
+  data := &userRequest{User: r.Context().Value("user").(*model.User)}
+
+  // parse JSON request into struct
+  if err := render.Bind(r, data); err != nil {
+    return nil, err
+  }
+
+  // validate final model
+  if err := data.User.Validate(); err != nil {
+    return nil, err
+  }
+
+  return data, nil
+}
+
 // Index is the enpoint for retrieving all users.
 func (rs *UserResource) Index(w http.ResponseWriter, r *http.Request) {
   // fetch collection of users from database
@@ -122,24 +140,6 @@ func (rs *UserResource) Get(w http.ResponseWriter, r *http.Request) {
     render.Render(w, r, ErrRender(err))
     return
   }
-}
-
-// bindValidate jointly binds data from json request and validates the model.
-func (rs *UserResource) bindValidate(w http.ResponseWriter, r *http.Request) (*userRequest, error) {
-  // get user from middle-ware context
-  data := &userRequest{User: r.Context().Value("user").(*model.User)}
-
-  // parse JSON request into struct
-  if err := render.Bind(r, data); err != nil {
-    return nil, err
-  }
-
-  // validate final model
-  if err := data.User.Validate(); err != nil {
-    return nil, err
-  }
-
-  return data, nil
 }
 
 // Patch is the endpoint fro updating a specific user with given id.

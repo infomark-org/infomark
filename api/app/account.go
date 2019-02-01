@@ -40,27 +40,30 @@ func NewAccountResource(userStore UserStore) *AccountResource {
 
 // .............................................................................
 
+type accountInfo struct {
+  Email         string `json:"email"`
+  PlainPassword string `json:"plain_password"`
+}
+
 // userAccountRequest is the request payload for account management.
 type userAccountRequest struct {
   User    *model.User `json:"user"`
-  Account struct {
-    Email         string `json:"email"`
-    PlainPassword string `json:"plain_password"`
-  } `json:"account"`
+  Account accountInfo `json:"account"`
 }
 
-// UsersResponse is the response payload for the User data model.
+// userAccountResponse is the response payload for account management.
 type userAccountResponse struct {
-  User *model.User
+  User *model.User `json:"user"`
 }
 
+// newUserAccountResponse creates a response from a user model.
 func newUserAccountResponse(p *model.User) *userAccountResponse {
   return &userAccountResponse{
     User: p,
   }
 }
 
-// Bind user request
+// Bind preprocesses a userAccountRequest.
 func (d *userAccountRequest) Bind(r *http.Request) error {
   // sending the id via request is invalid as the id should be submitted in the url
   d.User.ID = 0
@@ -72,18 +75,25 @@ func (d *userAccountRequest) Bind(r *http.Request) error {
   return err
 }
 
-// render user response
+// Render post-processes a userAccountResponse.
 func (u *userAccountResponse) Render(w http.ResponseWriter, r *http.Request) error {
   // nothing to hide
   return nil
 }
 
+// bindValidate jointly binds data from json request and validates the model.
 func (rs *AccountResource) bindValidate(w http.ResponseWriter, r *http.Request) (*userAccountRequest, error) {
+  // start from empty Request
+  // Note, this function is used by both POST and PATCH.
+  // We should not assume there is an initial account from middle-ware.
   data := &userAccountRequest{}
+
+  // parse JSON request into struct
   if err := render.Bind(r, data); err != nil {
     return nil, err
   }
 
+  // validate final model
   if err := data.User.Validate(); err != nil {
     return nil, err
   }
@@ -91,6 +101,7 @@ func (rs *AccountResource) bindValidate(w http.ResponseWriter, r *http.Request) 
   return data, nil
 }
 
+// Post is the enpoint for creating a new user account.
 func (rs *AccountResource) Post(w http.ResponseWriter, r *http.Request) {
 
   data, err := rs.bindValidate(w, r)
@@ -99,19 +110,21 @@ func (rs *AccountResource) Post(w http.ResponseWriter, r *http.Request) {
     return
   }
 
+  // create user entry in database
   newUser, err := rs.UserStore.Create(data.User)
   if err != nil {
     render.Render(w, r, ErrRender(err))
     return
   }
 
+  // return user information of created entry
   if err := render.Render(w, r, newUserAccountResponse(newUser)); err != nil {
     render.Render(w, r, ErrRender(err))
     return
   }
 }
 
-// update the user with given id
+// Patch is the endpoint fro updating a specific account with given id.
 func (rs *AccountResource) Patch(w http.ResponseWriter, r *http.Request) {
 
   data, err := rs.bindValidate(w, r)
@@ -132,7 +145,7 @@ func (rs *AccountResource) Patch(w http.ResponseWriter, r *http.Request) {
   }
 }
 
-// get a user by id
+// Get is the endpoint for retrieving a specific user account.
 func (rs *AccountResource) Get(w http.ResponseWriter, r *http.Request) {
   // TODO(patwie): from middleware and webtoken
   user, err := rs.UserStore.Get(1)
