@@ -19,74 +19,65 @@
 package model
 
 import (
-	"regexp"
 	"time"
 
-	"github.com/cgtuebingen/infomark-backend/validation"
+	validation "github.com/go-ozzo/ozzo-validation"
+	null "gopkg.in/guregu/null.v3"
 )
 
-// validate an email
-var reEmail = regexp.MustCompile(`(?m)[^@]+@(?:student\.|)uni-tuebingen.de`)
-
-// User represents a registered user.
-type User struct {
-	// the id for this user.
-	ID        uint       `json:"id" gorm:"primary_key"`
-	CreatedAt time.Time  `json:"-"`
-	UpdatedAt time.Time  `json:"-"`
-	DeletedAt *time.Time `json:"-"`
-
-	Email          string `json:"email"` // Email is the email address for this user.
-	PasswordHash   string `json:"-"`     // PasswordHash is the encrypted password.
-	FirstName      string `json:"first_name"`
-	LastName       string `json:"last_name"`
-	StudentNumber  string `json:"student_number"`
-	Specialization string `json:"specialization"`
-	Term           string `json:"term"`
-	Avatar         string `json:"avatar_url"`
-
-	ResetPasswordToken  string    `json:"-"`
-	ResetPasswordSentAt time.Time `json:"-"`
-	ConfirmationToken   string    `json:"-"`
-	ConfirmationSentAt  time.Time `json:"-"`
-	ConfirmedAt         time.Time `json:"-"`
-
-	CurrentSignInAt time.Time `json:"-"`
+type UserInfo struct {
+	FirstName     string      `json:"first_name"     db:"first_name"`
+	LastName      string      `json:"last_name"      db:"last_name"`
+	AvatarUrl     null.String `json:"avatar_url"     db:"avatar_url"`
+	Email         string      `json:"email"          db:"email"`
+	StudentNumber string      `json:"student_number" db:"student_number"`
+	Semester      int         `json:"semester"       db:"semester"`
+	Subject       string      `json:"subject"        db:"subject"`
 }
 
-// Validate validates the required fields and formats.
-func (u *User) Validate() (*validation.CheckResponses, error) {
+// User holds specific application settings linked to an entity, who can login.
+type User struct {
+	ID        int64     `json:"id"                      db:"id"`
+	CreatedAt time.Time `json:"created_at,omitempty"    db:"created_at,omitempty"`
+	UpdatedAt time.Time `json:"updated_at,omitempty"    db:"updated_at,omitempty"`
 
-	vals := []validation.Check{
-		{
-			Field: "last_name",
-			Value: u.LastName,
-			Rules: []validation.Rule{
-				&validation.LengthRule{Min: 1, Max: 250},
-			},
-		},
-		{
-			Field: "first_name",
-			Value: u.FirstName,
-			Rules: []validation.Rule{
-				&validation.LengthRule{Min: 1, Max: 250},
-			},
-		},
-		{
-			Field: "email",
-			Value: u.Email,
-			Rules: []validation.Rule{
-				&validation.MatchRule{Expr: reEmail},
-			},
-		},
-		{
-			Field: "password_hash",
-			Value: u.PasswordHash,
-			Rules: []validation.Rule{
-				&validation.LengthRule{Min: 8, Max: 500},
-			},
-		},
-	}
+	UserInfo
 
-	return validation.Validate(vals)
+	EncryptedPassword  string      `json:"-"         db:"encrypted_password"`
+	ResetPasswordToken null.String `json:"-"         db:"reset_password_token"`
+	ConfirmEmailToken  null.String `json:"-"         db:"confirm_email_token"`
+	Root               bool        `json:"-"         db:"root"`
+}
+
+func (d *User) Validate() error {
+
+	return validation.ValidateStruct(d,
+		validation.Field(
+			&d.FirstName,
+			validation.Required,
+		),
+		validation.Field(
+			&d.LastName,
+			validation.Required,
+		),
+		validation.Field(
+			&d.Email,
+			validation.Required,
+		),
+		validation.Field(
+			&d.StudentNumber,
+			validation.Required,
+		),
+		validation.Field(
+			&d.Semester,
+			validation.Required,
+			validation.Min(1),
+		),
+		validation.Field(
+			&d.Subject,
+			validation.Required,
+			validation.Min(1),
+		),
+	)
+
 }

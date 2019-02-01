@@ -16,37 +16,18 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package store
+package auth
 
 import (
-	"strconv"
-
-	"github.com/cgtuebingen/infomark-backend/model"
+	"golang.org/x/crypto/bcrypt"
 )
 
-func (ds *datastore) CountUsers() (int, error) {
-	var count int
-	err := ORM().Table("users").Count(&count).Error
-	return count, err
+func HashPassword(password string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	return string(bytes), err
 }
 
-// GetUserFromIdString retrieves the user from the database if exists
-func (ds *datastore) GetUserFromIdString(userID string) (user *model.User, err error) {
-	var uid int
-	user = &model.User{}
-
-	if userID != "" {
-		if uid, err = strconv.Atoi(userID); err == nil {
-			err = ORM().First(&user, uid).Error
-		}
-	}
-
-	return user, err
-}
-
-func (ds *datastore) GetUserFromEmail(email string) (*model.User, error) {
-	user := &model.User{}
-	err := ORM().Where("email = ?", email).First(&user).Error
-	return user, err
-
+func CheckPasswordHash(password, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+	return err == nil
 }

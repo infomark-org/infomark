@@ -16,10 +16,43 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package main
+package app
 
-import "github.com/cgtuebingen/infomark-backend/cmd"
+import (
+  "net/http"
 
-func main() {
-	cmd.Execute()
+  "github.com/cgtuebingen/infomark-backend/database"
+  "github.com/cgtuebingen/infomark-backend/logging"
+  "github.com/jmoiron/sqlx"
+  "github.com/sirupsen/logrus"
+)
+
+type ctxKey int
+
+const (
+  ctxAccount ctxKey = iota
+  ctxProfile
+)
+
+// API provides application resources and handlers.
+type API struct {
+  User *UserResource
+}
+
+// NewAPI configures and returns application API.
+func NewAPI(db *sqlx.DB) (*API, error) {
+  // accountStore := database.NewAccountStore(db)
+  // account := NewAccountResource(accountStore)
+
+  userStore := database.NewUserStore(db)
+  user := NewUserResource(userStore)
+
+  api := &API{
+    User: user,
+  }
+  return api, nil
+}
+
+func log(r *http.Request) logrus.FieldLogger {
+  return logging.GetLogEntry(r)
 }

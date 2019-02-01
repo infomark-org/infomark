@@ -16,111 +16,82 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package helper
+package app
 
 import (
-	"bytes"
-	"encoding/json"
-	"net/http"
-	"net/http/httptest"
+  "net/http"
 
-	"github.com/cgtuebingen/infomark-backend/validation"
-	"github.com/go-chi/render"
-	"golang.org/x/crypto/bcrypt"
+  "github.com/go-chi/render"
+  validation "github.com/go-ozzo/ozzo-validation"
 )
 
-// to omit fields in json structs
-// see: https://attilaolah.eu/2014/09/10/json-and-struct-composition-in-go/
-type Omit *struct{}
-
-// similar to gin.H as a neat wrapper
-type H map[string]interface{}
-
-func EmptyHandler(w http.ResponseWriter, r *http.Request) {
-	WriteJSON(w, H{"response": "empty"})
-}
-
-// func writeContentType(w http.ResponseWriter, value []string) {
-// 	header := w.Header()
-// 	if val := header["Content-Type"]; len(val) == 0 {
-// 		header["Content-Type"] = value
-// 	}
-// }
-
-func WriteJSON(w http.ResponseWriter, obj interface{}) error {
-	// writeContentType(w, []string{"application/json; charset=utf-8"})
-	jsonBytes, err := json.Marshal(obj)
-	if err != nil {
-		return err
-	}
-	w.Write(jsonBytes)
-	return nil
-}
-
-// func WriteText(w http.ResponseWriter, format string) error {
-// 	writeContentType(w, []string{"text/plain; charset=utf-8"})
-// 	io.WriteString(w, format)
-// 	return nil
-// }
-
-// func WriteTextf(w http.ResponseWriter, format string, a ...interface{}) error {
-// 	writeContentType(w, []string{"text/plain; charset=utf-8"})
-// 	io.WriteString(w, fmt.Sprintf(format, a...))
-// 	return nil
-// }
-
+// ErrResponse renderer type for handling all sorts of errors.
 type ErrResponse struct {
-	HTTPStatusCode int    `json:"-"`               // http response status code
-	StatusText     string `json:"status"`          // user-level status message
-	AppCode        int64  `json:"code,omitempty"`  // application-specific error code
-	Err            error  `json:"-"`               // low-level runtime error
-	ErrorText      string `json:"error,omitempty"` // application-level error message, for debugging
+  Err            error `json:"-"` // low-level runtime error
+  HTTPStatusCode int   `json:"-"` // http response status code
+
+  StatusText       string            `json:"status"`           // user-level status message
+  AppCode          int64             `json:"code,omitempty"`   // application-specific error code
+  ErrorText        string            `json:"error,omitempty"`  // application-level error message, for debugging
+  ValidationErrors validation.Errors `json:"errors,omitempty"` // user level model validation errors
 }
 
-func NewErrResponse(status int, err error) *ErrResponse {
-	if err != nil {
-		return &ErrResponse{
-			Err:            err,
-			HTTPStatusCode: status,
-			StatusText:     http.StatusText(status),
-			ErrorText:      err.Error(),
-		}
-	} else {
-		return &ErrResponse{
-			HTTPStatusCode: status,
-			StatusText:     http.StatusText(status),
-		}
-	}
-
-}
-
+// Render sets the application-specific error code in AppCode.
 func (e *ErrResponse) Render(w http.ResponseWriter, r *http.Request) error {
-	render.Status(r, e.HTTPStatusCode)
-	return nil
+  render.Status(r, e.HTTPStatusCode)
+  return nil
 }
 
-func RenderValidation(hints *validation.CheckResponses, w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusBadRequest)
-	WriteJSON(w, hints)
+// // ErrInvalidRequest returns status 422 Unprocessable Entity including error message.
+// func ErrInvalidRequest(err error) render.Renderer {
+//   return &ErrResponse{
+//     Err:            err,
+//     HTTPStatusCode: http.StatusUnprocessableEntity,
+//     StatusText:     http.StatusText(http.StatusUnprocessableEntity),
+//     ErrorText:      err.Error(),
+//   }
+// }
+
+// // ErrValidation returns status 422 Unprocessable Entity stating validation errors.
+// func ErrValidation(err error, valErr validation.Errors) render.Renderer {
+//   return &ErrResponse{
+//     Err:              err,
+//     HTTPStatusCode:   http.StatusUnprocessableEntity,
+//     StatusText:       http.StatusText(http.StatusUnprocessableEntity),
+//     ErrorText:        err.Error(),
+//     ValidationErrors: valErr,
+//   }
+// }
+
+// ErrRender returns status 422 Unprocessable Entity rendering response error.
+func ErrRender(err error) render.Renderer {
+  return &ErrResponse{
+    Err:            err,
+    HTTPStatusCode: http.StatusUnprocessableEntity,
+    StatusText:     http.StatusText(http.StatusUnprocessableEntity),
+    ErrorText:      err.Error(),
+  }
 }
 
-var ErrNotFoundResponse = NewErrResponse(http.StatusNotFound, nil)
+// see https://stackoverflow.com/a/50143519/7443104
+var (
+  // ErrBadRequest returns status 400 Bad Request for malformed request body.
+  ErrBadRequest = &ErrResponse{HTTPStatusCode: http.StatusBadRequest, StatusText: http.StatusText(http.StatusBadRequest)}
 
-func ErrRenderResponse(err error) render.Renderer {
-	return NewErrResponse(http.StatusUnprocessableEntity, err)
-}
+  // ErrUnauthorized returns 401 Unauthorized.
+  // e.g. "User has not logged-in"
+  ErrUnauthenticated = &ErrResponse{HTTPStatusCode: http.StatusUnauthorized, StatusText: http.StatusText(http.StatusUnauthorized)}
 
-func ErrDatabaseResponse(err error) render.Renderer {
-	return NewErrResponse(http.StatusServiceUnavailable, err)
-}
+  // ErrForbidden returns status 403 Forbidden for unauthorized request.
+  // e.g. "User doesn't have enough privilege"
+  ErrUnauthorized = &ErrResponse{HTTPStatusCode: http.StatusForbidden, StatusText: http.StatusText(http.StatusForbidden)}
 
-// Example:
-// r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-// 	render.WriteJSON(w, render.H{"test": "hi"})
-// 	render.WriteText(w, "hi")
-// 	http.Redirect(w, r, "/", 301)
-// })
-//
+  // ErrNotFound returns status 404 Not Found for invalid resource request.
+  ErrNotFound = &ErrResponse{HTTPStatusCode: http.StatusNotFound, StatusText: http.StatusText(http.StatusNotFound)}
+
+  // ErrInternalServerError returns status 500 Internal Server Error.
+  ErrInternalServerError = &ErrResponse{HTTPStatusCode: http.StatusInternalServerError, StatusText: http.StatusText(http.StatusInternalServerError)}
+)
 
 // StatusContinue                      = 100 // RFC 7231, 6.2.1
 // StatusSwitchingProtocols            = 101 // RFC 7231, 6.2.2
@@ -187,25 +158,3 @@ func ErrDatabaseResponse(err error) render.Renderer {
 // StatusLoopDetected                  = 508 // RFC 5842, 7.2
 // StatusNotExtended                   = 510 // RFC 2774, 7
 // StatusNetworkAuthenticationRequired = 511 // RFC 6585, 6
-
-func HashPassword(password string) (string, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	return string(bytes), err
-}
-
-func CheckPasswordHash(password, hash string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
-	return err == nil
-}
-
-//
-//
-func SimulateRequest(payload interface{}, api func(w http.ResponseWriter, r *http.Request)) *httptest.ResponseRecorder {
-
-	payload_json, _ := json.Marshal(payload)
-	r, _ := http.NewRequest("POST", "/users", bytes.NewBuffer(payload_json))
-	r.Header.Set("Content-Type", "application/json")
-	w := httptest.NewRecorder()
-	api(w, r)
-	return w
-}
