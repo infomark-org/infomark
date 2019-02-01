@@ -73,6 +73,15 @@ func ErrRender(err error) render.Renderer {
   }
 }
 
+func ErrBadRequestWithDetails(err error) *ErrResponse {
+  return &ErrResponse{
+    Err:            err,
+    HTTPStatusCode: http.StatusBadRequest,
+    StatusText:     http.StatusText(http.StatusBadRequest),
+    ErrorText:      err.Error(),
+  }
+}
+
 // see https://stackoverflow.com/a/50143519/7443104
 var (
   // ErrBadRequest returns status 400 Bad Request for malformed request body.

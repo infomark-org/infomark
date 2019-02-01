@@ -42,6 +42,7 @@ type DB interface {
   QueryRow(query string, args ...interface{}) *sql.Row
 }
 
+// DatabaseSyntax contains driver specific settings.
 type DatabaseSyntax struct {
   Quote               string // the quote character for table and column names
   Placeholder         string // the placeholder style to use in generated queries
@@ -191,7 +192,7 @@ func (d *DatabaseSyntax) Columns(src interface{}, includePk bool) ([]string, err
   return names, nil
 }
 
-// Columns using the Default Database type
+// Columns using the Default Database type.
 func Columns(src interface{}, includePk bool) ([]string, error) {
   return DefaultSyntax.Columns(src, includePk)
 }
@@ -201,7 +202,7 @@ type StatementData struct {
   Value  interface{}
 }
 
-// Tests whether the incoming value is the default value.
+// isZero tests whether the incoming value is the default value.
 // https://stackoverflow.com/a/27494761/7443104
 func isZero(v reflect.Value) bool {
   switch v.Kind() {
@@ -233,8 +234,8 @@ func isZero(v reflect.Value) bool {
   return result
 }
 
-// Read a struct an extract necessary data for a query.
-// This skips the primary key "id" and automatically sets "updated_at"
+// PackStatementData reads a struct and extract necessary data for a query.
+// This skips the primary key "id" automatically. No data modification is made.
 func (d *DatabaseSyntax) PackStatementData(src interface{}) ([]StatementData, error) {
 
   var null_string null.String

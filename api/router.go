@@ -24,6 +24,7 @@ import (
   "time"
 
   "github.com/cgtuebingen/infomark-backend/api/app"
+  "github.com/cgtuebingen/infomark-backend/auth/authenticate"
   "github.com/cgtuebingen/infomark-backend/logging"
   "github.com/go-chi/chi"
   "github.com/go-chi/chi/middleware"
@@ -36,7 +37,6 @@ import (
 type H map[string]interface{}
 
 func WriteJSON(w http.ResponseWriter, obj interface{}) error {
-  // writeContentType(w, []string{"application/json; charset=utf-8"})
   jsonBytes, err := json.Marshal(obj)
   if err != nil {
     return err
@@ -69,13 +69,12 @@ func New() (*chi.Mux, error) {
   r := chi.NewRouter()
   r.Use(middleware.Recoverer)
   r.Use(middleware.RequestID)
-  // TODO (patwie): This overrides the status code
-  // r.Use(middleware.DefaultCompress)
   r.Use(middleware.Timeout(15 * time.Second))
   r.Use(logging.NewStructuredLogger(logger))
   r.Use(render.SetContentType(render.ContentTypeJSON))
   r.Use(corsConfig().Handler)
 
+  r.Use(authenticate.AuthenticateAccessJWT)
   r.Route("/v1", func(r chi.Router) {
     // users
     r.Route("/users", func(r chi.Router) {
@@ -112,9 +111,7 @@ func corsConfig() *cors.Cors {
   // Basic CORS
   // for more ideas, see: https://developer.github.com/v3/#cross-origin-resource-sharing
   return cors.New(cors.Options{
-    // AllowedOrigins: []string{"https://foo.com"}, // Use this to allow specific origin hosts
-    AllowedOrigins: []string{"*"},
-    // AllowOriginFunc:  func(r *http.Request, origin string) bool { return true },
+    AllowedOrigins:   []string{"*"},
     AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
     AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
     ExposedHeaders:   []string{"Link"},

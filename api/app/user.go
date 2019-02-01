@@ -22,11 +22,14 @@ import (
   "context"
   "net/http"
   "strconv"
+  "strings"
 
-  "github.com/cgtuebingen/infomark-backend/api/auth"
+  "github.com/cgtuebingen/infomark-backend/auth"
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/go-chi/chi"
   "github.com/go-chi/render"
+  validation "github.com/go-ozzo/ozzo-validation"
+  "github.com/go-ozzo/ozzo-validation/is"
 )
 
 // UserStore specifies required database queries for user management.
@@ -82,16 +85,27 @@ func newUserListResponse(users []model.User) []render.Renderer {
 }
 
 // Bind preprocesses a userRequest.
-func (d *userRequest) Bind(r *http.Request) error {
+func (body *userRequest) Bind(r *http.Request) error {
   // Sending the id via request-body is invalid.
   // The id should be submitted in the url.
-  d.ProtectedID = 0
+  body.ProtectedID = 0
+  body.Email = strings.TrimSpace(body.Email)
+  body.Email = strings.ToLower(body.Email)
+
+  err := validation.ValidateStruct(body,
+    validation.Field(&body.Email, validation.Required, is.Email),
+  )
+  if err != nil {
+    return err
+  }
 
   // Encrypt plain password
-  hash, err := auth.HashPassword(d.PlainPassword)
-  d.EncryptedPassword = hash
+  hash, err := auth.HashPassword(body.PlainPassword)
+
+  body.EncryptedPassword = hash
 
   return err
+
 }
 
 // Render post-processes a userResponse.
@@ -101,18 +115,18 @@ func (u *userResponse) Render(w http.ResponseWriter, r *http.Request) error {
 }
 
 // bindValidate jointly binds data from json request and validates the model.
-func (rs *UserResource) bindValidate(w http.ResponseWriter, r *http.Request) (*userRequest, error) {
+func (rs *UserResource) bindValidate(w http.ResponseWriter, r *http.Request) (*userRequest, *ErrResponse) {
   // get user from middle-ware context
   data := &userRequest{User: r.Context().Value("user").(*model.User)}
 
   // parse JSON request into struct
   if err := render.Bind(r, data); err != nil {
-    return nil, err
+    return nil, ErrBadRequestWithDetails(err)
   }
 
   // validate final model
   if err := data.User.Validate(); err != nil {
-    return nil, err
+    return nil, ErrBadRequestWithDetails(err)
   }
 
   return data, nil
@@ -145,9 +159,9 @@ func (rs *UserResource) Get(w http.ResponseWriter, r *http.Request) {
 // Patch is the endpoint fro updating a specific user with given id.
 func (rs *UserResource) Patch(w http.ResponseWriter, r *http.Request) {
 
-  data, err := rs.bindValidate(w, r)
-  if err != nil {
-    render.Render(w, r, ErrBadRequest)
+  data, errResponse := rs.bindValidate(w, r)
+  if errResponse != nil {
+    render.Render(w, r, errResponse)
     return
   }
 

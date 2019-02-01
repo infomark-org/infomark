@@ -16,18 +16,37 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package auth
+package authorize
 
 import (
-	"golang.org/x/crypto/bcrypt"
+  "net/http"
+
+  "github.com/cgtuebingen/infomark-backend/auth"
+  "github.com/go-chi/render"
+
+  "github.com/dhax/go-base/auth/jwt"
 )
 
-func HashPassword(password string) (string, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	return string(bytes), err
+// RequiresRole middleware restricts access to accounts having role parameter in their jwt claims.
+func RequiresRole(role string) func(next http.Handler) http.Handler {
+  return func(next http.Handler) http.Handler {
+    hfn := func(w http.ResponseWriter, r *http.Request) {
+      claims := jwt.ClaimsFromCtx(r.Context())
+      if !hasRole(role, claims.Roles) {
+        render.Render(w, r, auth.ErrUnauthorized)
+        return
+      }
+      next.ServeHTTP(w, r)
+    }
+    return http.HandlerFunc(hfn)
+  }
 }
 
-func CheckPasswordHash(password, hash string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
-	return err == nil
+func hasRole(role string, roles []string) bool {
+  // for _, r := range roles {
+  //   if r == role {
+  //     return true
+  //   }
+  // }
+  return false
 }

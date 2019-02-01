@@ -21,7 +21,7 @@ package app
 import (
   "net/http"
 
-  "github.com/cgtuebingen/infomark-backend/api/auth"
+  "github.com/cgtuebingen/infomark-backend/auth"
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/go-chi/render"
 )
@@ -82,7 +82,7 @@ func (u *userAccountResponse) Render(w http.ResponseWriter, r *http.Request) err
 }
 
 // bindValidate jointly binds data from json request and validates the model.
-func (rs *AccountResource) bindValidate(w http.ResponseWriter, r *http.Request) (*userAccountRequest, error) {
+func (rs *AccountResource) bindValidate(w http.ResponseWriter, r *http.Request) (*userAccountRequest, *ErrResponse) {
   // start from empty Request
   // Note, this function is used by both POST and PATCH.
   // We should not assume there is an initial account from middle-ware.
@@ -90,12 +90,12 @@ func (rs *AccountResource) bindValidate(w http.ResponseWriter, r *http.Request) 
 
   // parse JSON request into struct
   if err := render.Bind(r, data); err != nil {
-    return nil, err
+    return nil, ErrBadRequestWithDetails(err)
   }
 
   // validate final model
   if err := data.User.Validate(); err != nil {
-    return nil, err
+    return nil, ErrBadRequestWithDetails(err)
   }
 
   return data, nil
@@ -104,9 +104,9 @@ func (rs *AccountResource) bindValidate(w http.ResponseWriter, r *http.Request) 
 // Post is the enpoint for creating a new user account.
 func (rs *AccountResource) Post(w http.ResponseWriter, r *http.Request) {
 
-  data, err := rs.bindValidate(w, r)
-  if err != nil {
-    render.Render(w, r, ErrBadRequest)
+  data, errResponse := rs.bindValidate(w, r)
+  if errResponse != nil {
+    render.Render(w, r, errResponse)
     return
   }
 
@@ -127,14 +127,14 @@ func (rs *AccountResource) Post(w http.ResponseWriter, r *http.Request) {
 // Patch is the endpoint fro updating a specific account with given id.
 func (rs *AccountResource) Patch(w http.ResponseWriter, r *http.Request) {
 
-  data, err := rs.bindValidate(w, r)
-  if err != nil {
-    render.Render(w, r, ErrBadRequest)
+  data, errResponse := rs.bindValidate(w, r)
+  if errResponse != nil {
+    render.Render(w, r, errResponse)
     return
   }
 
   // TODO(patwie) verify userID
-  if err = rs.UserStore.Update(data.User); err != nil {
+  if err := rs.UserStore.Update(data.User); err != nil {
     render.Render(w, r, ErrInternalServerError)
     return
   }
