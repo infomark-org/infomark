@@ -26,7 +26,8 @@ import (
 
 // AccessClaims represent the claims parsed from JWT access token.
 type AccessClaims struct {
-  LoginID int
+  LoginID int  // the id to get user information
+  Root    bool // a global flag to bypass all permission checks
 }
 
 // ParseClaims parses JWT claims into AccessClaims.
