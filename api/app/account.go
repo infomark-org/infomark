@@ -20,6 +20,7 @@ package app
 
 import (
   "net/http"
+  "strings"
 
   "github.com/cgtuebingen/infomark-backend/auth"
   "github.com/cgtuebingen/infomark-backend/model"
@@ -67,6 +68,9 @@ func newUserAccountResponse(p *model.User) *userAccountResponse {
 func (d *userAccountRequest) Bind(r *http.Request) error {
   // sending the id via request is invalid as the id should be submitted in the url
   d.User.ID = 0
+
+  d.User.FirstName = strings.TrimSpace(d.User.FirstName)
+  d.User.LastName = strings.TrimSpace(d.User.LastName)
 
   // encrypt password
   hash, err := auth.HashPassword(d.Account.PlainPassword)

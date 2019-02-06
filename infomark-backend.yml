@@ -1,0 +1,9 @@
+auth_jwt_secret: fffff
+auth_jwt_access_expiry: 15m
+auth_jwt_refresh_expiry: 1h
+
+log_level: debug
+port: localhost:3000
+
+database_url: postgres://postgres:postgres@localhost:5432/gobase?sslmode=disable
+db_debug: false

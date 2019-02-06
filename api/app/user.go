@@ -38,6 +38,7 @@ type UserStore interface {
   Update(p *model.User) error
   GetAll() ([]model.User, error)
   Create(p *model.User) (*model.User, error)
+  FindByEmail(email string) (*model.User, error)
 }
 
 // UserResource specifies user management handler.

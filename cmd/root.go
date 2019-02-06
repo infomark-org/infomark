@@ -37,6 +37,8 @@ The infomark-server is the REST api backend for the course distributing system.
 	`,
 }
 
+var cfgFile = ""
+
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
@@ -50,19 +52,22 @@ func init() {
 	cobra.OnInitialize(initConfig)
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is infomark-backend.yaml)")
 
-	viper.SetDefault("database_url", "postgres://postgres:postgres@localhost:5432/gobase?sslmode=disable")
+	// viper.SetDefault("database_url", "postgres://postgres:postgres@localhost:5432/gobase?sslmode=disable")
 
-	RootCmd.PersistentFlags().Bool("db_debug", false, "log sql to console")
-	viper.BindPFlag("db_debug", RootCmd.PersistentFlags().Lookup("db_debug"))
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	// RootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// RootCmd.PersistentFlags().Bool("db_debug", false, "log sql to console")
+	// viper.BindPFlag("db_debug", RootCmd.PersistentFlags().Lookup("db_debug"))
 }
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-	viper.SetConfigFile(cfgFile)
+
+	if cfgFile != "" {
+		// Use config file from the flag.
+		viper.SetConfigFile(cfgFile)
+	} else {
+		panic("Flag --config should be given")
+	}
+
 	viper.AutomaticEnv()
 
 	// If a config file is found, read it in.

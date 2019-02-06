@@ -1,0 +1,1 @@
+./pgweb_linux_amd64 --user postgres --pass=postgres --db=infomark

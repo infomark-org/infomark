@@ -24,7 +24,6 @@ import (
   "time"
 
   "github.com/cgtuebingen/infomark-backend/api/app"
-  "github.com/cgtuebingen/infomark-backend/auth/authenticate"
   "github.com/cgtuebingen/infomark-backend/logging"
   "github.com/go-chi/chi"
   "github.com/go-chi/chi/middleware"
@@ -60,6 +59,12 @@ func New() (*chi.Mux, error) {
     return nil, err
   }
 
+  err = db.Ping()
+  if err != nil {
+    logger.WithField("module", "database").Error(err)
+    return nil, err
+  }
+
   appAPI, err := app.NewAPI(db)
   if err != nil {
     logger.WithField("module", "app").Error(err)
@@ -74,7 +79,7 @@ func New() (*chi.Mux, error) {
   r.Use(render.SetContentType(render.ContentTypeJSON))
   r.Use(corsConfig().Handler)
 
-  r.Use(authenticate.AuthenticateAccessJWT)
+  // r.Use(authenticate.AuthenticateAccessJWT)
   r.Route("/v1", func(r chi.Router) {
     // users
     r.Route("/users", func(r chi.Router) {
@@ -92,16 +97,19 @@ func New() (*chi.Mux, error) {
       r.Post("/", appAPI.Account.Post)
     })
 
+    r.Route("/auth", func(r chi.Router) {
+      r.Post("/token", appAPI.Auth.RefreshTokenHandler)
+    })
+
     // r.Route("/account", func(r chi.Router) {
     //   r.Get("/", EmptyHandler)
     //   r.Patch("/", EmptyHandler)
     //   r.Post("/", EmptyHandler)
     // })
 
-  })
-
-  r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
-    w.Write([]byte("pong"))
+    r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
+      w.Write([]byte("pong"))
+    })
   })
 
   return r, nil

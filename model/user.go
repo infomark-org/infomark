@@ -19,6 +19,7 @@
 package model
 
 import (
+	"strings"
 	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation"
@@ -46,6 +47,9 @@ type User struct {
 }
 
 func (d *User) Validate() error {
+
+	d.Email = strings.TrimSpace(d.Email)
+	d.Email = strings.ToLower(d.Email)
 
 	return validation.ValidateStruct(d,
 		validation.Field(

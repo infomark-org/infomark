@@ -22,37 +22,65 @@ import (
   "errors"
 
   jwt "github.com/dgrijalva/jwt-go"
+  "github.com/spf13/viper"
 )
 
 // AccessClaims represent the claims parsed from JWT access token.
 type AccessClaims struct {
-  LoginID int  // the id to get user information
-  Root    bool // a global flag to bypass all permission checks
+  jwt.StandardClaims
+  AccessNotRefresh bool  `json:"anr"`      // to distinguish between access and refresh code
+  LoginID          int64 `json:"login_id"` // the id to get user information
+  Root             bool  `json:"root"`     // a global flag to bypass all permission checks
 }
 
-// ParseClaims parses JWT claims into AccessClaims.
-func (c *AccessClaims) ParseClaims(claims jwt.MapClaims) error {
-  // loginID represents the userID of the identity who is doing the request.
-  loginID, ok := claims["login_id"]
-  if !ok {
-    return errors.New("could not parse claim login_id")
+func NewAccessClaims(loginId int64, root bool) AccessClaims {
+  return AccessClaims{
+    LoginID:          loginId,
+    AccessNotRefresh: true,
+    Root:             root,
   }
-  c.LoginID = int(loginID.(float64))
-
-  return nil
 }
 
 // RefreshClaims represent the claims parsed from JWT refresh token.
 type RefreshClaims struct {
-  Token string
+  jwt.StandardClaims
+  AccessNotRefresh bool  `json:"anr"`
+  LoginID          int64 `json:"login_id"`
 }
 
-// ParseClaims parses the JWT claims into RefreshClaims.
-func (c *RefreshClaims) ParseClaims(claims jwt.MapClaims) error {
-  token, ok := claims["token"]
-  if !ok {
-    return errors.New("could not parse claim token")
+func NewRefreshClaims(loginId int64) RefreshClaims {
+  return RefreshClaims{
+    LoginID:          loginId,
+    AccessNotRefresh: false,
   }
-  c.Token = token.(string)
-  return nil
+}
+
+// Parse refresh claims from a token string
+func (ret *RefreshClaims) ParseRefreshClaims(tokenStr string) error {
+
+  secret := viper.GetString("auth_jwt_secret")
+
+  // verify the token
+  token, err := jwt.ParseWithClaims(tokenStr, &RefreshClaims{}, func(token *jwt.Token) (interface{}, error) {
+    return []byte(secret), nil
+  })
+
+  if err != nil {
+    return err
+  }
+
+  if claims, ok := token.Claims.(*RefreshClaims); ok && token.Valid {
+
+    if !claims.AccessNotRefresh {
+      ret.LoginID = claims.LoginID
+      ret.AccessNotRefresh = claims.AccessNotRefresh
+      return nil
+    } else {
+      return errors.New("token is an access token, but refresh token was required")
+    }
+
+  } else {
+    return errors.New("token is invalid")
+  }
+
 }
