@@ -47,6 +47,7 @@ func RequiredValidAccessClaims(next http.Handler) http.Handler {
       // ok, there is a access token in the header
       err := accessClaims.ParseAccessClaimsFromToken(tokenStr)
       if err != nil {
+        fmt.Println(err)
         render.Render(w, r, app.ErrUnauthorized)
         return
       }
@@ -71,13 +72,13 @@ func RequiredValidAccessClaims(next http.Handler) http.Handler {
 
       }
 
-      // nothing given
-      // serve next
-      ctx := context.WithValue(r.Context(), "access_claims", accessClaims)
-      next.ServeHTTP(w, r.WithContext(ctx))
-      return
-
     }
+
+    // nothing given
+    // serve next
+    ctx := context.WithValue(r.Context(), "access_claims", accessClaims)
+    next.ServeHTTP(w, r.WithContext(ctx))
+    return
 
   })
 }

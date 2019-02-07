@@ -85,17 +85,23 @@ func New() (*chi.Mux, error) {
   // r.Use(authenticate.AuthenticateAccessJWT)
   r.Route("/api", func(r chi.Router) {
 
-    // open routes
     r.Route("/v1", func(r chi.Router) {
 
-      r.Post("/auth/token", appAPI.Auth.RefreshAccessTokenHandler)
-      r.Post("/auth/sessions", appAPI.Auth.LoginHandler)
-      r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
-        w.Write([]byte("pong"))
+      // open routes
+      r.Group(func(r chi.Router) {
+        r.Post("/auth/token", appAPI.Auth.RefreshAccessTokenHandler)
+        r.Post("/auth/sessions", appAPI.Auth.LoginHandler)
+        r.Post("/auth/request_password_reset", appAPI.Auth.PasswordResetHandler)
+        r.Post("/account", appAPI.Account.PostHandler)
+        r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
+          w.Write([]byte("pong"))
+        })
       })
 
+      // protected routes
       r.Group(func(r chi.Router) {
         r.Use(mymiddleware.RequiredValidAccessClaims)
+
         // users
         r.Route("/users", func(r chi.Router) {
           r.Get("/", appAPI.User.IndexHandler)
@@ -109,7 +115,6 @@ func New() (*chi.Mux, error) {
         r.Route("/account", func(r chi.Router) {
           r.Get("/", appAPI.Account.GetHandler)
           r.Patch("/", appAPI.Account.PatchHandler)
-          r.Post("/", appAPI.Account.PostHandler)
         })
 
         r.Route("/auth", func(r chi.Router) {

@@ -103,7 +103,7 @@ func (ret *AccessClaims) ParseAccessClaimsFromToken(tokenStr string) error {
 
   if claims, ok := token.Claims.(*AccessClaims); ok && token.Valid {
 
-    if !claims.AccessNotRefresh {
+    if claims.AccessNotRefresh {
       ret.LoginID = claims.LoginID
       ret.AccessNotRefresh = claims.AccessNotRefresh
       ret.Root = claims.Root
@@ -154,4 +154,9 @@ func (ret *AccessClaims) WriteToSession(w http.ResponseWriter, r *http.Request) 
   fmt.Println("Wrote ret.Root", ret.Root)
 
   return w
+}
+
+func (ret *AccessClaims) DestroyInSession(w http.ResponseWriter, r *http.Request) error {
+  session := SessionManager.Load(r)
+  return session.Destroy(w)
 }

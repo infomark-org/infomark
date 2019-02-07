@@ -34,7 +34,7 @@ func createSessionManager() *scs.Manager {
 	sessionManager := scs.NewCookieManager(viper.GetString("auth_session_secret"))
 	sessionManager.Lifetime(time.Hour) // Set the maximum session lifetime to 1 hour.
 	sessionManager.Persist(true)       // Persist the session after a user has closed their browser.
-	sessionManager.Secure(true)        // Set the Secure flag on the session cookie.
+	sessionManager.Secure(false)       // Set the Secure flag on the session cookie.
 	return sessionManager
 }
 

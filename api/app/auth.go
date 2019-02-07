@@ -27,6 +27,7 @@ import (
   "github.com/cgtuebingen/infomark-backend/auth/authenticate"
   "github.com/go-chi/jwtauth"
   "github.com/go-chi/render"
+  null "gopkg.in/guregu/null.v3"
 )
 
 // AuthResource specifies user management handler.
@@ -68,8 +69,8 @@ func (body *authResponse) Render(w http.ResponseWriter, r *http.Request) error {
   return nil
 }
 
-// bindValidate jointly binds data from json request and validates the model.
-func (rs *AuthResource) bindValidate(w http.ResponseWriter, r *http.Request) (*authRequest, *ErrResponse) {
+// bindValidateAuthRequest jointly binds data from json request and validates the model.
+func (rs *AuthResource) bindValidateAuthRequest(w http.ResponseWriter, r *http.Request) (*authRequest, *ErrResponse) {
   // get user from middle-ware context
   data := &authRequest{}
 
@@ -86,9 +87,29 @@ func (rs *AuthResource) bindValidate(w http.ResponseWriter, r *http.Request) (*a
   return data, nil
 }
 
+// .............................................................................
+// authRequest is the request payload for account management.
+type passwordResetRequest struct {
+  Email string `json:"email"`
+}
+
+// Bind preprocesses a authRequest.
+func (body *passwordResetRequest) Bind(r *http.Request) error {
+  body.Email = strings.TrimSpace(body.Email)
+  body.Email = strings.ToLower(body.Email)
+  return nil
+}
+
+// Render post-processes a authResponse.
+func (body *passwordResetRequest) Render(w http.ResponseWriter, r *http.Request) error {
+  return nil
+}
+
+// .............................................................................
+
 func (rs *AuthResource) LoginHandler(w http.ResponseWriter, r *http.Request) {
   // we are given email-password credentials
-  data, errResponse := rs.bindValidate(w, r)
+  data, errResponse := rs.bindValidateAuthRequest(w, r)
   if errResponse != nil {
     render.Render(w, r, errResponse)
     return
@@ -116,11 +137,32 @@ func (rs *AuthResource) LoginHandler(w http.ResponseWriter, r *http.Request) {
   fmt.Println("WRITE accessClaims.LoginID", accessClaims.LoginID)
   fmt.Println("WRITE accessClaims.Root", accessClaims.Root)
 
-  accessClaims.WriteToSession(w, r)
+  w = accessClaims.WriteToSession(w, r)
 }
 
 func (rs *AuthResource) LogoutHandler(w http.ResponseWriter, r *http.Request) {
+  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  accessClaims.DestroyInSession(w, r)
+}
 
+func (rs *AuthResource) PasswordResetHandler(w http.ResponseWriter, r *http.Request) {
+  data := &passwordResetRequest{}
+  if err := render.Bind(r, data); err != nil {
+    render.Render(w, r, ErrBadRequestWithDetails(err))
+  }
+
+  // does such a user exists with request email adress?
+  user, err := rs.UserStore.FindByEmail(data.Email)
+  if err != nil {
+    render.Render(w, r, ErrNotFound)
+    return
+  }
+
+  user.ResetPasswordToken = null.StringFrom(auth.GenerateToken(32))
+  rs.UserStore.Update(user)
+
+  // TODO(patwie):
+  // Send Email to User
 }
 
 // Post is endpoint
@@ -186,7 +228,7 @@ func (rs *AuthResource) RefreshAccessTokenHandler(w http.ResponseWriter, r *http
     // TODO refector same as LoginHandler
 
     // we are given email-password credentials
-    data, errResponse := rs.bindValidate(w, r)
+    data, errResponse := rs.bindValidateAuthRequest(w, r)
     if errResponse != nil {
       render.Render(w, r, errResponse)
       return
