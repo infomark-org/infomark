@@ -24,6 +24,7 @@ import (
   "time"
 
   "github.com/cgtuebingen/infomark-backend/api/app"
+  mymiddleware "github.com/cgtuebingen/infomark-backend/api/app/middleware"
   "github.com/cgtuebingen/infomark-backend/logging"
   "github.com/go-chi/chi"
   "github.com/go-chi/chi/middleware"
@@ -31,6 +32,7 @@ import (
   "github.com/go-chi/render"
   "github.com/jmoiron/sqlx"
   _ "github.com/lib/pq"
+  "github.com/spf13/viper"
 )
 
 type H map[string]interface{}
@@ -53,7 +55,8 @@ func New() (*chi.Mux, error) {
   logger := logging.NewLogger()
 
   // db, err := sqlx.Connect("sqlite3", "__deleteme.db")
-  db, err := sqlx.Connect("postgres", "user=postgres dbname=infomark password=postgres sslmode=disable")
+  db, err := sqlx.Connect("postgres", viper.GetString("database_connection"))
+  // db, err := sqlx.Connect("postgres", "user=postgres dbname=infomark password=postgres sslmode=disable")
   if err != nil {
     logger.WithField("module", "database").Error(err)
     return nil, err
@@ -80,35 +83,40 @@ func New() (*chi.Mux, error) {
   r.Use(corsConfig().Handler)
 
   // r.Use(authenticate.AuthenticateAccessJWT)
-  r.Route("/v1", func(r chi.Router) {
-    // users
-    r.Route("/users", func(r chi.Router) {
-      r.Get("/", appAPI.User.Index)
-      r.Route("/{userID}", func(r chi.Router) {
-        r.Use(appAPI.User.Context)
-        r.Get("/", appAPI.User.Get)
-        r.Patch("/", appAPI.User.Patch)
+  r.Route("/api", func(r chi.Router) {
+
+    // open routes
+    r.Route("/v1", func(r chi.Router) {
+
+      r.Post("/auth/token", appAPI.Auth.RefreshAccessTokenHandler)
+      r.Post("/auth/sessions", appAPI.Auth.LoginHandler)
+      r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
+        w.Write([]byte("pong"))
       })
-    })
-    // login
-    r.Route("/account", func(r chi.Router) {
-      r.Get("/", appAPI.Account.Get)
-      r.Patch("/", EmptyHandler)
-      r.Post("/", appAPI.Account.Post)
-    })
 
-    r.Route("/auth", func(r chi.Router) {
-      r.Post("/token", appAPI.Auth.RefreshTokenHandler)
-    })
+      r.Group(func(r chi.Router) {
+        r.Use(mymiddleware.RequiredValidAccessClaims)
+        // users
+        r.Route("/users", func(r chi.Router) {
+          r.Get("/", appAPI.User.IndexHandler)
+          r.Route("/{userID}", func(r chi.Router) {
+            r.Use(appAPI.User.Context)
+            r.Get("/", appAPI.User.GetHandler)
+            r.Patch("/", appAPI.User.PatchHandler)
+          })
+        })
 
-    // r.Route("/account", func(r chi.Router) {
-    //   r.Get("/", EmptyHandler)
-    //   r.Patch("/", EmptyHandler)
-    //   r.Post("/", EmptyHandler)
-    // })
+        r.Route("/account", func(r chi.Router) {
+          r.Get("/", appAPI.Account.GetHandler)
+          r.Patch("/", appAPI.Account.PatchHandler)
+          r.Post("/", appAPI.Account.PostHandler)
+        })
 
-    r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
-      w.Write([]byte("pong"))
+        r.Route("/auth", func(r chi.Router) {
+          r.Delete("/sessions", appAPI.Auth.LogoutHandler)
+        })
+      })
+
     })
   })
 

@@ -1,9 +1,11 @@
 auth_jwt_secret: fffff
 auth_jwt_access_expiry: 15m
-auth_jwt_refresh_expiry: 1h
+auth_jwt_refresh_expiry: 10h
+
+auth_session_secret: u46IpCV9y5Vlur8YvODJEhgOY8m9JVE4sdfdfsdf
 
 log_level: debug
 port: localhost:3000
 
-database_url: postgres://postgres:postgres@localhost:5432/gobase?sslmode=disable
+database_connection: user=postgres dbname=infomark password=postgres sslmode=disable
 db_debug: false

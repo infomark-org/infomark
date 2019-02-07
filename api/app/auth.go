@@ -86,8 +86,45 @@ func (rs *AuthResource) bindValidate(w http.ResponseWriter, r *http.Request) (*a
   return data, nil
 }
 
+func (rs *AuthResource) LoginHandler(w http.ResponseWriter, r *http.Request) {
+  // we are given email-password credentials
+  data, errResponse := rs.bindValidate(w, r)
+  if errResponse != nil {
+    render.Render(w, r, errResponse)
+    return
+  }
+
+  // does such a user exists with request email adress?
+  potentialUser, err := rs.UserStore.FindByEmail(data.Email)
+  if err != nil {
+    render.Render(w, r, ErrNotFound)
+    return
+  }
+
+  // does the password match?
+  if !auth.CheckPasswordHash(data.PlainPassword, potentialUser.EncryptedPassword) {
+    render.Render(w, r, ErrNotFound)
+    return
+  }
+
+  // user passed all tests
+  accessClaims := &authenticate.AccessClaims{
+    LoginID: potentialUser.ID,
+    Root:    potentialUser.Root,
+  }
+
+  fmt.Println("WRITE accessClaims.LoginID", accessClaims.LoginID)
+  fmt.Println("WRITE accessClaims.Root", accessClaims.Root)
+
+  accessClaims.WriteToSession(w, r)
+}
+
+func (rs *AuthResource) LogoutHandler(w http.ResponseWriter, r *http.Request) {
+
+}
+
 // Post is endpoint
-func (rs *AuthResource) RefreshTokenHandler(w http.ResponseWriter, r *http.Request) {
+func (rs *AuthResource) RefreshAccessTokenHandler(w http.ResponseWriter, r *http.Request) {
   // Login with your username and password to get the generated JWT refresh and
   // access tokens. Alternatively, if the refresh token is already present in
   // the header the access token is returned.
@@ -108,7 +145,7 @@ func (rs *AuthResource) RefreshTokenHandler(w http.ResponseWriter, r *http.Reque
 
     // ok, there is a token in the header
     refreshClaims := &authenticate.RefreshClaims{}
-    err := refreshClaims.ParseRefreshClaims(tokenStr)
+    err := refreshClaims.ParseRefreshClaimsFromToken(tokenStr)
 
     if err != nil {
       // something went wrong during getting the claims
@@ -145,6 +182,9 @@ func (rs *AuthResource) RefreshTokenHandler(w http.ResponseWriter, r *http.Reque
     }
 
   } else {
+
+    // TODO refector same as LoginHandler
+
     // we are given email-password credentials
     data, errResponse := rs.bindValidate(w, r)
     if errResponse != nil {

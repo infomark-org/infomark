@@ -19,94 +19,44 @@
 package authenticate
 
 import (
-  "net/http"
+	"fmt"
+	"net/http"
+	"time"
 
-  "github.com/go-chi/jwtauth"
+	"github.com/alexedwards/scs"
+	"github.com/go-chi/jwtauth"
+	"github.com/spf13/viper"
 )
 
-// type ctxKey int
+var SessionManager = createSessionManager()
 
-// const (
-//   ctxAccessClaims ctxKey = iota
-//   ctxRefreshToken
-// )
-
-// // ClaimsFromCtx retrieves the parsed AccessClaims from request context.
-// func ClaimsFromCtx(ctx context.Context) AccessClaims {
-//   return ctx.Value(ctxAccessClaims).(AccessClaims)
-// }
-
-// // RefreshTokenFromCtx retrieves the parsed refresh token from context.
-// func RefreshTokenFromCtx(ctx context.Context) string {
-//   return ctx.Value(ctxRefreshToken).(string)
-// }
-
-// // AuthenticateAccessJWT is a default authentication middleware to enforce access from the
-// // Verifier middleware request context values. The AuthenticateAccessJWT sends a 401 Unauthorized
-// // response for any unverified tokens and passes the good ones through.
-// func AuthenticateAccessJWT(next http.Handler) http.Handler {
-//   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-//     token, claims, err := jwtauth.FromContext(r.Context())
-
-//     if err != nil {
-//       logging.GetLogEntry(r).Warn(err)
-//       render.Render(w, r, auth.ErrUnauthorized(auth.ErrTokenUnauthorized))
-//       return
-//     }
-
-//     if !token.Valid {
-//       render.Render(w, r, auth.ErrUnauthorized(auth.ErrTokenExpired))
-//       return
-//     }
-
-//     // AccessToken is authenticated, parse claims
-//     var c AccessClaims
-//     err = c.ParseClaims(claims)
-//     if err != nil {
-//       logging.GetLogEntry(r).Error(err)
-//       render.Render(w, r, auth.ErrUnauthorized(auth.ErrInvalidAccessToken))
-//       return
-//     }
-
-//     // Set AccessClaims on context
-//     ctx := context.WithValue(r.Context(), ctxAccessClaims, c)
-//     next.ServeHTTP(w, r.WithContext(ctx))
-//   })
-// }
-
-func HasHeaderToken(r *http.Request) bool {
-  jwt := jwtauth.TokenFromHeader(r)
-  return jwt != ""
+func createSessionManager() *scs.Manager {
+	sessionManager := scs.NewCookieManager(viper.GetString("auth_session_secret"))
+	sessionManager.Lifetime(time.Hour) // Set the maximum session lifetime to 1 hour.
+	sessionManager.Persist(true)       // Persist the session after a user has closed their browser.
+	sessionManager.Secure(true)        // Set the Secure flag on the session cookie.
+	return sessionManager
 }
 
-// // AuthenticateRefreshJWT checks validity of refresh tokens and is
-// // only used for access token refresh and logout requests.
-// // It responds with 401 Unauthorized for invalid or expired refresh tokens.
-// func AuthenticateRefreshJWT(next http.Handler) http.Handler {
-//   return http.HandlerFunc(
-//     func(w http.ResponseWriter, r *http.Request) {
-//       token, claims, err := jwtauth.FromContext(r.Context())
-//       if err != nil {
-//         logging.GetLogEntry(r).Warn(err)
-//         render.Render(w, r, auth.ErrUnauthorized(auth.ErrTokenUnauthorized))
-//         return
-//       }
-//       if !token.Valid {
-//         render.Render(w, r, auth.ErrUnauthorized(auth.ErrTokenExpired))
-//         return
-//       }
+func HasHeaderToken(r *http.Request) bool {
+	jwt := jwtauth.TokenFromHeader(r)
+	return jwt != ""
+}
 
-//       // Token is authenticated, parse refresh token string
-//       var c RefreshClaims
-//       err = c.ParseClaims(claims)
-//       if err != nil {
-//         logging.GetLogEntry(r).Error(err)
-//         render.Render(w, r, auth.ErrUnauthorized(auth.ErrInvalidRefreshToken))
-//         return
-//       }
+func HasSessionToken(r *http.Request) bool {
+	session := SessionManager.Load(r)
 
-//       // Set refresh token string on context
-//       ctx := context.WithValue(r.Context(), ctxRefreshToken, "c.Token")
-//       next.ServeHTTP(w, r.WithContext(ctx))
-//     })
-// }
+	loginID, err := session.GetInt64("login_id")
+	if err != nil {
+		fmt.Println(err)
+		return false
+	}
+
+	fmt.Println("loginID", loginID)
+
+	if loginID == 0 {
+		return false
+	}
+
+	return true
+}

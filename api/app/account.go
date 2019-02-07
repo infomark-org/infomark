@@ -106,7 +106,7 @@ func (rs *AccountResource) bindValidate(w http.ResponseWriter, r *http.Request) 
 }
 
 // Post is the enpoint for creating a new user account.
-func (rs *AccountResource) Post(w http.ResponseWriter, r *http.Request) {
+func (rs *AccountResource) PostHandler(w http.ResponseWriter, r *http.Request) {
 
   data, errResponse := rs.bindValidate(w, r)
   if errResponse != nil {
@@ -129,7 +129,7 @@ func (rs *AccountResource) Post(w http.ResponseWriter, r *http.Request) {
 }
 
 // Patch is the endpoint fro updating a specific account with given id.
-func (rs *AccountResource) Patch(w http.ResponseWriter, r *http.Request) {
+func (rs *AccountResource) PatchHandler(w http.ResponseWriter, r *http.Request) {
 
   data, errResponse := rs.bindValidate(w, r)
   if errResponse != nil {
@@ -150,7 +150,7 @@ func (rs *AccountResource) Patch(w http.ResponseWriter, r *http.Request) {
 }
 
 // Get is the endpoint for retrieving a specific user account.
-func (rs *AccountResource) Get(w http.ResponseWriter, r *http.Request) {
+func (rs *AccountResource) GetHandler(w http.ResponseWriter, r *http.Request) {
   // TODO(patwie): from middleware and webtoken
   user, err := rs.UserStore.Get(1)
   if err != nil {

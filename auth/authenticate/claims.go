@@ -20,6 +20,8 @@ package authenticate
 
 import (
   "errors"
+  "fmt"
+  "net/http"
 
   jwt "github.com/dgrijalva/jwt-go"
   "github.com/spf13/viper"
@@ -56,7 +58,7 @@ func NewRefreshClaims(loginId int64) RefreshClaims {
 }
 
 // Parse refresh claims from a token string
-func (ret *RefreshClaims) ParseRefreshClaims(tokenStr string) error {
+func (ret *RefreshClaims) ParseRefreshClaimsFromToken(tokenStr string) error {
 
   secret := viper.GetString("auth_jwt_secret")
 
@@ -83,4 +85,73 @@ func (ret *RefreshClaims) ParseRefreshClaims(tokenStr string) error {
     return errors.New("token is invalid")
   }
 
+}
+
+// Parse access claims from a JWT token string
+func (ret *AccessClaims) ParseAccessClaimsFromToken(tokenStr string) error {
+
+  secret := viper.GetString("auth_jwt_secret")
+
+  // verify the token
+  token, err := jwt.ParseWithClaims(tokenStr, &AccessClaims{}, func(token *jwt.Token) (interface{}, error) {
+    return []byte(secret), nil
+  })
+
+  if err != nil {
+    return err
+  }
+
+  if claims, ok := token.Claims.(*AccessClaims); ok && token.Valid {
+
+    if !claims.AccessNotRefresh {
+      ret.LoginID = claims.LoginID
+      ret.AccessNotRefresh = claims.AccessNotRefresh
+      ret.Root = claims.Root
+      return nil
+    } else {
+      return errors.New("token is an refresh token, but access token was required")
+    }
+
+  } else {
+    return errors.New("token is invalid")
+  }
+
+}
+
+// Parse access claims from a cookie
+func (ret *AccessClaims) ParseRefreshClaimsFromSession(r *http.Request) error {
+
+  session := SessionManager.Load(r)
+
+  loginId, err := session.GetInt64("login_id")
+  if err != nil {
+    return err
+  }
+  root, err := session.GetBool("root")
+  if err != nil {
+    return err
+  }
+
+  ret.LoginID = loginId
+  // cookie based authentification is access-token only
+  ret.AccessNotRefresh = true
+  ret.Root = root
+  return nil
+}
+
+func (ret *AccessClaims) WriteToSession(w http.ResponseWriter, r *http.Request) http.ResponseWriter {
+  session := SessionManager.Load(r)
+
+  err := session.PutInt64(w, "login_id", ret.LoginID)
+  if err != nil {
+    panic("hh")
+  }
+  fmt.Println("Wrote ret.LoginID", ret.LoginID)
+  err = session.PutBool(w, "root", ret.Root)
+  if err != nil {
+    panic("hh")
+  }
+  fmt.Println("Wrote ret.Root", ret.Root)
+
+  return w
 }

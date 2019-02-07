@@ -134,7 +134,7 @@ func (rs *UserResource) bindValidate(w http.ResponseWriter, r *http.Request) (*u
 }
 
 // Index is the enpoint for retrieving all users.
-func (rs *UserResource) Index(w http.ResponseWriter, r *http.Request) {
+func (rs *UserResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
   // fetch collection of users from database
   users, err := rs.UserStore.GetAll()
 
@@ -146,7 +146,7 @@ func (rs *UserResource) Index(w http.ResponseWriter, r *http.Request) {
 }
 
 // Get is the enpoint for retrieving a specific user.
-func (rs *UserResource) Get(w http.ResponseWriter, r *http.Request) {
+func (rs *UserResource) GetHandler(w http.ResponseWriter, r *http.Request) {
   // `user` is retrieved via middle-ware
   user := r.Context().Value("user").(*model.User)
 
@@ -158,7 +158,7 @@ func (rs *UserResource) Get(w http.ResponseWriter, r *http.Request) {
 }
 
 // Patch is the endpoint fro updating a specific user with given id.
-func (rs *UserResource) Patch(w http.ResponseWriter, r *http.Request) {
+func (rs *UserResource) PatchHandler(w http.ResponseWriter, r *http.Request) {
 
   data, errResponse := rs.bindValidate(w, r)
   if errResponse != nil {
