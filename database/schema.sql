@@ -46,7 +46,7 @@ CREATE TABLE courses (
   description TEXT not null,
   begins_at TIMESTAMP not null,
   ends_at TIMESTAMP not null,
-  required_points INT
+  required_points INT  DEFAULT 0
 );
 
 
@@ -66,6 +66,7 @@ CREATE TABLE sheets(
   updated_at TIMESTAMP not null DEFAULT current_timestamp,
 
   name TEXT,
+  ordering INT ,
 
   -- we us the canonical naming "sheet{ordering}.zip"
   -- file_path TEXT,
@@ -91,7 +92,7 @@ CREATE TABLE tasks(
   created_at TIMESTAMP not null DEFAULT current_timestamp,
   updated_at TIMESTAMP not null DEFAULT current_timestamp,
 
-  max_points INT not null,
+  max_points INT DEFAULT 0,
   -- we keep both paths as they might be empty
   public_test_path TEXT,
   private_test_path TEXT,
@@ -104,7 +105,7 @@ CREATE TABLE task_sheet(
   id SERIAL not null primary key,
   task_id INT not null,
   sheet_id INT not null,
-  ordering INT not null,
+  ordering INT ,
 
   -- PRIMARY KEY (task_id, sheet_id),
   FOREIGN KEY (task_id) REFERENCES tasks (id),
@@ -132,14 +133,14 @@ CREATE TABLE grades(
   updated_at TIMESTAMP not null DEFAULT current_timestamp,
 
   -- 0: pending, 1: running, 2: finished
-  execution_state INT not null DEFAULT 0,
+  execution_state INT DEFAULT 0,
 
   public_test_log TEXT,
   private_test_log TEXT,
 
   -- 0 means ok, 1 failed (just like return codes)
-  public_test_status INT not null DEFAULT 0,
-  private_test_status INT not null DEFAULT 0,
+  public_test_status INT  DEFAULT 0,
+  private_test_status INT  DEFAULT 0,
 
   feedback TEXT,
 
@@ -172,7 +173,7 @@ CREATE TABLE task_feedbacks(
 
   user_id INT not null,
   task_id INT not null,
-  rating INT not null,
+  rating INT DEFAULT 0,
 
   -- PRIMARY KEY (user_id, task_id),
   FOREIGN KEY (user_id) REFERENCES users (id),
@@ -185,7 +186,7 @@ CREATE TABLE group_bids(
 
   user_id INT not null,
   group_id INT not null,
-  bid INT not null,
+  bid INT DEFAULT 0,
 
   -- PRIMARY KEY (user_id, group_id),
   FOREIGN KEY (user_id) REFERENCES users (id),
@@ -201,7 +202,7 @@ CREATE TABLE materials(
   -- should be unique in one course (keep original filename as it has some meaning)
   file_path TEXT not null,
   -- 0: slide, 1: supplementary
-  type INT not null,
+  type INT DEFAULT 0,
   publish_at TIMESTAMP not null,
   lecture_at TIMESTAMP not null
 );

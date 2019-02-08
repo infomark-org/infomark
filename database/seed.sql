@@ -1,31 +1,34 @@
-INSERT INTO users(
+INSERT INTO users  (
   id,
   created_at,
   updated_at,
   first_name,
   last_name,
-  avatar_url,
+  avatar_path,
   email,
   student_number,
   semester,
   subject,
+  language,
   encrypted_password,
   reset_password_token,
   confirm_email_token,
   root
-) VALUES(
+)
+VALUES(
   DEFAULT,
   current_timestamp,
   current_timestamp,
-  'Max',
-  'Mustermann',
+  'TestV',
+  'TestN',
   NULL,
-  'max.mustermann@uni-tuebingen.de',
-  '0815',
-  5,
-  'Informatik',
-  'some_hashed_stuff',
+  'test@uni-tuebingen.de',
+  0815,
+  1,
+  'mathematics',
+  'en',
+  '$2a$10$PJqjI61.2f7n6t1drJcIMuv7k.emMbvPutmy3JYg.93MzikgmVbbK',
   NULL,
   NULL,
-  DEFAULT
+  TRUE
 );

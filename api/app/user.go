@@ -167,7 +167,7 @@ func (rs *UserResource) GetHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // Patch is the endpoint fro updating a specific user with given id.
-func (rs *UserResource) PatchHandler(w http.ResponseWriter, r *http.Request) {
+func (rs *UserResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 
   data, errResponse := rs.bindValidate(w, r)
   if errResponse != nil {

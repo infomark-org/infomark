@@ -110,7 +110,19 @@ func New() (*chi.Mux, error) {
           r.Route("/{userID}", func(r chi.Router) {
             r.Use(appAPI.User.Context)
             r.Get("/", appAPI.User.GetHandler)
-            r.Patch("/", appAPI.User.PatchHandler)
+            r.Patch("/", appAPI.User.EditHandler)
+          })
+        })
+
+        // users
+        r.Route("/courses", func(r chi.Router) {
+          r.Get("/", appAPI.Course.IndexHandler)
+          r.Post("/", appAPI.Course.CreateHandler)
+          r.Route("/{courseID}", func(r chi.Router) {
+            r.Use(appAPI.Course.Context)
+            r.Get("/", appAPI.Course.GetHandler)
+            r.Patch("/", appAPI.Course.EditHandler)
+            r.Delete("/", appAPI.Course.DeleteHandler)
           })
         })
 

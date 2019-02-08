@@ -68,7 +68,8 @@ func (body *authRequest) Bind(r *http.Request) error {
     validation.Field(&body.Email, validation.Required, is.Email),
     validation.Field(&body.PlainPassword,
       validation.Required,
-      validation.Length(7, 0)),
+    // validation.Length(7, 0)
+    ),
   )
   if err != nil {
     return err
@@ -79,18 +80,6 @@ func (body *authRequest) Bind(r *http.Request) error {
 
 func (body *authResponse) Render(w http.ResponseWriter, r *http.Request) error {
   return nil
-}
-
-func (rs *AuthResource) bindValidateAuthRequest(w http.ResponseWriter, r *http.Request) (*authRequest, *ErrResponse) {
-  // get user from middle-ware context
-  data := &authRequest{}
-
-  // parse JSON request into struct
-  if err := render.Bind(r, data); err != nil {
-    return nil, ErrBadRequestWithDetails(err)
-  }
-
-  return data, nil
 }
 
 // .............................................................................
@@ -174,13 +163,13 @@ func (rs *AuthResource) LoginHandler(w http.ResponseWriter, r *http.Request) {
   // does such a user exists with request email adress?
   potentialUser, err := rs.UserStore.FindByEmail(data.Email)
   if err != nil {
-    render.Render(w, r, ErrNotFound)
+    render.Render(w, r, ErrBadRequest(err))
     return
   }
 
   // does the password match?
   if !auth.CheckPasswordHash(data.PlainPassword, potentialUser.EncryptedPassword) {
-    render.Render(w, r, ErrNotFound)
+    render.Render(w, r, ErrBadRequest(err))
     return
   }
 

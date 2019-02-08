@@ -202,36 +202,58 @@ type StatementData struct {
   Value  interface{}
 }
 
-// isZero tests whether the incoming value is the default value.
-// https://stackoverflow.com/a/27494761/7443104
-func isZero(v reflect.Value) bool {
-  switch v.Kind() {
-  case reflect.Func, reflect.Map, reflect.Slice:
-    return v.IsNil()
-  case reflect.Array:
-    z := true
-    for i := 0; i < v.Len(); i++ {
-      z = z && isZero(v.Index(i))
-    }
-    return z
-  case reflect.Struct:
-    z := true
-    for i := 0; i < v.NumField(); i++ {
-      if v.Field(i).CanSet() {
-        z = z && isZero(v.Field(i))
-      }
-    }
-    return z
-  case reflect.Ptr:
-    if !v.IsNil() {
-      return isZero(reflect.Indirect(v))
-    }
-  }
-  // Compare other types directly:
-  z := reflect.Zero(v.Type())
-  result := v.Interface() == z.Interface()
+// // isZero tests whether the incoming value is the default value.
+// // https://stackoverflow.com/a/27494761/7443104
+// func isZero2(v reflect.Value) bool {
+//   switch v.Kind() {
+//   case reflect.Func, reflect.Map, reflect.Slice:
+//     return v.IsNil()
+//   case reflect.Array:
+//     z := true
+//     for i := 0; i < v.Len(); i++ {
+//       z = z && isZero(v.Index(i))
+//     }
+//     return z
+//   case reflect.Struct:
+//     z := true
+//     for i := 0; i < v.NumField(); i++ {
+//       if v.Field(i).CanSet() {
+//         fmt.Println("Field ", i, v.Field(i), isZero(v.Field(i)))
+//         z = z && isZero(v.Field(i))
+//       } else {
+//         fmt.Println("Cannot set ", i, v.Field(i))
+//       }
+//     }
+//     return z
+//   case reflect.Ptr:
+//     if !v.IsNil() {
+//       return isZero(reflect.Indirect(v))
+//     }
+//   }
+//   // Compare other types directly:
+//   z := reflect.Zero(v.Type())
+//   result := v.Interface() == z.Interface()
 
-  return result
+//   return result
+// }
+
+func isZero(value reflect.Value) bool {
+  switch value.Kind() {
+  case reflect.String:
+    return value.Len() == 0
+  case reflect.Bool:
+    return !value.Bool()
+  case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+    return value.Int() == 0
+  case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+    return value.Uint() == 0
+  case reflect.Float32, reflect.Float64:
+    return value.Float() == 0
+  case reflect.Interface, reflect.Ptr:
+    return value.IsNil()
+  }
+
+  return reflect.DeepEqual(value.Interface(), reflect.Zero(value.Type()).Interface())
 }
 
 // PackStatementData reads a struct and extract necessary data for a query.
@@ -264,6 +286,7 @@ func (d *DatabaseSyntax) PackStatementData(src interface{}) ([]StatementData, er
 
     // field is in tag and current struct
     if present {
+      fmt.Println("field ", name, " is present")
       current_value := structVal.Field(field.index)
 
       if reflect.TypeOf(null_string) == current_value.Type() {
@@ -283,10 +306,13 @@ func (d *DatabaseSyntax) PackStatementData(src interface{}) ([]StatementData, er
         }
       } else {
         if !isZero(current_value) {
+          fmt.Println("field ", name, " is NOT zero", current_value.Interface())
           statementDatas = append(statementDatas, StatementData{
             Column: name,
             Value:  current_value.Interface(), //current_value.Interface(),
           })
+        } else {
+          fmt.Println("field ", name, " is zero", current_value.Interface(), current_value.Kind())
         }
 
       }
@@ -321,6 +347,8 @@ func (d *DatabaseSyntax) PackStatementData(src interface{}) ([]StatementData, er
 
       // }
 
+    } else {
+      fmt.Println("field ", name, " is NOT present")
     }
 
   }
@@ -342,6 +370,11 @@ func (d *DatabaseSyntax) InsertStatement(table string, src interface{}) (string,
   if err != nil {
     return "", nil, err
   }
+
+  // for _, el := range stmtData {
+  //   fmt.Println("Column", el.Column)
+  //   fmt.Println("Value", el.Value)
+  // }
 
   // structInfo, err := parseStruct(reflect.TypeOf(src))
 
@@ -385,6 +418,8 @@ func (d *DatabaseSyntax) InsertStatement(table string, src interface{}) (string,
   }
   stmt += ";"
 
+  fmt.Println(stmt)
+  fmt.Println(values)
   return stmt, values, nil
 
 }
