@@ -1,5 +1,5 @@
 
-http_url: info2.informatik.uni-tuebingen.de
+url: http://info2.informatik.uni-tuebingen.de
 
 auth_jwt_secret: fffff
 auth_jwt_access_expiry: 15m

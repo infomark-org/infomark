@@ -19,12 +19,17 @@
 package app
 
 import (
+  "fmt"
   "net/http"
   "strings"
 
   "github.com/cgtuebingen/infomark-backend/auth"
+  "github.com/cgtuebingen/infomark-backend/auth/authenticate"
+  "github.com/cgtuebingen/infomark-backend/email"
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/go-chi/render"
+  "github.com/spf13/viper"
+  null "gopkg.in/guregu/null.v3"
 )
 
 // AccountResource specifies user management handler.
@@ -85,34 +90,25 @@ func (u *userAccountResponse) Render(w http.ResponseWriter, r *http.Request) err
   return nil
 }
 
-// bindValidate jointly binds data from json request and validates the model.
-func (rs *AccountResource) bindValidate(w http.ResponseWriter, r *http.Request) (*userAccountRequest, *ErrResponse) {
+// Post is the enpoint for creating a new user account.
+func (rs *AccountResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
   // start from empty Request
-  // Note, this function is used by both POST and PATCH.
-  // We should not assume there is an initial account from middle-ware.
   data := &userAccountRequest{}
 
   // parse JSON request into struct
   if err := render.Bind(r, data); err != nil {
-    return nil, ErrBadRequestWithDetails(err)
+    render.Render(w, r, ErrBadRequestWithDetails(err))
+    return
   }
 
   // validate final model
   if err := data.User.Validate(); err != nil {
-    return nil, ErrBadRequestWithDetails(err)
-  }
-
-  return data, nil
-}
-
-// Post is the enpoint for creating a new user account.
-func (rs *AccountResource) PostHandler(w http.ResponseWriter, r *http.Request) {
-
-  data, errResponse := rs.bindValidate(w, r)
-  if errResponse != nil {
-    render.Render(w, r, errResponse)
+    render.Render(w, r, ErrBadRequestWithDetails(err))
     return
   }
+
+  // we will ask the user to confirm their email address
+  data.User.ConfirmEmailToken = null.StringFrom(auth.GenerateToken(32))
 
   // create user entry in database
   newUser, err := rs.UserStore.Create(data.User)
@@ -126,21 +122,92 @@ func (rs *AccountResource) PostHandler(w http.ResponseWriter, r *http.Request) {
     render.Render(w, r, ErrRender(err))
     return
   }
+
+  err = sendConfirmEmailForUser(newUser)
+  if err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
+  render.Status(r, http.StatusOK)
+
 }
 
-// Patch is the endpoint fro updating a specific account with given id.
-func (rs *AccountResource) PatchHandler(w http.ResponseWriter, r *http.Request) {
+func sendConfirmEmailForUser(user *model.User) error {
+  // send email
+  // Send Email to User
+  email, err := email.NewEmailFromTemplate(
+    user.Email,
+    "Confirm Account Instructions",
+    "confirm_email.en.txt",
+    map[string]string{
+      "first_name":          user.FirstName,
+      "last_name":           user.LastName,
+      "confirm_email_url":   fmt.Sprintf("%s/confirm_email", viper.GetString("url")),
+      "confirm_email_token": user.ConfirmEmailToken.String,
+    })
 
-  data, errResponse := rs.bindValidate(w, r)
-  if errResponse != nil {
-    render.Render(w, r, errResponse)
+  if err != nil {
+    return err
+  }
+  err = email.Send()
+  if err != nil {
+    return err
+  }
+
+  return nil
+}
+
+// Patch is the endpoint fro updating the specific account from the requesting
+// identity.
+func (rs *AccountResource) EditHandler(w http.ResponseWriter, r *http.Request) {
+
+  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+
+  // start from empty Request
+  data := &userAccountRequest{}
+
+  // parse JSON request into struct
+  if err := render.Bind(r, data); err != nil {
+    render.Render(w, r, ErrBadRequestWithDetails(err))
     return
+  }
+
+  data.User.ID = accessClaims.LoginID
+
+  // validate final model
+  if err := data.User.Validate(); err != nil {
+    render.Render(w, r, ErrBadRequestWithDetails(err))
+    return
+  }
+
+  dbUser, err := rs.UserStore.Get(data.User.ID)
+  if err != nil {
+    render.Render(w, r, ErrNotFound)
+    return
+  }
+
+  emailHasChanged := dbUser.Email != data.User.Email
+
+  // make sure email is valid
+  if emailHasChanged {
+    // we will ask the user to confirm their email address
+    data.User.ConfirmEmailToken = null.StringFrom(auth.GenerateToken(32))
   }
 
   // TODO(patwie) verify userID
   if err := rs.UserStore.Update(data.User); err != nil {
-    render.Render(w, r, ErrInternalServerError)
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return
+  }
+
+  // make sure email is valid
+  if emailHasChanged {
+    err = sendConfirmEmailForUser(data.User)
+    if err != nil {
+      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+      return
+    }
   }
 
   if err := render.Render(w, r, newUserAccountResponse(data.User)); err != nil {
@@ -149,10 +216,11 @@ func (rs *AccountResource) PatchHandler(w http.ResponseWriter, r *http.Request) 
   }
 }
 
-// Get is the endpoint for retrieving a specific user account.
+// Get is the endpoint for retrieving the specific user account from the requesting
+// identity.
 func (rs *AccountResource) GetHandler(w http.ResponseWriter, r *http.Request) {
-  // TODO(patwie): from middleware and webtoken
-  user, err := rs.UserStore.Get(1)
+  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  user, err := rs.UserStore.Get(accessClaims.LoginID)
   if err != nil {
     render.Render(w, r, ErrNotFound)
     return

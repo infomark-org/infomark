@@ -19,14 +19,19 @@
 package app
 
 import (
+  "errors"
   "fmt"
   "net/http"
   "strings"
 
   "github.com/cgtuebingen/infomark-backend/auth"
   "github.com/cgtuebingen/infomark-backend/auth/authenticate"
+  "github.com/cgtuebingen/infomark-backend/email"
   "github.com/go-chi/jwtauth"
   "github.com/go-chi/render"
+  validation "github.com/go-ozzo/ozzo-validation"
+  "github.com/go-ozzo/ozzo-validation/is"
+  "github.com/spf13/viper"
   null "gopkg.in/guregu/null.v3"
 )
 
@@ -44,13 +49,11 @@ func NewAuthResource(userStore UserStore) *AuthResource {
 
 // .............................................................................
 
-// authRequest is the request payload for account management.
 type authRequest struct {
   Email         string `json:"email"`
   PlainPassword string `json:"plain_password"`
 }
 
-// authResponse is the response payload for account management.
 type authResponse struct {
   AccessToken  string `json:"access_token,omitempty"`
   RefreshToken string `json:"refresh_token,omitempty"`
@@ -60,16 +63,24 @@ type authResponse struct {
 func (body *authRequest) Bind(r *http.Request) error {
   body.Email = strings.TrimSpace(body.Email)
   body.Email = strings.ToLower(body.Email)
+
+  err := validation.ValidateStruct(body,
+    validation.Field(&body.Email, validation.Required, is.Email),
+    validation.Field(&body.PlainPassword,
+      validation.Required,
+      validation.Length(7, 0)),
+  )
+  if err != nil {
+    return err
+  }
+
   return nil
 }
 
-// Render post-processes a authResponse.
 func (body *authResponse) Render(w http.ResponseWriter, r *http.Request) error {
-  // nothing to hide
   return nil
 }
 
-// bindValidateAuthRequest jointly binds data from json request and validates the model.
 func (rs *AuthResource) bindValidateAuthRequest(w http.ResponseWriter, r *http.Request) (*authRequest, *ErrResponse) {
   // get user from middle-ware context
   data := &authRequest{}
@@ -79,29 +90,72 @@ func (rs *AuthResource) bindValidateAuthRequest(w http.ResponseWriter, r *http.R
     return nil, ErrBadRequestWithDetails(err)
   }
 
-  // // validate final model
-  // if err := data.User.Validate(); err != nil {
-  //   return nil, ErrBadRequestWithDetails(err)
-  // }
-
   return data, nil
 }
 
 // .............................................................................
-// authRequest is the request payload for account management.
-type passwordResetRequest struct {
-  Email string `json:"email"`
+type loginResponse struct {
+  Root bool `json:"root"`
 }
 
-// Bind preprocesses a authRequest.
-func (body *passwordResetRequest) Bind(r *http.Request) error {
-  body.Email = strings.TrimSpace(body.Email)
-  body.Email = strings.ToLower(body.Email)
+func (body *loginResponse) Render(w http.ResponseWriter, r *http.Request) error {
+  // nothing to hide
   return nil
 }
 
-// Render post-processes a authResponse.
-func (body *passwordResetRequest) Render(w http.ResponseWriter, r *http.Request) error {
+// .............................................................................
+type resetPasswordRequest struct {
+  Email string `json:"email"`
+}
+
+func (body *resetPasswordRequest) Bind(r *http.Request) error {
+  body.Email = strings.TrimSpace(body.Email)
+  body.Email = strings.ToLower(body.Email)
+
+  err := validation.ValidateStruct(body,
+    validation.Field(&body.Email, validation.Required, is.Email),
+  )
+  if err != nil {
+    return err
+  }
+
+  return nil
+}
+
+// .............................................................................
+type updatePasswordRequest struct {
+  Email              string `json:"email"`
+  ResetPasswordToken string `json:"reset_password_token"`
+  PlainPassword      string `json:"plain_password"`
+}
+
+func (body *updatePasswordRequest) Bind(r *http.Request) error {
+  body.Email = strings.TrimSpace(body.Email)
+  body.Email = strings.ToLower(body.Email)
+
+  err := validation.ValidateStruct(body,
+    validation.Field(&body.Email, validation.Required, is.Email),
+    validation.Field(&body.ResetPasswordToken, validation.Required),
+    validation.Field(&body.PlainPassword,
+      validation.Required,
+      validation.Length(7, 0)),
+  )
+  if err != nil {
+    return err
+  }
+
+  return nil
+}
+
+// .............................................................................
+type confirmEmailRequest struct {
+  Email             string `json:"email"`
+  ConfirmEmailToken string `json:"confirmation_token"`
+}
+
+func (body *confirmEmailRequest) Bind(r *http.Request) error {
+  body.Email = strings.TrimSpace(body.Email)
+  body.Email = strings.ToLower(body.Email)
   return nil
 }
 
@@ -109,10 +163,12 @@ func (body *passwordResetRequest) Render(w http.ResponseWriter, r *http.Request)
 
 func (rs *AuthResource) LoginHandler(w http.ResponseWriter, r *http.Request) {
   // we are given email-password credentials
-  data, errResponse := rs.bindValidateAuthRequest(w, r)
-  if errResponse != nil {
-    render.Render(w, r, errResponse)
-    return
+
+  data := &authRequest{}
+
+  // parse JSON request into struct
+  if err := render.Bind(r, data); err != nil {
+    render.Render(w, r, ErrBadRequestWithDetails(err))
   }
 
   // does such a user exists with request email adress?
@@ -128,6 +184,15 @@ func (rs *AuthResource) LoginHandler(w http.ResponseWriter, r *http.Request) {
     return
   }
 
+  fmt.Println(potentialUser.ConfirmEmailToken)
+  // is the email address confirmed?
+  if potentialUser.ConfirmEmailToken.Valid {
+    // Valid is true if String is not NULL
+    // confirm token `potentialUser.ConfirmEmailToken.String` exists
+    render.Render(w, r, ErrRender(errors.New("email not confirmed")))
+    return
+  }
+
   // user passed all tests
   accessClaims := &authenticate.AccessClaims{
     LoginID: potentialUser.ID,
@@ -138,6 +203,14 @@ func (rs *AuthResource) LoginHandler(w http.ResponseWriter, r *http.Request) {
   fmt.Println("WRITE accessClaims.Root", accessClaims.Root)
 
   w = accessClaims.WriteToSession(w, r)
+
+  resp := &loginResponse{Root: potentialUser.Root}
+  // return access token only
+  if err := render.Render(w, r, resp); err != nil {
+    render.Render(w, r, ErrRender(err))
+    return
+  }
+
 }
 
 func (rs *AuthResource) LogoutHandler(w http.ResponseWriter, r *http.Request) {
@@ -145,10 +218,11 @@ func (rs *AuthResource) LogoutHandler(w http.ResponseWriter, r *http.Request) {
   accessClaims.DestroyInSession(w, r)
 }
 
-func (rs *AuthResource) PasswordResetHandler(w http.ResponseWriter, r *http.Request) {
-  data := &passwordResetRequest{}
+func (rs *AuthResource) RequestPasswordResetHandler(w http.ResponseWriter, r *http.Request) {
+  data := &resetPasswordRequest{}
   if err := render.Bind(r, data); err != nil {
     render.Render(w, r, ErrBadRequestWithDetails(err))
+    return
   }
 
   // does such a user exists with request email adress?
@@ -161,8 +235,98 @@ func (rs *AuthResource) PasswordResetHandler(w http.ResponseWriter, r *http.Requ
   user.ResetPasswordToken = null.StringFrom(auth.GenerateToken(32))
   rs.UserStore.Update(user)
 
-  // TODO(patwie):
   // Send Email to User
+  email, err := email.NewEmailFromTemplate(
+    user.Email,
+    "Password Reset Instructions",
+    "request_password_token.en.txt",
+    map[string]string{
+      "first_name":           user.FirstName,
+      "last_name":            user.LastName,
+      "reset_password_url":   fmt.Sprintf("%s/reset_password", viper.GetString("url")),
+      "reset_password_token": user.ResetPasswordToken.String,
+    })
+  if err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
+  err = email.Send()
+  if err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
+  render.Status(r, http.StatusOK)
+}
+
+func (rs *AuthResource) UpdatePasswordHandler(w http.ResponseWriter, r *http.Request) {
+  data := &updatePasswordRequest{}
+  if err := render.Bind(r, data); err != nil {
+    render.Render(w, r, ErrBadRequestWithDetails(err))
+    return
+  }
+
+  // does such a user exists with request email adress?
+  user, err := rs.UserStore.FindByEmail(data.Email)
+  if err != nil {
+    render.Render(w, r, ErrNotFound)
+    return
+  }
+
+  // compare token
+  if user.ResetPasswordToken.String != data.ResetPasswordToken {
+    render.Render(w, r, ErrBadRequest)
+    return
+  }
+
+  // token is ok, remove token and set new password
+  user.ResetPasswordToken = null.String{}
+  user.EncryptedPassword, err = auth.HashPassword(data.PlainPassword)
+  if err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
+  fmt.Println(user)
+  if err := rs.UserStore.Update(user); err != nil {
+    fmt.Println(err)
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
+  render.Status(r, http.StatusOK)
+}
+
+func (rs *AuthResource) ConfirmEmailHandler(w http.ResponseWriter, r *http.Request) {
+  data := &confirmEmailRequest{}
+  if err := render.Bind(r, data); err != nil {
+    render.Render(w, r, ErrBadRequestWithDetails(err))
+  }
+
+  // does such a user exists with request email adress?
+  user, err := rs.UserStore.FindByEmail(data.Email)
+  if err != nil {
+    render.Render(w, r, ErrNotFound)
+    return
+  }
+
+  // compare token
+  if user.ConfirmEmailToken.String != data.ConfirmEmailToken {
+    render.Render(w, r, ErrBadRequest)
+    return
+  }
+
+  // token is ok
+  user.ConfirmEmailToken = null.String{}
+  fmt.Println(user)
+  if err := rs.UserStore.Update(user); err != nil {
+    fmt.Println(err)
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
+  render.Status(r, http.StatusOK)
 }
 
 // Post is endpoint
@@ -175,7 +339,7 @@ func (rs *AuthResource) RefreshAccessTokenHandler(w http.ResponseWriter, r *http
   // access the underlying JWT functions
   tokenManager, err := authenticate.NewTokenAuth()
   if err != nil {
-    render.Render(w, r, ErrInternalServerError)
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return
   }
 
@@ -209,7 +373,7 @@ func (rs *AuthResource) RefreshAccessTokenHandler(w http.ResponseWriter, r *http
     // we just need to return an access-token
     accessToken, err := tokenManager.CreateAccessJWT(authenticate.NewAccessClaims(targetUser.ID, targetUser.Root))
     if err != nil {
-      render.Render(w, r, ErrInternalServerError)
+      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
       return
     }
 
@@ -225,13 +389,12 @@ func (rs *AuthResource) RefreshAccessTokenHandler(w http.ResponseWriter, r *http
 
   } else {
 
-    // TODO refector same as LoginHandler
-
     // we are given email-password credentials
-    data, errResponse := rs.bindValidateAuthRequest(w, r)
-    if errResponse != nil {
-      render.Render(w, r, errResponse)
-      return
+    data := &authRequest{}
+
+    // parse JSON request into struct
+    if err := render.Bind(r, data); err != nil {
+      render.Render(w, r, ErrBadRequestWithDetails(err))
     }
 
     // does such a user exists with request email adress?
@@ -250,14 +413,14 @@ func (rs *AuthResource) RefreshAccessTokenHandler(w http.ResponseWriter, r *http
     refreshToken, err := tokenManager.CreateRefreshJWT(authenticate.NewRefreshClaims(potentialUser.ID))
 
     if err != nil {
-      render.Render(w, r, ErrInternalServerError)
+      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
       return
     }
 
     accessToken, err := tokenManager.CreateAccessJWT(authenticate.NewAccessClaims(potentialUser.ID, potentialUser.Root))
 
     if err != nil {
-      render.Render(w, r, ErrInternalServerError)
+      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
       return
     }
 

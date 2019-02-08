@@ -91,8 +91,10 @@ func New() (*chi.Mux, error) {
       r.Group(func(r chi.Router) {
         r.Post("/auth/token", appAPI.Auth.RefreshAccessTokenHandler)
         r.Post("/auth/sessions", appAPI.Auth.LoginHandler)
-        r.Post("/auth/request_password_reset", appAPI.Auth.PasswordResetHandler)
-        r.Post("/account", appAPI.Account.PostHandler)
+        r.Post("/auth/request_password_reset", appAPI.Auth.RequestPasswordResetHandler)
+        r.Post("/auth/update_password", appAPI.Auth.UpdatePasswordHandler)
+        r.Post("/auth/confirm_email", appAPI.Auth.ConfirmEmailHandler)
+        r.Post("/account", appAPI.Account.CreateHandler)
         r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
           w.Write([]byte("pong"))
         })
@@ -112,14 +114,11 @@ func New() (*chi.Mux, error) {
           })
         })
 
-        r.Route("/account", func(r chi.Router) {
-          r.Get("/", appAPI.Account.GetHandler)
-          r.Patch("/", appAPI.Account.PatchHandler)
-        })
+        r.Get("/account", appAPI.Account.GetHandler)
+        r.Patch("/account", appAPI.Account.EditHandler)
 
-        r.Route("/auth", func(r chi.Router) {
-          r.Delete("/sessions", appAPI.Auth.LogoutHandler)
-        })
+        r.Delete("/auth/sessions", appAPI.Auth.LogoutHandler)
+
       })
 
     })

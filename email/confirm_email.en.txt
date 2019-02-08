@@ -1,0 +1,16 @@
+Hi {{.first_name}} {{.last_name}}!
+
+
+You must now confirm your email address to:
+   - Log into our system and upload your homework solutions
+   - Reset your password
+   - Receive account alerts
+
+Please use the following link to confirm your email address:
+
+{{.confirm_email_url}}/{{.confirm_email_token}}
+
+If this does not work, please use the following token in the form:
+
+{{.confirm_email_token}}
+

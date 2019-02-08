@@ -29,6 +29,8 @@ CREATE TABLE users (
   semester INT not null,
   subject TEXT not null,
 
+  language char(2) not null DEFAULT 'en',
+
   encrypted_password TEXT not null,
   reset_password_token TEXT,
   confirm_email_token TEXT,

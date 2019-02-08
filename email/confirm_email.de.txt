@@ -1,0 +1,16 @@
+Hi {{.first_name}} {{.last_name}}!
+
+
+Sie müssen nun Ihre E-Mail-Adresse bestätigen:
+   - Um sich in unser System einzuloggen und die Lösungen zu den Übungsblättern hochzuladen.
+   - Passwort zurücksetzen
+   - Account-Warnungen erhalten
+
+Bitte verwende den folgenden Link, um deine E-Mail-Adresse zu bestätigen:
+
+{{.confirm_email_url}}/{{.confirm_email_token}}
+
+If this does not work, please use the following token in the form:
+
+{{.confirm_email_token}}
+

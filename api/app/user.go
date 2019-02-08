@@ -25,6 +25,7 @@ import (
   "strings"
 
   "github.com/cgtuebingen/infomark-backend/auth"
+  "github.com/cgtuebingen/infomark-backend/auth/authenticate"
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/go-chi/chi"
   "github.com/go-chi/render"
@@ -133,8 +134,16 @@ func (rs *UserResource) bindValidate(w http.ResponseWriter, r *http.Request) (*u
   return data, nil
 }
 
-// Index is the enpoint for retrieving all users.
+// Index is the enpoint for retrieving all users if claim.root is true.
 func (rs *UserResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
+
+  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+
+  if !accessClaims.Root {
+    render.Render(w, r, ErrUnauthorized)
+    return
+  }
+
   // fetch collection of users from database
   users, err := rs.UserStore.GetAll()
 

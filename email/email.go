@@ -16,7 +16,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package main
+package email
 
 import (
 	"bytes"
@@ -28,14 +28,39 @@ import (
 	"github.com/spf13/viper"
 )
 
-func SendEmail(toEmail string, subject string, body string) error {
-	// fromEmail := "no-reply@info2.informatik.uni-tuebingen.de" //viper.GetString("email_from")
-	// sendmail_binary := "/usr/sbin/sendmail"                   // viper.GetString("email_sendmail")
-	fromEmail := viper.GetString("email_from")
-	sendmail_binary := viper.GetString("sendmail_binary")
+type Emailer interface {
+	Send() error
+	LoadTemplate(file string, data map[string]string) error
+}
 
-	fmt.Println("from", fromEmail)
-	fmt.Println("sendmail_binary", sendmail_binary)
+type Email struct {
+	From    string
+	To      string
+	Subject string
+	Body    string
+}
+
+func NewEmail(toEmail string, subject string, body string) *Email {
+	email := &Email{
+		From:    viper.GetString("email_from"),
+		To:      toEmail,
+		Subject: subject,
+		Body:    body,
+	}
+	return email
+}
+
+func NewEmailFromTemplate(toEmail string, subject string, file string, data map[string]string) (*Email, error) {
+	body, err := LoadAndFillTemplate(file, data)
+	if err != nil {
+		return nil, err
+	}
+	return NewEmail(toEmail, subject, body), nil
+}
+
+// SendEmail uses `sendmail` to deliver emails.
+func (e *Email) Send() error {
+	sendmail_binary := viper.GetString("sendmail_binary")
 
 	cmd := exec.Command(sendmail_binary, "-t")
 	cmd.Stdout = os.Stdout
@@ -51,15 +76,17 @@ func SendEmail(toEmail string, subject string, body string) error {
 		return err
 	}
 
-	pw.Write([]byte(fmt.Sprintf("From: %s\n", fromEmail)))
-	pw.Write([]byte(fmt.Sprintf("To: %s\n", toEmail)))
-	pw.Write([]byte(fmt.Sprintf("Subject: %s\n", subject)))
+	pw.Write([]byte(fmt.Sprintf("From: %s\n", e.From)))
+	pw.Write([]byte(fmt.Sprintf("To: %s\n", e.To)))
+	pw.Write([]byte(fmt.Sprintf("Subject: %s\n", e.Subject)))
 	pw.Write([]byte(fmt.Sprintf("\n"))) // blank line separating headers from body
-	pw.Write([]byte(fmt.Sprintf("%s", body)))
+	pw.Write([]byte(fmt.Sprintf("%s", e.Body)))
+
 	err = pw.Close()
 	if err != nil {
 		return err
 	}
+
 	err = cmd.Wait()
 	if err != nil {
 		return err
@@ -68,7 +95,8 @@ func SendEmail(toEmail string, subject string, body string) error {
 	return nil
 }
 
-func ParseEmailTemplate(file string, data map[string]string) (string, error) {
+// LoadAndFillTemplate loads a template and fills out the placeholders.
+func LoadAndFillTemplate(file string, data map[string]string) (string, error) {
 	root_dir := viper.GetString("email_templates_dir")
 	fmt.Println(root_dir)
 	t, err := template.ParseFiles(fmt.Sprintf("%s/%s", root_dir, file))
@@ -80,31 +108,31 @@ func ParseEmailTemplate(file string, data map[string]string) (string, error) {
 	return tpl.String(), nil
 }
 
-func main() {
+// func main() {
 
-	viper.SetConfigFile("/home/wieschol/git/github.com/cgtuebingen/infomark-go/infomark-backend/infomark-backend.yml")
-	if err := viper.ReadInConfig(); err == nil {
-		fmt.Println("Using config file:", viper.ConfigFileUsed())
-	}
+// 	viper.SetConfigFile("/home/wieschol/git/github.com/cgtuebingen/infomark-go/infomark-backend/infomark-backend.yml")
+// 	if err := viper.ReadInConfig(); err == nil {
+// 		fmt.Println("Using config file:", viper.ConfigFileUsed())
+// 	}
 
-	body, err := ParseEmailTemplate(
-		"request_password_token.de.txt",
-		map[string]string{
-			"first_name":  "Patrick",
-			"last_name":   "Wiesch",
-			"reset_url":   "http://info2.informatik.uni-tuebingen.de/reset",
-			"reset_token": "sdjfgsdjkfddd",
-		},
-	)
-	if err != nil {
-		fmt.Println(err)
-	}
+// 	body, err := LoadAndFillTemplate(
+// 		"request_password_token.de.txt",
+// 		map[string]string{
+// 			"first_name":  "Patrick",
+// 			"last_name":   "Wiesch",
+// 			"reset_url":   "http://info2.informatik.uni-tuebingen.de/reset",
+// 			"reset_token": "sdjfgsdjkfddd",
+// 		},
+// 	)
+// 	if err != nil {
+// 		fmt.Println(err)
+// 	}
 
-	// fmt.Println(body)
-	if err == nil {
-		SendEmail("patrick.wieschollek@uni-tuebingen.de", "GoSubject222", body)
+// 	// fmt.Println(body)
+// 	if err == nil {
+// 		SendEmail("patrick.wieschollek@uni-tuebingen.de", "GoSubject222", body)
 
-	} else {
-		fmt.Println(err)
-	}
-}
+// 	} else {
+// 		fmt.Println(err)
+// 	}
+// }

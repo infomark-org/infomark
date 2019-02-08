@@ -265,28 +265,61 @@ func (d *DatabaseSyntax) PackStatementData(src interface{}) ([]StatementData, er
     // field is in tag and current struct
     if present {
       current_value := structVal.Field(field.index)
-      if !isZero(current_value) {
 
-        // if current_value.Type() == null.String
-        // This is an ugly case, but we want to nicely create JSON
-        // and the null package does the job
-        if reflect.TypeOf(null_string) == current_value.Type() {
-          if current_value.Field(0).Field(1).Bool() == true {
-            statementDatas = append(statementDatas, StatementData{
-              Column: name,
-              Value:  current_value.Field(0).Field(0).String(),
-            })
+      if reflect.TypeOf(null_string) == current_value.Type() {
+        // sql.NUll
+        // Valid is true if String is not NULL
+        if current_value.Field(0).Field(1).Bool() == true {
+          statementDatas = append(statementDatas, StatementData{
+            Column: name,
+            Value:  current_value.Field(0).Field(0).String(),
+          })
 
-          }
         } else {
           statementDatas = append(statementDatas, StatementData{
             Column: name,
-            Value:  current_value.Interface(),
+            Value:  nil,
           })
-
+        }
+      } else {
+        if !isZero(current_value) {
+          statementDatas = append(statementDatas, StatementData{
+            Column: name,
+            Value:  current_value.Interface(), //current_value.Interface(),
+          })
         }
 
       }
+
+      // if !isZero(current_value) {
+
+      //   // if current_value.Type() == null.String
+      //   // This is an ugly case, but we want to nicely create JSON
+      //   // and the null package does the job
+      //   if reflect.TypeOf(null_string) == current_value.Type() {
+      //     // sql.NUll
+      //     // Valid is true if String is not NULL
+      //     if current_value.Field(0).Field(1).Bool() == true {
+      //       statementDatas = append(statementDatas, StatementData{
+      //         Column: name,
+      //         Value:  current_value.Field(0).Field(0).String(),
+      //       })
+
+      //     } else {
+      //       statementDatas = append(statementDatas, StatementData{
+      //         Column: name,
+      //         Value:  nil,
+      //       })
+      //     }
+      //   } else {
+      //     statementDatas = append(statementDatas, StatementData{
+      //       Column: name,
+      //       Value:  current_value.Interface(), //current_value.Interface(),
+      //     })
+
+      //   }
+
+      // }
 
     }
 
@@ -427,7 +460,8 @@ func (d *DatabaseSyntax) UpdateStatement(table string, id int64, src interface{}
 
   pairs_string := strings.Join(pairs, ", ")
   stmt := fmt.Sprintf("UPDATE %s SET %s WHERE id = $1;", table, pairs_string)
-
+  fmt.Println(stmt)
+  fmt.Println(values)
   return stmt, values, nil
 
 }
