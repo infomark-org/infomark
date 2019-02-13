@@ -236,7 +236,7 @@ func (rs *AccountResource) GetHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (rs *AccountResource) GetAvatarHandler(w http.ResponseWriter, r *http.Request) {
-  img, err := os.Open("public/avatar.jpg")
+  img, err := os.Open("dev_files/avatar.jpg")
   if err != nil {
     panic(err)
     // log.Fatal(err) // perhaps handle this nicer
