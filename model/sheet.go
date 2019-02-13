@@ -29,7 +29,6 @@ type Sheet struct {
 	UpdatedAt time.Time `json:"-" db:"updated_at,omitempty"`
 
 	Name           string    `json:"name" db:"name"`
-	Ordering       int       `json:"ordering" db:"ordering"`
 	PublishedAt    time.Time `json:"publish_at" db:"publish_at"`
 	DueAt          time.Time `json:"due_at" db:"due_at"`
 	RequiredPoints int       `json:"required_points" db:"required_points"`
