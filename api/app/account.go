@@ -20,7 +20,9 @@ package app
 
 import (
   "fmt"
+  "io"
   "net/http"
+  "os"
   "strings"
 
   "github.com/cgtuebingen/infomark-backend/auth"
@@ -230,5 +232,17 @@ func (rs *AccountResource) GetHandler(w http.ResponseWriter, r *http.Request) {
     render.Render(w, r, ErrRender(err))
     return
   }
+
+}
+
+func (rs *AccountResource) GetAvatarHandler(w http.ResponseWriter, r *http.Request) {
+  img, err := os.Open("public/avatar.jpg")
+  if err != nil {
+    panic(err)
+    // log.Fatal(err) // perhaps handle this nicer
+  }
+  defer img.Close()
+  w.Header().Set("Content-Type", "image/jpeg") // <-- set the content-type header
+  io.Copy(w, img)
 
 }

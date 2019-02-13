@@ -158,6 +158,15 @@ func (rs *UserResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 func (rs *UserResource) GetHandler(w http.ResponseWriter, r *http.Request) {
   // `user` is retrieved via middle-ware
   user := r.Context().Value("user").(*model.User)
+  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+
+  // is request identity allowed to get informaition about this user
+  if user.ID != accessClaims.LoginID {
+    if !accessClaims.Root {
+      render.Render(w, r, ErrUnauthorized)
+      return
+    }
+  }
 
   // render JSON reponse
   if err := render.Render(w, r, newUserResponse(user)); err != nil {
@@ -169,10 +178,20 @@ func (rs *UserResource) GetHandler(w http.ResponseWriter, r *http.Request) {
 // Patch is the endpoint fro updating a specific user with given id.
 func (rs *UserResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 
+  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+
   data, errResponse := rs.bindValidate(w, r)
   if errResponse != nil {
     render.Render(w, r, errResponse)
     return
+  }
+
+  // is request identity allowed to edit this user
+  if data.User.ID != accessClaims.LoginID {
+    if !accessClaims.Root {
+      render.Render(w, r, ErrUnauthorized)
+      return
+    }
   }
 
   // update database entry

@@ -37,19 +37,19 @@ type CourseStore interface {
   GetAll() ([]model.Course, error)
   Create(p *model.Course) (*model.Course, error)
   Delete(courseID int64) error
+
+  Sheets(course *model.Course, only_active bool) ([]model.Sheet, error)
 }
 
 // CourseResource specifies course management handler.
 type CourseResource struct {
   CourseStore CourseStore
-  SheetStore  SheetStore
 }
 
 // NewCourseResource create and returns a CourseResource.
-func NewCourseResource(courseStore CourseStore, sheetStore SheetStore) *CourseResource {
+func NewCourseResource(courseStore CourseStore) *CourseResource {
   return &CourseResource{
     CourseStore: courseStore,
-    SheetStore:  sheetStore,
   }
 }
 
@@ -70,7 +70,7 @@ type courseResponse struct {
 // newCourseResponse creates a response from a course model.
 func (rs *CourseResource) newCourseResponse(p *model.Course) *courseResponse {
 
-  sheets, _ := rs.SheetStore.SheetsOfCourse(p, false)
+  sheets, _ := rs.CourseStore.Sheets(p, false)
 
   return &courseResponse{
     Course: p,

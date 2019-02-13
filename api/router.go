@@ -104,7 +104,6 @@ func New() (*chi.Mux, error) {
       r.Group(func(r chi.Router) {
         r.Use(mymiddleware.RequiredValidAccessClaims)
 
-        // users
         r.Route("/users", func(r chi.Router) {
           r.Get("/", appAPI.User.IndexHandler)
           r.Route("/{userID}", func(r chi.Router) {
@@ -114,7 +113,6 @@ func New() (*chi.Mux, error) {
           })
         })
 
-        // users
         r.Route("/courses", func(r chi.Router) {
           r.Get("/", appAPI.Course.IndexHandler)
           r.Post("/", appAPI.Course.CreateHandler)
@@ -123,10 +121,36 @@ func New() (*chi.Mux, error) {
             r.Get("/", appAPI.Course.GetHandler)
             r.Patch("/", appAPI.Course.EditHandler)
             r.Delete("/", appAPI.Course.DeleteHandler)
+
+            r.Route("/sheets", func(r chi.Router) {
+              r.Get("/", appAPI.Sheet.IndexHandler)
+              r.Post("/", appAPI.Sheet.CreateHandler)
+
+            })
+          })
+        })
+
+        r.Route("/sheets", func(r chi.Router) {
+          r.Route("/{sheetID}", func(r chi.Router) {
+            r.Use(appAPI.Sheet.Context)
+            r.Get("/", appAPI.Sheet.GetHandler)
+            r.Patch("/", appAPI.Sheet.EditHandler)
+            r.Delete("/", appAPI.Sheet.DeleteHandler)
+            r.Get("/tasks", appAPI.Task.IndexHandler)
+          })
+        })
+
+        r.Route("/tasks", func(r chi.Router) {
+          r.Route("/{taskID}", func(r chi.Router) {
+            r.Use(appAPI.Task.Context)
+            r.Get("/", appAPI.Task.GetHandler)
+            r.Patch("/", appAPI.Task.EditHandler)
+            r.Delete("/", appAPI.Task.DeleteHandler)
           })
         })
 
         r.Get("/account", appAPI.Account.GetHandler)
+        r.Get("/account/avatar", appAPI.Account.GetAvatarHandler)
         r.Patch("/account", appAPI.Account.EditHandler)
 
         r.Delete("/auth/sessions", appAPI.Auth.LogoutHandler)

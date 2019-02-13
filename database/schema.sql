@@ -54,6 +54,8 @@ CREATE TABLE user_course(
   id SERIAL not null primary key,
   user_id INT not null,
   course_id INT not null,
+  -- 0: student, 1:tutor, 2:admin
+  role INT DEFAULT 0,
 
   -- PRIMARY KEY (user_id, course_id),
   FOREIGN KEY (user_id) REFERENCES users (id),
@@ -66,7 +68,6 @@ CREATE TABLE sheets(
   updated_at TIMESTAMP not null DEFAULT current_timestamp,
 
   name TEXT,
-  ordering INT ,
 
   -- we us the canonical naming "sheet{ordering}.zip"
   -- file_path TEXT,

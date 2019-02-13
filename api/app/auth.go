@@ -158,18 +158,19 @@ func (rs *AuthResource) LoginHandler(w http.ResponseWriter, r *http.Request) {
   // parse JSON request into struct
   if err := render.Bind(r, data); err != nil {
     render.Render(w, r, ErrBadRequestWithDetails(err))
+    return
   }
 
   // does such a user exists with request email adress?
   potentialUser, err := rs.UserStore.FindByEmail(data.Email)
   if err != nil {
-    render.Render(w, r, ErrBadRequest(err))
+    render.Render(w, r, ErrBadRequestWithDetails(err))
     return
   }
 
   // does the password match?
   if !auth.CheckPasswordHash(data.PlainPassword, potentialUser.EncryptedPassword) {
-    render.Render(w, r, ErrBadRequest(err))
+    render.Render(w, r, ErrBadRequestWithDetails(err))
     return
   }
 
@@ -291,6 +292,7 @@ func (rs *AuthResource) ConfirmEmailHandler(w http.ResponseWriter, r *http.Reque
   data := &confirmEmailRequest{}
   if err := render.Bind(r, data); err != nil {
     render.Render(w, r, ErrBadRequestWithDetails(err))
+    return
   }
 
   // does such a user exists with request email adress?
@@ -384,6 +386,7 @@ func (rs *AuthResource) RefreshAccessTokenHandler(w http.ResponseWriter, r *http
     // parse JSON request into struct
     if err := render.Bind(r, data); err != nil {
       render.Render(w, r, ErrBadRequestWithDetails(err))
+      return
     }
 
     // does such a user exists with request email adress?
