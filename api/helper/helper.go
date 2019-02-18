@@ -23,17 +23,98 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+
+	txdb "github.com/DATA-DOG/go-txdb"
+	"github.com/cgtuebingen/infomark-backend/auth/authenticate"
+	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
 )
 
 // similar to gin.H as a neat wrapper
 type H map[string]interface{}
 
-func SimulateRequest(payload interface{}, api func(w http.ResponseWriter, r *http.Request)) *httptest.ResponseRecorder {
+var tokenManager, _ = authenticate.NewTokenAuth()
 
-	payload_json, _ := json.Marshal(payload)
-	r, _ := http.NewRequest("POST", "/users", bytes.NewBuffer(payload_json))
+type Payload struct {
+	Data         H
+	Method       string
+	AccessClaims authenticate.AccessClaims
+}
+
+// https://github.com/go-chi/chi/blob/cca4135d8dddff765463feaf1118047a9e506b4a/chain.go#L34-L49
+// type Handler interface {
+//         ServeHTTP(ResponseWriter, *Request)
+// }
+// type HandlerFunc func(ResponseWriter, *Request)
+//
+// chain builds a http.Handler composed of an inline middleware stack and endpoint
+// handler in the order they are passed.
+func chain(endpoint http.Handler, middlewares ...func(http.Handler) http.Handler) http.Handler {
+	// Return ahead of time if there aren't any middlewares for the chain
+	if len(middlewares) == 0 {
+		return endpoint
+	}
+
+	// Wrap the end handler with the middleware chain
+	h := middlewares[len(middlewares)-1](endpoint)
+	for i := len(middlewares) - 2; i >= 0; i-- {
+		h = middlewares[i](h)
+	}
+
+	return h
+}
+
+func SimulateRequest(
+	// payload interface{},
+	request Payload,
+	apiHandler http.HandlerFunc,
+	middlewares ...func(http.Handler) http.Handler) *httptest.ResponseRecorder {
+
+	// create request
+	payload_json, _ := json.Marshal(request.Data)
+	r, _ := http.NewRequest(request.Method, "/", bytes.NewBuffer(payload_json))
 	r.Header.Set("Content-Type", "application/json")
+
+	// If there are some access claims, we add them to the header.
+	// We currently support JWT only for testing.
+	if request.AccessClaims.LoginID != 0 {
+
+		// generate some valid claims
+		accessToken, err := tokenManager.CreateAccessJWT(authenticate.NewAccessClaims(1, true))
+		if err != nil {
+			panic(err)
+		}
+		r.Header.Set("Authorization", "Bearer "+accessToken)
+	}
+
 	w := httptest.NewRecorder()
-	api(w, r)
+
+	// apply middlewares
+	handler := chain(apiHandler, middlewares...)
+	handler.ServeHTTP(w, r)
+
 	return w
+}
+
+func init() {
+	// we register an sql driver named "txdb"
+	// This allows to run all tests as transaction in isolated environemnts to make sure
+	// we do not accidentially alter the database in a persistent way. Hence,  all tests can run
+	// in an arbitrary order.
+	txdb.Register("psql_txdb", "postgres", "postgres://postgres:postgres@localhost/infomark?sslmode=disable")
+}
+
+// TransactionDB creates a sql-driver which seemlessly supports transactions.
+func TransactionDB() (*sqlx.DB, error) {
+	db, err := sqlx.Connect("psql_txdb", "identifier")
+	if err != nil {
+		return nil, err
+	}
+
+	err = db.Ping()
+	if err != nil {
+		return nil, err
+	}
+
+	return db, err
 }

@@ -16,14 +16,13 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package middleware
+package authenticate
 
 import (
   "context"
   "net/http"
 
-  "github.com/cgtuebingen/infomark-backend/api/app"
-  "github.com/cgtuebingen/infomark-backend/auth/authenticate"
+  "github.com/cgtuebingen/infomark-backend/auth"
   "github.com/go-chi/jwtauth"
   "github.com/go-chi/render"
 )
@@ -34,10 +33,10 @@ import (
 func RequiredValidAccessClaims(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-    accessClaims := &authenticate.AccessClaims{}
+    accessClaims := &AccessClaims{}
 
     // first we test the JWT autorization
-    if authenticate.HasHeaderToken(r) {
+    if HasHeaderToken(r) {
       // fmt.Println("has token")
 
       // parse token from from header
@@ -47,26 +46,26 @@ func RequiredValidAccessClaims(next http.Handler) http.Handler {
       err := accessClaims.ParseAccessClaimsFromToken(tokenStr)
       if err != nil {
         // fmt.Println(err)
-        render.Render(w, r, app.ErrUnauthorized)
+        render.Render(w, r, auth.ErrUnauthorized)
         return
       }
 
     } else {
       // fmt.Println("no token, try session")
-      if authenticate.HasSessionToken(r) {
+      if HasSessionToken(r) {
         // fmt.Println("found session")
 
         // session data is stored in cookie
         err := accessClaims.ParseRefreshClaimsFromSession(r)
         if err != nil {
           // fmt.Println(err)
-          render.Render(w, r, app.ErrUnauthorized)
+          render.Render(w, r, auth.ErrUnauthorized)
           return
         }
       } else {
         // fmt.Println("NO session found")
 
-        render.Render(w, r, app.ErrUnauthenticated)
+        render.Render(w, r, auth.ErrUnauthenticated)
         return
 
       }

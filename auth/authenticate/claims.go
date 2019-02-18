@@ -20,7 +20,6 @@ package authenticate
 
 import (
   "errors"
-  "fmt"
   "net/http"
 
   jwt "github.com/dgrijalva/jwt-go"
@@ -146,12 +145,12 @@ func (ret *AccessClaims) WriteToSession(w http.ResponseWriter, r *http.Request) 
   if err != nil {
     panic("hh")
   }
-  fmt.Println("Wrote ret.LoginID", ret.LoginID)
+  // fmt.Println("Wrote ret.LoginID", ret.LoginID)
   err = session.PutBool(w, "root", ret.Root)
   if err != nil {
     panic("hh")
   }
-  fmt.Println("Wrote ret.Root", ret.Root)
+  // fmt.Println("Wrote ret.Root", ret.Root)
 
   return w
 }

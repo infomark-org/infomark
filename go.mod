@@ -1,6 +1,7 @@
 module github.com/cgtuebingen/infomark-backend
 
 require (
+	github.com/DATA-DOG/go-txdb v0.1.2
 	github.com/Microsoft/go-winio v0.4.11 // indirect
 	github.com/alexedwards/scs v1.4.0
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
@@ -24,7 +25,7 @@ require (
 	github.com/spf13/cobra v0.0.3
 	github.com/spf13/viper v1.3.1
 	golang.org/x/crypto v0.0.0-20190103213133-ff983b9c42bc
-	golang.org/x/net v0.0.0-20181213202711-891ebc4b82d6
+	golang.org/x/net v0.0.0-20190213061140-3a22650c66bd
 	google.golang.org/appengine v1.4.0 // indirect
 	gopkg.in/guregu/null.v3 v3.4.0
 )

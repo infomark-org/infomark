@@ -19,7 +19,6 @@
 package authenticate
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
@@ -48,11 +47,11 @@ func HasSessionToken(r *http.Request) bool {
 
 	loginID, err := session.GetInt64("login_id")
 	if err != nil {
-		fmt.Println(err)
+		// fmt.Println(err)
 		return false
 	}
 
-	fmt.Println("loginID", loginID)
+	// fmt.Println("loginID", loginID)
 
 	if loginID == 0 {
 		return false

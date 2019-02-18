@@ -19,7 +19,10 @@
 package app
 
 import (
+	"fmt"
+
 	"github.com/cgtuebingen/infomark-backend/api/helper"
+	"github.com/cgtuebingen/infomark-backend/auth/authenticate"
 	"github.com/cgtuebingen/infomark-backend/database"
 	"github.com/cgtuebingen/infomark-backend/logging"
 	"github.com/franela/goblin"
@@ -30,7 +33,15 @@ import (
 	"testing"
 )
 
-func TestLogin(t *testing.T) {
+func DesterMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		fmt.Println("here")
+		next.ServeHTTP(w, r)
+		return
+	})
+}
+
+func TestAccount(t *testing.T) {
 
 	logger := logging.NewLogger()
 	g := goblin.Goblin(t)
@@ -42,50 +53,44 @@ func TestLogin(t *testing.T) {
 	}
 
 	userStore := database.NewUserStore(db)
-	auth := NewAuthResource(userStore)
+	rs := NewAccountResource(userStore)
 
-	g.Describe("LoginHandlers", func() {
-		g.It("Not existent user should fail", func() {
+	g.Describe("GetAccount", func() {
+		g.It("Should require valid claims", func() {
 
 			re := helper.Payload{
-				Data: helper.H{
-					"email":          "peter.zwegat@uni-tuebingen.de",
-					"plain_password": "",
-				},
+				Data:   helper.H{},
 				Method: "POST",
 			}
 
-			w := helper.SimulateRequest(re, auth.LoginHandler)
-			g.Assert(w.Code).Equal(http.StatusBadRequest)
+			w := helper.SimulateRequest(re, rs.GetHandler, authenticate.RequiredValidAccessClaims)
+			g.Assert(w.Code).Equal(http.StatusUnauthorized)
 		})
 
-		g.It("Wrong credentials should fail", func() {
+		g.It("Should return info when claims are invalid", func() {
 
 			re := helper.Payload{
-				Data: helper.H{
-					"email":          "test@uni-tuebingen.de",
-					"plain_password": "testOops",
-				},
-				Method: "POST",
+				Data:         helper.H{},
+				Method:       "POST",
+				AccessClaims: authenticate.NewAccessClaims(0, true), // 0 is invalid
 			}
 
-			w := helper.SimulateRequest(re, auth.LoginHandler)
-			g.Assert(w.Code).Equal(http.StatusBadRequest)
+			w := helper.SimulateRequest(re, rs.GetHandler, authenticate.RequiredValidAccessClaims)
+			g.Assert(w.Code).Equal(http.StatusUnauthorized)
 		})
 
-		g.It("Correct credentials should not fail", func() {
+		g.It("Should return info when claims are valid", func() {
 
 			re := helper.Payload{
-				Data: helper.H{
-					"email":          "test@uni-tuebingen.de",
-					"plain_password": "test",
-				},
-				Method: "POST",
+				Data:         helper.H{},
+				Method:       "POST",
+				AccessClaims: authenticate.NewAccessClaims(1, true),
 			}
 
-			w := helper.SimulateRequest(re, auth.LoginHandler)
+			w := helper.SimulateRequest(re, rs.GetHandler, authenticate.RequiredValidAccessClaims)
 			g.Assert(w.Code).Equal(http.StatusOK)
 		})
+
 	})
 
 }

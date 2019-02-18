@@ -36,6 +36,8 @@ import (
 
 const tagName = "db"
 
+var ReflectCaching = true
+
 type DB interface {
   Exec(query string, args ...interface{}) (sql.Result, error)
   Query(query string, args ...interface{}) (*sql.Rows, error)
@@ -98,11 +100,13 @@ var fieldsCacheMutex sync.Mutex
 // do some reflection on struct to parse "db" tags
 func parseStruct(objectType reflect.Type) (*structInfo, error) {
   // use caching to speed things up
-  fieldsCacheMutex.Lock()
-  defer fieldsCacheMutex.Unlock()
+  if ReflectCaching {
+    fieldsCacheMutex.Lock()
+    defer fieldsCacheMutex.Unlock()
 
-  if result, present := fieldsCache[objectType]; present {
-    return result, nil
+    if result, present := fieldsCache[objectType]; present {
+      return result, nil
+    }
   }
 
   // make sure dst is a non-nil pointer to a struct

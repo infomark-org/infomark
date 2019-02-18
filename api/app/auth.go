@@ -170,11 +170,11 @@ func (rs *AuthResource) LoginHandler(w http.ResponseWriter, r *http.Request) {
 
   // does the password match?
   if !auth.CheckPasswordHash(data.PlainPassword, potentialUser.EncryptedPassword) {
-    render.Render(w, r, ErrBadRequestWithDetails(err))
+    render.Render(w, r, ErrBadRequestWithDetails(errors.New("credentials are wrong")))
     return
   }
 
-  fmt.Println(potentialUser.ConfirmEmailToken)
+  // fmt.Println(potentialUser.ConfirmEmailToken)
   // is the email address confirmed?
   if potentialUser.ConfirmEmailToken.Valid {
     // Valid is true if String is not NULL
@@ -189,8 +189,8 @@ func (rs *AuthResource) LoginHandler(w http.ResponseWriter, r *http.Request) {
     Root:    potentialUser.Root,
   }
 
-  fmt.Println("WRITE accessClaims.LoginID", accessClaims.LoginID)
-  fmt.Println("WRITE accessClaims.Root", accessClaims.Root)
+  // fmt.Println("WRITE accessClaims.LoginID", accessClaims.LoginID)
+  // fmt.Println("WRITE accessClaims.Root", accessClaims.Root)
 
   w = accessClaims.WriteToSession(w, r)
 
@@ -278,9 +278,9 @@ func (rs *AuthResource) UpdatePasswordHandler(w http.ResponseWriter, r *http.Req
     return
   }
 
-  fmt.Println(user)
+  // fmt.Println(user)
   if err := rs.UserStore.Update(user); err != nil {
-    fmt.Println(err)
+    // fmt.Println(err)
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return
   }
@@ -310,7 +310,7 @@ func (rs *AuthResource) ConfirmEmailHandler(w http.ResponseWriter, r *http.Reque
 
   // token is ok
   user.ConfirmEmailToken = null.String{}
-  fmt.Println(user)
+  // fmt.Println(user)
   if err := rs.UserStore.Update(user); err != nil {
     fmt.Println(err)
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
