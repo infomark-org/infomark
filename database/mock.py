@@ -73,7 +73,7 @@ def create_course(name):
       ('description', 'Lorem Ipsum'),
       ('begins_at', time_stamp(datetime.datetime(2019, 2, 1, 1, 2, 3))),
       ('ends_at', time_stamp(datetime.datetime(2019, 7, 30, 23, 59, 59))),
-      ('required_points', fake.random_int(10, 100)),
+      ('required_percentage', fake.random_int(10, 100)),
   ])
 
   return data

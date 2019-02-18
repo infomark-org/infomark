@@ -55,8 +55,8 @@ func NewAPI(db *sqlx.DB) (*API, error) {
   user := NewUserResource(userStore)
   account := NewAccountResource(userStore)
   auth := NewAuthResource(userStore)
-  course := NewCourseResource(courseStore, sheetStore)
-  sheet := NewSheetResource(sheetStore, taskStore)
+  course := NewCourseResource(courseStore)
+  sheet := NewSheetResource(sheetStore)
   task := NewTaskResource(taskStore)
 
   api := &API{

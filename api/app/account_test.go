@@ -54,36 +54,42 @@ func TestAccount(t *testing.T) {
 	g.Describe("GetAccount", func() {
 		g.It("Should require valid claims", func() {
 
-			re := helper.Payload{
-				Data:   helper.H{},
-				Method: "POST",
-			}
-
-			w := helper.SimulateRequest(re, rs.GetHandler, authenticate.RequiredValidAccessClaims)
+			w := helper.SimulateRequest(
+				helper.Payload{
+					Data:   helper.H{},
+					Method: "POST",
+				},
+				rs.GetHandler,
+				authenticate.RequiredValidAccessClaims,
+			)
 			g.Assert(w.Code).Equal(http.StatusUnauthorized)
 		})
 
 		g.It("Should return info when claims are invalid", func() {
 
-			re := helper.Payload{
-				Data:         helper.H{},
-				Method:       "POST",
-				AccessClaims: authenticate.NewAccessClaims(0, true), // 0 is invalid
-			}
-
-			w := helper.SimulateRequest(re, rs.GetHandler, authenticate.RequiredValidAccessClaims)
+			w := helper.SimulateRequest(
+				helper.Payload{
+					Data:         helper.H{},
+					Method:       "POST",
+					AccessClaims: authenticate.NewAccessClaims(0, true), // 0 is invalid
+				},
+				rs.GetHandler,
+				authenticate.RequiredValidAccessClaims,
+			)
 			g.Assert(w.Code).Equal(http.StatusUnauthorized)
 		})
 
 		g.It("Should return info when claims are valid", func() {
 
-			re := helper.Payload{
-				Data:         helper.H{},
-				Method:       "POST",
-				AccessClaims: authenticate.NewAccessClaims(1, true),
-			}
-
-			w := helper.SimulateRequest(re, rs.GetHandler, authenticate.RequiredValidAccessClaims)
+			w := helper.SimulateRequest(
+				helper.Payload{
+					Data:         helper.H{},
+					Method:       "POST",
+					AccessClaims: authenticate.NewAccessClaims(1, true),
+				},
+				rs.GetHandler,
+				authenticate.RequiredValidAccessClaims,
+			)
 			g.Assert(w.Code).Equal(http.StatusOK)
 		})
 
