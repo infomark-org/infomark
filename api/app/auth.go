@@ -226,7 +226,7 @@ func (rs *AuthResource) RequestPasswordResetHandler(w http.ResponseWriter, r *ht
   rs.UserStore.Update(user)
 
   // Send Email to User
-  email, err := email.NewEmailFromTemplate(
+  msg, err := email.NewEmailFromTemplate(
     user.Email,
     "Password Reset Instructions",
     "request_password_token.en.txt",
@@ -240,8 +240,8 @@ func (rs *AuthResource) RequestPasswordResetHandler(w http.ResponseWriter, r *ht
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return
   }
-
-  err = email.Send()
+  err = email.DefaultMail.Send(msg)
+  // err = email.Send()
   if err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return

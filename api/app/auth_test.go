@@ -36,6 +36,7 @@ func TestLogin(t *testing.T) {
 	g := goblin.Goblin(t)
 
 	db, err := helper.TransactionDB()
+	defer db.Close()
 	if err != nil {
 		logger.WithField("module", "database").Error(err)
 		return
@@ -46,44 +47,46 @@ func TestLogin(t *testing.T) {
 
 	g.Describe("LoginHandlers", func() {
 		g.It("Not existent user should fail", func() {
-
-			re := helper.Payload{
-				Data: helper.H{
-					"email":          "peter.zwegat@uni-tuebingen.de",
-					"plain_password": "",
+			w := helper.SimulateRequest(
+				helper.Payload{
+					Data: helper.H{
+						"email":          "peter.zwegat@uni-tuebingen.de",
+						"plain_password": "",
+					},
+					Method: "POST",
 				},
-				Method: "POST",
-			}
-
-			w := helper.SimulateRequest(re, auth.LoginHandler)
+				auth.LoginHandler,
+			)
 			g.Assert(w.Code).Equal(http.StatusBadRequest)
 		})
 
 		g.It("Wrong credentials should fail", func() {
 
-			re := helper.Payload{
-				Data: helper.H{
-					"email":          "test@uni-tuebingen.de",
-					"plain_password": "testOops",
+			w := helper.SimulateRequest(
+				helper.Payload{
+					Data: helper.H{
+						"email":          "test@uni-tuebingen.de",
+						"plain_password": "testOops",
+					},
+					Method: "POST",
 				},
-				Method: "POST",
-			}
-
-			w := helper.SimulateRequest(re, auth.LoginHandler)
+				auth.LoginHandler,
+			)
 			g.Assert(w.Code).Equal(http.StatusBadRequest)
 		})
 
 		g.It("Correct credentials should not fail", func() {
 
-			re := helper.Payload{
-				Data: helper.H{
-					"email":          "test@uni-tuebingen.de",
-					"plain_password": "test",
+			w := helper.SimulateRequest(
+				helper.Payload{
+					Data: helper.H{
+						"email":          "test@uni-tuebingen.de",
+						"plain_password": "test",
+					},
+					Method: "POST",
 				},
-				Method: "POST",
-			}
-
-			w := helper.SimulateRequest(re, auth.LoginHandler)
+				auth.LoginHandler,
+			)
 			g.Assert(w.Code).Equal(http.StatusOK)
 		})
 	})

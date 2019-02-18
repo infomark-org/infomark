@@ -27,7 +27,7 @@ import (
   "time"
 
   "github.com/cgtuebingen/infomark-backend/api/app"
-  mymiddleware "github.com/cgtuebingen/infomark-backend/api/app/middleware"
+  "github.com/cgtuebingen/infomark-backend/auth/authenticate"
   "github.com/cgtuebingen/infomark-backend/logging"
   "github.com/go-chi/chi"
   "github.com/go-chi/chi/middleware"
@@ -105,7 +105,7 @@ func New() (*chi.Mux, error) {
 
       // protected routes
       r.Group(func(r chi.Router) {
-        r.Use(mymiddleware.RequiredValidAccessClaims)
+        r.Use(authenticate.RequiredValidAccessClaims)
 
         r.Route("/users", func(r chi.Router) {
           r.Get("/", appAPI.User.IndexHandler)

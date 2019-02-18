@@ -55,7 +55,7 @@ type accountInfo struct {
   PlainPassword string `json:"plain_password"`
 }
 
-// userAccountRequest is the request payload for account management.
+// userAccountRequest is the request payload for account management chaning name etc....
 type userAccountRequest struct {
   User    *model.User `json:"user"`
   Account accountInfo `json:"account"`
@@ -76,16 +76,18 @@ func newUserAccountResponse(p *model.User) *userAccountResponse {
 // Bind preprocesses a userAccountRequest.
 func (d *userAccountRequest) Bind(r *http.Request) error {
   // sending the id via request is invalid as the id should be submitted in the url
-  d.User.ID = 0
+  if d.User != nil {
+    d.User.ID = 0
 
-  d.User.FirstName = strings.TrimSpace(d.User.FirstName)
-  d.User.LastName = strings.TrimSpace(d.User.LastName)
+    d.User.FirstName = strings.TrimSpace(d.User.FirstName)
+    d.User.LastName = strings.TrimSpace(d.User.LastName)
 
-  // encrypt password
-  hash, err := auth.HashPassword(d.Account.PlainPassword)
-  d.User.EncryptedPassword = hash
-
-  return err
+    // encrypt password
+    hash, err := auth.HashPassword(d.Account.PlainPassword)
+    d.User.EncryptedPassword = hash
+    return err
+  }
+  return nil
 }
 
 // Render post-processes a userAccountResponse.
@@ -140,7 +142,7 @@ func (rs *AccountResource) CreateHandler(w http.ResponseWriter, r *http.Request)
 func sendConfirmEmailForUser(user *model.User) error {
   // send email
   // Send Email to User
-  email, err := email.NewEmailFromTemplate(
+  msg, err := email.NewEmailFromTemplate(
     user.Email,
     "Confirm Account Instructions",
     "confirm_email.en.txt",
@@ -154,7 +156,7 @@ func sendConfirmEmailForUser(user *model.User) error {
   if err != nil {
     return err
   }
-  err = email.Send()
+  err = email.DefaultMail.Send(msg)
   if err != nil {
     return err
   }
@@ -168,16 +170,46 @@ func (rs *AccountResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
 
-  // start from empty Request
-  data := &userAccountRequest{}
+  // make a backup of old data
+  oldUser, err := rs.UserStore.Get(accessClaims.LoginID)
+  if err != nil {
+    render.Render(w, r, ErrNotFound)
+    return
+  }
 
-  // parse JSON request into struct
+  // we gonna alter this struct
+  newUser, err := rs.UserStore.Get(accessClaims.LoginID)
+  if err != nil {
+    render.Render(w, r, ErrNotFound)
+    return
+  }
+
+  // start from database data
+  data := &userAccountRequest{User: newUser}
+
+  // update struct from JSON request
   if err := render.Bind(r, data); err != nil {
     render.Render(w, r, ErrBadRequestWithDetails(err))
     return
   }
 
-  data.User.ID = accessClaims.LoginID
+  // we require the account-part with at least one value
+  if data.Account.PlainPassword == "" {
+    render.Render(w, r, ErrBadRequestWithDetails(errors.New("plain_password in request is missing")))
+    return
+  }
+
+  // does the submitted password match with the current active password?
+  if !auth.CheckPasswordHash(data.Account.PlainPassword, newUser.EncryptedPassword) {
+    render.Render(w, r, ErrBadRequestWithDetails(errors.New("credentials are wrong")))
+    return
+  }
+
+  // we require the user-part with at least one value
+  if data.User == nil {
+    render.Render(w, r, ErrBadRequestWithDetails(errors.New("user data in request is missing")))
+    return
+  }
 
   // validate final model
   if err := data.User.Validate(); err != nil {
@@ -185,13 +217,7 @@ func (rs *AccountResource) EditHandler(w http.ResponseWriter, r *http.Request) {
     return
   }
 
-  dbUser, err := rs.UserStore.Get(data.User.ID)
-  if err != nil {
-    render.Render(w, r, ErrNotFound)
-    return
-  }
-
-  emailHasChanged := dbUser.Email != data.User.Email
+  emailHasChanged := newUser.Email != oldUser.Email
 
   // make sure email is valid
   if emailHasChanged {
@@ -199,7 +225,6 @@ func (rs *AccountResource) EditHandler(w http.ResponseWriter, r *http.Request) {
     data.User.ConfirmEmailToken = null.StringFrom(auth.GenerateToken(32))
   }
 
-  // TODO(patwie) verify userID
   if err := rs.UserStore.Update(data.User); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return
@@ -214,10 +239,13 @@ func (rs *AccountResource) EditHandler(w http.ResponseWriter, r *http.Request) {
     }
   }
 
+  render.Status(r, http.StatusNoContent)
+
   if err := render.Render(w, r, newUserAccountResponse(data.User)); err != nil {
     render.Render(w, r, ErrRender(err))
     return
   }
+
 }
 
 // Get is the endpoint for retrieving the specific user account from the requesting

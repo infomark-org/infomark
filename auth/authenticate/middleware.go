@@ -37,7 +37,6 @@ func RequiredValidAccessClaims(next http.Handler) http.Handler {
 
     // first we test the JWT autorization
     if HasHeaderToken(r) {
-      // fmt.Println("has token")
 
       // parse token from from header
       tokenStr := jwtauth.TokenFromHeader(r)

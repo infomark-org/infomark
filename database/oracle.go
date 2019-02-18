@@ -290,7 +290,7 @@ func (d *DatabaseSyntax) PackStatementData(src interface{}) ([]StatementData, er
 
     // field is in tag and current struct
     if present {
-      fmt.Println("field ", name, " is present")
+      // fmt.Println("field ", name, " is present") // DEBUG
       current_value := structVal.Field(field.index)
 
       if reflect.TypeOf(null_string) == current_value.Type() {
@@ -310,13 +310,13 @@ func (d *DatabaseSyntax) PackStatementData(src interface{}) ([]StatementData, er
         }
       } else {
         if !isZero(current_value) {
-          fmt.Println("field ", name, " is NOT zero", current_value.Interface())
+          // fmt.Println("field ", name, " is NOT zero", current_value.Interface()) // DEBUG
           statementDatas = append(statementDatas, StatementData{
             Column: name,
             Value:  current_value.Interface(), //current_value.Interface(),
           })
         } else {
-          fmt.Println("field ", name, " is zero", current_value.Interface(), current_value.Kind())
+          // fmt.Println("field ", name, " is zero", current_value.Interface(), current_value.Kind()) // DEBUG
         }
 
       }
@@ -352,7 +352,7 @@ func (d *DatabaseSyntax) PackStatementData(src interface{}) ([]StatementData, er
       // }
 
     } else {
-      fmt.Println("field ", name, " is NOT present")
+      // fmt.Println("field ", name, " is NOT present") // DEBUG
     }
 
   }
@@ -422,8 +422,8 @@ func (d *DatabaseSyntax) InsertStatement(table string, src interface{}) (string,
   }
   stmt += ";"
 
-  fmt.Println(stmt)
-  fmt.Println(values)
+  // fmt.Println(stmt)// DEBUG
+  // fmt.Println(values)// DEBUG
   return stmt, values, nil
 
 }
@@ -499,8 +499,8 @@ func (d *DatabaseSyntax) UpdateStatement(table string, id int64, src interface{}
 
   pairs_string := strings.Join(pairs, ", ")
   stmt := fmt.Sprintf("UPDATE %s SET %s WHERE id = $1;", table, pairs_string)
-  fmt.Println(stmt)
-  fmt.Println(values)
+  // fmt.Println(stmt)
+  // fmt.Println(values)
   return stmt, values, nil
 
 }

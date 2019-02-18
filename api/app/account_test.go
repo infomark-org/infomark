@@ -47,6 +47,7 @@ func TestAccount(t *testing.T) {
 	g := goblin.Goblin(t)
 
 	db, err := helper.TransactionDB()
+	defer db.Close()
 	if err != nil {
 		logger.WithField("module", "database").Error(err)
 		return
@@ -93,4 +94,76 @@ func TestAccount(t *testing.T) {
 
 	})
 
+}
+
+func TestAccountChanges(t *testing.T) {
+
+	logger := logging.NewLogger()
+	g := goblin.Goblin(t)
+
+	db, err := helper.TransactionDB()
+	defer db.Close()
+	if err != nil {
+		logger.WithField("module", "database").Error(err)
+		return
+	}
+
+	userStore := database.NewUserStore(db)
+	rs := NewAccountResource(userStore)
+
+	g.Describe("ChangeAccount", func() {
+		g.It("Should require valid access claims", func() {
+			w := helper.SimulateRequest(
+				helper.Payload{
+					Data: helper.H{
+						"first_name": "foo",
+						"last_name":  "bar",
+					},
+					Method: "PATCH",
+				},
+				rs.EditHandler,
+				authenticate.RequiredValidAccessClaims,
+			)
+			g.Assert(w.Code).Equal(http.StatusUnauthorized)
+		})
+
+		g.It("Should not change anything with incorrect password", func() {
+			w := helper.SimulateRequest(
+				helper.Payload{
+					Data: helper.H{
+						"account": helper.H{},
+						"user": helper.H{
+							"email": "foo",
+						},
+					},
+					Method:       "PATCH",
+					AccessClaims: authenticate.NewAccessClaims(1, true),
+				},
+				rs.EditHandler,
+				authenticate.RequiredValidAccessClaims,
+			)
+			g.Assert(w.Code).Equal(http.StatusBadRequest)
+		})
+
+		g.It("Should change email with correct password", func() {
+			w := helper.SimulateRequest(
+				helper.Payload{
+					Data: helper.H{
+						"account": helper.H{
+							"plain_password": "test",
+						},
+						"user": helper.H{
+							"email": "foo@uni-tuebingen.de",
+						},
+					},
+					Method:       "PATCH",
+					AccessClaims: authenticate.NewAccessClaims(1, true),
+				},
+				rs.EditHandler,
+				authenticate.RequiredValidAccessClaims,
+			)
+			fmt.Println(w)
+			g.Assert(w.Code).Equal(http.StatusNoContent)
+		})
+	})
 }

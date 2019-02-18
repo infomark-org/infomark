@@ -28,11 +28,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-type Emailer interface {
-	Send() error
-	LoadTemplate(file string, data map[string]string) error
-}
-
 type Email struct {
 	From    string
 	To      string
@@ -58,11 +53,44 @@ func NewEmailFromTemplate(toEmail string, subject string, file string, data map[
 	return NewEmail(toEmail, subject, body), nil
 }
 
-// SendEmail uses `sendmail` to deliver emails.
-func (e *Email) Send() error {
-	sendmail_binary := viper.GetString("sendmail_binary")
+type Emailer interface {
+	Send() error
+	LoadTemplate(file string, data map[string]string) error
+}
 
-	cmd := exec.Command(sendmail_binary, "-t")
+type SendMailer struct {
+	Binary string
+}
+type TerminalMailer struct {
+}
+
+func NewSendMailer() *SendMailer {
+	sendmail_binary := viper.GetString("sendmail_binary")
+	return &SendMailer{Binary: sendmail_binary}
+}
+
+func NewTerminalMailer() *TerminalMailer {
+	return &TerminalMailer{}
+}
+
+var SendMail = NewSendMailer()
+var TerminalMail = NewTerminalMailer()
+var DefaultMail = TerminalMail
+
+// TerminalMailer prints everything to stdout.
+func (sm *TerminalMailer) Send(e *Email) error {
+	fmt.Printf("From: %s\n", e.From)
+	fmt.Printf("To: %s\n", e.To)
+	fmt.Printf("Subject: %s\n", e.Subject)
+	fmt.Printf("\n")
+	fmt.Printf("%s", e.Body)
+	return nil
+}
+
+// SendMailer uses `sendmail` to deliver emails.
+func (sm *SendMailer) Send(e *Email) error {
+
+	cmd := exec.Command(sm.Binary, "-t")
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 

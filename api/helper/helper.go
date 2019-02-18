@@ -21,19 +21,29 @@ package helper
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 
 	txdb "github.com/DATA-DOG/go-txdb"
 	"github.com/cgtuebingen/infomark-backend/auth/authenticate"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	"github.com/spf13/viper"
 )
 
 // similar to gin.H as a neat wrapper
 type H map[string]interface{}
 
-var tokenManager, _ = authenticate.NewTokenAuth()
+var tokenManager *authenticate.TokenAuth
+
+func init() {
+	viper.SetConfigFile("/home/wieschol/git/github.com/cgtuebingen/infomark-go/infomark-backend/infomark-backend.yml")
+	viper.AutomaticEnv()
+	viper.ReadInConfig()
+	tokenManager, _ = authenticate.NewTokenAuth()
+}
 
 type Payload struct {
 	Data         H
@@ -64,6 +74,32 @@ func chain(endpoint http.Handler, middlewares ...func(http.Handler) http.Handler
 	return h
 }
 
+func formatRequest(r *http.Request) string {
+	// Create return string
+	var request []string
+	// Add the request string
+	url := fmt.Sprintf("%v %v %v", r.Method, r.URL, r.Proto)
+	request = append(request, url)
+	// Add the host
+	request = append(request, fmt.Sprintf("Host: %v", r.Host))
+	// Loop through headers
+	for name, headers := range r.Header {
+		name = strings.ToLower(name)
+		for _, h := range headers {
+			request = append(request, fmt.Sprintf("%v: %v", name, h))
+		}
+	}
+
+	// If this is a POST, add post data
+	if r.Method == "POST" {
+		r.ParseForm()
+		request = append(request, "\n")
+		request = append(request, r.Form.Encode())
+	}
+	// Return the request as a string
+	return strings.Join(request, "\n")
+}
+
 func SimulateRequest(
 	// payload interface{},
 	request Payload,
@@ -78,14 +114,15 @@ func SimulateRequest(
 	// If there are some access claims, we add them to the header.
 	// We currently support JWT only for testing.
 	if request.AccessClaims.LoginID != 0 {
-
 		// generate some valid claims
 		accessToken, err := tokenManager.CreateAccessJWT(authenticate.NewAccessClaims(1, true))
 		if err != nil {
 			panic(err)
 		}
-		r.Header.Set("Authorization", "Bearer "+accessToken)
+		r.Header.Add("Authorization", "Bearer "+accessToken)
 	}
+
+	// fmt.Println(formatRequest(r))
 
 	w := httptest.NewRecorder()
 

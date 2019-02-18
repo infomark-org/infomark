@@ -46,8 +46,6 @@ type API struct {
 
 // NewAPI configures and returns application API.
 func NewAPI(db *sqlx.DB) (*API, error) {
-  // accountStore := database.NewAccountStore(db)
-  // account := NewAccountResource(accountStore)
 
   userStore := database.NewUserStore(db)
   courseStore := database.NewCourseStore(db)
