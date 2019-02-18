@@ -154,6 +154,8 @@ func New() (*chi.Mux, error) {
 
         r.Get("/account", appAPI.Account.GetHandler)
         r.Get("/account/avatar", appAPI.Account.GetAvatarHandler)
+        r.Post("/account/avatar", appAPI.Account.UpdateAvatarHandler)
+        r.Delete("/account/avatar", appAPI.Account.DeleteAvatarHandler)
         r.Patch("/account", appAPI.Account.EditHandler)
 
         r.Delete("/auth/sessions", appAPI.Auth.LogoutHandler)

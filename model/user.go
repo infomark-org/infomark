@@ -34,7 +34,7 @@ type User struct {
 
 	FirstName     string      `json:"first_name" db:"first_name"`
 	LastName      string      `json:"last_name" db:"last_name"`
-	AvatarUrl     null.String `json:"avatar_path" db:"avatar_path"`
+	AvatarPath    null.String `json:"avatar_url" db:"avatar_path"`
 	Email         string      `json:"email" db:"email"`
 	StudentNumber string      `json:"student_number" db:"student_number"`
 	Semester      int         `json:"semester" db:"semester"`
