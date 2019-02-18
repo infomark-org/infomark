@@ -54,15 +54,20 @@ func NewEmailFromTemplate(toEmail string, subject string, file string, data map[
 }
 
 type Emailer interface {
-	Send() error
-	LoadTemplate(file string, data map[string]string) error
+	Send(e *Email) error
+	// LoadTemplate(file string, data map[string]string) error
 }
 
+// SendMailer uses the sendmail binary to send emails.
 type SendMailer struct {
 	Binary string
 }
-type TerminalMailer struct {
-}
+
+// TerminalMailer prints the email to the terminal.
+type TerminalMailer struct{}
+
+// VoidMailer does nothing (to keep the unit test outputs clean)
+type VoidMailer struct{}
 
 func NewSendMailer() *SendMailer {
 	sendmail_binary := viper.GetString("sendmail_binary")
@@ -73,9 +78,22 @@ func NewTerminalMailer() *TerminalMailer {
 	return &TerminalMailer{}
 }
 
+func NewVoidMailer() *VoidMailer {
+	return &VoidMailer{}
+}
+
 var SendMail = NewSendMailer()
 var TerminalMail = NewTerminalMailer()
-var DefaultMail = TerminalMail
+var VoidMail = NewVoidMailer()
+var DefaultMail Emailer
+
+func init() {
+	DefaultMail = TerminalMail
+}
+
+func (sm *VoidMailer) Send(e *Email) error {
+	return nil
+}
 
 // TerminalMailer prints everything to stdout.
 func (sm *TerminalMailer) Send(e *Email) error {
@@ -126,7 +144,7 @@ func (sm *SendMailer) Send(e *Email) error {
 // LoadAndFillTemplate loads a template and fills out the placeholders.
 func LoadAndFillTemplate(file string, data map[string]string) (string, error) {
 	root_dir := viper.GetString("email_templates_dir")
-	fmt.Println(root_dir)
+	// fmt.Println(root_dir)
 	t, err := template.ParseFiles(fmt.Sprintf("%s/%s", root_dir, file))
 	if err != nil {
 		return "", err

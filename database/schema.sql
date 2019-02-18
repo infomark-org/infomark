@@ -46,7 +46,7 @@ CREATE TABLE courses (
   description TEXT not null,
   begins_at TIMESTAMP not null,
   ends_at TIMESTAMP not null,
-  required_points INT  DEFAULT 0
+  required_percentage INT  DEFAULT 0
 );
 
 

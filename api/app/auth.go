@@ -310,7 +310,6 @@ func (rs *AuthResource) ConfirmEmailHandler(w http.ResponseWriter, r *http.Reque
 
   // token is ok
   user.ConfirmEmailToken = null.String{}
-  // fmt.Println(user)
   if err := rs.UserStore.Update(user); err != nil {
     fmt.Println(err)
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))

@@ -107,6 +107,17 @@ func (rs *AccountResource) CreateHandler(w http.ResponseWriter, r *http.Request)
     return
   }
 
+  // check password length
+  if len(data.Account.PlainPassword) < viper.GetInt("min_password_length") {
+    render.Render(w, r, ErrBadRequestWithDetails(errors.New("password to short")))
+    return
+  }
+
+  if data.User == nil {
+    render.Render(w, r, ErrBadRequestWithDetails(errors.New("user in request is missing")))
+    return
+  }
+
   // validate final model
   if err := data.User.Validate(); err != nil {
     render.Render(w, r, ErrBadRequestWithDetails(err))
@@ -211,6 +222,8 @@ func (rs *AccountResource) EditHandler(w http.ResponseWriter, r *http.Request) {
     return
   }
 
+  data.User.ID = accessClaims.LoginID
+
   // validate final model
   if err := data.User.Validate(); err != nil {
     render.Render(w, r, ErrBadRequestWithDetails(err))
@@ -224,6 +237,8 @@ func (rs *AccountResource) EditHandler(w http.ResponseWriter, r *http.Request) {
     // we will ask the user to confirm their email address
     data.User.ConfirmEmailToken = null.StringFrom(auth.GenerateToken(32))
   }
+
+  // fmt.Println(data.User)
 
   if err := rs.UserStore.Update(data.User); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))

@@ -19,29 +19,24 @@
 package app
 
 import (
-	"fmt"
-
 	"github.com/cgtuebingen/infomark-backend/api/helper"
+	authpkg "github.com/cgtuebingen/infomark-backend/auth"
 	"github.com/cgtuebingen/infomark-backend/auth/authenticate"
 	"github.com/cgtuebingen/infomark-backend/database"
+	"github.com/cgtuebingen/infomark-backend/email"
 	"github.com/cgtuebingen/infomark-backend/logging"
 	"github.com/franela/goblin"
 	_ "github.com/lib/pq"
+	"github.com/spf13/viper"
 
 	// "github.com/spf13/viper"
 	"net/http"
 	"testing"
 )
 
-func DesterMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("here")
-		next.ServeHTTP(w, r)
-		return
-	})
-}
-
 func TestAccount(t *testing.T) {
+
+	email.DefaultMail = email.VoidMail
 
 	logger := logging.NewLogger()
 	g := goblin.Goblin(t)
@@ -96,6 +91,108 @@ func TestAccount(t *testing.T) {
 
 }
 
+func TestAccountCreate(t *testing.T) {
+
+	logger := logging.NewLogger()
+	g := goblin.Goblin(t)
+
+	db, err := helper.TransactionDB()
+	defer db.Close()
+	if err != nil {
+		logger.WithField("module", "database").Error(err)
+		return
+	}
+
+	userStore := database.NewUserStore(db)
+	rs := NewAccountResource(userStore)
+
+	g.Describe("Account Creation", func() {
+		g.It("Should not create invalid accounts", func() {
+			w := helper.SimulateRequest(
+				helper.Payload{
+					Data: helper.H{
+						"account": helper.H{
+							"email":          "foo@test.com",
+							"plain_password": "bar",
+						},
+						"user": helper.H{
+							"first_name": "",
+						},
+					},
+					Method: "POST",
+				},
+				rs.CreateHandler,
+			)
+			g.Assert(w.Code).Equal(http.StatusBadRequest)
+		})
+
+		g.It("Should not create accounts with too short password", func() {
+
+			min_len := viper.GetInt("min_password_length")
+			too_short_password := authpkg.GenerateToken(min_len - 1)
+
+			w := helper.SimulateRequest(
+				helper.Payload{
+					Data: helper.H{
+						"account": helper.H{
+							"email":          "foo@test.com",
+							"plain_password": too_short_password,
+						},
+						"user": helper.H{
+							"first_name": "",
+						},
+					},
+					Method: "POST",
+				},
+				rs.CreateHandler,
+			)
+			g.Assert(w.Code).Equal(http.StatusBadRequest)
+		})
+
+		g.It("Should create valid accounts", func() {
+
+			min_len := viper.GetInt("min_password_length")
+			ok_password := authpkg.GenerateToken(min_len)
+
+			w := helper.SimulateRequest(
+				helper.Payload{
+					Data: helper.H{
+						"account": helper.H{
+							"email":          "foo@test.com",
+							"plain_password": ok_password,
+						},
+						"user": helper.H{
+							"first_name":     "Max",
+							"last_name":      "Mustermensch",
+							"semester":       2,
+							"student_number": "0815",
+							"subject":        "math",
+							"email":          "foo@test.com",
+						},
+					},
+					Method: "POST",
+				},
+				rs.CreateHandler,
+			)
+			g.Assert(w.Code).Equal(http.StatusOK)
+
+			user_after, err := userStore.FindByEmail("foo@test.com")
+			g.Assert(err).Equal(nil)
+			g.Assert(user_after.Email).Equal("foo@test.com")
+			g.Assert(user_after.ConfirmEmailToken.Valid).Equal(true)
+			g.Assert(user_after.FirstName).Equal("Max")
+			g.Assert(user_after.LastName).Equal("Mustermensch")
+			g.Assert(user_after.Semester).Equal(2)
+			g.Assert(user_after.StudentNumber).Equal("0815")
+			g.Assert(user_after.Subject).Equal("math")
+
+			password_valid := authpkg.CheckPasswordHash(ok_password, user_after.EncryptedPassword)
+			g.Assert(password_valid).Equal(true)
+
+		})
+	})
+}
+
 func TestAccountChanges(t *testing.T) {
 
 	logger := logging.NewLogger()
@@ -111,7 +208,7 @@ func TestAccountChanges(t *testing.T) {
 	userStore := database.NewUserStore(db)
 	rs := NewAccountResource(userStore)
 
-	g.Describe("ChangeAccount", func() {
+	g.Describe("Account Changes", func() {
 		g.It("Should require valid access claims", func() {
 			w := helper.SimulateRequest(
 				helper.Payload{
@@ -127,7 +224,7 @@ func TestAccountChanges(t *testing.T) {
 			g.Assert(w.Code).Equal(http.StatusUnauthorized)
 		})
 
-		g.It("Should not change anything with incorrect password", func() {
+		g.It("Should not change the account when incorrect password", func() {
 			w := helper.SimulateRequest(
 				helper.Payload{
 					Data: helper.H{
@@ -145,7 +242,12 @@ func TestAccountChanges(t *testing.T) {
 			g.Assert(w.Code).Equal(http.StatusBadRequest)
 		})
 
-		g.It("Should change email with correct password", func() {
+		g.It("Should change email with correct password and confirm token", func() {
+
+			user_before, err := userStore.Get(1)
+			g.Assert(err).Equal(nil)
+			g.Assert(user_before.Email).Equal("test@uni-tuebingen.de")
+
 			w := helper.SimulateRequest(
 				helper.Payload{
 					Data: helper.H{
@@ -153,7 +255,9 @@ func TestAccountChanges(t *testing.T) {
 							"plain_password": "test",
 						},
 						"user": helper.H{
-							"email": "foo@uni-tuebingen.de",
+							"email":      "foo@uni-tuebingen.de",
+							"first_name": "Peter",
+							"last_name":  "Zwegat",
 						},
 					},
 					Method:       "PATCH",
@@ -162,8 +266,14 @@ func TestAccountChanges(t *testing.T) {
 				rs.EditHandler,
 				authenticate.RequiredValidAccessClaims,
 			)
-			fmt.Println(w)
 			g.Assert(w.Code).Equal(http.StatusNoContent)
+
+			user_after, err := userStore.Get(1)
+			g.Assert(err).Equal(nil)
+			g.Assert(user_after.Email).Equal("foo@uni-tuebingen.de")
+			g.Assert(user_after.FirstName).Equal("Peter")
+			g.Assert(user_after.LastName).Equal("Zwegat")
+			g.Assert(user_after.ConfirmEmailToken.Valid).Equal(true)
 		})
 	})
 }
