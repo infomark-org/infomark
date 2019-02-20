@@ -20,7 +20,7 @@ package app
 
 import (
   "context"
-  _ "fmt"
+  "errors"
   "net/http"
   "strconv"
 
@@ -42,14 +42,12 @@ type CourseStore interface {
 // CourseResource specifies course management handler.
 type CourseResource struct {
   CourseStore CourseStore
-  SheetStore  SheetStore
 }
 
 // NewCourseResource create and returns a CourseResource.
-func NewCourseResource(courseStore CourseStore, sheetStore SheetStore) *CourseResource {
+func NewCourseResource(courseStore CourseStore) *CourseResource {
   return &CourseResource{
     CourseStore: courseStore,
-    SheetStore:  sheetStore,
   }
 }
 
@@ -64,17 +62,13 @@ type courseRequest struct {
 // courseResponse is the response payload for course management.
 type courseResponse struct {
   *model.Course
-  Sheets []model.Sheet `json:"sheets"`
 }
 
 // newCourseResponse creates a response from a course model.
 func (rs *CourseResource) newCourseResponse(p *model.Course) *courseResponse {
 
-  sheets, _ := rs.SheetStore.SheetsOfCourse(p, false)
-
   return &courseResponse{
     Course: p,
-    Sheets: sheets,
   }
 }
 
@@ -155,7 +149,11 @@ func (rs *CourseResource) CreateHandler(w http.ResponseWriter, r *http.Request) 
 // GetHandler is the enpoint for retrieving a specific course.
 func (rs *CourseResource) GetHandler(w http.ResponseWriter, r *http.Request) {
   // `course` is retrieved via middle-ware
-  course := r.Context().Value("course").(*model.Course)
+  course, ok := r.Context().Value("course").(*model.Course)
+  if !ok {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(errors.New("course context is missing")))
+    return
+  }
 
   // render JSON reponse
   if err := render.Render(w, r, rs.newCourseResponse(course)); err != nil {

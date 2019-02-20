@@ -20,7 +20,6 @@ package app
 
 import (
   "context"
-  "fmt"
   "net/http"
   "strconv"
 
@@ -46,10 +45,9 @@ type SheetResource struct {
 }
 
 // NewSheetResource create and returns a SheetResource.
-func NewSheetResource(sheetStore SheetStore, taskStore TaskStore) *SheetResource {
+func NewSheetResource(sheetStore SheetStore) *SheetResource {
   return &SheetResource{
     SheetStore: sheetStore,
-    TaskStore:  taskStore,
   }
 }
 
@@ -70,13 +68,8 @@ type SheetResponse struct {
 // newSheetResponse creates a response from a Sheet model.
 func (rs *SheetResource) newSheetResponse(p *model.Sheet) *SheetResponse {
 
-  tasks, err := rs.TaskStore.TasksOfSheet(p, false)
-  if err != nil {
-    fmt.Println(err)
-  }
   return &SheetResponse{
     Sheet: p,
-    Tasks: tasks,
   }
 }
 

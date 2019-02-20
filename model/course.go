@@ -30,11 +30,11 @@ type Course struct {
 	CreatedAt time.Time `json:"-" db:"created_at,omitempty"`
 	UpdatedAt time.Time `json:"-" db:"updated_at,omitempty"`
 
-	Name           string    `json:"name" db:"name"`
-	Description    string    `json:"description" db:"description"`
-	BeginsAt       time.Time `json:"begins_at" db:"begins_at"`
-	EndsAt         time.Time `json:"ends_at" db:"ends_at"`
-	RequiredPoints int       `json:"required_points" db:"required_points"`
+	Name               string    `json:"name" db:"name"`
+	Description        string    `json:"description" db:"description"`
+	BeginsAt           time.Time `json:"begins_at" db:"begins_at"`
+	EndsAt             time.Time `json:"ends_at" db:"ends_at"`
+	RequiredPercentage int       `json:"required_percentage" db:"required_percentage"`
 }
 
 func (d *Course) Validate() error {

@@ -123,15 +123,16 @@ func formatRequest(r *http.Request) string {
 	return strings.Join(request, "\n")
 }
 
-func SimulateRequest(
+func SimulateRequestWithURL(
 	// payload interface{},
 	request Payload,
+	url string,
 	apiHandler http.HandlerFunc,
 	middlewares ...func(http.Handler) http.Handler) *httptest.ResponseRecorder {
 
 	// create request
 	payload_json, _ := json.Marshal(request.Data)
-	r, _ := http.NewRequest(request.Method, "/", bytes.NewBuffer(payload_json))
+	r, _ := http.NewRequest(request.Method, url, bytes.NewBuffer(payload_json))
 	r.Header.Set("Content-Type", "application/json")
 
 	// If there are some access claims, we add them to the header.
@@ -154,6 +155,16 @@ func SimulateRequest(
 	handler.ServeHTTP(w, r)
 
 	return w
+}
+
+func SimulateRequest(
+	// payload interface{},
+	request Payload,
+	apiHandler http.HandlerFunc,
+	middlewares ...func(http.Handler) http.Handler) *httptest.ResponseRecorder {
+
+	return SimulateRequestWithURL(request, "/", apiHandler, middlewares...)
+
 }
 
 func init() {

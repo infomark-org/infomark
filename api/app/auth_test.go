@@ -20,17 +20,22 @@ package app
 
 import (
 	"github.com/cgtuebingen/infomark-backend/api/helper"
+	authpkg "github.com/cgtuebingen/infomark-backend/auth"
 	"github.com/cgtuebingen/infomark-backend/database"
+	"github.com/cgtuebingen/infomark-backend/email"
 	"github.com/cgtuebingen/infomark-backend/logging"
 	"github.com/franela/goblin"
 	_ "github.com/lib/pq"
+	null "gopkg.in/guregu/null.v3"
 
 	// "github.com/spf13/viper"
 	"net/http"
 	"testing"
 )
 
-func TestLogin(t *testing.T) {
+func TestAuthComponent(t *testing.T) {
+
+	email.DefaultMail = email.VoidMail
 
 	logger := logging.NewLogger()
 	g := goblin.Goblin(t)
@@ -45,7 +50,7 @@ func TestLogin(t *testing.T) {
 	userStore := database.NewUserStore(db)
 	auth := NewAuthResource(userStore)
 
-	g.Describe("LoginHandlers", func() {
+	g.Describe("LoginHandler", func() {
 		g.It("Not existent user should fail", func() {
 			w := helper.SimulateRequest(
 				helper.Payload{
@@ -88,6 +93,174 @@ func TestLogin(t *testing.T) {
 				auth.LoginHandler,
 			)
 			g.Assert(w.Code).Equal(http.StatusOK)
+		})
+
+		g.It("Password-Reset will fail if email invalid", func() {
+
+			w := helper.SimulateRequest(
+				helper.Payload{
+					Data: helper.H{
+						"email": "test2@uni-tuebingen.de",
+					},
+					Method: "POST",
+				},
+				auth.RequestPasswordResetHandler,
+			)
+			g.Assert(w.Code).Equal(http.StatusNotFound)
+		})
+
+		g.It("Invalid Password-Reset-Token is denied", func() {
+
+			w := helper.SimulateRequest(
+				helper.Payload{
+					Data: helper.H{
+						"reset_password_token": "invalid_string",
+						"plain_password":       "new_password",
+					},
+					Method: "POST",
+				},
+				auth.UpdatePasswordHandler,
+			)
+			g.Assert(w.Code).Equal(http.StatusBadRequest)
+
+			user_after, err := userStore.Get(1)
+			g.Assert(err).Equal(nil)
+			g.Assert(user_after.Email).Equal("test@uni-tuebingen.de")
+		})
+
+		g.It("Correct Password-Reset-Token will change password", func() {
+
+			// fetch reset token
+			user_before, err := userStore.Get(1)
+			g.Assert(err).Equal(nil)
+			g.Assert(user_before.Email).Equal("test@uni-tuebingen.de")
+			g.Assert(user_before.ResetPasswordToken.Valid).Equal(false)
+
+			w := helper.SimulateRequest(
+				helper.Payload{
+					Data: helper.H{
+						"email": "test@uni-tuebingen.de",
+					},
+					Method: "POST",
+				},
+				auth.RequestPasswordResetHandler,
+			)
+			g.Assert(w.Code).Equal(http.StatusOK)
+
+			user_after, err := userStore.Get(1)
+			g.Assert(err).Equal(nil)
+			g.Assert(user_after.Email).Equal("test@uni-tuebingen.de")
+			g.Assert(user_after.ResetPasswordToken.Valid).Equal(true)
+
+			// use token to reset password
+			w = helper.SimulateRequest(
+				helper.Payload{
+					Data: helper.H{
+						"reset_password_token": user_after.ResetPasswordToken.String,
+						"plain_password":       "new_password",
+						"email":                "test@uni-tuebingen.de",
+					},
+					Method: "POST",
+				},
+				auth.UpdatePasswordHandler,
+			)
+			g.Assert(w.Code).Equal(http.StatusOK)
+
+			user_after2, err := userStore.Get(1)
+			g.Assert(err).Equal(nil)
+			g.Assert(user_after2.Email).Equal("test@uni-tuebingen.de")
+			g.Assert(user_after2.ResetPasswordToken.Valid).Equal(false)
+
+			password_valid := authpkg.CheckPasswordHash("new_password", user_after2.EncryptedPassword)
+			g.Assert(password_valid).Equal(true)
+
+			password_valid = authpkg.CheckPasswordHash("test", user_after2.EncryptedPassword)
+			g.Assert(password_valid).Equal(false)
+
+		})
+
+		g.It("Should not login when confirm email token is set", func() {
+
+			// fetch reset token
+			user_before, err := userStore.Get(1)
+			g.Assert(err).Equal(nil)
+			g.Assert(user_before.Email).Equal("test@uni-tuebingen.de")
+			g.Assert(user_before.ConfirmEmailToken.Valid).Equal(false)
+			user_before.ConfirmEmailToken = null.StringFrom("testtoken")
+			userStore.Update(user_before)
+
+			w := helper.SimulateRequest(
+				helper.Payload{
+					Data: helper.H{
+						"email":          "test@uni-tuebingen.de",
+						"plain_password": "test",
+					},
+					Method: "POST",
+				},
+				auth.LoginHandler,
+			)
+			g.Assert(w.Code).Equal(http.StatusBadRequest)
+
+		})
+
+		g.It("Should not confirm email with incorrect token", func() {
+
+			// fetch reset token
+			user_before, err := userStore.Get(1)
+			g.Assert(err).Equal(nil)
+			g.Assert(user_before.Email).Equal("test@uni-tuebingen.de")
+			user_before.ConfirmEmailToken = null.StringFrom("testtoken")
+			userStore.Update(user_before)
+			g.Assert(user_before.ConfirmEmailToken.Valid).Equal(true)
+
+			// cannot login
+
+			w := helper.SimulateRequest(
+				helper.Payload{
+					Data: helper.H{
+						"email":              "test@uni-tuebingen.de",
+						"confirmation_token": "testtoken_wrong",
+					},
+					Method: "POST",
+				},
+				auth.ConfirmEmailHandler,
+			)
+			g.Assert(w.Code).Equal(http.StatusBadRequest)
+
+			user_after, err := userStore.Get(1)
+			g.Assert(err).Equal(nil)
+			g.Assert(user_after.ConfirmEmailToken.Valid).Equal(true)
+
+		})
+
+		g.It("Should confirm email with correct token", func() {
+
+			// fetch reset token
+			user_before, err := userStore.Get(1)
+			g.Assert(err).Equal(nil)
+			g.Assert(user_before.Email).Equal("test@uni-tuebingen.de")
+			user_before.ConfirmEmailToken = null.StringFrom("testtoken")
+			userStore.Update(user_before)
+			g.Assert(user_before.ConfirmEmailToken.Valid).Equal(true)
+
+			// cannot login
+
+			w := helper.SimulateRequest(
+				helper.Payload{
+					Data: helper.H{
+						"email":              "test@uni-tuebingen.de",
+						"confirmation_token": "testtoken",
+					},
+					Method: "POST",
+				},
+				auth.ConfirmEmailHandler,
+			)
+			g.Assert(w.Code).Equal(http.StatusOK)
+
+			user_after, err := userStore.Get(1)
+			g.Assert(err).Equal(nil)
+			g.Assert(user_after.ConfirmEmailToken.Valid).Equal(false)
+
 		})
 	})
 
