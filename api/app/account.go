@@ -96,6 +96,39 @@ func (u *userAccountResponse) Render(w http.ResponseWriter, r *http.Request) err
   return nil
 }
 
+// userAccountResponse is the response payload for account management.
+type userEnrollmentResponse struct {
+  CourseID int64 `json:"course_id"`
+  Role     int64 `json:"role"`
+}
+
+// newCourseResponse creates a response from a course model.
+func (rs *AccountResource) newUserEnrollmentResponse(p *model.Enrollment) *userEnrollmentResponse {
+
+  return &userEnrollmentResponse{
+    CourseID: p.CourseID,
+    Role:     p.Role,
+  }
+}
+
+func (rs *AccountResource) newUserEnrollmentsResponse(enrollments []model.Enrollment) []render.Renderer {
+  // https://stackoverflow.com/a/36463641/7443104
+  list := []render.Renderer{}
+  for k := range enrollments {
+    list = append(list, rs.newUserEnrollmentResponse(&enrollments[k]))
+  }
+
+  return list
+}
+
+// Render post-processes a userAccountResponse.
+func (u *userEnrollmentResponse) Render(w http.ResponseWriter, r *http.Request) error {
+  // nothing to hide
+  return nil
+}
+
+// .............................................................................
+
 // Post is the enpoint for creating a new user account.
 func (rs *AccountResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
   // start from empty Request
@@ -419,4 +452,17 @@ func (rs *AccountResource) DeleteAvatarHandler(w http.ResponseWriter, r *http.Re
   }
 
   render.Status(r, http.StatusOK)
+}
+
+func (rs *AccountResource) GetEnrollmentsHandler(w http.ResponseWriter, r *http.Request) {
+  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+
+  // get enrollments
+  enrollments, err := rs.UserStore.GetEnrollments(accessClaims.LoginID)
+
+  // render JSON reponse
+  if err = render.RenderList(w, r, rs.newUserEnrollmentsResponse(enrollments)); err != nil {
+    render.Render(w, r, ErrRender(err))
+    return
+  }
 }

@@ -40,6 +40,7 @@ type UserStore interface {
   GetAll() ([]model.User, error)
   Create(p *model.User) (*model.User, error)
   FindByEmail(email string) (*model.User, error)
+  GetEnrollments(userID int64) ([]model.Enrollment, error)
 }
 
 // UserResource specifies user management handler.

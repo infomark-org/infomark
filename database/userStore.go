@@ -66,3 +66,10 @@ func (s *UserStore) Update(p *model.User) error {
 func (s *UserStore) Delete(userID int64) error {
   return Delete(s.db, "users", userID)
 }
+
+func (s *UserStore) GetEnrollments(userID int64) ([]model.Enrollment, error) {
+  p := []model.Enrollment{}
+  err := s.db.Select(&p, "SELECT course_id, role from user_course WHERE user_id = $1;", userID)
+  return p, err
+
+}

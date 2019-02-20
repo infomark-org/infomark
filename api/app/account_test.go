@@ -19,12 +19,15 @@
 package app
 
 import (
+	"encoding/json"
+	// "fmt"
 	"github.com/cgtuebingen/infomark-backend/api/helper"
 	authpkg "github.com/cgtuebingen/infomark-backend/auth"
 	"github.com/cgtuebingen/infomark-backend/auth/authenticate"
 	"github.com/cgtuebingen/infomark-backend/database"
 	"github.com/cgtuebingen/infomark-backend/email"
 	"github.com/cgtuebingen/infomark-backend/logging"
+	"github.com/cgtuebingen/infomark-backend/model"
 	"github.com/franela/goblin"
 	_ "github.com/lib/pq"
 	"github.com/spf13/viper"
@@ -91,6 +94,42 @@ func TestAccount(t *testing.T) {
 				authenticate.RequiredValidAccessClaims,
 			)
 			g.Assert(w.Code).Equal(http.StatusOK)
+		})
+
+		g.It("Should get all enrollments", func() {
+
+			enrollments_expected, err := userStore.GetEnrollments(1)
+			g.Assert(err).Equal(nil)
+			w := helper.SimulateRequest(
+				helper.Payload{
+					Data:         helper.H{},
+					Method:       "GET",
+					AccessClaims: authenticate.NewAccessClaims(1, true),
+				},
+				rs.GetEnrollmentsHandler,
+				// set course
+				authenticate.RequiredValidAccessClaims,
+			)
+			g.Assert(w.Code).Equal(http.StatusOK)
+
+			enrollments_actual := []model.Enrollment{}
+			err = json.NewDecoder(w.Body).Decode(&enrollments_actual)
+			g.Assert(err).Equal(nil)
+
+			g.Assert(len(enrollments_actual)).Equal(len(enrollments_expected))
+
+			for j := 0; j < len(enrollments_expected); j++ {
+				// fmt.Println(j)
+				g.Assert(enrollments_actual[j].Role).Equal(enrollments_expected[j].Role)
+				g.Assert(enrollments_actual[j].CourseID).Equal(enrollments_expected[j].CourseID)
+				g.Assert(enrollments_actual[j].ID).Equal(int64(0))
+			}
+			// g.Assert(enrollments_actual.ID).Equal(course_expected.ID)
+			// g.Assert(enrollments_actual.Description).Equal(course_expected.Description)
+			// g.Assert(enrollments_actual.BeginsAt.Equal(course_expected.BeginsAt)).Equal(true)
+			// g.Assert(enrollments_actual.EndsAt.Equal(course_expected.EndsAt)).Equal(true)
+			// g.Assert(enrollments_actual.RequiredPercentage).Equal(course_expected.RequiredPercentage)
+
 		})
 
 	})

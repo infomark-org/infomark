@@ -21,6 +21,7 @@ package app
 import (
 	"context"
 	"encoding/json"
+	_ "fmt"
 	"io/ioutil"
 
 	"github.com/cgtuebingen/infomark-backend/api/helper"

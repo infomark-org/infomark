@@ -1,4 +1,3 @@
-
 url: http://info2.informatik.uni-tuebingen.de
 
 auth_jwt_secret: fffff
@@ -16,5 +15,5 @@ db_debug: false
 min_password_length: 7
 
 email_from: no-reply@info2.informatik.uni-tuebingen.de
-email_templates_dir: /home/wieschol/git/github.com/cgtuebingen/infomark-go/infomark-backend/email
+email_templates_dir: /home/patwie/git/github.com/cgtuebingen/infomark/infomark-backend/email
 sendmail_binary: /usr/sbin/sendmail
