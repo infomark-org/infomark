@@ -1,4 +1,4 @@
-// InfoMark - a platform for managing courses with
+// InfoMark - a platform for managing users with
 //            distributing exercise sheets and testing exercise submissions
 // Copyright (C) 2019  ComputerGraphics Tuebingen
 // Authors: Patrick Wieschollek
@@ -22,6 +22,7 @@ import (
 	"context"
 	"encoding/json"
 	_ "fmt"
+	// "io/ioutil"
 
 	"github.com/cgtuebingen/infomark-backend/api/helper"
 	"github.com/cgtuebingen/infomark-backend/auth/authenticate"
@@ -37,16 +38,7 @@ import (
 	"testing"
 )
 
-func SetCourseContext(course *model.Course) func(http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx := context.WithValue(r.Context(), "course", course)
-			next.ServeHTTP(w, r.WithContext(ctx))
-		})
-	}
-}
-
-func TestCourse(t *testing.T) {
+func TestUser(t *testing.T) {
 
 	email.DefaultMail = email.VoidMail
 
@@ -60,12 +52,11 @@ func TestCourse(t *testing.T) {
 		return
 	}
 
-	courseStore := database.NewCourseStore(db)
-	rs := NewCourseResource(courseStore)
+	userStore := database.NewUserStore(db)
+	rs := NewUserResource(userStore)
 
-	g.Describe("Course Query", func() {
+	g.Describe("User Query", func() {
 		g.It("Should require claims", func() {
-
 			w := helper.SimulateRequest(
 				helper.Payload{
 					Data:   helper.H{},
@@ -77,7 +68,9 @@ func TestCourse(t *testing.T) {
 			g.Assert(w.Code).Equal(http.StatusUnauthorized)
 		})
 
-		g.It("Should list all courses", func() {
+		g.It("Should list all users", func() {
+			users_expected, err := rs.UserStore.GetAll()
+			g.Assert(err).Equal(nil)
 
 			w := helper.SimulateRequest(
 				helper.Payload{
@@ -90,17 +83,16 @@ func TestCourse(t *testing.T) {
 			)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
-			courses_actual := []model.Course{}
-
-			err = json.NewDecoder(w.Body).Decode(&courses_actual)
+			users_actual := []model.User{}
+			err = json.NewDecoder(w.Body).Decode(&users_actual)
 			g.Assert(err).Equal(nil)
-			g.Assert(len(courses_actual)).Equal(2)
+			g.Assert(len(users_actual)).Equal(len(users_expected))
 
 		})
 
-		g.It("Should get a specific course", func() {
+		g.It("Should get a specific user", func() {
 
-			course_expected, err := courseStore.Get(1)
+			user_expected, err := userStore.Get(1)
 			g.Assert(err).Equal(nil)
 
 			w := helper.SimulateRequest(
@@ -110,22 +102,32 @@ func TestCourse(t *testing.T) {
 					AccessClaims: authenticate.NewAccessClaims(1, true),
 				},
 				rs.GetHandler,
-				// set course
+				// set user
 				authenticate.RequiredValidAccessClaims,
-				SetCourseContext(course_expected),
+				func(next http.Handler) http.Handler {
+					return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+						ctx := context.WithValue(r.Context(), "user", user_expected)
+						next.ServeHTTP(w, r.WithContext(ctx))
+					})
+				},
 			)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
-			course_actual := &model.Course{}
-			err = json.NewDecoder(w.Body).Decode(course_actual)
+			user_actual := &model.User{}
+			err = json.NewDecoder(w.Body).Decode(user_actual)
 			g.Assert(err).Equal(nil)
 
-			g.Assert(course_actual.ID).Equal(course_expected.ID)
-			g.Assert(course_actual.Name).Equal(course_expected.Name)
-			g.Assert(course_actual.Description).Equal(course_expected.Description)
-			g.Assert(course_actual.BeginsAt.Equal(course_expected.BeginsAt)).Equal(true)
-			g.Assert(course_actual.EndsAt.Equal(course_expected.EndsAt)).Equal(true)
-			g.Assert(course_actual.RequiredPercentage).Equal(course_expected.RequiredPercentage)
+			g.Assert(user_actual.ID).Equal(user_expected.ID)
+
+			g.Assert(user_actual.FirstName).Equal(user_expected.FirstName)
+			g.Assert(user_actual.FirstName).Equal(user_expected.FirstName)
+			g.Assert(user_actual.LastName).Equal(user_expected.LastName)
+			g.Assert(user_actual.AvatarPath).Equal(user_expected.AvatarPath)
+			g.Assert(user_actual.Email).Equal(user_expected.Email)
+			g.Assert(user_actual.StudentNumber).Equal(user_expected.StudentNumber)
+			g.Assert(user_actual.Semester).Equal(user_expected.Semester)
+			g.Assert(user_actual.Subject).Equal(user_expected.Subject)
+			g.Assert(user_actual.Language).Equal(user_expected.Language)
 
 		})
 

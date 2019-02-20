@@ -54,7 +54,7 @@ func TestAccount(t *testing.T) {
 	userStore := database.NewUserStore(db)
 	rs := NewAccountResource(userStore)
 
-	g.Describe("GetAccount", func() {
+	g.Describe("Account Query", func() {
 		g.It("Should require valid claims", func() {
 
 			w := helper.SimulateRequest(
@@ -107,7 +107,6 @@ func TestAccount(t *testing.T) {
 					AccessClaims: authenticate.NewAccessClaims(1, true),
 				},
 				rs.GetEnrollmentsHandler,
-				// set course
 				authenticate.RequiredValidAccessClaims,
 			)
 			g.Assert(w.Code).Equal(http.StatusOK)
@@ -115,7 +114,6 @@ func TestAccount(t *testing.T) {
 			enrollments_actual := []model.Enrollment{}
 			err = json.NewDecoder(w.Body).Decode(&enrollments_actual)
 			g.Assert(err).Equal(nil)
-
 			g.Assert(len(enrollments_actual)).Equal(len(enrollments_expected))
 
 			for j := 0; j < len(enrollments_expected); j++ {
@@ -124,12 +122,6 @@ func TestAccount(t *testing.T) {
 				g.Assert(enrollments_actual[j].CourseID).Equal(enrollments_expected[j].CourseID)
 				g.Assert(enrollments_actual[j].ID).Equal(int64(0))
 			}
-			// g.Assert(enrollments_actual.ID).Equal(course_expected.ID)
-			// g.Assert(enrollments_actual.Description).Equal(course_expected.Description)
-			// g.Assert(enrollments_actual.BeginsAt.Equal(course_expected.BeginsAt)).Equal(true)
-			// g.Assert(enrollments_actual.EndsAt.Equal(course_expected.EndsAt)).Equal(true)
-			// g.Assert(enrollments_actual.RequiredPercentage).Equal(course_expected.RequiredPercentage)
-
 		})
 
 	})
