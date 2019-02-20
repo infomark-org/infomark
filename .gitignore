@@ -22,3 +22,4 @@ infomark-worker
 local/
 database/mock.sql
 static/
+files/uploads/
