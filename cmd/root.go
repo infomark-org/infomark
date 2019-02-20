@@ -20,8 +20,10 @@ package cmd
 
 import (
 	"fmt"
+	"log"
 	"os"
 
+	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -49,25 +51,34 @@ func Execute() {
 }
 
 func init() {
-	cobra.OnInitialize(initConfig)
+	cobra.OnInitialize(InitConfig)
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is infomark-backend.yaml)")
-
-	// viper.SetDefault("database_url", "postgres://postgres:postgres@localhost:5432/gobase?sslmode=disable")
-
-	// RootCmd.PersistentFlags().Bool("db_debug", false, "log sql to console")
-	// viper.BindPFlag("db_debug", RootCmd.PersistentFlags().Lookup("db_debug"))
 }
 
-// initConfig reads in config file and ENV variables if set.
-func initConfig() {
-
+// SetConfigFile searchs for a config file named ".informark-backend.yml"
+// which is located in the home-directory if the flag "--config" is not present.
+func SetConfigFile() {
 	if cfgFile != "" {
 		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)
 	} else {
-		panic("Flag --config should be given")
+		// Find home directory.
+		home, err := homedir.Dir()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// Search config in home directory with name ".go-base" (without extension).
+		viper.AddConfigPath(home)
+		viper.SetConfigName(".infomark-backend")
 	}
 
+}
+
+// initConfig reads in config file and ENV variables if set.
+func InitConfig() {
+
+	SetConfigFile()
 	viper.AutomaticEnv()
 
 	// If a config file is found, read it in.

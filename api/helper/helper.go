@@ -22,6 +22,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -30,6 +31,7 @@ import (
 	"github.com/cgtuebingen/infomark-backend/auth/authenticate"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/viper"
 )
 
@@ -38,10 +40,31 @@ type H map[string]interface{}
 
 var tokenManager *authenticate.TokenAuth
 
-func init() {
-	viper.SetConfigFile("/home/wieschol/git/github.com/cgtuebingen/infomark-go/infomark-backend/infomark-backend.yml")
+func SetConfigFile() {
+
+	// Find home directory.
+	home, err := homedir.Dir()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Search config in home directory with name ".go-base" (without extension).
+	viper.AddConfigPath(home)
+	viper.SetConfigName(".infomark-backend")
+}
+func InitConfig() {
+
+	SetConfigFile()
 	viper.AutomaticEnv()
-	viper.ReadInConfig()
+
+	// If a config file is found, read it in.
+	if err := viper.ReadInConfig(); err == nil {
+		fmt.Println("Using config file:", viper.ConfigFileUsed())
+	}
+}
+
+func init() {
+	InitConfig()
 	tokenManager, _ = authenticate.NewTokenAuth()
 }
 
