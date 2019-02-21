@@ -60,3 +60,17 @@ func (s *CourseStore) Update(p *model.Course) error {
 func (s *CourseStore) Delete(courseID int64) error {
   return Delete(s.db, "courses", courseID)
 }
+
+func (s *CourseStore) Enroll(courseID int64, userID int64) error {
+  stmt := "INSERT INTO user_course (id, user_id, course_id, role) VALUES (DEFAULT, $1, $2, $3);"
+
+  _, err := s.db.Exec(stmt, userID, courseID, 0)
+  return err
+}
+
+func (s *CourseStore) Disenroll(courseID int64, userID int64) error {
+  stmt := "DELETE FROM user_course WHERE user_id = $1 AND course_id = $2;"
+
+  _, err := s.db.Exec(stmt, userID, courseID)
+  return err
+}

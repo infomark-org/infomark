@@ -124,6 +124,8 @@ func New() (*chi.Mux, error) {
             r.Get("/", appAPI.Course.GetHandler)
             r.Patch("/", appAPI.Course.EditHandler)
             r.Delete("/", appAPI.Course.DeleteHandler)
+            r.Post("/enrollments", appAPI.Course.EnrollHandler)
+            r.Delete("/enrollments", appAPI.Course.DisenrollHandler)
 
             r.Route("/sheets", func(r chi.Router) {
               r.Get("/", appAPI.Sheet.IndexHandler)

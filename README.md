@@ -8,8 +8,16 @@ The frontend is implemented in [Elm]((https://elm-lang.org/)) and is available [
 
 # Building
 
-1. Run `go build infomark-backend.go`
+1. Rrun `export GOPROXY="https://gomods.patwie.com"`
+2. Run `go build infomark-backend.go`
 
 # Running
 
 Read the docs [docs](./docs/)
+
+# Test
+
+```
+sudo docker build . -t infomark-test
+sudo docker run -it infomark-test bash
+```

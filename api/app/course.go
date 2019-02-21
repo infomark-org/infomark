@@ -24,6 +24,7 @@ import (
   "net/http"
   "strconv"
 
+  "github.com/cgtuebingen/infomark-backend/auth/authenticate"
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/go-chi/chi"
   "github.com/go-chi/render"
@@ -37,6 +38,8 @@ type CourseStore interface {
   GetAll() ([]model.Course, error)
   Create(p *model.Course) (*model.Course, error)
   Delete(courseID int64) error
+  Enroll(courseID int64, userID int64) error
+  Disenroll(courseID int64, userID int64) error
 }
 
 // CourseResource specifies course management handler.
@@ -191,6 +194,32 @@ func (rs *CourseResource) DeleteHandler(w http.ResponseWriter, r *http.Request) 
 
   // update database entry
   if err := rs.CourseStore.Delete(course.ID); err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
+  render.Status(r, http.StatusOK)
+}
+
+func (rs *CourseResource) EnrollHandler(w http.ResponseWriter, r *http.Request) {
+  course := r.Context().Value("course").(*model.Course)
+  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+
+  // update database entry
+  if err := rs.CourseStore.Enroll(course.ID, accessClaims.LoginID); err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
+  render.Status(r, http.StatusOK)
+}
+
+func (rs *CourseResource) DisenrollHandler(w http.ResponseWriter, r *http.Request) {
+  course := r.Context().Value("course").(*model.Course)
+  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+
+  // update database entry
+  if err := rs.CourseStore.Disenroll(course.ID, accessClaims.LoginID); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return
   }
