@@ -44,6 +44,18 @@ type API struct {
   Task    *TaskResource
 }
 
+type Stores struct {
+  Course CourseStore
+  User   UserStore
+}
+
+func NewStores(courseStore CourseStore, userStore UserStore) *Stores {
+  return &Stores{
+    Course: courseStore,
+    User:   userStore,
+  }
+}
+
 // NewAPI configures and returns application API.
 func NewAPI(db *sqlx.DB) (*API, error) {
 
@@ -52,10 +64,12 @@ func NewAPI(db *sqlx.DB) (*API, error) {
   sheetStore := database.NewSheetStore(db)
   taskStore := database.NewTaskStore(db)
 
+  stores := NewStores(courseStore, userStore)
+
   user := NewUserResource(userStore)
   account := NewAccountResource(userStore)
   auth := NewAuthResource(userStore)
-  course := NewCourseResource(courseStore)
+  course := NewCourseResource(stores)
   sheet := NewSheetResource(sheetStore)
   task := NewTaskResource(taskStore)
 

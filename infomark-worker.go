@@ -43,7 +43,7 @@ type DockerService struct {
 }
 
 func NewDockerService() *DockerService {
-  ctx := context.Background()
+    ctx := context.Background()
   cli, err := client.NewEnvClient()
   if err != nil {
     panic(err)

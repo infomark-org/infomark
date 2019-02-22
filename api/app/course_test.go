@@ -61,7 +61,10 @@ func TestCourse(t *testing.T) {
 	}
 
 	courseStore := database.NewCourseStore(db)
-	rs := NewCourseResource(courseStore)
+	userStore := database.NewUserStore(db)
+	stores := NewStores(courseStore, userStore)
+
+	rs := NewCourseResource(stores)
 
 	g.Describe("Course Query", func() {
 		g.It("Should require claims", func() {
@@ -100,7 +103,7 @@ func TestCourse(t *testing.T) {
 
 		g.It("Should get a specific course", func() {
 
-			course_expected, err := courseStore.Get(1)
+			course_expected, err := stores.Course.Get(1)
 			g.Assert(err).Equal(nil)
 
 			w := helper.SimulateRequest(

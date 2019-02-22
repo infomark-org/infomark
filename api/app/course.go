@@ -40,17 +40,18 @@ type CourseStore interface {
   Delete(courseID int64) error
   Enroll(courseID int64, userID int64) error
   Disenroll(courseID int64, userID int64) error
+  EnrolledUsers(course *model.Course) ([]model.UserCourseEnrollment, error)
 }
 
 // CourseResource specifies course management handler.
 type CourseResource struct {
-  CourseStore CourseStore
+  Stores *Stores
 }
 
 // NewCourseResource create and returns a CourseResource.
-func NewCourseResource(courseStore CourseStore) *CourseResource {
+func NewCourseResource(stores *Stores) *CourseResource {
   return &CourseResource{
-    CourseStore: courseStore,
+    Stores: stores,
   }
 }
 
@@ -104,10 +105,53 @@ func (body *courseResponse) Render(w http.ResponseWriter, r *http.Request) error
   return nil
 }
 
+// .............................................................................
+
+// courseResponse is the response payload for course management.
+type enrollmentResponse struct {
+  Role int64       `json:"role"`
+  User *model.User `json:"user"`
+}
+
+// Render post-processes a courseResponse.
+func (body *enrollmentResponse) Render(w http.ResponseWriter, r *http.Request) error {
+  return nil
+}
+
+// newCourseResponse creates a response from a course model.
+func (rs *CourseResource) newEnrollmentResponse(p *model.UserCourseEnrollment) *enrollmentResponse {
+
+  return &enrollmentResponse{
+    Role: p.Role,
+    User: &model.User{
+      ID:            p.UserID,
+      FirstName:     p.FirstName,
+      LastName:      p.LastName,
+      AvatarPath:    p.AvatarPath,
+      Email:         p.Email,
+      StudentNumber: p.StudentNumber,
+      Semester:      p.Semester,
+      Subject:       p.Subject,
+      Language:      p.Language,
+    },
+  }
+}
+
+func (rs *CourseResource) newEnrollmentListResponse(enrollments []model.UserCourseEnrollment) []render.Renderer {
+  list := []render.Renderer{}
+  for k := range enrollments {
+    list = append(list, rs.newEnrollmentResponse(&enrollments[k]))
+  }
+
+  return list
+}
+
+// .............................................................................
+
 // IndexHandler is the enpoint for retrieving all courses if claim.root is true.
 func (rs *CourseResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
   // fetch collection of courses from database
-  courses, err := rs.CourseStore.GetAll()
+  courses, err := rs.Stores.Course.GetAll()
 
   // render JSON reponse
   if err = render.RenderList(w, r, rs.newCourseListResponse(courses)); err != nil {
@@ -134,7 +178,7 @@ func (rs *CourseResource) CreateHandler(w http.ResponseWriter, r *http.Request) 
   }
 
   // create course entry in database
-  newCourse, err := rs.CourseStore.Create(data.Course)
+  newCourse, err := rs.Stores.Course.Create(data.Course)
   if err != nil {
     render.Render(w, r, ErrRender(err))
     return
@@ -181,7 +225,7 @@ func (rs *CourseResource) EditHandler(w http.ResponseWriter, r *http.Request) {
   }
 
   // update database entry
-  if err := rs.CourseStore.Update(data.Course); err != nil {
+  if err := rs.Stores.Course.Update(data.Course); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return
   }
@@ -193,8 +237,26 @@ func (rs *CourseResource) DeleteHandler(w http.ResponseWriter, r *http.Request) 
   course := r.Context().Value("course").(*model.Course)
 
   // update database entry
-  if err := rs.CourseStore.Delete(course.ID); err != nil {
+  if err := rs.Stores.Course.Delete(course.ID); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
+  render.Status(r, http.StatusOK)
+}
+
+func (rs *CourseResource) IndexEnrollmentsHandler(w http.ResponseWriter, r *http.Request) {
+  course := r.Context().Value("course").(*model.Course)
+
+  enrolledUsers, err := rs.Stores.Course.EnrolledUsers(course)
+  if err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
+  // render JSON reponse
+  if err = render.RenderList(w, r, rs.newEnrollmentListResponse(enrolledUsers)); err != nil {
+    render.Render(w, r, ErrRender(err))
     return
   }
 
@@ -206,8 +268,24 @@ func (rs *CourseResource) EnrollHandler(w http.ResponseWriter, r *http.Request) 
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
 
   // update database entry
-  if err := rs.CourseStore.Enroll(course.ID, accessClaims.LoginID); err != nil {
+  if err := rs.Stores.Course.Enroll(course.ID, accessClaims.LoginID); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
+  user, err := rs.Stores.User.Get(accessClaims.LoginID)
+  if err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
+  resp := &enrollmentResponse{
+    Role: 0,
+    User: user,
+  }
+
+  if err := render.Render(w, r, resp); err != nil {
+    render.Render(w, r, ErrRender(err))
     return
   }
 
@@ -219,7 +297,7 @@ func (rs *CourseResource) DisenrollHandler(w http.ResponseWriter, r *http.Reques
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
 
   // update database entry
-  if err := rs.CourseStore.Disenroll(course.ID, accessClaims.LoginID); err != nil {
+  if err := rs.Stores.Course.Disenroll(course.ID, accessClaims.LoginID); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return
   }
@@ -232,7 +310,7 @@ func (rs *CourseResource) DisenrollHandler(w http.ResponseWriter, r *http.Reques
 // the URL parameter `courseID` passed through as the request. In case
 // the Course could not be found, we stop here and return a 404.
 // We do NOT check whether the course is authorized to get this course.
-func (d *CourseResource) Context(next http.Handler) http.Handler {
+func (rs *CourseResource) Context(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
     // TODO: check permission if inquirer of request is allowed to access this course
     // Should be done via another middleware
@@ -246,7 +324,7 @@ func (d *CourseResource) Context(next http.Handler) http.Handler {
     }
 
     // find specific course in database
-    course, err := d.CourseStore.Get(course_id)
+    course, err := rs.Stores.Course.Get(course_id)
     if err != nil {
       render.Render(w, r, ErrNotFound)
       return

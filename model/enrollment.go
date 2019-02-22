@@ -18,15 +18,31 @@
 
 package model
 
-import (
+import null "gopkg.in/guregu/null.v3"
+
 // "time"
 // validation "github.com/go-ozzo/ozzo-validation"
-)
 
 type Enrollment struct {
 	ID       int64 `json:"id" db:"id"`
 	CourseID int64 `json:"course_id" db:"course_id"`
 	Role     int64 `json:"role" db:"role"`
+}
+
+type UserCourseEnrollment struct {
+	UserID int64 `json:"id" db:"id"`
+	// EnrollmentID int64 `json:"id" db:"id"`
+
+	Role int64 `json:"role" db:"role"`
+
+	FirstName     string      `json:"first_name" db:"first_name"`
+	LastName      string      `json:"last_name" db:"last_name"`
+	AvatarPath    null.String `json:"avatar_url" db:"avatar_path"`
+	Email         string      `json:"email" db:"email"`
+	StudentNumber string      `json:"student_number" db:"student_number"`
+	Semester      int         `json:"semester" db:"semester"`
+	Subject       string      `json:"subject" db:"subject"`
+	Language      string      `json:"language" db:"language"`
 }
 
 func (d *Enrollment) Validate() error {

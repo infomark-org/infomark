@@ -85,4 +85,13 @@ func InitConfig() {
 	if err := viper.ReadInConfig(); err == nil {
 		fmt.Println("Using config file:", viper.ConfigFileUsed())
 	}
+
+	// test if config is correct
+	// verify path to email templates
+	root_dir := viper.GetString("email_templates_dir")
+	filename := fmt.Sprintf("%s/%s", root_dir, "request_password_token.en.txt")
+	if _, err := os.Stat(filename); os.IsNotExist(err) {
+		fmt.Println("Path from config file .infomark-backend.yml to email templates is wrong!")
+		panic(err)
+	}
 }

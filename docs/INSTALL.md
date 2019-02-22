@@ -45,7 +45,7 @@ and open `http://localhost:8081/` in your browser.
 We need to upload the schema from `database/schema.sql` which contains the structure.
 
 ```
-PGPASSWORD=postgres psql -h 'localhost' -U 'postgres' -d 'infomark' -f database/schema.sql
+PGPASSWORD=postgres psql -h 'localhost' -U 'postgres' -d 'infomark' -f schema.sql
 ```
 
 ### Create Mockup
@@ -54,7 +54,7 @@ For debugging you might want to use a mockup. Generate a mockup by
 
 ```
 python3 mock.py
-PGPASSWORD=postgres psql -h 'localhost' -U 'postgres' -d 'infomark' -f database/mock.sql
+PGPASSWORD=postgres psql -h 'localhost' -U 'postgres' -d 'infomark' -f mock.sql
 ```
 
 ## InfoMark - Backend
