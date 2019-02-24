@@ -144,6 +144,12 @@ func New() (*chi.Mux, error) {
             r.Patch("/", appAPI.Sheet.EditHandler)
             r.Delete("/", appAPI.Sheet.DeleteHandler)
             r.Get("/tasks", appAPI.Task.IndexHandler)
+
+            r.Route("/file", func(r chi.Router) {
+              r.Get("/", appAPI.Sheet.GetFileHandler)
+              r.Post("/", appAPI.Sheet.ChangeFileHandler)
+
+            })
           })
         })
 

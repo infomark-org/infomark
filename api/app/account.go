@@ -21,12 +21,10 @@ package app
 import (
   "errors"
   "fmt"
-  "io"
   "net/http"
-  "os"
-  "strconv"
   "strings"
 
+  "github.com/cgtuebingen/infomark-backend/api/helper"
   "github.com/cgtuebingen/infomark-backend/auth"
   "github.com/cgtuebingen/infomark-backend/auth/authenticate"
   "github.com/cgtuebingen/infomark-backend/email"
@@ -318,20 +316,9 @@ func (rs *AccountResource) GetAvatarHandler(w http.ResponseWriter, r *http.Reque
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
   user, err := rs.Stores.User.Get(accessClaims.LoginID)
 
-  avatarPath := "files/avatar.jpg"
-
-  if user.AvatarPath.Valid {
-    // Valid is true if String is not NULL
-    avatarPath = fmt.Sprintf("files/uploads/%s", user.AvatarPath.String)
-  }
-
-  img, err := os.Open(avatarPath)
-  if err != nil {
+  if err = helper.NewAvatarHandle(user.ID).WriteToBody(w); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
   }
-  defer img.Close()
-  w.Header().Set("Content-Type", "image/jpeg") // <-- set the content-type header
-  io.Copy(w, img)
 
 }
 
@@ -346,75 +333,10 @@ func (rs *AccountResource) UpdateAvatarHandler(w http.ResponseWriter, r *http.Re
     return
   }
 
-  // receive avatar_data frm post request
-  if err := r.ParseMultipartForm(32 << 20); err != nil {
-    render.Render(w, r, ErrBadRequestWithDetails(err))
-    return
-  }
+  helper.NewAvatarHandle(user.ID).WriteToDisk(r, "avatar_data")
 
-  // we are interested in the field "avatar_data"
-  file, handler, err := r.FormFile("avatar_data")
-  if err != nil {
-    render.Render(w, r, ErrBadRequestWithDetails(err))
-    return
-  }
-  defer file.Close()
-  // fmt.Println("Handler Header", handler.Header)
-  // fmt.Println("Handler Header", handler.Header["Content-Type"][0])
-  // fmt.Println("Handler Header", handler.Filename)
-
-  switch handler.Header["Content-Type"][0] {
-  case "image/jpeg", "image/jpg":
-    fmt.Println("file ok")
-
-  // case "image/gif":
-  // case "image/png":
-  // case "application/pdf": // not image, but application !
-
-  default:
-    render.Render(w, r, ErrBadRequestWithDetails(errors.New("We support JPG/JPEG only.")))
-    return
-
-  }
-
-  if user.AvatarPath.Valid {
-    // Valid is true if String is not NULL
-    // remove old file
-    if err := os.Remove(fmt.Sprintf("files/uploads/%s", user.AvatarPath.String)); err != nil {
-      // TODO better logging
-      fmt.Println(err)
-      // render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-      // return
-    }
-  }
-
-  // the file will live under "files/uploads/"
-  targetFile := fmt.Sprintf("avatar-user-%s.jpg", strconv.FormatInt(user.ID, 10))
-  targetPath := fmt.Sprintf("./files/uploads/%s", targetFile)
-
-  // try to open new file
-  f, err := os.OpenFile(targetPath, os.O_WRONLY|os.O_CREATE, 0666)
-  if err != nil {
+  if err = helper.NewAvatarHandle(user.ID).WriteToBody(w); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-    return
-  }
-  defer f.Close()
-
-  // copy file from request
-  bt, err := io.Copy(f, file)
-  fmt.Println(bt)
-  if err != nil {
-    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-    return
-  }
-
-  // update database
-  user.AvatarPath = null.StringFrom(targetFile)
-
-  // update database entry
-  if err := rs.Stores.User.Update(user); err != nil {
-    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-    return
   }
 
   render.Status(r, http.StatusCreated)
@@ -431,24 +353,8 @@ func (rs *AccountResource) DeleteAvatarHandler(w http.ResponseWriter, r *http.Re
     return
   }
 
-  if user.AvatarPath.Valid {
-    // Valid is true if String is not NULL
-    // remove old file
-    if err := os.Remove(fmt.Sprintf("files/uploads/%s", user.AvatarPath.String)); err != nil {
-      // TODO better logging
-      fmt.Println(err)
-      // render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-      // return
-    }
-  }
-
-  // update database
-  user.AvatarPath = null.String{}
-
-  // update database entry
-  if err := rs.Stores.User.Update(user); err != nil {
+  if err = helper.NewAvatarHandle(user.ID).Delete(); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-    return
   }
 
   render.Status(r, http.StatusNoContent)

@@ -195,6 +195,25 @@ func (rs *SheetResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
   render.Status(r, http.StatusNoContent)
 }
 
+func (rs *SheetResource) GetFileHandler(w http.ResponseWriter, r *http.Request) {
+  // always get a post
+  // Sheet := r.Context().Value("sheet").(*model.Sheet)
+
+  // avatarPath := fmt.Sprintf("files/uploads/%s", user.AvatarPath.String)
+
+  // img, err := os.Open(avatarPath)
+  // if err != nil {
+  //   render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+  // }
+}
+
+func (rs *SheetResource) ChangeFileHandler(w http.ResponseWriter, r *http.Request) {
+  // always get a post
+  // Sheet := r.Context().Value("sheet").(*model.Sheet)
+
+  // the file will be located
+}
+
 // .............................................................................
 // Context middleware is used to load an Sheet object from
 // the URL parameter `SheetID` passed through as the request. In case
