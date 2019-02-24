@@ -31,18 +31,6 @@ import (
   validation "github.com/go-ozzo/ozzo-validation"
 )
 
-// CourseStore specifies required database queries for course management.
-type CourseStore interface {
-  Get(courseID int64) (*model.Course, error)
-  Update(p *model.Course) error
-  GetAll() ([]model.Course, error)
-  Create(p *model.Course) (*model.Course, error)
-  Delete(courseID int64) error
-  Enroll(courseID int64, userID int64) error
-  Disenroll(courseID int64, userID int64) error
-  EnrolledUsers(course *model.Course) ([]model.UserCourseEnrollment, error)
-}
-
 // CourseResource specifies course management handler.
 type CourseResource struct {
   Stores *Stores
@@ -119,7 +107,7 @@ func (body *enrollmentResponse) Render(w http.ResponseWriter, r *http.Request) e
 }
 
 // newCourseResponse creates a response from a course model.
-func (rs *CourseResource) newEnrollmentResponse(p *model.UserCourseEnrollment) *enrollmentResponse {
+func (rs *CourseResource) newEnrollmentResponse(p *model.UserCourse) *enrollmentResponse {
 
   return &enrollmentResponse{
     Role: p.Role,
@@ -137,7 +125,7 @@ func (rs *CourseResource) newEnrollmentResponse(p *model.UserCourseEnrollment) *
   }
 }
 
-func (rs *CourseResource) newEnrollmentListResponse(enrollments []model.UserCourseEnrollment) []render.Renderer {
+func (rs *CourseResource) newEnrollmentListResponse(enrollments []model.UserCourse) []render.Renderer {
   list := []render.Renderer{}
   for k := range enrollments {
     list = append(list, rs.newEnrollmentResponse(&enrollments[k]))

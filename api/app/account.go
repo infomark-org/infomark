@@ -38,13 +38,13 @@ import (
 
 // AccountResource specifies user management handler.
 type AccountResource struct {
-  UserStore UserStore
+  Stores *Stores
 }
 
 // NewAccountResource create and returns a AccountResource.
-func NewAccountResource(userStore UserStore) *AccountResource {
+func NewAccountResource(stores *Stores) *AccountResource {
   return &AccountResource{
-    UserStore: userStore,
+    Stores: stores,
   }
 }
 
@@ -161,7 +161,7 @@ func (rs *AccountResource) CreateHandler(w http.ResponseWriter, r *http.Request)
   data.User.ConfirmEmailToken = null.StringFrom(auth.GenerateToken(32))
 
   // create user entry in database
-  newUser, err := rs.UserStore.Create(data.User)
+  newUser, err := rs.Stores.User.Create(data.User)
   if err != nil {
     render.Render(w, r, ErrRender(err))
     return
@@ -215,14 +215,14 @@ func (rs *AccountResource) EditHandler(w http.ResponseWriter, r *http.Request) {
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
 
   // make a backup of old data
-  oldUser, err := rs.UserStore.Get(accessClaims.LoginID)
+  oldUser, err := rs.Stores.User.Get(accessClaims.LoginID)
   if err != nil {
     render.Render(w, r, ErrNotFound)
     return
   }
 
   // we gonna alter this struct
-  newUser, err := rs.UserStore.Get(accessClaims.LoginID)
+  newUser, err := rs.Stores.User.Get(accessClaims.LoginID)
   if err != nil {
     render.Render(w, r, ErrNotFound)
     return
@@ -273,7 +273,7 @@ func (rs *AccountResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 
   // fmt.Println(data.User)
 
-  if err := rs.UserStore.Update(data.User); err != nil {
+  if err := rs.Stores.User.Update(data.User); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return
   }
@@ -300,7 +300,7 @@ func (rs *AccountResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 // identity.
 func (rs *AccountResource) GetHandler(w http.ResponseWriter, r *http.Request) {
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
-  user, err := rs.UserStore.Get(accessClaims.LoginID)
+  user, err := rs.Stores.User.Get(accessClaims.LoginID)
   if err != nil {
     render.Render(w, r, ErrNotFound)
     return
@@ -316,7 +316,7 @@ func (rs *AccountResource) GetHandler(w http.ResponseWriter, r *http.Request) {
 func (rs *AccountResource) GetAvatarHandler(w http.ResponseWriter, r *http.Request) {
 
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
-  user, err := rs.UserStore.Get(accessClaims.LoginID)
+  user, err := rs.Stores.User.Get(accessClaims.LoginID)
 
   avatarPath := "files/avatar.jpg"
 
@@ -340,7 +340,7 @@ func (rs *AccountResource) UpdateAvatarHandler(w http.ResponseWriter, r *http.Re
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
 
   // get current user
-  user, err := rs.UserStore.Get(accessClaims.LoginID)
+  user, err := rs.Stores.User.Get(accessClaims.LoginID)
   if err != nil {
     render.Render(w, r, ErrNotFound)
     return
@@ -412,7 +412,7 @@ func (rs *AccountResource) UpdateAvatarHandler(w http.ResponseWriter, r *http.Re
   user.AvatarPath = null.StringFrom(targetFile)
 
   // update database entry
-  if err := rs.UserStore.Update(user); err != nil {
+  if err := rs.Stores.User.Update(user); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return
   }
@@ -425,7 +425,7 @@ func (rs *AccountResource) DeleteAvatarHandler(w http.ResponseWriter, r *http.Re
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
 
   // get current user
-  user, err := rs.UserStore.Get(accessClaims.LoginID)
+  user, err := rs.Stores.User.Get(accessClaims.LoginID)
   if err != nil {
     render.Render(w, r, ErrNotFound)
     return
@@ -446,7 +446,7 @@ func (rs *AccountResource) DeleteAvatarHandler(w http.ResponseWriter, r *http.Re
   user.AvatarPath = null.String{}
 
   // update database entry
-  if err := rs.UserStore.Update(user); err != nil {
+  if err := rs.Stores.User.Update(user); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return
   }
@@ -458,7 +458,7 @@ func (rs *AccountResource) GetEnrollmentsHandler(w http.ResponseWriter, r *http.
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
 
   // get enrollments
-  enrollments, err := rs.UserStore.GetEnrollments(accessClaims.LoginID)
+  enrollments, err := rs.Stores.User.GetEnrollments(accessClaims.LoginID)
 
   // render JSON reponse
   if err = render.RenderList(w, r, rs.newUserEnrollmentsResponse(enrollments)); err != nil {

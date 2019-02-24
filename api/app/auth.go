@@ -37,13 +37,13 @@ import (
 
 // AuthResource specifies user management handler.
 type AuthResource struct {
-  UserStore UserStore
+  Stores *Stores
 }
 
 // NewAuthResource create and returns a AuthResource.
-func NewAuthResource(userStore UserStore) *AuthResource {
+func NewAuthResource(stores *Stores) *AuthResource {
   return &AuthResource{
-    UserStore: userStore,
+    Stores: stores,
   }
 }
 
@@ -162,7 +162,7 @@ func (rs *AuthResource) LoginHandler(w http.ResponseWriter, r *http.Request) {
   }
 
   // does such a user exists with request email adress?
-  potentialUser, err := rs.UserStore.FindByEmail(data.Email)
+  potentialUser, err := rs.Stores.User.FindByEmail(data.Email)
   if err != nil {
     render.Render(w, r, ErrBadRequestWithDetails(err))
     return
@@ -216,14 +216,14 @@ func (rs *AuthResource) RequestPasswordResetHandler(w http.ResponseWriter, r *ht
   }
 
   // does such a user exists with request email adress?
-  user, err := rs.UserStore.FindByEmail(data.Email)
+  user, err := rs.Stores.User.FindByEmail(data.Email)
   if err != nil {
     render.Render(w, r, ErrNotFound)
     return
   }
 
   user.ResetPasswordToken = null.StringFrom(auth.GenerateToken(32))
-  rs.UserStore.Update(user)
+  rs.Stores.User.Update(user)
 
   // Send Email to User
   msg, err := email.NewEmailFromTemplate(
@@ -258,7 +258,7 @@ func (rs *AuthResource) UpdatePasswordHandler(w http.ResponseWriter, r *http.Req
   }
 
   // does such a user exists with request email adress?
-  user, err := rs.UserStore.FindByEmail(data.Email)
+  user, err := rs.Stores.User.FindByEmail(data.Email)
   if err != nil {
     render.Render(w, r, ErrNotFound)
     return
@@ -279,7 +279,7 @@ func (rs *AuthResource) UpdatePasswordHandler(w http.ResponseWriter, r *http.Req
   }
 
   // fmt.Println(user)
-  if err := rs.UserStore.Update(user); err != nil {
+  if err := rs.Stores.User.Update(user); err != nil {
     // fmt.Println(err)
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return
@@ -296,7 +296,7 @@ func (rs *AuthResource) ConfirmEmailHandler(w http.ResponseWriter, r *http.Reque
   }
 
   // does such a user exists with request email adress?
-  user, err := rs.UserStore.FindByEmail(data.Email)
+  user, err := rs.Stores.User.FindByEmail(data.Email)
   if err != nil {
     render.Render(w, r, ErrNotFound)
     return
@@ -310,7 +310,7 @@ func (rs *AuthResource) ConfirmEmailHandler(w http.ResponseWriter, r *http.Reque
 
   // token is ok
   user.ConfirmEmailToken = null.String{}
-  if err := rs.UserStore.Update(user); err != nil {
+  if err := rs.Stores.User.Update(user); err != nil {
     fmt.Println(err)
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return
@@ -354,7 +354,7 @@ func (rs *AuthResource) RefreshAccessTokenHandler(w http.ResponseWriter, r *http
     fmt.Println("refreshClaims.AccessNotRefresh", refreshClaims.AccessNotRefresh)
 
     // everything ok
-    targetUser, err := rs.UserStore.Get(refreshClaims.LoginID)
+    targetUser, err := rs.Stores.User.Get(refreshClaims.LoginID)
     if err != nil {
       render.Render(w, r, ErrNotFound)
       return
@@ -389,7 +389,7 @@ func (rs *AuthResource) RefreshAccessTokenHandler(w http.ResponseWriter, r *http
     }
 
     // does such a user exists with request email adress?
-    potentialUser, err := rs.UserStore.FindByEmail(data.Email)
+    potentialUser, err := rs.Stores.User.FindByEmail(data.Email)
     if err != nil {
       render.Render(w, r, ErrNotFound)
       return

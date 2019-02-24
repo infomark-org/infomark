@@ -25,7 +25,6 @@ import (
 
 	"github.com/cgtuebingen/infomark-backend/api/helper"
 	"github.com/cgtuebingen/infomark-backend/auth/authenticate"
-	"github.com/cgtuebingen/infomark-backend/database"
 	"github.com/cgtuebingen/infomark-backend/email"
 	"github.com/cgtuebingen/infomark-backend/logging"
 	"github.com/cgtuebingen/infomark-backend/model"
@@ -60,10 +59,7 @@ func TestCourse(t *testing.T) {
 		return
 	}
 
-	courseStore := database.NewCourseStore(db)
-	userStore := database.NewUserStore(db)
-	stores := NewStores(courseStore, userStore)
-
+	stores := NewStores(db)
 	rs := NewCourseResource(stores)
 
 	g.Describe("Course Query", func() {
@@ -131,6 +127,96 @@ func TestCourse(t *testing.T) {
 			g.Assert(course_actual.RequiredPercentage).Equal(course_expected.RequiredPercentage)
 
 		})
+
+	})
+
+}
+
+func TestCourseCreation(t *testing.T) {
+
+	email.DefaultMail = email.VoidMail
+
+	logger := logging.NewLogger()
+	g := goblin.Goblin(t)
+
+	db, err := helper.TransactionDB()
+	defer db.Close()
+	if err != nil {
+		logger.WithField("module", "database").Error(err)
+		return
+	}
+
+	stores := NewStores(db)
+	rs := NewCourseResource(stores)
+
+	g.Describe("Course Query", func() {
+		g.It("Should require claims", func() {
+
+			w := helper.SimulateRequest(
+				helper.Payload{
+					Data:   helper.H{},
+					Method: "GET",
+				},
+				rs.IndexHandler,
+				authenticate.RequiredValidAccessClaims,
+			)
+			g.Assert(w.Code).Equal(http.StatusUnauthorized)
+		})
+
+		g.It("Should list all courses", func() {
+
+			w := helper.SimulateRequest(
+				helper.Payload{
+					Data:         helper.H{},
+					Method:       "GET",
+					AccessClaims: authenticate.NewAccessClaims(1, true),
+				},
+				rs.IndexHandler,
+				authenticate.RequiredValidAccessClaims,
+			)
+			g.Assert(w.Code).Equal(http.StatusOK)
+
+			courses_actual := []model.Course{}
+
+			err = json.NewDecoder(w.Body).Decode(&courses_actual)
+			g.Assert(err).Equal(nil)
+			g.Assert(len(courses_actual)).Equal(2)
+
+		})
+
+		g.It("Should get a specific course", func() {
+
+			course_expected, err := stores.Course.Get(1)
+			g.Assert(err).Equal(nil)
+
+			w := helper.SimulateRequest(
+				helper.Payload{
+					Data:         helper.H{},
+					Method:       "GET",
+					AccessClaims: authenticate.NewAccessClaims(1, true),
+				},
+				rs.GetHandler,
+				// set course
+				authenticate.RequiredValidAccessClaims,
+				SetCourseContext(course_expected),
+			)
+			g.Assert(w.Code).Equal(http.StatusOK)
+
+			course_actual := &model.Course{}
+			err = json.NewDecoder(w.Body).Decode(course_actual)
+			g.Assert(err).Equal(nil)
+
+			g.Assert(course_actual.ID).Equal(course_expected.ID)
+			g.Assert(course_actual.Name).Equal(course_expected.Name)
+			g.Assert(course_actual.Description).Equal(course_expected.Description)
+			g.Assert(course_actual.BeginsAt.Equal(course_expected.BeginsAt)).Equal(true)
+			g.Assert(course_actual.EndsAt.Equal(course_expected.EndsAt)).Equal(true)
+			g.Assert(course_actual.RequiredPercentage).Equal(course_expected.RequiredPercentage)
+
+		})
+
+	})
+	g.Describe("Course Create", func() {
 
 	})
 

@@ -33,25 +33,15 @@ import (
   "github.com/go-ozzo/ozzo-validation/is"
 )
 
-// UserStore specifies required database queries for user management.
-type UserStore interface {
-  Get(userID int64) (*model.User, error)
-  Update(p *model.User) error
-  GetAll() ([]model.User, error)
-  Create(p *model.User) (*model.User, error)
-  FindByEmail(email string) (*model.User, error)
-  GetEnrollments(userID int64) ([]model.Enrollment, error)
-}
-
 // UserResource specifies user management handler.
 type UserResource struct {
-  UserStore UserStore
+  Stores *Stores
 }
 
 // NewUserResource create and returns a UserResource.
-func NewUserResource(userStore UserStore) *UserResource {
+func NewUserResource(stores *Stores) *UserResource {
   return &UserResource{
-    UserStore: userStore,
+    Stores: stores,
   }
 }
 
@@ -146,7 +136,7 @@ func (rs *UserResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
   }
 
   // fetch collection of users from database
-  users, err := rs.UserStore.GetAll()
+  users, err := rs.Stores.User.GetAll()
 
   // render JSON reponse
   if err = render.RenderList(w, r, newUserListResponse(users)); err != nil {
@@ -196,7 +186,7 @@ func (rs *UserResource) EditHandler(w http.ResponseWriter, r *http.Request) {
   }
 
   // update database entry
-  if err := rs.UserStore.Update(data.User); err != nil {
+  if err := rs.Stores.User.Update(data.User); err != nil {
     render.Render(w, r, ErrInternalServerError)
     return
   }
@@ -223,7 +213,7 @@ func (d *UserResource) Context(next http.Handler) http.Handler {
     }
 
     // find specific user in database
-    user, err := d.UserStore.Get(user_id)
+    user, err := d.Stores.User.Get(user_id)
     if err != nil {
       render.Render(w, r, ErrNotFound)
       return

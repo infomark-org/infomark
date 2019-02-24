@@ -29,7 +29,7 @@ type Enrollment struct {
 	Role     int64 `json:"role" db:"role"`
 }
 
-type UserCourseEnrollment struct {
+type UserCourse struct {
 	UserID int64 `json:"id" db:"id"`
 	// EnrollmentID int64 `json:"id" db:"id"`
 

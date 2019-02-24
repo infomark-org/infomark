@@ -24,7 +24,6 @@ import (
 	"github.com/cgtuebingen/infomark-backend/api/helper"
 	authpkg "github.com/cgtuebingen/infomark-backend/auth"
 	"github.com/cgtuebingen/infomark-backend/auth/authenticate"
-	"github.com/cgtuebingen/infomark-backend/database"
 	"github.com/cgtuebingen/infomark-backend/email"
 	"github.com/cgtuebingen/infomark-backend/logging"
 	"github.com/cgtuebingen/infomark-backend/model"
@@ -51,8 +50,8 @@ func TestAccount(t *testing.T) {
 		return
 	}
 
-	userStore := database.NewUserStore(db)
-	rs := NewAccountResource(userStore)
+	stores := NewStores(db)
+	rs := NewAccountResource(stores)
 
 	g.Describe("Account Query", func() {
 		g.It("Should require valid claims", func() {
@@ -98,7 +97,7 @@ func TestAccount(t *testing.T) {
 
 		g.It("Should get all enrollments", func() {
 
-			enrollments_expected, err := userStore.GetEnrollments(1)
+			enrollments_expected, err := stores.User.GetEnrollments(1)
 			g.Assert(err).Equal(nil)
 			w := helper.SimulateRequest(
 				helper.Payload{
@@ -140,8 +139,8 @@ func TestAccountCreate(t *testing.T) {
 		return
 	}
 
-	userStore := database.NewUserStore(db)
-	rs := NewAccountResource(userStore)
+	stores := NewStores(db)
+	rs := NewAccountResource(stores)
 
 	g.Describe("Account Creation", func() {
 		g.It("Should not create invalid accounts", func() {
@@ -213,7 +212,7 @@ func TestAccountCreate(t *testing.T) {
 			)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
-			user_after, err := userStore.FindByEmail("foo@test.com")
+			user_after, err := stores.User.FindByEmail("foo@test.com")
 			g.Assert(err).Equal(nil)
 			g.Assert(user_after.Email).Equal("foo@test.com")
 			g.Assert(user_after.ConfirmEmailToken.Valid).Equal(true)
@@ -242,8 +241,8 @@ func TestAccountChanges(t *testing.T) {
 		return
 	}
 
-	userStore := database.NewUserStore(db)
-	rs := NewAccountResource(userStore)
+	stores := NewStores(db)
+	rs := NewAccountResource(stores)
 
 	g.Describe("Account Changes", func() {
 		g.It("Should require valid access claims", func() {
@@ -281,7 +280,7 @@ func TestAccountChanges(t *testing.T) {
 
 		g.It("Should change email with correct password and confirm token", func() {
 
-			user_before, err := userStore.Get(1)
+			user_before, err := stores.User.Get(1)
 			g.Assert(err).Equal(nil)
 			g.Assert(user_before.Email).Equal("test@uni-tuebingen.de")
 
@@ -305,7 +304,7 @@ func TestAccountChanges(t *testing.T) {
 			)
 			g.Assert(w.Code).Equal(http.StatusNoContent)
 
-			user_after, err := userStore.Get(1)
+			user_after, err := stores.User.Get(1)
 			g.Assert(err).Equal(nil)
 			g.Assert(user_after.Email).Equal("foo@uni-tuebingen.de")
 			g.Assert(user_after.FirstName).Equal("Peter")

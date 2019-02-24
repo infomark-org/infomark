@@ -73,8 +73,8 @@ func (s *CourseStore) Disenroll(courseID int64, userID int64) error {
   return err
 }
 
-func (s *CourseStore) EnrolledUsers(course *model.Course) ([]model.UserCourseEnrollment, error) {
-  p := []model.UserCourseEnrollment{}
+func (s *CourseStore) EnrolledUsers(course *model.Course) ([]model.UserCourse, error) {
+  p := []model.UserCourse{}
 
   err := s.db.Select(&p, `
     SELECT

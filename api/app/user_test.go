@@ -22,11 +22,11 @@ import (
 	"context"
 	"encoding/json"
 	_ "fmt"
+
 	// "io/ioutil"
 
 	"github.com/cgtuebingen/infomark-backend/api/helper"
 	"github.com/cgtuebingen/infomark-backend/auth/authenticate"
-	"github.com/cgtuebingen/infomark-backend/database"
 	"github.com/cgtuebingen/infomark-backend/email"
 	"github.com/cgtuebingen/infomark-backend/logging"
 	"github.com/cgtuebingen/infomark-backend/model"
@@ -52,8 +52,8 @@ func TestUser(t *testing.T) {
 		return
 	}
 
-	userStore := database.NewUserStore(db)
-	rs := NewUserResource(userStore)
+	stores := NewStores(db)
+	rs := NewUserResource(stores)
 
 	g.Describe("User Query", func() {
 		g.It("Should require claims", func() {
@@ -69,7 +69,7 @@ func TestUser(t *testing.T) {
 		})
 
 		g.It("Should list all users", func() {
-			users_expected, err := rs.UserStore.GetAll()
+			users_expected, err := rs.Stores.User.GetAll()
 			g.Assert(err).Equal(nil)
 
 			w := helper.SimulateRequest(
@@ -92,7 +92,7 @@ func TestUser(t *testing.T) {
 
 		g.It("Should get a specific user", func() {
 
-			user_expected, err := userStore.Get(1)
+			user_expected, err := rs.Stores.User.Get(1)
 			g.Assert(err).Equal(nil)
 
 			w := helper.SimulateRequest(

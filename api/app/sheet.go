@@ -28,26 +28,15 @@ import (
   "github.com/go-chi/render"
 )
 
-// SheetStore specifies required database queries for Sheet management.
-type SheetStore interface {
-  Get(SheetID int64) (*model.Sheet, error)
-  Update(p *model.Sheet) error
-  GetAll() ([]model.Sheet, error)
-  Create(p *model.Sheet) (*model.Sheet, error)
-  Delete(SheetID int64) error
-  SheetsOfCourse(course *model.Course, only_active bool) ([]model.Sheet, error)
-}
-
 // SheetResource specifies Sheet management handler.
 type SheetResource struct {
-  SheetStore SheetStore
-  TaskStore  TaskStore
+  Stores *Stores
 }
 
 // NewSheetResource create and returns a SheetResource.
-func NewSheetResource(sheetStore SheetStore) *SheetResource {
+func NewSheetResource(stores *Stores) *SheetResource {
   return &SheetResource{
-    SheetStore: sheetStore,
+    Stores: stores,
   }
 }
 
@@ -107,7 +96,7 @@ func (rs *SheetResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
   // we use middle to detect whether there is a course given
 
   course := r.Context().Value("course").(*model.Course)
-  sheets, err = rs.SheetStore.SheetsOfCourse(course, false)
+  sheets, err = rs.Stores.Sheet.SheetsOfCourse(course, false)
 
   // render JSON reponse
   if err = render.RenderList(w, r, rs.newSheetListResponse(sheets)); err != nil {
@@ -134,7 +123,7 @@ func (rs *SheetResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
   }
 
   // create Sheet entry in database
-  newSheet, err := rs.SheetStore.Create(data.Sheet)
+  newSheet, err := rs.Stores.Sheet.Create(data.Sheet)
   if err != nil {
     render.Render(w, r, ErrRender(err))
     return
@@ -177,7 +166,7 @@ func (rs *SheetResource) EditHandler(w http.ResponseWriter, r *http.Request) {
   }
 
   // update database entry
-  if err := rs.SheetStore.Update(data.Sheet); err != nil {
+  if err := rs.Stores.Sheet.Update(data.Sheet); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return
   }
@@ -189,7 +178,7 @@ func (rs *SheetResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
   Sheet := r.Context().Value("Sheet").(*model.Sheet)
 
   // update database entry
-  if err := rs.SheetStore.Delete(Sheet.ID); err != nil {
+  if err := rs.Stores.Sheet.Delete(Sheet.ID); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return
   }
@@ -216,7 +205,7 @@ func (d *SheetResource) Context(next http.Handler) http.Handler {
     }
 
     // find specific Sheet in database
-    Sheet, err := d.SheetStore.Get(Sheet_id)
+    Sheet, err := d.Stores.Sheet.Get(Sheet_id)
     if err != nil {
       render.Render(w, r, ErrNotFound)
       return

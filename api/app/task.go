@@ -28,25 +28,15 @@ import (
   "github.com/go-chi/render"
 )
 
-// TaskStore specifies required database queries for Task management.
-type TaskStore interface {
-  Get(TaskID int64) (*model.Task, error)
-  Update(p *model.Task) error
-  GetAll() ([]model.Task, error)
-  Create(p *model.Task) (*model.Task, error)
-  Delete(TaskID int64) error
-  TasksOfSheet(Sheet *model.Sheet, only_active bool) ([]model.Task, error)
-}
-
 // TaskResource specifies Task management handler.
 type TaskResource struct {
-  TaskStore TaskStore
+  Stores *Stores
 }
 
 // NewTaskResource create and returns a TaskResource.
-func NewTaskResource(TaskStore TaskStore) *TaskResource {
+func NewTaskResource(stores *Stores) *TaskResource {
   return &TaskResource{
-    TaskStore: TaskStore,
+    Stores: stores,
   }
 }
 
@@ -105,7 +95,7 @@ func (rs *TaskResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
   var err error
   // we use middle to detect whether there is a course given
   sheet := r.Context().Value("sheet").(*model.Sheet)
-  Tasks, err = rs.TaskStore.TasksOfSheet(sheet, false)
+  Tasks, err = rs.Stores.Task.TasksOfSheet(sheet, false)
 
   // render JSON reponse
   if err = render.RenderList(w, r, rs.newTaskListResponse(Tasks)); err != nil {
@@ -132,7 +122,7 @@ func (rs *TaskResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
   }
 
   // create Task entry in database
-  newTask, err := rs.TaskStore.Create(data.Task)
+  newTask, err := rs.Stores.Task.Create(data.Task)
   if err != nil {
     render.Render(w, r, ErrRender(err))
     return
@@ -175,7 +165,7 @@ func (rs *TaskResource) EditHandler(w http.ResponseWriter, r *http.Request) {
   }
 
   // update database entry
-  if err := rs.TaskStore.Update(data.Task); err != nil {
+  if err := rs.Stores.Task.Update(data.Task); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return
   }
@@ -187,7 +177,7 @@ func (rs *TaskResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
   Task := r.Context().Value("Task").(*model.Task)
 
   // update database entry
-  if err := rs.TaskStore.Delete(Task.ID); err != nil {
+  if err := rs.Stores.Task.Delete(Task.ID); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return
   }
@@ -214,7 +204,7 @@ func (d *TaskResource) Context(next http.Handler) http.Handler {
     }
 
     // find specific Task in database
-    Task, err := d.TaskStore.Get(Task_id)
+    Task, err := d.Stores.Task.Get(Task_id)
     if err != nil {
       render.Render(w, r, ErrNotFound)
       return

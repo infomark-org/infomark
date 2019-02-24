@@ -23,6 +23,7 @@ import (
 
   "github.com/cgtuebingen/infomark-backend/database"
   "github.com/cgtuebingen/infomark-backend/logging"
+  "github.com/cgtuebingen/infomark-backend/model"
   "github.com/jmoiron/sqlx"
   "github.com/sirupsen/logrus"
 )
@@ -33,6 +34,47 @@ const (
   ctxAccount ctxKey = iota
   ctxProfile
 )
+
+type UserStore interface {
+  Get(userID int64) (*model.User, error)
+  Update(p *model.User) error
+  GetAll() ([]model.User, error)
+  Create(p *model.User) (*model.User, error)
+  FindByEmail(email string) (*model.User, error)
+  GetEnrollments(userID int64) ([]model.Enrollment, error)
+}
+
+// CourseStore specifies required database queries for course management.
+type CourseStore interface {
+  Get(courseID int64) (*model.Course, error)
+  Update(p *model.Course) error
+  GetAll() ([]model.Course, error)
+  Create(p *model.Course) (*model.Course, error)
+  Delete(courseID int64) error
+  Enroll(courseID int64, userID int64) error
+  Disenroll(courseID int64, userID int64) error
+  EnrolledUsers(course *model.Course) ([]model.UserCourse, error)
+}
+
+// SheetStore specifies required database queries for Sheet management.
+type SheetStore interface {
+  Get(SheetID int64) (*model.Sheet, error)
+  Update(p *model.Sheet) error
+  GetAll() ([]model.Sheet, error)
+  Create(p *model.Sheet) (*model.Sheet, error)
+  Delete(SheetID int64) error
+  SheetsOfCourse(course *model.Course, only_active bool) ([]model.Sheet, error)
+}
+
+// TaskStore specifies required database queries for Task management.
+type TaskStore interface {
+  Get(TaskID int64) (*model.Task, error)
+  Update(p *model.Task) error
+  GetAll() ([]model.Task, error)
+  Create(p *model.Task) (*model.Task, error)
+  Delete(TaskID int64) error
+  TasksOfSheet(Sheet *model.Sheet, only_active bool) ([]model.Task, error)
+}
 
 // API provides application resources and handlers.
 type API struct {
@@ -47,39 +89,32 @@ type API struct {
 type Stores struct {
   Course CourseStore
   User   UserStore
+  Sheet  SheetStore
+  Task   TaskStore
 }
 
-func NewStores(courseStore CourseStore, userStore UserStore) *Stores {
+func NewStores(db *sqlx.DB) *Stores {
+
   return &Stores{
-    Course: courseStore,
-    User:   userStore,
+    Course: database.NewCourseStore(db),
+    User:   database.NewUserStore(db),
+    Sheet:  database.NewSheetStore(db),
+    Task:   database.NewTaskStore(db),
   }
 }
 
 // NewAPI configures and returns application API.
 func NewAPI(db *sqlx.DB) (*API, error) {
 
-  userStore := database.NewUserStore(db)
-  courseStore := database.NewCourseStore(db)
-  sheetStore := database.NewSheetStore(db)
-  taskStore := database.NewTaskStore(db)
-
-  stores := NewStores(courseStore, userStore)
-
-  user := NewUserResource(userStore)
-  account := NewAccountResource(userStore)
-  auth := NewAuthResource(userStore)
-  course := NewCourseResource(stores)
-  sheet := NewSheetResource(sheetStore)
-  task := NewTaskResource(taskStore)
+  stores := NewStores(db)
 
   api := &API{
-    Account: account,
-    Auth:    auth,
-    User:    user,
-    Course:  course,
-    Sheet:   sheet,
-    Task:    task,
+    Account: NewAccountResource(stores),
+    Auth:    NewAuthResource(stores),
+    User:    NewUserResource(stores),
+    Course:  NewCourseResource(stores),
+    Sheet:   NewSheetResource(stores),
+    Task:    NewTaskResource(stores),
   }
   return api, nil
 }

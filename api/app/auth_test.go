@@ -19,9 +19,10 @@
 package app
 
 import (
+	"fmt"
+
 	"github.com/cgtuebingen/infomark-backend/api/helper"
-	authpkg "github.com/cgtuebingen/infomark-backend/auth"
-	"github.com/cgtuebingen/infomark-backend/database"
+	"github.com/cgtuebingen/infomark-backend/auth"
 	"github.com/cgtuebingen/infomark-backend/email"
 	"github.com/cgtuebingen/infomark-backend/logging"
 	"github.com/franela/goblin"
@@ -47,8 +48,8 @@ func TestAuthComponent(t *testing.T) {
 		return
 	}
 
-	userStore := database.NewUserStore(db)
-	auth := NewAuthResource(userStore)
+	stores := NewStores(db)
+	rs := NewAuthResource(stores)
 
 	g.Describe("LoginHandler", func() {
 		g.It("Not existent user should fail", func() {
@@ -60,7 +61,7 @@ func TestAuthComponent(t *testing.T) {
 					},
 					Method: "POST",
 				},
-				auth.LoginHandler,
+				rs.LoginHandler,
 			)
 			g.Assert(w.Code).Equal(http.StatusBadRequest)
 		})
@@ -75,7 +76,7 @@ func TestAuthComponent(t *testing.T) {
 					},
 					Method: "POST",
 				},
-				auth.LoginHandler,
+				rs.LoginHandler,
 			)
 			g.Assert(w.Code).Equal(http.StatusBadRequest)
 		})
@@ -90,7 +91,7 @@ func TestAuthComponent(t *testing.T) {
 					},
 					Method: "POST",
 				},
-				auth.LoginHandler,
+				rs.LoginHandler,
 			)
 			g.Assert(w.Code).Equal(http.StatusOK)
 		})
@@ -104,7 +105,7 @@ func TestAuthComponent(t *testing.T) {
 					},
 					Method: "POST",
 				},
-				auth.RequestPasswordResetHandler,
+				rs.RequestPasswordResetHandler,
 			)
 			g.Assert(w.Code).Equal(http.StatusNotFound)
 		})
@@ -119,11 +120,11 @@ func TestAuthComponent(t *testing.T) {
 					},
 					Method: "POST",
 				},
-				auth.UpdatePasswordHandler,
+				rs.UpdatePasswordHandler,
 			)
 			g.Assert(w.Code).Equal(http.StatusBadRequest)
 
-			user_after, err := userStore.Get(1)
+			user_after, err := stores.User.Get(1)
 			g.Assert(err).Equal(nil)
 			g.Assert(user_after.Email).Equal("test@uni-tuebingen.de")
 		})
@@ -131,7 +132,7 @@ func TestAuthComponent(t *testing.T) {
 		g.It("Correct Password-Reset-Token will change password", func() {
 
 			// fetch reset token
-			user_before, err := userStore.Get(1)
+			user_before, err := stores.User.Get(1)
 			g.Assert(err).Equal(nil)
 			g.Assert(user_before.Email).Equal("test@uni-tuebingen.de")
 			g.Assert(user_before.ResetPasswordToken.Valid).Equal(false)
@@ -143,11 +144,12 @@ func TestAuthComponent(t *testing.T) {
 					},
 					Method: "POST",
 				},
-				auth.RequestPasswordResetHandler,
+				rs.RequestPasswordResetHandler,
 			)
+			fmt.Println(w.Body)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
-			user_after, err := userStore.Get(1)
+			user_after, err := stores.User.Get(1)
 			g.Assert(err).Equal(nil)
 			g.Assert(user_after.Email).Equal("test@uni-tuebingen.de")
 			g.Assert(user_after.ResetPasswordToken.Valid).Equal(true)
@@ -162,19 +164,19 @@ func TestAuthComponent(t *testing.T) {
 					},
 					Method: "POST",
 				},
-				auth.UpdatePasswordHandler,
+				rs.UpdatePasswordHandler,
 			)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
-			user_after2, err := userStore.Get(1)
+			user_after2, err := stores.User.Get(1)
 			g.Assert(err).Equal(nil)
 			g.Assert(user_after2.Email).Equal("test@uni-tuebingen.de")
 			g.Assert(user_after2.ResetPasswordToken.Valid).Equal(false)
 
-			password_valid := authpkg.CheckPasswordHash("new_password", user_after2.EncryptedPassword)
+			password_valid := auth.CheckPasswordHash("new_password", user_after2.EncryptedPassword)
 			g.Assert(password_valid).Equal(true)
 
-			password_valid = authpkg.CheckPasswordHash("test", user_after2.EncryptedPassword)
+			password_valid = auth.CheckPasswordHash("test", user_after2.EncryptedPassword)
 			g.Assert(password_valid).Equal(false)
 
 		})
@@ -182,12 +184,12 @@ func TestAuthComponent(t *testing.T) {
 		g.It("Should not login when confirm email token is set", func() {
 
 			// fetch reset token
-			user_before, err := userStore.Get(1)
+			user_before, err := stores.User.Get(1)
 			g.Assert(err).Equal(nil)
 			g.Assert(user_before.Email).Equal("test@uni-tuebingen.de")
 			g.Assert(user_before.ConfirmEmailToken.Valid).Equal(false)
 			user_before.ConfirmEmailToken = null.StringFrom("testtoken")
-			userStore.Update(user_before)
+			stores.User.Update(user_before)
 
 			w := helper.SimulateRequest(
 				helper.Payload{
@@ -197,7 +199,7 @@ func TestAuthComponent(t *testing.T) {
 					},
 					Method: "POST",
 				},
-				auth.LoginHandler,
+				rs.LoginHandler,
 			)
 			g.Assert(w.Code).Equal(http.StatusBadRequest)
 
@@ -206,11 +208,11 @@ func TestAuthComponent(t *testing.T) {
 		g.It("Should not confirm email with incorrect token", func() {
 
 			// fetch reset token
-			user_before, err := userStore.Get(1)
+			user_before, err := stores.User.Get(1)
 			g.Assert(err).Equal(nil)
 			g.Assert(user_before.Email).Equal("test@uni-tuebingen.de")
 			user_before.ConfirmEmailToken = null.StringFrom("testtoken")
-			userStore.Update(user_before)
+			stores.User.Update(user_before)
 			g.Assert(user_before.ConfirmEmailToken.Valid).Equal(true)
 
 			// cannot login
@@ -223,11 +225,11 @@ func TestAuthComponent(t *testing.T) {
 					},
 					Method: "POST",
 				},
-				auth.ConfirmEmailHandler,
+				rs.ConfirmEmailHandler,
 			)
 			g.Assert(w.Code).Equal(http.StatusBadRequest)
 
-			user_after, err := userStore.Get(1)
+			user_after, err := stores.User.Get(1)
 			g.Assert(err).Equal(nil)
 			g.Assert(user_after.ConfirmEmailToken.Valid).Equal(true)
 
@@ -236,11 +238,11 @@ func TestAuthComponent(t *testing.T) {
 		g.It("Should confirm email with correct token", func() {
 
 			// fetch reset token
-			user_before, err := userStore.Get(1)
+			user_before, err := stores.User.Get(1)
 			g.Assert(err).Equal(nil)
 			g.Assert(user_before.Email).Equal("test@uni-tuebingen.de")
 			user_before.ConfirmEmailToken = null.StringFrom("testtoken")
-			userStore.Update(user_before)
+			stores.User.Update(user_before)
 			g.Assert(user_before.ConfirmEmailToken.Valid).Equal(true)
 
 			// cannot login
@@ -253,11 +255,11 @@ func TestAuthComponent(t *testing.T) {
 					},
 					Method: "POST",
 				},
-				auth.ConfirmEmailHandler,
+				rs.ConfirmEmailHandler,
 			)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
-			user_after, err := userStore.Get(1)
+			user_after, err := stores.User.Get(1)
 			g.Assert(err).Equal(nil)
 			g.Assert(user_after.ConfirmEmailToken.Valid).Equal(false)
 
