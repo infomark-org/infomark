@@ -37,3 +37,4 @@ files/uploads/tasks/*
 
 local
 local.go
+api.yaml
