@@ -21,6 +21,7 @@ package database
 import (
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/jmoiron/sqlx"
+  "github.com/lib/pq"
 )
 
 type CourseStore struct {
@@ -99,16 +100,40 @@ func (s *CourseStore) Disenroll(courseID int64, userID int64) error {
   return err
 }
 
-func (s *CourseStore) EnrolledUsers(course *model.Course) ([]model.UserCourse, error) {
+func (s *CourseStore) EnrolledUsers(
+  course *model.Course,
+  roleFilter []string,
+  filterFirstName string,
+  filterLastName string,
+  filterEmail string,
+  filterSubject string,
+  filterLanguage string) ([]model.UserCourse, error) {
   p := []model.UserCourse{}
 
+  // , u.avatar_path
   err := s.db.Select(&p, `
     SELECT
-      uc.role, u.id, u.first_name, u.last_name, u.avatar_path, u.email,
+      uc.role, u.id, u.first_name, u.last_name, u.email,
       u.student_number, u.semester, u.subject, u.language FROM user_course uc
     INNER JOIN
       users u ON uc.user_id = u.id
     WHERE
-      uc.course_id = $1;`, course.ID)
+      uc.course_id = $1
+    AND
+      uc.role = ANY($2)
+    AND
+      LOWER(u.first_name) LIKE $3
+    AND
+      LOWER(u.last_name) LIKE $4
+    AND
+      LOWER(u.email) LIKE $5
+    AND
+      LOWER(u.subject) LIKE $6
+    AND
+      LOWER(u.language) LIKE $7
+    `, course.ID, pq.Array(roleFilter),
+    filterFirstName, filterLastName, filterEmail,
+    filterSubject, filterLanguage,
+  )
   return p, err
 }

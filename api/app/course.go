@@ -24,6 +24,7 @@ import (
   "net/http"
   "strconv"
 
+  "github.com/cgtuebingen/infomark-backend/api/helper"
   "github.com/cgtuebingen/infomark-backend/auth/authenticate"
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/go-chi/chi"
@@ -244,9 +245,21 @@ func (rs *CourseResource) DeleteHandler(w http.ResponseWriter, r *http.Request) 
 }
 
 func (rs *CourseResource) IndexEnrollmentsHandler(w http.ResponseWriter, r *http.Request) {
+  // /courses/1/enrollments?roles=0,1
   course := r.Context().Value("course").(*model.Course)
 
-  enrolledUsers, err := rs.Stores.Course.EnrolledUsers(course)
+  // extract filters
+  filterRoles := helper.StringArrayFromUrl(r, "roles", []string{"0", "1", "2"})
+  filterFirstName := helper.StringFromUrl(r, "first_name", "%%")
+  filterLastName := helper.StringFromUrl(r, "last_name", "%%")
+  filterEmail := helper.StringFromUrl(r, "email", "%%")
+  filterSubject := helper.StringFromUrl(r, "subject", "%%")
+  filterLanguage := helper.StringFromUrl(r, "language", "%%")
+
+  enrolledUsers, err := rs.Stores.Course.EnrolledUsers(course,
+    filterRoles, filterFirstName, filterLastName, filterEmail,
+    filterSubject, filterLanguage,
+  )
   if err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return

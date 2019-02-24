@@ -29,6 +29,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	// "os"
@@ -42,9 +43,44 @@ import (
 	"github.com/spf13/viper"
 )
 
+func StringArrayToIntArray(values []string) ([]int, error) {
+	out := make([]int, len(values))
+	for index, value := range values {
+		v, err := strconv.Atoi(value)
+		if err != nil {
+			return nil, err
+		}
+		out[index] = v
+	}
+	return out, nil
+}
+
+func StringArrayFromUrl(r *http.Request, name string, standard []string) []string {
+	rolesFromURL, ok := r.URL.Query()[name]
+	if ok {
+		return strings.Split(rolesFromURL[0], ",")
+	} else {
+		return standard
+	}
+}
+
+func StringFromUrl(r *http.Request, name string, standard string) string {
+	rolesFromURL, ok := r.URL.Query()[name]
+	if ok {
+		if len(rolesFromURL[0]) > 0 {
+			return rolesFromURL[0]
+		} else {
+			return standard
+		}
+	} else {
+		return standard
+	}
+}
+
 // similar to gin.H as a neat wrapper
 type H map[string]interface{}
 
+// for testing convert any model to SimulateRequest
 func ToH(z interface{}) map[string]interface{} {
 	data, _ := json.Marshal(z)
 	var msgMapTemplate interface{}

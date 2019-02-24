@@ -53,7 +53,14 @@ type CourseStore interface {
   Delete(courseID int64) error
   Enroll(courseID int64, userID int64) error
   Disenroll(courseID int64, userID int64) error
-  EnrolledUsers(course *model.Course) ([]model.UserCourse, error)
+  EnrolledUsers(
+    course *model.Course,
+    roleFilter []string,
+    filterFirstName string,
+    filterLastName string,
+    filterEmail string,
+    filterSubject string,
+    filterLanguage string) ([]model.UserCourse, error)
 }
 
 // SheetStore specifies required database queries for Sheet management.

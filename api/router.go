@@ -166,14 +166,14 @@ func New() (*chi.Mux, error) {
             r.Delete("/", appAPI.Task.DeleteHandler)
           })
 
-          r.Route("/public_file", func(r chi.Router) {
-            r.Get("/", appAPI.Sheet.GetPublicTestFileHandler)
-            r.Post("/", appAPI.Sheet.ChangePublicTestFileHandler)
+          r.Route("/public_files", func(r chi.Router) {
+            r.Get("/", appAPI.Task.GetPublicTestFileHandler)
+            r.Post("/", appAPI.Task.ChangePublicTestFileHandler)
           })
 
-          r.Route("/private_file", func(r chi.Router) {
-            r.Get("/", appAPI.Sheet.GetPrivateTestFileHandler)
-            r.Post("/", appAPI.Sheet.ChangePrivateTestFileHandler)
+          r.Route("/private_files", func(r chi.Router) {
+            r.Get("/", appAPI.Task.GetPrivateTestFileHandler)
+            r.Post("/", appAPI.Task.ChangePrivateTestFileHandler)
           })
         })
 

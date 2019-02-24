@@ -29,6 +29,18 @@ def time_stamp(time):
   return time.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
 
 
+def random_language():
+  candidates = ["en", "de"]
+  idx = fake.random_int(0, len(candidates) - 1)
+  return candidates[idx]
+
+
+def random_subject():
+  candidates = ["math", "bioinfo", "info", "mediainfo", 'computer science']
+  idx = fake.random_int(0, len(candidates) - 1)
+  return candidates[idx]
+
+
 def create_user(fake, role='student'):
   first_name = fake.first_name()
   last_name = fake.last_name()
@@ -52,8 +64,8 @@ def create_user(fake, role='student'):
       ('email', email),
       ('student_number', fake.random_int(1000, 2000)),
       ('semester', fake.random_int(2, 8)),
-      ('subject', 'computer science'),
-      ('language', 'de'),
+      ('subject', random_subject()),
+      ('language', random_language()),
       ('encrypted_password', default_encrypted_password),
       ('reset_password_token', VAL.NULL),
       ('confirm_email_token', VAL.NULL),
@@ -264,4 +276,3 @@ if __name__ == "__main__":
 
     for el in task_sheet:
       f.write(to_statement('task_sheet', el))
-
