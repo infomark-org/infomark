@@ -20,6 +20,7 @@ package app
 
 import (
   "context"
+  "errors"
   "net/http"
   "strconv"
 
@@ -75,6 +76,11 @@ func (rs *TaskResource) newTaskListResponse(Tasks []model.Task) []render.Rendere
 
 // Bind preprocesses a TaskRequest.
 func (body *TaskRequest) Bind(r *http.Request) error {
+
+  if body.Task == nil {
+    return errors.New("Empty body")
+  }
+
   // Sending the id via request-body is invalid.
   // The id should be submitted in the url.
   body.ProtectedID = 0
@@ -128,13 +134,14 @@ func (rs *TaskResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
     return
   }
 
+  render.Status(r, http.StatusCreated)
+
   // return Task information of created entry
   if err := render.Render(w, r, rs.newTaskResponse(newTask)); err != nil {
     render.Render(w, r, ErrRender(err))
     return
   }
 
-  render.Status(r, http.StatusCreated)
 }
 
 // GetHandler is the enpoint for retrieving a specific Task.
@@ -182,7 +189,7 @@ func (rs *TaskResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
     return
   }
 
-  render.Status(r, http.StatusOK)
+  render.Status(r, http.StatusNoContent)
 }
 
 // .............................................................................

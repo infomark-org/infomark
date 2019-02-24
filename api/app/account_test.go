@@ -127,7 +127,7 @@ func TestAccount(t *testing.T) {
 
 }
 
-func TestAccountCreate(t *testing.T) {
+func TestAccountCreation(t *testing.T) {
 
 	logger := logging.NewLogger()
 	g := goblin.Goblin(t)
@@ -210,7 +210,7 @@ func TestAccountCreate(t *testing.T) {
 				},
 				rs.CreateHandler,
 			)
-			g.Assert(w.Code).Equal(http.StatusOK)
+			g.Assert(w.Code).Equal(http.StatusCreated)
 
 			user_after, err := stores.User.FindByEmail("foo@test.com")
 			g.Assert(err).Equal(nil)

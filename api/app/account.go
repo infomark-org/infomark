@@ -167,6 +167,8 @@ func (rs *AccountResource) CreateHandler(w http.ResponseWriter, r *http.Request)
     return
   }
 
+  render.Status(r, http.StatusCreated)
+
   // return user information of created entry
   if err := render.Render(w, r, newUserAccountResponse(newUser)); err != nil {
     render.Render(w, r, ErrRender(err))
@@ -178,8 +180,6 @@ func (rs *AccountResource) CreateHandler(w http.ResponseWriter, r *http.Request)
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return
   }
-
-  render.Status(r, http.StatusOK)
 
 }
 
@@ -451,7 +451,7 @@ func (rs *AccountResource) DeleteAvatarHandler(w http.ResponseWriter, r *http.Re
     return
   }
 
-  render.Status(r, http.StatusOK)
+  render.Status(r, http.StatusNoContent)
 }
 
 func (rs *AccountResource) GetEnrollmentsHandler(w http.ResponseWriter, r *http.Request) {

@@ -20,6 +20,7 @@ package app
 
 import (
   "context"
+  "errors"
   "net/http"
   "strconv"
 
@@ -56,7 +57,6 @@ type SheetResponse struct {
 
 // newSheetResponse creates a response from a Sheet model.
 func (rs *SheetResource) newSheetResponse(p *model.Sheet) *SheetResponse {
-
   return &SheetResponse{
     Sheet: p,
   }
@@ -75,6 +75,11 @@ func (rs *SheetResource) newSheetListResponse(Sheets []model.Sheet) []render.Ren
 
 // Bind preprocesses a SheetRequest.
 func (body *SheetRequest) Bind(r *http.Request) error {
+
+  if body.Sheet == nil {
+    return errors.New("Empty body")
+  }
+
   // Sending the id via request-body is invalid.
   // The id should be submitted in the url.
   body.ProtectedID = 0
@@ -129,13 +134,14 @@ func (rs *SheetResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
     return
   }
 
+  render.Status(r, http.StatusCreated)
+
   // return Sheet information of created entry
   if err := render.Render(w, r, rs.newSheetResponse(newSheet)); err != nil {
     render.Render(w, r, ErrRender(err))
     return
   }
 
-  render.Status(r, http.StatusCreated)
 }
 
 // GetHandler is the enpoint for retrieving a specific Sheet.
@@ -183,7 +189,7 @@ func (rs *SheetResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
     return
   }
 
-  render.Status(r, http.StatusOK)
+  render.Status(r, http.StatusNoContent)
 }
 
 // .............................................................................

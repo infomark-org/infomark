@@ -77,10 +77,14 @@ func (rs *CourseResource) newCourseListResponse(courses []model.Course) []render
 
 // Bind preprocesses a courseRequest.
 func (body *courseRequest) Bind(r *http.Request) error {
+
+  if body.Course == nil {
+    return errors.New("Empty body")
+  }
+
   // Sending the id via request-body is invalid.
   // The id should be submitted in the url.
   body.ProtectedID = 0
-
   err := validation.ValidateStruct(body,
     validation.Field(&body.Name, validation.Required),
   )
@@ -172,13 +176,14 @@ func (rs *CourseResource) CreateHandler(w http.ResponseWriter, r *http.Request) 
     return
   }
 
+  render.Status(r, http.StatusCreated)
+
   // return course information of created entry
   if err := render.Render(w, r, rs.newCourseResponse(newCourse)); err != nil {
     render.Render(w, r, ErrRender(err))
     return
   }
 
-  render.Status(r, http.StatusCreated)
 }
 
 // GetHandler is the enpoint for retrieving a specific course.
@@ -218,11 +223,16 @@ func (rs *CourseResource) EditHandler(w http.ResponseWriter, r *http.Request) {
     return
   }
 
-  render.Status(r, http.StatusNoContent)
+  // TODO(patwie): change StatusNoContent
+  render.Status(r, http.StatusOK)
 }
 
 func (rs *CourseResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
   course := r.Context().Value("course").(*model.Course)
+
+  // Warning: There is more to do! Currently we just dis-enroll all students,
+  // remove all sheets and delete the course it self FROM THE DATABASE.
+  // This does not remove gradings and the sheets or touches any file!
 
   // update database entry
   if err := rs.Stores.Course.Delete(course.ID); err != nil {
@@ -230,7 +240,7 @@ func (rs *CourseResource) DeleteHandler(w http.ResponseWriter, r *http.Request) 
     return
   }
 
-  render.Status(r, http.StatusOK)
+  render.Status(r, http.StatusNoContent)
 }
 
 func (rs *CourseResource) IndexEnrollmentsHandler(w http.ResponseWriter, r *http.Request) {
@@ -272,12 +282,13 @@ func (rs *CourseResource) EnrollHandler(w http.ResponseWriter, r *http.Request) 
     User: user,
   }
 
+  render.Status(r, http.StatusCreated)
+
   if err := render.Render(w, r, resp); err != nil {
     render.Render(w, r, ErrRender(err))
     return
   }
 
-  render.Status(r, http.StatusOK)
 }
 
 func (rs *CourseResource) DisenrollHandler(w http.ResponseWriter, r *http.Request) {
@@ -290,7 +301,7 @@ func (rs *CourseResource) DisenrollHandler(w http.ResponseWriter, r *http.Reques
     return
   }
 
-  render.Status(r, http.StatusOK)
+  render.Status(r, http.StatusNoContent)
 }
 
 // .............................................................................

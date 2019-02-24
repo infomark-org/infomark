@@ -20,6 +20,7 @@ package app
 
 import (
   "context"
+  "errors"
   "net/http"
   "strconv"
   "strings"
@@ -79,6 +80,11 @@ func newUserListResponse(users []model.User) []render.Renderer {
 
 // Bind preprocesses a userRequest.
 func (body *userRequest) Bind(r *http.Request) error {
+
+  if body.User == nil {
+    return errors.New("Empty body")
+  }
+
   // Sending the id via request-body is invalid.
   // The id should be submitted in the url.
   body.ProtectedID = 0

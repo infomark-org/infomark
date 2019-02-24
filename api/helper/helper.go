@@ -178,6 +178,7 @@ func init() {
 // TransactionDB creates a sql-driver which seemlessly supports transactions.
 func TransactionDB() (*sqlx.DB, error) {
 	db, err := sqlx.Connect("psql_txdb", "identifier")
+
 	if err != nil {
 		return nil, err
 	}
