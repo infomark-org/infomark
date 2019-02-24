@@ -130,6 +130,66 @@ func TestCourse(t *testing.T) {
 
 		})
 
+		g.It("Should be able to filter enrollments (all)", func() {
+			course_active, err := stores.Course.Get(1)
+
+			var number_enrollments_expected int
+			err = db.Get(
+				&number_enrollments_expected,
+				"SELECT count(*) FROM user_course WHERE course_id = $1",
+				course_active.ID,
+			)
+			if err != nil {
+				panic(err)
+			}
+
+			enrollments_expected, err := rs.Stores.Course.EnrolledUsers(
+				course_active,
+				[]string{"0", "1", "2"}, "%%", "%%", "%%", "%%", "%%")
+			g.Assert(len(enrollments_expected)).Equal(number_enrollments_expected)
+
+		})
+
+		g.It("Should be able to filter enrollments (students only)", func() {
+			course_active, err := stores.Course.Get(1)
+
+			var number_enrollments_expected int
+			err = db.Get(
+				&number_enrollments_expected,
+				"SELECT count(*) FROM user_course WHERE course_id = $1 and role = 0",
+				course_active.ID,
+			)
+			if err != nil {
+				panic(err)
+			}
+
+			enrollments_expected, err := rs.Stores.Course.EnrolledUsers(
+				course_active,
+				[]string{"0"}, "%%", "%%", "%%", "%%", "%%")
+			g.Assert(len(enrollments_expected)).Equal(number_enrollments_expected)
+
+		})
+
+		g.It("Should be able to filter enrollments (tutors only)", func() {
+			course_active, err := stores.Course.Get(1)
+
+			var number_enrollments_expected int
+			err = db.Get(
+				&number_enrollments_expected,
+				"SELECT count(*) FROM user_course WHERE course_id = $1 and role = 1",
+				course_active.ID,
+			)
+			if err != nil {
+				panic(err)
+			}
+
+			enrollments_expected, err := rs.Stores.Course.EnrolledUsers(
+				course_active,
+				[]string{"1"}, "%%", "%%", "%%", "%%", "%%")
+			g.Assert(len(enrollments_expected)).Equal(number_enrollments_expected)
+
+		})
+
 	})
 
 }
