@@ -21,6 +21,7 @@ package app
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	_ "fmt"
 	"time"
 
@@ -31,6 +32,7 @@ import (
 	"github.com/cgtuebingen/infomark-backend/model"
 	"github.com/franela/goblin"
 	_ "github.com/lib/pq"
+	"github.com/spf13/viper"
 
 	// "github.com/spf13/viper"
 	"net/http"
@@ -153,6 +155,9 @@ func TestSheetCreation(t *testing.T) {
 	stores := NewStores(db)
 	rs := NewSheetResource(stores)
 
+	// delete fixture file
+	defer helper.NewSheetFileHandle(1).Delete()
+
 	g.Describe("Sheet Creation", func() {
 
 		course_active, err := stores.Course.Get(1)
@@ -220,6 +225,47 @@ func TestSheetCreation(t *testing.T) {
 			sheets_after, err := rs.Stores.Sheet.SheetsOfCourse(course_active, false)
 			g.Assert(err).Equal(nil)
 			g.Assert(len(sheets_after)).Equal(len(sheets_before) + 1)
+		})
+
+		g.It("Should skip non-existent sheet file", func() {
+
+			sheet_active, err := stores.Sheet.Get(1)
+			g.Assert(err).Equal(nil)
+
+			w := helper.SimulateRequest(
+				helper.Payload{
+					Data:         helper.H{},
+					Method:       "GET",
+					AccessClaims: authenticate.NewAccessClaims(1, true),
+				},
+				rs.GetFileHandler,
+				authenticate.RequiredValidAccessClaims,
+				SetSheetContext(sheet_active),
+			)
+			g.Assert(w.Code).Equal(http.StatusNotFound)
+		})
+
+		g.It("Should upload sheet file", func() {
+
+			sheet_active, err := stores.Sheet.Get(1)
+			g.Assert(err).Equal(nil)
+
+			hnd := helper.NewSheetFileHandle(sheet_active.ID)
+			g.Assert(hnd.Exists()).Equal(false)
+
+			w := helper.SimulateFileRequest(
+				helper.Payload{
+					Data:         helper.H{},
+					Method:       "POST",
+					AccessClaims: authenticate.NewAccessClaims(1, true),
+				},
+				fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir")),
+				"file_data",
+				rs.ChangeFileHandler,
+				authenticate.RequiredValidAccessClaims,
+				SetSheetContext(sheet_active),
+			)
+			g.Assert(w.Code).Equal(http.StatusOK)
 		})
 
 	})

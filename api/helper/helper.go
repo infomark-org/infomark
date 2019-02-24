@@ -22,9 +22,15 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
+
+	// "os"
 	"strings"
 
 	txdb "github.com/DATA-DOG/go-txdb"
@@ -123,18 +129,36 @@ func formatRequest(r *http.Request) string {
 	return strings.Join(request, "\n")
 }
 
-func SimulateRequestWithURL(
-	// payload interface{},
-	request Payload,
-	url string,
-	apiHandler http.HandlerFunc,
-	middlewares ...func(http.Handler) http.Handler) *httptest.ResponseRecorder {
+// Creates a new file upload http request with optional extra params
+func newfileUploadRequest(uri string, params map[string]string, paramName, path string) (*http.Request, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
 
-	// create request
-	payload_json, _ := json.Marshal(request.Data)
-	r, _ := http.NewRequest(request.Method, url, bytes.NewBuffer(payload_json))
-	r.Header.Set("Content-Type", "application/json")
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	part, err := writer.CreateFormFile(paramName, filepath.Base(path))
+	if err != nil {
+		return nil, err
+	}
+	_, err = io.Copy(part, file)
 
+	for key, val := range params {
+		_ = writer.WriteField(key, val)
+	}
+	err = writer.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", uri, body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	return req, err
+}
+
+func addAccessClaimsIfNeeded(r *http.Request, request Payload) *http.Request {
 	// If there are some access claims, we add them to the header.
 	// We currently support JWT only for testing.
 	if request.AccessClaims.LoginID != 0 {
@@ -145,7 +169,21 @@ func SimulateRequestWithURL(
 		}
 		r.Header.Add("Authorization", "Bearer "+accessToken)
 	}
+	return r
+}
 
+func SimulateRequest(
+	// payload interface{},
+	request Payload,
+	apiHandler http.HandlerFunc,
+	middlewares ...func(http.Handler) http.Handler) *httptest.ResponseRecorder {
+
+	// create request
+	payload_json, _ := json.Marshal(request.Data)
+	r, _ := http.NewRequest(request.Method, "/", bytes.NewBuffer(payload_json))
+	r.Header.Set("Content-Type", "application/json")
+
+	r = addAccessClaimsIfNeeded(r, request)
 	// fmt.Println(formatRequest(r))
 
 	w := httptest.NewRecorder()
@@ -157,14 +195,74 @@ func SimulateRequestWithURL(
 	return w
 }
 
-func SimulateRequest(
-	// payload interface{},
+func SimulateFileRequest(
 	request Payload,
+	requestFileName string,
+	requestFormName string,
 	apiHandler http.HandlerFunc,
 	middlewares ...func(http.Handler) http.Handler) *httptest.ResponseRecorder {
 
-	return SimulateRequestWithURL(request, "/", apiHandler, middlewares...)
+	r, err := newfileUploadRequest("", map[string]string{}, requestFormName, requestFileName)
+	if err != nil {
+		panic(err)
+	}
 
+	r = addAccessClaimsIfNeeded(r, request)
+
+	w := httptest.NewRecorder()
+
+	// apply middlewares
+	handler := chain(apiHandler, middlewares...)
+	handler.ServeHTTP(w, r)
+
+	return w
+
+	// // create request
+	// var b bytes.Buffer
+	// ww := multipart.NewWriter(&b)
+	// fw, err := ww.CreateFormFile(requestFileName, "somefile")
+	// if _, err = io.Copy(fw, requestFile); err != nil {
+	// 	panic(err)
+	// }
+	// ww.Close()
+
+	// req, err := http.NewRequest("POST", "/", &b)
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	// r.Header.Set("Content-Type", w.FormDataContentType())
+
+	// // If there are some access claims, we add them to the header.
+	// // We currently support JWT only for testing.
+	// if request.AccessClaims.LoginID != 0 {
+	// 	// generate some valid claims
+	// 	accessToken, err := tokenManager.CreateAccessJWT(authenticate.NewAccessClaims(1, true))
+	// 	if err != nil {
+	// 		panic(err)
+	// 	}
+	// 	r.Header.Add("Authorization", "Bearer "+accessToken)
+	// }
+
+	// // fmt.Println(formatRequest(r))
+
+	// w := httptest.NewRecorder()
+
+	// // apply middlewares
+	// handler := chain(apiHandler, middlewares...)
+
+	// values := map[string]io.Reader{
+	// 	"file":  mustOpen("main.go"), // lets assume its this file
+	// 	"other": strings.NewReader("hello world!"),
+	// }
+	// err := Upload(client, remoteURL, values)
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	// handler.ServeHTTP(w, r)
+
+	// return w
 }
 
 func init() {

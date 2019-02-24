@@ -24,6 +24,7 @@ import (
   "net/http"
   "strconv"
 
+  "github.com/cgtuebingen/infomark-backend/api/helper"
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/go-chi/chi"
   "github.com/go-chi/render"
@@ -196,22 +197,29 @@ func (rs *SheetResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (rs *SheetResource) GetFileHandler(w http.ResponseWriter, r *http.Request) {
-  // always get a post
-  // Sheet := r.Context().Value("sheet").(*model.Sheet)
 
-  // avatarPath := fmt.Sprintf("files/uploads/%s", user.AvatarPath.String)
+  sheet := r.Context().Value("sheet").(*model.Sheet)
+  hnd := helper.NewSheetFileHandle(sheet.ID)
 
-  // img, err := os.Open(avatarPath)
-  // if err != nil {
-  //   render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-  // }
+  if !hnd.Exists() {
+    render.Render(w, r, ErrNotFound)
+    return
+  } else {
+    if err := hnd.WriteToBody(w); err != nil {
+      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    }
+  }
 }
 
 func (rs *SheetResource) ChangeFileHandler(w http.ResponseWriter, r *http.Request) {
-  // always get a post
-  // Sheet := r.Context().Value("sheet").(*model.Sheet)
+  // will always be a POST
+  sheet := r.Context().Value("sheet").(*model.Sheet)
 
   // the file will be located
+  if err := helper.NewSheetFileHandle(sheet.ID).WriteToDisk(r, "file_data"); err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+  }
+  render.Status(r, http.StatusOK)
 }
 
 // .............................................................................

@@ -316,13 +316,13 @@ func (rs *AccountResource) GetAvatarHandler(w http.ResponseWriter, r *http.Reque
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
   user, err := rs.Stores.User.Get(accessClaims.LoginID)
 
-  if err = helper.NewAvatarHandle(user.ID).WriteToBody(w); err != nil {
+  if err = helper.NewAvatarFileHandle(user.ID).WriteToBody(w); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
   }
 
 }
 
-func (rs *AccountResource) UpdateAvatarHandler(w http.ResponseWriter, r *http.Request) {
+func (rs *AccountResource) ChangeAvatarHandler(w http.ResponseWriter, r *http.Request) {
 
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
 
@@ -333,14 +333,10 @@ func (rs *AccountResource) UpdateAvatarHandler(w http.ResponseWriter, r *http.Re
     return
   }
 
-  helper.NewAvatarHandle(user.ID).WriteToDisk(r, "avatar_data")
-
-  if err = helper.NewAvatarHandle(user.ID).WriteToBody(w); err != nil {
+  if err := helper.NewAvatarFileHandle(user.ID).WriteToDisk(r, "avatar_data"); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
   }
-
-  render.Status(r, http.StatusCreated)
-
+  render.Status(r, http.StatusOK)
 }
 
 func (rs *AccountResource) DeleteAvatarHandler(w http.ResponseWriter, r *http.Request) {
@@ -353,7 +349,7 @@ func (rs *AccountResource) DeleteAvatarHandler(w http.ResponseWriter, r *http.Re
     return
   }
 
-  if err = helper.NewAvatarHandle(user.ID).Delete(); err != nil {
+  if err = helper.NewAvatarFileHandle(user.ID).Delete(); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
   }
 

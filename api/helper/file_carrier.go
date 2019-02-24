@@ -27,7 +27,7 @@ import (
   "os"
   "strconv"
 
-  _ "github.com/lib/pq"
+  "github.com/spf13/viper"
 )
 
 type FileCategory int32
@@ -51,10 +51,17 @@ type FileHandle struct {
   ID       int64 // an unique identifier (e.g. from database)
 }
 
-func NewAvatarHandle(userID int64) *FileHandle {
+func NewAvatarFileHandle(userID int64) *FileHandle {
   return &FileHandle{
     Category: AvatarCategory,
     ID:       userID,
+  }
+}
+
+func NewSheetFileHandle(sheetID int64) *FileHandle {
+  return &FileHandle{
+    Category: SheetCategory,
+    ID:       sheetID,
   }
 }
 
@@ -66,23 +73,23 @@ func (f *FileHandle) Path(fallback bool) string {
     potentialPath := fmt.Sprintf("files/uploads/avatars/%s.jpg", strconv.FormatInt(f.ID, 10))
     if fallback {
       if _, err := os.Stat(potentialPath); os.IsNotExist(err) {
-        return "files/uploads/avatars/default.jpg"
+        return fmt.Sprintf("%s/avatars/default.jpg", viper.GetString("uploads_dir"))
       }
     }
     return potentialPath
 
   case SheetCategory:
-    return fmt.Sprintf("files/uploads/sheets/%s.zip", strconv.FormatInt(f.ID, 10))
+    return fmt.Sprintf("%s/sheets/%s.zip", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
   }
   return ""
 }
 
 func (f *FileHandle) Exists() bool {
-  file, err := os.Open(f.Path(false))
-  if err != nil {
+
+  if _, err := os.Stat(f.Path(false)); os.IsNotExist(err) {
     return false
   }
-  defer file.Close()
+
   return true
 }
 func (f *FileHandle) Delete() error {
@@ -173,8 +180,8 @@ func (f *FileHandle) WriteToDisk(r *http.Request, fieldName string) error {
   defer hnd.Close()
 
   // copy file from request
-  bt, err := io.Copy(hnd, file)
-  fmt.Println(bt)
+  _, err = io.Copy(hnd, file)
+
   if err != nil {
     return err
   }

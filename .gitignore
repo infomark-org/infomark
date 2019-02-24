@@ -22,5 +22,13 @@ infomark-worker
 local/
 database/mock.sql
 static/
-files/uploads/
+
+
+
 .infomark-backend.yml
+
+files/uploads/avatars/*
+files/uploads/sheets/*
+
+!files/uploads/avatars/.keep
+!files/uploads/sheets/.keep
