@@ -42,27 +42,6 @@ func (e *ErrResponse) Render(w http.ResponseWriter, r *http.Request) error {
   return nil
 }
 
-// // ErrInvalidRequest returns status 422 Unprocessable Entity including error message.
-// func ErrInvalidRequest(err error) render.Renderer {
-//   return &ErrResponse{
-//     Err:            err,
-//     HTTPStatusCode: http.StatusUnprocessableEntity,
-//     StatusText:     http.StatusText(http.StatusUnprocessableEntity),
-//     ErrorText:      err.Error(),
-//   }
-// }
-
-// // ErrValidation returns status 422 Unprocessable Entity stating validation errors.
-// func ErrValidation(err error, valErr validation.Errors) render.Renderer {
-//   return &ErrResponse{
-//     Err:              err,
-//     HTTPStatusCode:   http.StatusUnprocessableEntity,
-//     StatusText:       http.StatusText(http.StatusUnprocessableEntity),
-//     ErrorText:        err.Error(),
-//     ValidationErrors: valErr,
-//   }
-// }
-
 // ErrRender returns status 422 Unprocessable Entity rendering response error.
 func ErrRender(err error) render.Renderer {
   return &ErrResponse{

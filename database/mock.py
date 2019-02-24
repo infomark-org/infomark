@@ -48,7 +48,7 @@ def create_user(fake, role='student'):
       ('updated_at', VAL.TIMESTAMP),
       ('first_name', first_name),
       ('last_name', last_name),
-      ('avatar_path', VAL.NULL),
+      # ('avatar_path', VAL.NULL),
       ('email', email),
       ('student_number', fake.random_int(1000, 2000)),
       ('semester', fake.random_int(2, 8)),
@@ -123,8 +123,8 @@ def create_task():
       ('updated_at', VAL.TIMESTAMP),
 
       ('max_points', fake.random_int(10, 100)),
-      ('public_test_path', 'path/to/tests/public_dummy_test'),
-      ('private_test_path', 'path/to/tests/private_dummy_test'),
+      # ('public_test_path', 'path/to/tests/public_dummy_test'),
+      # ('private_test_path', 'path/to/tests/private_dummy_test'),
 
       ('public_docker_image', 'ImageCIRunnerJavaEnv'),
       ('private_docker_image', 'ImageCIRunnerJavaEnv'),

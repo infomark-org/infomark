@@ -33,8 +33,10 @@ import (
 type FileCategory int32
 
 const (
-  AvatarCategory FileCategory = 0
-  SheetCategory  FileCategory = 1
+  AvatarCategory      FileCategory = 0
+  SheetCategory       FileCategory = 1
+  PublicTestCategory  FileCategory = 2
+  PrivateTestCategory FileCategory = 3
 )
 
 type FileManager interface {
@@ -65,6 +67,20 @@ func NewSheetFileHandle(sheetID int64) *FileHandle {
   }
 }
 
+func NewPublicTestFileHandle(sheetID int64) *FileHandle {
+  return &FileHandle{
+    Category: PublicTestCategory,
+    ID:       sheetID,
+  }
+}
+
+func NewPrivateTestFileHandle(sheetID int64) *FileHandle {
+  return &FileHandle{
+    Category: PrivateTestCategory,
+    ID:       sheetID,
+  }
+}
+
 // Path returns a path without checking if it exists. If fallback is true,
 // the method tries to use the default value.
 func (f *FileHandle) Path(fallback bool) string {
@@ -80,6 +96,13 @@ func (f *FileHandle) Path(fallback bool) string {
 
   case SheetCategory:
     return fmt.Sprintf("%s/sheets/%s.zip", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
+
+  case PublicTestCategory:
+    return fmt.Sprintf("%s/tasks/%s-public.zip", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
+
+  case PrivateTestCategory:
+    return fmt.Sprintf("%s/tasks/%s-private.zip", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
+
   }
   return ""
 }
@@ -163,11 +186,18 @@ func (f *FileHandle) WriteToDisk(r *http.Request, fieldName string) error {
   switch f.Category {
   case AvatarCategory:
     switch givenContentType {
-    case "image/jpeg":
-    case "image/jpg":
+    case "image/jpeg", "image/jpg":
 
     default:
-      return errors.New("We support JPG/JPEG only.")
+      return errors.New(fmt.Sprintf("We support JPG/JPEG files only. But %s was given", givenContentType))
+
+    }
+  case SheetCategory, PublicTestCategory, PrivateTestCategory:
+    switch givenContentType {
+    case "application/zip", "application/octet-stream":
+
+    default:
+      return errors.New(fmt.Sprintf("We support ZIP files only. But %s was given", givenContentType))
 
     }
   }

@@ -71,7 +71,7 @@ type TaskStore interface {
   Get(TaskID int64) (*model.Task, error)
   Update(p *model.Task) error
   GetAll() ([]model.Task, error)
-  Create(p *model.Task) (*model.Task, error)
+  Create(p *model.Task, s *model.Sheet) (*model.Task, error)
   Delete(TaskID int64) error
   TasksOfSheet(Sheet *model.Sheet, only_active bool) ([]model.Task, error)
 }

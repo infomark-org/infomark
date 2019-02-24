@@ -32,19 +32,28 @@ infomark=# \conninfo
 You are connected to database "infomark" as user "postgres" via socket in "/var/run/postgresql" at port "5432".
 ```
 
+
+You might optionally edit the time config for postgres
+
+```bash
+sudo nano /etc/postgresql/9.5/main/postgresql.conf  # timezone = 'UTC'
+sudo service postgresql restart
+```
+
 You should use `pgweb` via
 
-```
+```bash
 pgweb --host=localhost --user=postgres --pass=postgres --db=infomark
 ```
 
 and open `http://localhost:8081/` in your browser.
 
+
 ### Create Database
 
 We need to upload the schema from `database/schema.sql` which contains the structure.
 
-```
+```bash
 PGPASSWORD=postgres psql -h 'localhost' -U 'postgres' -d 'infomark' -f schema.sql
 ```
 
@@ -52,7 +61,7 @@ PGPASSWORD=postgres psql -h 'localhost' -U 'postgres' -d 'infomark' -f schema.sq
 
 For debugging you might want to use a mockup. Generate a mockup by
 
-```
+```bash
 python3 mock.py
 PGPASSWORD=postgres psql -h 'localhost' -U 'postgres' -d 'infomark' -f mock.sql
 ```
@@ -61,7 +70,7 @@ PGPASSWORD=postgres psql -h 'localhost' -U 'postgres' -d 'infomark' -f mock.sql
 
 To build and run infomark-backend type
 
-```
+```bash
 # build
 go build infomark-backend.go
 # run

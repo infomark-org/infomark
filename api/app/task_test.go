@@ -22,12 +22,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	_ "fmt"
-	"time"
 
 	"github.com/cgtuebingen/infomark-backend/api/helper"
 	"github.com/cgtuebingen/infomark-backend/auth/authenticate"
-	"github.com/cgtuebingen/infomark-backend/email"
 	"github.com/cgtuebingen/infomark-backend/logging"
 	"github.com/cgtuebingen/infomark-backend/model"
 	"github.com/franela/goblin"
@@ -39,18 +36,16 @@ import (
 	"testing"
 )
 
-func SetSheetContext(sheet *model.Sheet) func(http.Handler) http.Handler {
+func SetTaskContext(task *model.Task) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			ctx := context.WithValue(r.Context(), "sheet", sheet)
+			ctx := context.WithValue(r.Context(), "task", task)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
 }
 
-func TestSheet(t *testing.T) {
-
-	email.DefaultMail = email.VoidMail
+func TestTask(t *testing.T) {
 
 	logger := logging.NewLogger()
 	g := goblin.Goblin(t)
@@ -63,11 +58,11 @@ func TestSheet(t *testing.T) {
 	}
 
 	stores := NewStores(db)
-	rs := NewSheetResource(stores)
+	rs := NewTaskResource(stores)
 
-	g.Describe("Sheet Query", func() {
+	g.Describe("Task Query", func() {
 
-		course_active, err := stores.Course.Get(1)
+		sheet_active, err := stores.Sheet.Get(1)
 		g.Assert(err).Equal(nil)
 
 		g.It("Should require claims", func() {
@@ -83,7 +78,7 @@ func TestSheet(t *testing.T) {
 			g.Assert(w.Code).Equal(http.StatusUnauthorized)
 		})
 
-		g.It("Should list all sheets from a course", func() {
+		g.It("Should list all tasks from a sheet", func() {
 
 			w := helper.SimulateRequest(
 				helper.Payload{
@@ -93,21 +88,21 @@ func TestSheet(t *testing.T) {
 				},
 				rs.IndexHandler,
 				authenticate.RequiredValidAccessClaims,
-				SetCourseContext(course_active),
+				SetSheetContext(sheet_active),
 			)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
-			sheets_actual := []model.Course{}
+			tasks_actual := []model.Task{}
 
-			err = json.NewDecoder(w.Body).Decode(&sheets_actual)
+			err = json.NewDecoder(w.Body).Decode(&tasks_actual)
 			g.Assert(err).Equal(nil)
-			g.Assert(len(sheets_actual)).Equal(10)
+			g.Assert(len(tasks_actual)).Equal(3)
 
 		})
 
 		g.It("Should get a specific sheet", func() {
 
-			sheet_expected, err := stores.Sheet.Get(1)
+			task_expected, err := stores.Task.Get(1)
 			g.Assert(err).Equal(nil)
 
 			w := helper.SimulateRequest(
@@ -119,18 +114,18 @@ func TestSheet(t *testing.T) {
 				rs.GetHandler,
 				// set course
 				authenticate.RequiredValidAccessClaims,
-				SetSheetContext(sheet_expected),
+				SetTaskContext(task_expected),
 			)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
-			sheet_actual := &model.Sheet{}
-			err = json.NewDecoder(w.Body).Decode(sheet_actual)
+			task_actual := &model.Task{}
+			err = json.NewDecoder(w.Body).Decode(task_actual)
 			g.Assert(err).Equal(nil)
 
-			g.Assert(sheet_actual.ID).Equal(sheet_expected.ID)
-			g.Assert(sheet_actual.Name).Equal(sheet_expected.Name)
-			g.Assert(sheet_actual.PublishAt.Equal(sheet_expected.PublishAt)).Equal(true)
-			g.Assert(sheet_actual.DueAt.Equal(sheet_expected.DueAt)).Equal(true)
+			g.Assert(task_actual.ID).Equal(task_expected.ID)
+			g.Assert(task_actual.MaxPoints).Equal(task_expected.MaxPoints)
+			g.Assert(task_actual.PublicDockerImage).Equal(task_expected.PublicDockerImage)
+			g.Assert(task_actual.PrivateDockerImage).Equal(task_expected.PrivateDockerImage)
 
 		})
 
@@ -138,9 +133,7 @@ func TestSheet(t *testing.T) {
 
 }
 
-func TestSheetCreation(t *testing.T) {
-
-	email.DefaultMail = email.VoidMail
+func TestTaskCreation(t *testing.T) {
 
 	logger := logging.NewLogger()
 	g := goblin.Goblin(t)
@@ -153,14 +146,15 @@ func TestSheetCreation(t *testing.T) {
 	}
 
 	stores := NewStores(db)
-	rs := NewSheetResource(stores)
+	rs := NewTaskResource(stores)
 
 	// delete fixture file
-	defer helper.NewSheetFileHandle(1).Delete()
+	defer helper.NewPublicTestFileHandle(1).Delete()
+	defer helper.NewPrivateTestFileHandle(1).Delete()
 
-	g.Describe("Sheet Creation", func() {
+	g.Describe("Task Creation", func() {
 
-		course_active, err := stores.Course.Get(1)
+		sheet_active, err := stores.Sheet.Get(1)
 		g.Assert(err).Equal(nil)
 
 		g.It("Should require claims", func() {
@@ -172,7 +166,7 @@ func TestSheetCreation(t *testing.T) {
 				},
 				rs.CreateHandler,
 				authenticate.RequiredValidAccessClaims,
-				SetCourseContext(course_active),
+				SetSheetContext(sheet_active),
 			)
 			g.Assert(w.Code).Equal(http.StatusUnauthorized)
 		})
@@ -187,49 +181,49 @@ func TestSheetCreation(t *testing.T) {
 				},
 				rs.CreateHandler,
 				authenticate.RequiredValidAccessClaims,
-				SetCourseContext(course_active),
+				SetSheetContext(sheet_active),
 			)
 			g.Assert(w.Code).Equal(http.StatusBadRequest)
 		})
 
-		g.It("Should create valid sheet", func() {
+		g.It("Should create valid task", func() {
 
-			sheets_before, err := rs.Stores.Sheet.SheetsOfCourse(course_active, false)
+			tasks_before, err := rs.Stores.Task.TasksOfSheet(sheet_active, false)
 			g.Assert(err).Equal(nil)
+
+			task_sent := model.Task{
+				MaxPoints:          88,
+				PublicDockerImage:  "TestImage-Public",
+				PrivateDockerImage: "TestImage-Private",
+			}
 
 			w := helper.SimulateRequest(
 				helper.Payload{
-					Data: helper.H{
-						"name":       "Sheet_new",
-						"publish_at": "2019-02-01T01:02:03Z",
-						"due_at":     "2019-07-30T23:59:59Z",
-					},
+					Data:         helper.ToH(task_sent),
 					Method:       "POST",
 					AccessClaims: authenticate.NewAccessClaims(1, true),
 				},
 				rs.CreateHandler,
 				authenticate.RequiredValidAccessClaims,
-				SetCourseContext(course_active),
+				SetSheetContext(sheet_active),
 			)
 			g.Assert(w.Code).Equal(http.StatusCreated)
 
-			expectedPublishAt, _ := time.Parse(time.RFC3339, "2019-02-01T01:02:03Z")
-			expectedDueAt, _ := time.Parse(time.RFC3339, "2019-07-30T23:59:59Z")
+			task_return := &model.Task{}
+			err = json.NewDecoder(w.Body).Decode(&task_return)
 
-			sheet_return := &model.Sheet{}
-			err = json.NewDecoder(w.Body).Decode(&sheet_return)
-			g.Assert(sheet_return.Name).Equal("Sheet_new")
-			g.Assert(sheet_return.PublishAt.Equal(expectedPublishAt)).Equal(true)
-			g.Assert(sheet_return.DueAt.Equal(expectedDueAt)).Equal(true)
+			g.Assert(task_return.MaxPoints).Equal(88)
+			g.Assert(task_return.PrivateDockerImage).Equal(task_sent.PrivateDockerImage)
+			g.Assert(task_return.PublicDockerImage).Equal(task_sent.PublicDockerImage)
 
-			sheets_after, err := rs.Stores.Sheet.SheetsOfCourse(course_active, false)
+			tasks_after, err := rs.Stores.Task.TasksOfSheet(sheet_active, false)
 			g.Assert(err).Equal(nil)
-			g.Assert(len(sheets_after)).Equal(len(sheets_before) + 1)
+			g.Assert(len(tasks_after)).Equal(len(tasks_before) + 1)
 		})
 
-		g.It("Should skip non-existent sheet file", func() {
+		g.It("Should skip non-existent test files", func() {
 
-			sheet_active, err := stores.Sheet.Get(1)
+			task_active, err := stores.Task.Get(1)
 			g.Assert(err).Equal(nil)
 
 			w := helper.SimulateRequest(
@@ -238,23 +232,39 @@ func TestSheetCreation(t *testing.T) {
 					Method:       "GET",
 					AccessClaims: authenticate.NewAccessClaims(1, true),
 				},
-				rs.GetFileHandler,
+				rs.GetPublicTestFileHandler,
 				authenticate.RequiredValidAccessClaims,
-				SetSheetContext(sheet_active),
+				SetTaskContext(task_active),
 			)
+
+			g.Assert(w.Code).Equal(http.StatusNotFound)
+
+			w = helper.SimulateRequest(
+				helper.Payload{
+					Data:         helper.H{},
+					Method:       "GET",
+					AccessClaims: authenticate.NewAccessClaims(1, true),
+				},
+				rs.GetPrivateTestFileHandler,
+				authenticate.RequiredValidAccessClaims,
+				SetTaskContext(task_active),
+			)
+
 			g.Assert(w.Code).Equal(http.StatusNotFound)
 		})
 
-		g.It("Should upload sheet file", func() {
+		g.It("Should upload public test file", func() {
 
-			sheet_active, err := stores.Sheet.Get(1)
+			task_active, err := stores.Task.Get(1)
 			g.Assert(err).Equal(nil)
 
-			g.Assert(helper.NewSheetFileHandle(sheet_active.ID).Exists()).Equal(false)
+			g.Assert(helper.NewPublicTestFileHandle(task_active.ID).Exists()).Equal(false)
+			g.Assert(helper.NewPrivateTestFileHandle(task_active.ID).Exists()).Equal(false)
 
-			hnd := helper.NewSheetFileHandle(sheet_active.ID)
+			hnd := helper.NewPublicTestFileHandle(task_active.ID)
 			g.Assert(hnd.Exists()).Equal(false)
 
+			// send public testfile
 			w := helper.SimulateFileRequest(
 				helper.Payload{
 					Data:         helper.H{},
@@ -263,26 +273,86 @@ func TestSheetCreation(t *testing.T) {
 				},
 				fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir")),
 				"file_data",
-				rs.ChangeFileHandler,
+				rs.ChangePublicTestFileHandler,
 				authenticate.RequiredValidAccessClaims,
-				SetSheetContext(sheet_active),
+				SetTaskContext(task_active),
 			)
-
 			g.Assert(w.Code).Equal(http.StatusOK)
 
-			// check disk
-			g.Assert(helper.NewSheetFileHandle(1).Exists()).Equal(true)
+			// public test file should be there
+			g.Assert(helper.NewPublicTestFileHandle(task_active.ID).Exists()).Equal(true)
 
-			// a file should be there
+			// check request as well
 			w = helper.SimulateRequest(
 				helper.Payload{
 					Data:         helper.H{},
 					Method:       "GET",
 					AccessClaims: authenticate.NewAccessClaims(1, true),
 				},
-				rs.GetFileHandler,
+				rs.GetPublicTestFileHandler,
 				authenticate.RequiredValidAccessClaims,
-				SetSheetContext(sheet_active),
+				SetTaskContext(task_active),
+			)
+			g.Assert(w.Code).Equal(http.StatusOK)
+
+			// private test file should be not there
+			g.Assert(helper.NewPrivateTestFileHandle(task_active.ID).Exists()).Equal(false)
+
+			// check request as well
+			w = helper.SimulateRequest(
+				helper.Payload{
+					Data:         helper.H{},
+					Method:       "GET",
+					AccessClaims: authenticate.NewAccessClaims(1, true),
+				},
+				rs.GetPrivateTestFileHandler,
+				authenticate.RequiredValidAccessClaims,
+				SetTaskContext(task_active),
+			)
+			g.Assert(w.Code).Equal(http.StatusNotFound)
+
+			// send private testfile
+			w = helper.SimulateFileRequest(
+				helper.Payload{
+					Data:         helper.H{},
+					Method:       "POST",
+					AccessClaims: authenticate.NewAccessClaims(1, true),
+				},
+				fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir")),
+				"file_data",
+				rs.ChangePrivateTestFileHandler,
+				authenticate.RequiredValidAccessClaims,
+				SetTaskContext(task_active),
+			)
+			g.Assert(w.Code).Equal(http.StatusOK)
+
+			g.Assert(helper.NewPublicTestFileHandle(task_active.ID).Exists()).Equal(true)
+			g.Assert(helper.NewPrivateTestFileHandle(task_active.ID).Exists()).Equal(true)
+
+			// check requests as well
+			w = helper.SimulateRequest(
+				helper.Payload{
+					Data:         helper.H{},
+					Method:       "GET",
+					AccessClaims: authenticate.NewAccessClaims(1, true),
+				},
+				rs.GetPrivateTestFileHandler,
+				authenticate.RequiredValidAccessClaims,
+				SetTaskContext(task_active),
+			)
+			g.Assert(w.Code).Equal(http.StatusOK)
+
+			w = helper.SimulateFileRequest(
+				helper.Payload{
+					Data:         helper.H{},
+					Method:       "POST",
+					AccessClaims: authenticate.NewAccessClaims(1, true),
+				},
+				fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir")),
+				"file_data",
+				rs.ChangePrivateTestFileHandler,
+				authenticate.RequiredValidAccessClaims,
+				SetTaskContext(task_active),
 			)
 			g.Assert(w.Code).Equal(http.StatusOK)
 		})
@@ -291,7 +361,7 @@ func TestSheetCreation(t *testing.T) {
 
 }
 
-func TestSheetChanges(t *testing.T) {
+func TestTaskChanges(t *testing.T) {
 
 	logger := logging.NewLogger()
 	g := goblin.Goblin(t)
@@ -304,20 +374,20 @@ func TestSheetChanges(t *testing.T) {
 	}
 
 	stores := NewStores(db)
-	rs := NewSheetResource(stores)
+	rs := NewTaskResource(stores)
 
-	g.Describe("Sheet Changes", func() {
+	g.Describe("Task Changes", func() {
 
-		course_active, err := stores.Course.Get(1)
+		sheet_active, err := stores.Sheet.Get(1)
 		g.Assert(err).Equal(nil)
 
-		all_sheets_before, err := rs.Stores.Sheet.GetAll()
+		all_tasks_before, err := rs.Stores.Task.GetAll()
 		g.Assert(err).Equal(nil)
 
-		sheets_before, err := rs.Stores.Sheet.SheetsOfCourse(course_active, false)
+		tasks_before, err := rs.Stores.Task.TasksOfSheet(sheet_active, false)
 		g.Assert(err).Equal(nil)
 
-		sheet_before, err := stores.Sheet.Get(sheets_before[0].ID)
+		task_before, err := stores.Task.Get(tasks_before[0].ID)
 		g.Assert(err).Equal(nil)
 
 		g.It("Should require claims", func() {
@@ -337,27 +407,25 @@ func TestSheetChanges(t *testing.T) {
 			w := helper.SimulateRequest(
 				helper.Payload{
 					Data: helper.H{
-						"name":       "Sheet_update",
-						"publish_at": "2023-02-01T01:02:03Z",
-						"due_at":     "2023-07-30T23:59:59Z",
+
+						"max_points":           555,
+						"public_docker_image":  "new_public",
+						"private_docker_image": "new_private",
 					},
 					Method:       "PATCH",
 					AccessClaims: authenticate.NewAccessClaims(1, true),
 				},
 				rs.EditHandler,
 				authenticate.RequiredValidAccessClaims,
-				SetSheetContext(sheet_before),
+				SetTaskContext(task_before),
 			)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
-			expectedBegin, _ := time.Parse(time.RFC3339, "2023-02-01T01:02:03Z")
-			expectedEnd, _ := time.Parse(time.RFC3339, "2023-07-30T23:59:59Z")
-
-			sheet_after, err := stores.Sheet.Get(sheets_before[0].ID)
+			task_after, err := stores.Task.Get(tasks_before[0].ID)
 			g.Assert(err).Equal(nil)
-			g.Assert(sheet_after.Name).Equal("Sheet_update")
-			g.Assert(sheet_after.PublishAt.Equal(expectedBegin)).Equal(true)
-			g.Assert(sheet_after.DueAt.Equal(expectedEnd)).Equal(true)
+			g.Assert(task_after.MaxPoints).Equal(555)
+			g.Assert(task_after.PublicDockerImage).Equal("new_public")
+			g.Assert(task_after.PrivateDockerImage).Equal("new_private")
 		})
 
 		g.It("Should delete", func() {
@@ -369,14 +437,14 @@ func TestSheetChanges(t *testing.T) {
 				},
 				rs.DeleteHandler,
 				authenticate.RequiredValidAccessClaims,
-				SetSheetContext(sheet_before),
+				SetTaskContext(task_before),
 			)
 			// TODO()
 			g.Assert(w.Code).Equal(http.StatusOK)
 
-			all_sheets_after, err := rs.Stores.Sheet.GetAll()
+			all_tasks_after, err := rs.Stores.Task.GetAll()
 			g.Assert(err).Equal(nil)
-			g.Assert(len(all_sheets_after)).Equal(len(all_sheets_before) - 1)
+			g.Assert(len(all_tasks_after)).Equal(len(all_tasks_before) - 1)
 		})
 	})
 

@@ -29,6 +29,11 @@ static/
 
 files/uploads/avatars/*
 files/uploads/sheets/*
+files/uploads/tasks/*
 
 !files/uploads/avatars/.keep
 !files/uploads/sheets/.keep
+!files/uploads/tasks/.keep
+
+local
+local.go

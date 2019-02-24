@@ -143,7 +143,12 @@ func New() (*chi.Mux, error) {
             r.Get("/", appAPI.Sheet.GetHandler)
             r.Patch("/", appAPI.Sheet.EditHandler)
             r.Delete("/", appAPI.Sheet.DeleteHandler)
-            r.Get("/tasks", appAPI.Task.IndexHandler)
+
+            r.Route("/tasks", func(r chi.Router) {
+              r.Get("/", appAPI.Task.IndexHandler)
+              r.Post("/", appAPI.Task.CreateHandler)
+
+            })
 
             r.Route("/file", func(r chi.Router) {
               r.Get("/", appAPI.Sheet.GetFileHandler)
@@ -159,6 +164,16 @@ func New() (*chi.Mux, error) {
             r.Get("/", appAPI.Task.GetHandler)
             r.Patch("/", appAPI.Task.EditHandler)
             r.Delete("/", appAPI.Task.DeleteHandler)
+          })
+
+          r.Route("/public_file", func(r chi.Router) {
+            r.Get("/", appAPI.Sheet.GetPublicTestFileHandler)
+            r.Post("/", appAPI.Sheet.ChangePublicTestFileHandler)
+          })
+
+          r.Route("/private_file", func(r chi.Router) {
+            r.Get("/", appAPI.Sheet.GetPrivateTestFileHandler)
+            r.Post("/", appAPI.Sheet.ChangePrivateTestFileHandler)
           })
         })
 

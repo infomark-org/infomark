@@ -23,7 +23,7 @@ CREATE TABLE users (
   first_name TEXT not null,
   last_name TEXT not null,
   -- we need to avatar_path (as it might be empty)
-  avatar_path TEXT,
+  -- avatar_path TEXT,
   email TEXT not null unique,
   student_number TEXT not null,
   semester INT not null,
@@ -95,8 +95,8 @@ CREATE TABLE tasks(
 
   max_points INT DEFAULT 0,
   -- we keep both paths as they might be empty
-  public_test_path TEXT,
-  private_test_path TEXT,
+  -- public_test_path TEXT,
+  -- private_test_path TEXT,
 
   public_docker_image TEXT,
   private_docker_image TEXT

@@ -184,15 +184,17 @@ func TestCourseCreation(t *testing.T) {
 			courses_before, err := rs.Stores.Course.GetAll()
 			g.Assert(err).Equal(nil)
 
+			course_sent := model.Course{
+				Name:               "Info2_new",
+				Description:        "Lorem Ipsum_new",
+				BeginsAt:           helper.Time(time.Now()),
+				EndsAt:             helper.Time(time.Now()),
+				RequiredPercentage: 43,
+			}
+
 			w := helper.SimulateRequest(
 				helper.Payload{
-					Data: helper.H{
-						"name":                "Info2_new",
-						"description":         "Lorem Ipsum_new",
-						"begins_at":           "2019-02-01T01:02:03Z",
-						"ends_at":             "2019-07-30T23:59:59Z",
-						"required_percentage": 43,
-					},
+					Data:         helper.ToH(course_sent),
 					Method:       "POST",
 					AccessClaims: authenticate.NewAccessClaims(1, true),
 				},
@@ -201,16 +203,23 @@ func TestCourseCreation(t *testing.T) {
 			)
 			g.Assert(w.Code).Equal(http.StatusCreated)
 
-			expectedBegin, _ := time.Parse(time.RFC3339, "2019-02-01T01:02:03Z")
-			expectedEnd, _ := time.Parse(time.RFC3339, "2019-07-30T23:59:59Z")
-
+			// verify body
 			course_return := &model.Course{}
 			err = json.NewDecoder(w.Body).Decode(&course_return)
-			g.Assert(course_return.Name).Equal("Info2_new")
-			g.Assert(course_return.Description).Equal("Lorem Ipsum_new")
-			g.Assert(course_return.BeginsAt.Equal(expectedBegin)).Equal(true)
-			g.Assert(course_return.EndsAt.Equal(expectedEnd)).Equal(true)
-			g.Assert(course_return.RequiredPercentage).Equal(43)
+			g.Assert(course_return.Name).Equal(course_sent.Name)
+			g.Assert(course_return.Description).Equal(course_sent.Description)
+			g.Assert(course_return.BeginsAt.Equal(course_sent.BeginsAt)).Equal(true)
+			g.Assert(course_return.EndsAt.Equal(course_sent.EndsAt)).Equal(true)
+			g.Assert(course_return.RequiredPercentage).Equal(course_sent.RequiredPercentage)
+
+			// verify database
+			course_new, err := rs.Stores.Course.Get(course_return.ID)
+			g.Assert(err).Equal(nil)
+			g.Assert(course_return.Name).Equal(course_new.Name)
+			g.Assert(course_return.Description).Equal(course_new.Description)
+			g.Assert(course_return.BeginsAt.Equal(course_new.BeginsAt)).Equal(true)
+			g.Assert(course_return.EndsAt.Equal(course_new.EndsAt)).Equal(true)
+			g.Assert(course_return.RequiredPercentage).Equal(course_new.RequiredPercentage)
 
 			courses_after, err := rs.Stores.Course.GetAll()
 			g.Assert(err).Equal(nil)
@@ -258,15 +267,17 @@ func TestCourseChanges(t *testing.T) {
 
 		g.It("Should perform updates", func() {
 
+			course_sent := model.Course{
+				Name:               "Info2_update",
+				Description:        "Lorem Ipsum_update",
+				BeginsAt:           helper.Time(time.Now()),
+				EndsAt:             helper.Time(time.Now()),
+				RequiredPercentage: 99,
+			}
+
 			w := helper.SimulateRequest(
 				helper.Payload{
-					Data: helper.H{
-						"name":                "Info2_update",
-						"description":         "Lorem Ipsum_update",
-						"begins_at":           "2020-02-01T01:02:03Z",
-						"ends_at":             "2020-07-30T23:59:59Z",
-						"required_percentage": 99,
-					},
+					Data:         helper.ToH(course_sent),
 					Method:       "PATCH",
 					AccessClaims: authenticate.NewAccessClaims(1, true),
 				},
@@ -276,16 +287,14 @@ func TestCourseChanges(t *testing.T) {
 			)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
-			expectedBegin, _ := time.Parse(time.RFC3339, "2020-02-01T01:02:03Z")
-			expectedEnd, _ := time.Parse(time.RFC3339, "2020-07-30T23:59:59Z")
-
 			course_after, err := stores.Course.Get(1)
 			g.Assert(err).Equal(nil)
-			g.Assert(course_after.Name).Equal("Info2_update")
-			g.Assert(course_after.Description).Equal("Lorem Ipsum_update")
-			g.Assert(course_after.BeginsAt.Equal(expectedBegin)).Equal(true)
-			g.Assert(course_after.EndsAt.Equal(expectedEnd)).Equal(true)
-			g.Assert(course_after.RequiredPercentage).Equal(99)
+
+			g.Assert(course_after.Name).Equal(course_sent.Name)
+			g.Assert(course_after.Description).Equal(course_sent.Description)
+			g.Assert(course_after.BeginsAt.Equal(course_sent.BeginsAt)).Equal(true)
+			g.Assert(course_after.EndsAt.Equal(course_sent.EndsAt)).Equal(true)
+			g.Assert(course_after.RequiredPercentage).Equal(course_sent.RequiredPercentage)
 		})
 
 		g.It("Should delete", func() {

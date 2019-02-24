@@ -29,6 +29,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"time"
 
 	// "os"
 	"strings"
@@ -43,6 +44,20 @@ import (
 
 // similar to gin.H as a neat wrapper
 type H map[string]interface{}
+
+func ToH(z interface{}) map[string]interface{} {
+	data, _ := json.Marshal(z)
+	var msgMapTemplate interface{}
+	_ = json.Unmarshal(data, &msgMapTemplate)
+	return msgMapTemplate.(map[string]interface{})
+}
+
+// Time return time.Now() but without nanseconds for passing unit-tests
+func Time(t time.Time) time.Time {
+	format := "2006-01-02 15:04:05 +0000 CET"
+	R, _ := time.Parse(format, t.Format(format))
+	return R
+}
 
 var tokenManager *authenticate.TokenAuth
 

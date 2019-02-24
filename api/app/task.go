@@ -24,6 +24,7 @@ import (
   "net/http"
   "strconv"
 
+  "github.com/cgtuebingen/infomark-backend/api/helper"
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/go-chi/chi"
   "github.com/go-chi/render"
@@ -99,7 +100,7 @@ func (rs *TaskResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 
   var Tasks []model.Task
   var err error
-  // we use middle to detect whether there is a course given
+  // we use middle to detect whether there is a sheet given
   sheet := r.Context().Value("sheet").(*model.Sheet)
   Tasks, err = rs.Stores.Task.TasksOfSheet(sheet, false)
 
@@ -112,6 +113,9 @@ func (rs *TaskResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 
 // CreateHandler is the enpoint for retrieving all Tasks if claim.root is true.
 func (rs *TaskResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
+
+  sheet := r.Context().Value("sheet").(*model.Sheet)
+
   // start from empty Request
   data := &TaskRequest{}
 
@@ -128,7 +132,7 @@ func (rs *TaskResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
   }
 
   // create Task entry in database
-  newTask, err := rs.Stores.Task.Create(data.Task)
+  newTask, err := rs.Stores.Task.Create(data.Task, sheet)
   if err != nil {
     render.Render(w, r, ErrRender(err))
     return
@@ -142,12 +146,14 @@ func (rs *TaskResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
     return
   }
 
+  _ = sheet
+
 }
 
 // GetHandler is the enpoint for retrieving a specific Task.
 func (rs *TaskResource) GetHandler(w http.ResponseWriter, r *http.Request) {
   // `Task` is retrieved via middle-ware
-  Task := r.Context().Value("Task").(*model.Task)
+  Task := r.Context().Value("task").(*model.Task)
 
   // render JSON reponse
   if err := render.Render(w, r, rs.newTaskResponse(Task)); err != nil {
@@ -162,7 +168,7 @@ func (rs *TaskResource) GetHandler(w http.ResponseWriter, r *http.Request) {
 func (rs *TaskResource) EditHandler(w http.ResponseWriter, r *http.Request) {
   // start from empty Request
   data := &TaskRequest{
-    Task: r.Context().Value("Task").(*model.Task),
+    Task: r.Context().Value("task").(*model.Task),
   }
 
   // parse JSON request into struct
@@ -181,7 +187,7 @@ func (rs *TaskResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (rs *TaskResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
-  Task := r.Context().Value("Task").(*model.Task)
+  Task := r.Context().Value("task").(*model.Task)
 
   // update database entry
   if err := rs.Stores.Task.Delete(Task.ID); err != nil {
@@ -190,6 +196,58 @@ func (rs *TaskResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
   }
 
   render.Status(r, http.StatusNoContent)
+}
+
+func (rs *TaskResource) GetPublicTestFileHandler(w http.ResponseWriter, r *http.Request) {
+
+  task := r.Context().Value("task").(*model.Task)
+  hnd := helper.NewPublicTestFileHandle(task.ID)
+
+  if !hnd.Exists() {
+    render.Render(w, r, ErrNotFound)
+    return
+  } else {
+    if err := hnd.WriteToBody(w); err != nil {
+      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    }
+  }
+}
+
+func (rs *TaskResource) GetPrivateTestFileHandler(w http.ResponseWriter, r *http.Request) {
+
+  task := r.Context().Value("task").(*model.Task)
+  hnd := helper.NewPrivateTestFileHandle(task.ID)
+
+  if !hnd.Exists() {
+    render.Render(w, r, ErrNotFound)
+    return
+  } else {
+    if err := hnd.WriteToBody(w); err != nil {
+      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    }
+  }
+}
+
+func (rs *TaskResource) ChangePublicTestFileHandler(w http.ResponseWriter, r *http.Request) {
+  // will always be a POST
+  task := r.Context().Value("task").(*model.Task)
+
+  // the file will be located
+  if err := helper.NewPublicTestFileHandle(task.ID).WriteToDisk(r, "file_data"); err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+  }
+  render.Status(r, http.StatusOK)
+}
+
+func (rs *TaskResource) ChangePrivateTestFileHandler(w http.ResponseWriter, r *http.Request) {
+  // will always be a POST
+  task := r.Context().Value("task").(*model.Task)
+
+  // the file will be located
+  if err := helper.NewPrivateTestFileHandle(task.ID).WriteToDisk(r, "file_data"); err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+  }
+  render.Status(r, http.StatusOK)
 }
 
 // .............................................................................
@@ -218,7 +276,7 @@ func (d *TaskResource) Context(next http.Handler) http.Handler {
     }
 
     // serve next
-    ctx := context.WithValue(r.Context(), "Task", Task)
+    ctx := context.WithValue(r.Context(), "task", Task)
     next.ServeHTTP(w, r.WithContext(ctx))
   })
 }

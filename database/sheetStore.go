@@ -62,7 +62,7 @@ func (s *SheetStore) Create(p *model.Sheet, c *model.Course) (*model.Sheet, erro
   // now associate sheet with course
   _, err = s.db.Exec(`INSERT INTO sheet_course
     (id,sheet_id,course_id,ordering)
-    VALUES (DEFAULT, $1, $2, $3);`, newID, c.ID, maxOrder)
+    VALUES (DEFAULT, $1, $2, $3);`, newID, c.ID, maxOrder+1)
   if err != nil {
     return nil, err
   }

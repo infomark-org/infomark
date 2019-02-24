@@ -10,6 +10,7 @@ require (
 	github.com/docker/docker v1.13.1
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.3.3 // indirect
+	github.com/fatih/structs v1.1.0 // indirect
 	github.com/franela/goblin v0.0.0-20181003173013-ead4ad1d2727
 	github.com/go-chi/chi v4.0.0+incompatible
 	github.com/go-chi/cors v1.0.0

@@ -45,11 +45,28 @@ func (s *TaskStore) GetAll() ([]model.Task, error) {
   return p, err
 }
 
-func (s *TaskStore) Create(p *model.Task) (*model.Task, error) {
+func (s *TaskStore) Create(p *model.Task, sheet *model.Sheet) (*model.Task, error) {
+  // create Task
   newID, err := Insert(s.db, "tasks", p)
   if err != nil {
     return nil, err
   }
+
+  // get maximum order
+  var maxOrder int
+  err = s.db.Get(&maxOrder, "SELECT max(ordering) FROM task_sheet WHERE sheet_id = $1", sheet.ID)
+  if err != nil {
+    return nil, err
+  }
+
+  // now associate sheet with course
+  _, err = s.db.Exec(`INSERT INTO task_sheet
+    (id,task_id,sheet_id,ordering)
+    VALUES (DEFAULT, $1, $2, $3);`, newID, sheet.ID, maxOrder+1)
+  if err != nil {
+    return nil, err
+  }
+
   return s.Get(newID)
 }
 
@@ -64,10 +81,11 @@ func (s *TaskStore) Delete(taskID int64) error {
 func (s *TaskStore) TasksOfSheet(sheet *model.Sheet, only_active bool) ([]model.Task, error) {
   p := []model.Task{}
 
+  // t.public_test_path, t.private_test_path,
   err := s.db.Select(&p, `
     SELECT
-      t.id, t.created_at, t.updated_at, t.max_points, t.public_test_path,
-      t.private_test_path, t.public_docker_image, t.private_docker_image
+      t.id, t.created_at, t.updated_at, t.max_points,
+      t.public_docker_image, t.private_docker_image
     FROM task_sheet ts
     INNER JOIN
       tasks t ON ts.task_id = t.id

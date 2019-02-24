@@ -116,10 +116,10 @@ func (rs *CourseResource) newEnrollmentResponse(p *model.UserCourse) *enrollment
   return &enrollmentResponse{
     Role: p.Role,
     User: &model.User{
-      ID:            p.UserID,
-      FirstName:     p.FirstName,
-      LastName:      p.LastName,
-      AvatarPath:    p.AvatarPath,
+      ID:        p.UserID,
+      FirstName: p.FirstName,
+      LastName:  p.LastName,
+      // AvatarPath:    p.AvatarPath,
       Email:         p.Email,
       StudentNumber: p.StudentNumber,
       Semester:      p.Semester,
