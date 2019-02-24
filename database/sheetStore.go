@@ -45,11 +45,28 @@ func (s *SheetStore) GetAll() ([]model.Sheet, error) {
   return p, err
 }
 
-func (s *SheetStore) Create(p *model.Sheet) (*model.Sheet, error) {
+func (s *SheetStore) Create(p *model.Sheet, c *model.Course) (*model.Sheet, error) {
+
   newID, err := Insert(s.db, "sheets", p)
   if err != nil {
     return nil, err
   }
+
+  // get maximum order
+  var maxOrder int
+  err = s.db.Get(&maxOrder, "SELECT max(ordering) FROM sheet_course WHERE course_id = $1", c.ID)
+  if err != nil {
+    return nil, err
+  }
+
+  // now associate sheet with course
+  _, err = s.db.Exec(`INSERT INTO sheet_course
+    (id,sheet_id,course_id,ordering)
+    VALUES (DEFAULT, $1, $2, $3);`, newID, c.ID, maxOrder)
+  if err != nil {
+    return nil, err
+  }
+
   return s.Get(newID)
 }
 

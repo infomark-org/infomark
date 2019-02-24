@@ -231,21 +231,22 @@ if __name__ == "__main__":
     f.write('DELETE FROM user_course;\n')
     f.write('ALTER SEQUENCE user_course_id_seq RESTART WITH 1;\n')
 
-    for k, admin in enumerate(admins):
-      k += 1
-      f.write(to_statement('user_course', create_user_course(k, course_id, 2)))
+    for cid in [1, 2]:
+      for k, admin in enumerate(admins):
+        k += 1
+        f.write(to_statement('user_course', create_user_course(k, cid, 2)))
 
-    for k, tutor in enumerate(tutors):
-      k += 1
-      k += len(admins)
-      f.write(to_statement('user_course', create_user_course(k, course_id, 1)))
+      for k, tutor in enumerate(tutors):
+        k += 1
+        k += len(admins)
+        f.write(to_statement('user_course', create_user_course(k, cid, 1)))
 
-    # enrollments
-    for k, student in enumerate(students):
-      k += 1
-      k += len(admins)
-      k += len(tutors)
-      f.write(to_statement('user_course', create_user_course(k, course_id, 0)))
+      # enrollments
+      for k, student in enumerate(students):
+        k += 1
+        k += len(admins)
+        k += len(tutors)
+        f.write(to_statement('user_course', create_user_course(k, cid, 0)))
 
     # sheets
     f.write('DELETE FROM sheets;\n')

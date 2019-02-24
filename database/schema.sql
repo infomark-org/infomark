@@ -58,8 +58,8 @@ CREATE TABLE user_course(
   role INT DEFAULT 0,
 
   -- PRIMARY KEY (user_id, course_id),
-  FOREIGN KEY (user_id) REFERENCES users (id),
-  FOREIGN KEY (course_id) REFERENCES courses (id)
+  FOREIGN KEY (user_id)   REFERENCES users (id)    ON DELETE CASCADE,
+  FOREIGN KEY (course_id) REFERENCES courses (id)  ON DELETE CASCADE
 );
 
 CREATE TABLE sheets(
@@ -83,8 +83,8 @@ CREATE TABLE sheet_course(
   ordering INT not null,
 
   -- PRIMARY KEY (sheet_id, course_id),
-  FOREIGN KEY (sheet_id) REFERENCES sheets (id),
-  FOREIGN KEY (course_id) REFERENCES courses (id)
+  FOREIGN KEY (sheet_id)  REFERENCES sheets (id)    ON DELETE CASCADE,
+  FOREIGN KEY (course_id) REFERENCES courses (id)   ON DELETE CASCADE
 );
 
 
@@ -109,8 +109,8 @@ CREATE TABLE task_sheet(
   ordering INT ,
 
   -- PRIMARY KEY (task_id, sheet_id),
-  FOREIGN KEY (task_id) REFERENCES tasks (id),
-  FOREIGN KEY (sheet_id) REFERENCES sheets (id)
+  FOREIGN KEY (task_id) REFERENCES tasks (id)     ON DELETE CASCADE,
+  FOREIGN KEY (sheet_id) REFERENCES sheets (id)   ON DELETE CASCADE
 );
 
 CREATE TABLE submissions(
@@ -124,8 +124,8 @@ CREATE TABLE submissions(
   -- file_path TEXT not null,
 
   -- PRIMARY KEY (user_id, task_id),
-  FOREIGN KEY (user_id) REFERENCES users (id),
-  FOREIGN KEY (task_id) REFERENCES tasks (id)
+  FOREIGN KEY (user_id) REFERENCES users (id)   ON DELETE CASCADE,
+  FOREIGN KEY (task_id) REFERENCES tasks (id)   ON DELETE CASCADE
 );
 
 CREATE TABLE grades(
@@ -149,8 +149,8 @@ CREATE TABLE grades(
   submission_id INT not null,
 
   -- PRIMARY KEY (tutor_id, submission_id),
-  FOREIGN KEY (tutor_id) REFERENCES users (id),
-  FOREIGN KEY (submission_id) REFERENCES submissions (id)
+  FOREIGN KEY (tutor_id) REFERENCES users (id)              ON DELETE CASCADE,
+  FOREIGN KEY (submission_id) REFERENCES submissions (id)   ON DELETE CASCADE
 );
 
 -- exercise groups
@@ -177,8 +177,8 @@ CREATE TABLE task_feedbacks(
   rating INT DEFAULT 0,
 
   -- PRIMARY KEY (user_id, task_id),
-  FOREIGN KEY (user_id) REFERENCES users (id),
-  FOREIGN KEY (task_id) REFERENCES tasks (id)
+  FOREIGN KEY (user_id) REFERENCES users (id)  ON DELETE CASCADE,
+  FOREIGN KEY (task_id) REFERENCES tasks (id)  ON DELETE CASCADE
 );
 
 -- bids of students to get into a specific exercise group
@@ -214,8 +214,8 @@ CREATE TABLE material_course(
   course_id INT not null,
 
   -- PRIMARY KEY (material_id, course_id),
-  FOREIGN KEY (material_id) REFERENCES materials (id),
-  FOREIGN KEY (course_id) REFERENCES courses (id)
+  FOREIGN KEY (material_id) REFERENCES materials (id)   ON DELETE CASCADE,
+  FOREIGN KEY (course_id) REFERENCES courses (id)       ON DELETE CASCADE
 );
 
 -- add_index "users", ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true, using: :btree

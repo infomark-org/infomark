@@ -28,10 +28,9 @@ type Sheet struct {
 	CreatedAt time.Time `json:"-" db:"created_at,omitempty"`
 	UpdatedAt time.Time `json:"-" db:"updated_at,omitempty"`
 
-	Name           string    `json:"name" db:"name"`
-	PublishedAt    time.Time `json:"publish_at" db:"publish_at"`
-	DueAt          time.Time `json:"due_at" db:"due_at"`
-	RequiredPoints int       `json:"required_points" db:"required_points"`
+	Name      string    `json:"name" db:"name"`
+	PublishAt time.Time `json:"publish_at" db:"publish_at"`
+	DueAt     time.Time `json:"due_at" db:"due_at"`
 }
 
 func (d *Sheet) Validate() error {

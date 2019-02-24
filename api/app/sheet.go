@@ -112,6 +112,9 @@ func (rs *SheetResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 
 // CreateHandler is the enpoint for retrieving all Sheets if claim.root is true.
 func (rs *SheetResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
+
+  course := r.Context().Value("course").(*model.Course)
+
   // start from empty Request
   data := &SheetRequest{}
 
@@ -128,7 +131,7 @@ func (rs *SheetResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
   }
 
   // create Sheet entry in database
-  newSheet, err := rs.Stores.Sheet.Create(data.Sheet)
+  newSheet, err := rs.Stores.Sheet.Create(data.Sheet, course)
   if err != nil {
     render.Render(w, r, ErrRender(err))
     return
@@ -147,7 +150,7 @@ func (rs *SheetResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
 // GetHandler is the enpoint for retrieving a specific Sheet.
 func (rs *SheetResource) GetHandler(w http.ResponseWriter, r *http.Request) {
   // `Sheet` is retrieved via middle-ware
-  Sheet := r.Context().Value("Sheet").(*model.Sheet)
+  Sheet := r.Context().Value("sheet").(*model.Sheet)
 
   // render JSON reponse
   if err := render.Render(w, r, rs.newSheetResponse(Sheet)); err != nil {
@@ -162,7 +165,7 @@ func (rs *SheetResource) GetHandler(w http.ResponseWriter, r *http.Request) {
 func (rs *SheetResource) EditHandler(w http.ResponseWriter, r *http.Request) {
   // start from empty Request
   data := &SheetRequest{
-    Sheet: r.Context().Value("Sheet").(*model.Sheet),
+    Sheet: r.Context().Value("sheet").(*model.Sheet),
   }
 
   // parse JSON request into struct
@@ -181,7 +184,7 @@ func (rs *SheetResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (rs *SheetResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
-  Sheet := r.Context().Value("Sheet").(*model.Sheet)
+  Sheet := r.Context().Value("sheet").(*model.Sheet)
 
   // update database entry
   if err := rs.Stores.Sheet.Delete(Sheet.ID); err != nil {

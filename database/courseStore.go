@@ -59,28 +59,32 @@ func (s *CourseStore) Update(p *model.Course) error {
 
 func (s *CourseStore) Delete(courseID int64) error {
 
-  tx, err := s.db.Begin()
+  // we handle the deletion iwth cascade foreign keys.
+  // This is just here in case we need again more complex logic.
+  // tx, err := s.db.Begin()
 
-  // disenroll all users
-  if _, err = tx.Exec("DELETE FROM user_course WHERE course_id = $1;", courseID); err != nil {
-    return err
-  }
+  // // disenroll all users
+  // if _, err = tx.Exec("DELETE FROM user_course WHERE course_id = $1;", courseID); err != nil {
+  //   return err
+  // }
 
-  // remove all linked sheets
-  if _, err = tx.Exec("DELETE FROM sheet_course WHERE course_id = $1;", courseID); err != nil {
-    return err
-  }
+  // // remove all linked sheets
+  // if _, err = tx.Exec("DELETE FROM sheet_course WHERE course_id = $1;", courseID); err != nil {
+  //   return err
+  // }
 
-  // remove course
-  if _, err = tx.Exec("DELETE FROM courses WHERE id = $1;", courseID); err != nil {
-    return err
-  }
+  // // remove course
+  // if _, err = tx.Exec("DELETE FROM courses WHERE id = $1;", courseID); err != nil {
+  //   return err
+  // }
 
-  if err = tx.Commit(); err != nil {
-    return err
-  }
+  // if err = tx.Commit(); err != nil {
+  //   return err
+  // }
+  //
+  // return nil
 
-  return nil
+  return Delete(s.db, "courses", courseID)
 }
 
 func (s *CourseStore) Enroll(courseID int64, userID int64) error {

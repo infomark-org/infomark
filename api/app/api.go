@@ -61,7 +61,7 @@ type SheetStore interface {
   Get(SheetID int64) (*model.Sheet, error)
   Update(p *model.Sheet) error
   GetAll() ([]model.Sheet, error)
-  Create(p *model.Sheet) (*model.Sheet, error)
+  Create(p *model.Sheet, c *model.Course) (*model.Sheet, error)
   Delete(SheetID int64) error
   SheetsOfCourse(course *model.Course, only_active bool) ([]model.Sheet, error)
 }
