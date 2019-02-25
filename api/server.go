@@ -26,6 +26,8 @@ import (
 	"os/signal"
 	"strings"
 
+	"github.com/cgtuebingen/infomark-backend/logging"
+	"github.com/jmoiron/sqlx"
 	"github.com/spf13/viper"
 )
 
@@ -37,7 +39,17 @@ type Server struct {
 // NewServer creates and configures an APIServer serving all application routes.
 func NewServer() (*Server, error) {
 	log.Println("configuring server...")
-	api, err := New()
+	logger := logging.NewLogger()
+
+	// db, err := sqlx.Connect("sqlite3", "__deleteme.db")
+	db, err := sqlx.Connect("postgres", viper.GetString("database_connection"))
+	// db, err := sqlx.Connect("postgres", "user=postgres dbname=infomark password=postgres sslmode=disable")
+	if err != nil {
+		logger.WithField("module", "database").Error(err)
+		return nil, err
+	}
+
+	apiHandler, err := New(db)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +66,7 @@ func NewServer() (*Server, error) {
 
 	srv := http.Server{
 		Addr:    addr,
-		Handler: api,
+		Handler: apiHandler,
 	}
 
 	return &Server{&srv}, nil

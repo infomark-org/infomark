@@ -19,6 +19,7 @@
 package model
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -32,19 +33,23 @@ type User struct {
 	CreatedAt time.Time `json:"-" db:"created_at,omitempty"`
 	UpdatedAt time.Time `json:"-" db:"updated_at,omitempty"`
 
-	FirstName string `json:"first_name" db:"first_name"`
-	LastName  string `json:"last_name" db:"last_name"`
-	// AvatarPath    null.String `json:"avatar_url" db:"avatar_path"`
-	Email         string `json:"email" db:"email"`
-	StudentNumber string `json:"student_number" db:"student_number"`
-	Semester      int    `json:"semester" db:"semester"`
-	Subject       string `json:"subject" db:"subject"`
-	Language      string `json:"language" db:"language"`
+	FirstName     string      `json:"first_name" db:"first_name"`
+	LastName      string      `json:"last_name" db:"last_name"`
+	AvatarURL     null.String `json:"avatar_url, omitempty" db:"avatar_url"`
+	Email         string      `json:"email" db:"email"`
+	StudentNumber string      `json:"student_number" db:"student_number"`
+	Semester      int         `json:"semester" db:"semester"`
+	Subject       string      `json:"subject" db:"subject"`
+	Language      string      `json:"language" db:"language"`
 
 	EncryptedPassword  string      `json:"-" db:"encrypted_password"`
 	ResetPasswordToken null.String `json:"-" db:"reset_password_token"`
 	ConfirmEmailToken  null.String `json:"-" db:"confirm_email_token"`
 	Root               bool        `json:"-" db:"root"`
+}
+
+func (d *User) FullName() string {
+	return fmt.Sprintf("%s %s", d.FirstName, d.LastName)
 }
 
 func (d *User) Validate() error {

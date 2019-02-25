@@ -10,6 +10,7 @@ NUM_TUTORS = 10
 NUM_ADMINS = 1
 
 
+
 class VAL(Enum):
   DEFAULT = 1
   NULL = 2
@@ -156,9 +157,46 @@ def create_task_sheet(task_id, sheet_id, k):
   return data
 
 
+def create_submission(user_id, task_id):
+  data = OrderedDict([
+      ('id', VAL.DEFAULT),
+      ('created_at', VAL.TIMESTAMP),
+      ('updated_at', VAL.TIMESTAMP),
+
+      ('user_id', user_id),
+      ('task_id', task_id),
+  ])
+
+  return data
+
+
+def create_grade(submission_id, tutor_id, max_points):
+  data = OrderedDict([
+      ('id', VAL.DEFAULT),
+      ('created_at', VAL.TIMESTAMP),
+      ('updated_at', VAL.TIMESTAMP),
+
+      ('execution_state', fake.random_int(0, 2)),
+
+      ('acquired_points', fake.random_int(0, max_points)),
+      ('public_test_log', 'Lorem Ipsum Public Test Log Stdout'),
+      ('private_test_log', 'Lorem Ipsum private Test Log Stdout'),
+
+      ('public_test_status', fake.random_int(0, 1)),
+      ('private_test_status', fake.random_int(0, 1)),
+
+      ('feedback', 'Lorem Ipsum Feedback'),
+
+      ('tutor_id', tutor_id),
+      ('submission_id', submission_id),
+  ])
+
+  return data
+
 # """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 # """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 # """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
 
 def to_statement(table, arr):
   cols = []
@@ -187,7 +225,7 @@ def to_statement(table, arr):
 
 
 if __name__ == "__main__":
-  fake = Factory.create()
+  # fake = Factory.create()
   fake = Faker('de_DE')
   fake.seed_instance(0)
 
@@ -222,7 +260,28 @@ if __name__ == "__main__":
       taskCounter += 1
     sheetCounter += 1
 
+  submissions = []
+  grades = []
+
+  for student_idx in range(1, NUM_STUDENTS + 1):
+    student_id = student_idx + NUM_TUTORS + NUM_ADMINS
+
+    for task_idx in range(1, len(tasks) + 1):
+
+      max_pts = tasks[task_idx - 1]['max_points']
+
+      # number_of_submissions = fake.random_int(0, 10)
+      # We discussed to delete all but the newest submission
+      number_of_submissions = 1
+      for i in range(number_of_submissions):
+        s = create_submission(student_id, task_idx)
+
+        submissions.append(s)
+        tid = fake.random_int(1, len(tutors))
+        grades.append(create_grade(len(submissions), tid, max_pts))
+
   with open('mock.sql', 'w') as f:
+    f.write('BEGIN;')
     # users
     f.write('DELETE FROM users;\n')
     f.write('ALTER SEQUENCE users_id_seq RESTART WITH 1;\n')
@@ -274,5 +333,19 @@ if __name__ == "__main__":
     for task in tasks:
       f.write(to_statement('tasks', task))
 
+    # tasks
+    f.write('ALTER SEQUENCE task_sheet_id_seq RESTART WITH 1;\n')
     for el in task_sheet:
       f.write(to_statement('task_sheet', el))
+
+    # submissions
+    f.write('ALTER SEQUENCE submissions_id_seq RESTART WITH 1;\n')
+    for el in submissions:
+      f.write(to_statement('submissions', el))
+
+    # grades
+    f.write('ALTER SEQUENCE grades_id_seq RESTART WITH 1;\n')
+    for el in grades:
+      f.write(to_statement('grades', el))
+
+    f.write('COMMIT;')

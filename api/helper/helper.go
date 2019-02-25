@@ -27,6 +27,7 @@ import (
 	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
+	"net/textproto"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -180,8 +181,24 @@ func formatRequest(r *http.Request) string {
 	return strings.Join(request, "\n")
 }
 
+var quoteEscaper = strings.NewReplacer("\\", "\\\\", `"`, "\\\"")
+
+func escapeQuotes(s string) string {
+	return quoteEscaper.Replace(s)
+}
+
+// ugly!! but see https://github.com/golang/go/issues/16425
+func CreateFormFile(w *multipart.Writer, fieldname, filename string, contentType string) (io.Writer, error) {
+	h := make(textproto.MIMEHeader)
+	h.Set("Content-Disposition",
+		fmt.Sprintf(`form-data; name="%s"; filename="%s"`,
+			escapeQuotes(fieldname), escapeQuotes(filename)))
+	h.Set("Content-Type", contentType)
+	return w.CreatePart(h)
+}
+
 // Creates a new file upload http request with optional extra params
-func newfileUploadRequest(uri string, params map[string]string, paramName, path string) (*http.Request, error) {
+func newfileUploadRequest(uri string, params map[string]string, paramName, path string, contentType string) (*http.Request, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -190,7 +207,7 @@ func newfileUploadRequest(uri string, params map[string]string, paramName, path 
 
 	body := &bytes.Buffer{}
 	writer := multipart.NewWriter(body)
-	part, err := writer.CreateFormFile(paramName, filepath.Base(path))
+	part, err := CreateFormFile(writer, paramName, filepath.Base(path), contentType)
 	if err != nil {
 		return nil, err
 	}
@@ -206,6 +223,8 @@ func newfileUploadRequest(uri string, params map[string]string, paramName, path 
 
 	req, err := http.NewRequest("POST", uri, body)
 	req.Header.Set("Content-Type", writer.FormDataContentType())
+
+	// fmt.Println(formatRequest(req))
 	return req, err
 }
 
@@ -250,10 +269,11 @@ func SimulateFileRequest(
 	request Payload,
 	requestFileName string,
 	requestFormName string,
+	requestFileContentType string,
 	apiHandler http.HandlerFunc,
 	middlewares ...func(http.Handler) http.Handler) *httptest.ResponseRecorder {
 
-	r, err := newfileUploadRequest("", map[string]string{}, requestFormName, requestFileName)
+	r, err := newfileUploadRequest("", map[string]string{}, requestFormName, requestFileName, requestFileContentType)
 	if err != nil {
 		panic(err)
 	}
@@ -267,53 +287,6 @@ func SimulateFileRequest(
 	handler.ServeHTTP(w, r)
 
 	return w
-
-	// // create request
-	// var b bytes.Buffer
-	// ww := multipart.NewWriter(&b)
-	// fw, err := ww.CreateFormFile(requestFileName, "somefile")
-	// if _, err = io.Copy(fw, requestFile); err != nil {
-	// 	panic(err)
-	// }
-	// ww.Close()
-
-	// req, err := http.NewRequest("POST", "/", &b)
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// r.Header.Set("Content-Type", w.FormDataContentType())
-
-	// // If there are some access claims, we add them to the header.
-	// // We currently support JWT only for testing.
-	// if request.AccessClaims.LoginID != 0 {
-	// 	// generate some valid claims
-	// 	accessToken, err := tokenManager.CreateAccessJWT(authenticate.NewAccessClaims(1, true))
-	// 	if err != nil {
-	// 		panic(err)
-	// 	}
-	// 	r.Header.Add("Authorization", "Bearer "+accessToken)
-	// }
-
-	// // fmt.Println(formatRequest(r))
-
-	// w := httptest.NewRecorder()
-
-	// // apply middlewares
-	// handler := chain(apiHandler, middlewares...)
-
-	// values := map[string]io.Reader{
-	// 	"file":  mustOpen("main.go"), // lets assume its this file
-	// 	"other": strings.NewReader("hello world!"),
-	// }
-	// err := Upload(client, remoteURL, values)
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// handler.ServeHTTP(w, r)
-
-	// return w
 }
 
 func init() {

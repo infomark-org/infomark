@@ -286,6 +286,7 @@ func TestCourseCreation(t *testing.T) {
 			g.Assert(len(courses_after)).Equal(len(courses_before) + 1)
 		})
 
+		g.Xit("Should send email", func() {})
 	})
 
 }

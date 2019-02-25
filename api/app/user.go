@@ -27,6 +27,7 @@ import (
 
   "github.com/cgtuebingen/infomark-backend/auth"
   "github.com/cgtuebingen/infomark-backend/auth/authenticate"
+  "github.com/cgtuebingen/infomark-backend/email"
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/go-chi/chi"
   "github.com/go-chi/render"
@@ -113,6 +114,8 @@ func (u *userResponse) Render(w http.ResponseWriter, r *http.Request) error {
   return nil
 }
 
+// .............................................................................
+
 // bindValidate jointly binds data from json request and validates the model.
 func (rs *UserResource) bindValidate(w http.ResponseWriter, r *http.Request) (*userRequest, *ErrResponse) {
   // get user from middle-ware context
@@ -198,6 +201,36 @@ func (rs *UserResource) EditHandler(w http.ResponseWriter, r *http.Request) {
   }
 
   render.Status(r, http.StatusNoContent)
+}
+
+// Patch is the endpoint fro updating a specific user with given id.
+func (rs *UserResource) SendEmailHandler(w http.ResponseWriter, r *http.Request) {
+
+  user := r.Context().Value("user").(*model.User)
+  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  accessUser, _ := rs.Stores.User.Get(accessClaims.LoginID)
+
+  data := &EmailRequest{}
+
+  // parse JSON request into struct
+  if err := render.Bind(r, data); err != nil {
+    render.Render(w, r, ErrBadRequestWithDetails(err))
+    return
+  }
+
+  // add sender identity
+  msg := email.NewEmailFromUser(
+    user.Email,
+    data.Subject,
+    data.Body,
+    accessUser,
+  )
+
+  if err := email.DefaultMail.Send(msg); err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
 }
 
 // .............................................................................

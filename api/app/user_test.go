@@ -38,6 +38,15 @@ import (
 	"testing"
 )
 
+func SetUserContext(user *model.User) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx := context.WithValue(r.Context(), "user", user)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
+}
+
 func TestUser(t *testing.T) {
 
 	email.DefaultMail = email.VoidMail
@@ -104,12 +113,7 @@ func TestUser(t *testing.T) {
 				rs.GetHandler,
 				// set user
 				authenticate.RequiredValidAccessClaims,
-				func(next http.Handler) http.Handler {
-					return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-						ctx := context.WithValue(r.Context(), "user", user_expected)
-						next.ServeHTTP(w, r.WithContext(ctx))
-					})
-				},
+				SetUserContext(user_expected),
 			)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
@@ -122,7 +126,6 @@ func TestUser(t *testing.T) {
 			g.Assert(user_actual.FirstName).Equal(user_expected.FirstName)
 			g.Assert(user_actual.FirstName).Equal(user_expected.FirstName)
 			g.Assert(user_actual.LastName).Equal(user_expected.LastName)
-			// g.Assert(user_actual.AvatarPath).Equal(user_expected.AvatarPath)
 			g.Assert(user_actual.Email).Equal(user_expected.Email)
 			g.Assert(user_actual.StudentNumber).Equal(user_expected.StudentNumber)
 			g.Assert(user_actual.Semester).Equal(user_expected.Semester)
@@ -130,6 +133,8 @@ func TestUser(t *testing.T) {
 			g.Assert(user_actual.Language).Equal(user_expected.Language)
 
 		})
+
+		g.Xit("Should send email", func() {})
 
 	})
 

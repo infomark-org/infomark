@@ -25,6 +25,7 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/cgtuebingen/infomark-backend/model"
 	"github.com/spf13/viper"
 )
 
@@ -41,6 +42,16 @@ func NewEmail(toEmail string, subject string, body string) *Email {
 		To:      toEmail,
 		Subject: subject,
 		Body:    body,
+	}
+	return email
+}
+
+func NewEmailFromUser(toEmail string, subject string, body string, user *model.User) *Email {
+	email := &Email{
+		From:    viper.GetString("email_from"),
+		To:      toEmail,
+		Subject: subject,
+		Body:    fmt.Sprintf("%s\n\n----------\nSender is %s\nSent via InfoMark\n", body, user.FullName()),
 	}
 	return email
 }

@@ -26,6 +26,7 @@ import (
 
   "github.com/cgtuebingen/infomark-backend/api/helper"
   "github.com/cgtuebingen/infomark-backend/auth/authenticate"
+  "github.com/cgtuebingen/infomark-backend/email"
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/go-chi/chi"
   "github.com/go-chi/render"
@@ -244,6 +245,8 @@ func (rs *CourseResource) DeleteHandler(w http.ResponseWriter, r *http.Request) 
   render.Status(r, http.StatusNoContent)
 }
 
+// IndexEnrollmentsHandler lists all enrolled users. The query can be refined by several
+// URLparameters.
 func (rs *CourseResource) IndexEnrollmentsHandler(w http.ResponseWriter, r *http.Request) {
   // /courses/1/enrollments?roles=0,1
   course := r.Context().Value("course").(*model.Course)
@@ -274,6 +277,7 @@ func (rs *CourseResource) IndexEnrollmentsHandler(w http.ResponseWriter, r *http
   render.Status(r, http.StatusOK)
 }
 
+// EnrollHandler will enroll the current identity into the given course
 func (rs *CourseResource) EnrollHandler(w http.ResponseWriter, r *http.Request) {
   course := r.Context().Value("course").(*model.Course)
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
@@ -304,6 +308,7 @@ func (rs *CourseResource) EnrollHandler(w http.ResponseWriter, r *http.Request) 
 
 }
 
+// DisenrollHandler will disenroll the current identity into the given course
 func (rs *CourseResource) DisenrollHandler(w http.ResponseWriter, r *http.Request) {
   course := r.Context().Value("course").(*model.Course)
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
@@ -315,6 +320,66 @@ func (rs *CourseResource) DisenrollHandler(w http.ResponseWriter, r *http.Reques
   }
 
   render.Status(r, http.StatusNoContent)
+}
+
+// SendEmailHandler will send email to the entire course filtered by role.
+func (rs *CourseResource) SendEmailHandler(w http.ResponseWriter, r *http.Request) {
+
+  course := r.Context().Value("course").(*model.Course)
+
+  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  accessUser, _ := rs.Stores.User.Get(accessClaims.LoginID)
+
+  data := &EmailRequest{}
+
+  // parse JSON request into struct
+  if err := render.Bind(r, data); err != nil {
+    render.Render(w, r, ErrBadRequestWithDetails(err))
+    return
+  }
+
+  // extract filters
+  filterRoles := helper.StringArrayFromUrl(r, "roles", []string{"0", "1", "2"})
+  filterFirstName := "%%"
+  filterLastName := "%%"
+  filterEmail := "%%"
+  filterSubject := "%%"
+  filterLanguage := "%%"
+
+  recipients, err := rs.Stores.Course.EnrolledUsers(course,
+    filterRoles, filterFirstName, filterLastName, filterEmail,
+    filterSubject, filterLanguage,
+  )
+
+  if err != nil {
+    render.Render(w, r, ErrBadRequestWithDetails(err))
+    return
+  }
+
+  for _, recipient := range recipients {
+    // add sender identity
+    msg := email.NewEmailFromUser(
+      recipient.Email,
+      data.Subject,
+      data.Body,
+      accessUser,
+    )
+
+    if err := email.DefaultMail.Send(msg); err != nil {
+      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+      return
+    }
+  }
+
+}
+
+// PointsHandler returns the point for the identity in a given course. This is
+// intented to serve data for a plot.
+func (rs *CourseResource) PointsHandler(w http.ResponseWriter, r *http.Request) {
+  // course := r.Context().Value("course").(*model.Course)
+  // accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+
+  render.Status(r, http.StatusOK)
 }
 
 // .............................................................................

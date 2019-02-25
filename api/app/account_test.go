@@ -20,6 +20,7 @@ package app
 
 import (
 	"encoding/json"
+	"fmt"
 	// "fmt"
 	"github.com/cgtuebingen/infomark-backend/api/helper"
 	authpkg "github.com/cgtuebingen/infomark-backend/auth"
@@ -121,6 +122,62 @@ func TestAccount(t *testing.T) {
 				g.Assert(enrollments_actual[j].CourseID).Equal(enrollments_expected[j].CourseID)
 				g.Assert(enrollments_actual[j].ID).Equal(int64(0))
 			}
+		})
+
+		g.It("Should have empty avatar url when no avatar is given", func() {
+
+			// empty avatar url
+			requestQuery := helper.SimulateRequest(
+				helper.Payload{
+					Data:         helper.H{},
+					Method:       "POST",
+					AccessClaims: authenticate.NewAccessClaims(1, true),
+				},
+				rs.GetHandler,
+				authenticate.RequiredValidAccessClaims,
+			)
+			fmt.Println(requestQuery.Body)
+			g.Assert(requestQuery.Code).Equal(http.StatusOK)
+
+			user_return := model.User{}
+			err = json.NewDecoder(requestQuery.Body).Decode(&user_return)
+			g.Assert(err).Equal(nil)
+			g.Assert(user_return.AvatarURL.Valid).Equal(false)
+
+			// upload avatar
+			requestUpload := helper.SimulateFileRequest(
+				helper.Payload{
+					Data:         helper.H{},
+					Method:       "POST",
+					AccessClaims: authenticate.NewAccessClaims(1, true),
+				},
+				fmt.Sprintf("%s/default-avatar.jpg", viper.GetString("fixtures_dir")),
+				"avatar_data",
+				"image/jpg",
+				rs.ChangeAvatarHandler,
+				authenticate.RequiredValidAccessClaims,
+			)
+			fmt.Println(requestUpload.Body)
+			g.Assert(requestUpload.Code).Equal(http.StatusOK)
+
+			// // NON-empty avatar url
+			// requestQuery = helper.SimulateRequest(
+			// 	helper.Payload{
+			// 		Data:         helper.H{},
+			// 		Method:       "POST",
+			// 		AccessClaims: authenticate.NewAccessClaims(1, true),
+			// 	},
+			// 	rs.GetHandler,
+			// 	authenticate.RequiredValidAccessClaims,
+			// )
+			// fmt.Println(requestQuery.Body)
+			// g.Assert(requestQuery.Code).Equal(http.StatusOK)
+
+			// user_return = model.User{}
+			// err = json.NewDecoder(requestQuery.Body).Decode(&user_return)
+			// g.Assert(err).Equal(nil)
+			// g.Assert(user_return.AvatarURL.Valid).Equal(true)
+
 		})
 
 	})
@@ -226,6 +283,7 @@ func TestAccountCreation(t *testing.T) {
 			g.Assert(password_valid).Equal(true)
 
 		})
+
 	})
 }
 

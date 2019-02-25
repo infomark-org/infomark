@@ -1,4 +1,5 @@
 -- http://localhost:8081/#
+BEGIN;
 drop table if exists material_course;
 drop table if exists user_course;
 drop table if exists sheet_course;
@@ -23,7 +24,7 @@ CREATE TABLE users (
   first_name TEXT not null,
   last_name TEXT not null,
   -- we need to avatar_path (as it might be empty)
-  -- avatar_path TEXT,
+  avatar_url TEXT,
   email TEXT not null unique,
   student_number TEXT not null,
   semester INT not null,
@@ -143,6 +144,8 @@ CREATE TABLE grades(
   public_test_status INT  DEFAULT 0,
   private_test_status INT  DEFAULT 0,
 
+  acquired_points INT  DEFAULT 0,
+
   feedback TEXT,
 
   tutor_id INT not null,
@@ -220,3 +223,5 @@ CREATE TABLE material_course(
 
 -- add_index "users", ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true, using: :btree
 -- add_index "users", ["email"], name: "index_users_on_email", unique: true, using: :btree
+
+COMMIT;

@@ -35,7 +35,6 @@ import (
   "github.com/go-chi/render"
   "github.com/jmoiron/sqlx"
   _ "github.com/lib/pq"
-  "github.com/spf13/viper"
 )
 
 type H map[string]interface{}
@@ -54,19 +53,10 @@ func EmptyHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // New configures application resources and routes.
-func New() (*chi.Mux, error) {
+func New(db *sqlx.DB) (*chi.Mux, error) {
   logger := logging.NewLogger()
 
-  // db, err := sqlx.Connect("sqlite3", "__deleteme.db")
-  db, err := sqlx.Connect("postgres", viper.GetString("database_connection"))
-  // db, err := sqlx.Connect("postgres", "user=postgres dbname=infomark password=postgres sslmode=disable")
-  if err != nil {
-    logger.WithField("module", "database").Error(err)
-    return nil, err
-  }
-
-  err = db.Ping()
-  if err != nil {
+  if err := db.Ping(); err != nil {
     logger.WithField("module", "database").Error(err)
     return nil, err
   }
@@ -113,6 +103,7 @@ func New() (*chi.Mux, error) {
             r.Use(appAPI.User.Context)
             r.Get("/", appAPI.User.GetHandler)
             r.Patch("/", appAPI.User.EditHandler)
+            r.Post("/email", appAPI.User.SendEmailHandler)
           })
         })
 
@@ -132,8 +123,11 @@ func New() (*chi.Mux, error) {
             r.Route("/sheets", func(r chi.Router) {
               r.Get("/", appAPI.Sheet.IndexHandler)
               r.Post("/", appAPI.Sheet.CreateHandler)
-
             })
+
+            r.Post("/emails", appAPI.Course.SendEmailHandler)
+
+            r.Get("/points", appAPI.Course.PointsHandler)
           })
         })
 

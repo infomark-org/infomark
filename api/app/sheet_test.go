@@ -263,6 +263,7 @@ func TestSheetCreation(t *testing.T) {
 				},
 				fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir")),
 				"file_data",
+				"application/zip",
 				rs.ChangeFileHandler,
 				authenticate.RequiredValidAccessClaims,
 				SetSheetContext(sheet_active),
