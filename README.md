@@ -21,7 +21,7 @@ edit ~/.informark-backend.yml
 
 # Testing
 
-We ship unit tests and a database mock which is generated in Python. Read the docs [docs](./docs/) for more details of how to use a database mock. Running the tests is mandatory to ensure stability and we suggest to at least these tests once locally.
+We ship unit tests and a database mock which is generated in Python. Read the docs [docs](./docs/) for more details of how to use a database mock. Running the tests is mandatory to ensure stability and correctness and we suggest to at least these tests once locally.
 
 
 # Running
