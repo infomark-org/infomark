@@ -27,6 +27,7 @@ pipeline:
     environment:
       - GOPROXY=https://gomods.patwie.com/
     commands:
+      - go version
       - go build infomark-backend.go
   test:
     image: golang
