@@ -22,6 +22,7 @@ import (
   "errors"
   "fmt"
   "net/http"
+  "strconv"
   "strings"
 
   "github.com/cgtuebingen/infomark-backend/api/helper"
@@ -336,6 +337,12 @@ func (rs *AccountResource) ChangeAvatarHandler(w http.ResponseWriter, r *http.Re
   if err := helper.NewAvatarFileHandle(user.ID).WriteToDisk(r, "avatar_data"); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
   }
+
+  user.AvatarURL = null.StringFrom(fmt.Sprintf("/api/v1/user/%s/avatar", strconv.FormatInt(user.ID, 10)))
+  if err := rs.Stores.User.Update(user); err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+  }
+
   render.Status(r, http.StatusOK)
 }
 

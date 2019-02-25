@@ -87,14 +87,6 @@ func (f *FileHandle) Path(fallback bool) string {
   switch f.Category {
   case AvatarCategory:
     return fmt.Sprintf("%s/avatars/%s.jpg", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
-    // potentialPath := fmt.Sprintf("files/uploads/avatars/%s.jpg", strconv.FormatInt(f.ID, 10))
-    // falback is handled by frontend, we just omit that field
-    // if fallback {
-    //   if _, err := os.Stat(potentialPath); os.IsNotExist(err) {
-    //     return fmt.Sprintf("%s/avatars/default.jpg", viper.GetString("uploads_dir"))
-    //   }
-    // }
-    // return potentialPath
 
   case SheetCategory:
     return fmt.Sprintf("%s/sheets/%s.zip", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
@@ -104,7 +96,6 @@ func (f *FileHandle) Path(fallback bool) string {
 
   case PrivateTestCategory:
     return fmt.Sprintf("%s/tasks/%s-private.zip", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
-
   }
   return ""
 }

@@ -124,62 +124,6 @@ func TestAccount(t *testing.T) {
 			}
 		})
 
-		g.It("Should have empty avatar url when no avatar is given", func() {
-
-			// empty avatar url
-			requestQuery := helper.SimulateRequest(
-				helper.Payload{
-					Data:         helper.H{},
-					Method:       "POST",
-					AccessClaims: authenticate.NewAccessClaims(1, true),
-				},
-				rs.GetHandler,
-				authenticate.RequiredValidAccessClaims,
-			)
-			fmt.Println(requestQuery.Body)
-			g.Assert(requestQuery.Code).Equal(http.StatusOK)
-
-			user_return := model.User{}
-			err = json.NewDecoder(requestQuery.Body).Decode(&user_return)
-			g.Assert(err).Equal(nil)
-			g.Assert(user_return.AvatarURL.Valid).Equal(false)
-
-			// upload avatar
-			requestUpload := helper.SimulateFileRequest(
-				helper.Payload{
-					Data:         helper.H{},
-					Method:       "POST",
-					AccessClaims: authenticate.NewAccessClaims(1, true),
-				},
-				fmt.Sprintf("%s/default-avatar.jpg", viper.GetString("fixtures_dir")),
-				"avatar_data",
-				"image/jpg",
-				rs.ChangeAvatarHandler,
-				authenticate.RequiredValidAccessClaims,
-			)
-			fmt.Println(requestUpload.Body)
-			g.Assert(requestUpload.Code).Equal(http.StatusOK)
-
-			// // NON-empty avatar url
-			// requestQuery = helper.SimulateRequest(
-			// 	helper.Payload{
-			// 		Data:         helper.H{},
-			// 		Method:       "POST",
-			// 		AccessClaims: authenticate.NewAccessClaims(1, true),
-			// 	},
-			// 	rs.GetHandler,
-			// 	authenticate.RequiredValidAccessClaims,
-			// )
-			// fmt.Println(requestQuery.Body)
-			// g.Assert(requestQuery.Code).Equal(http.StatusOK)
-
-			// user_return = model.User{}
-			// err = json.NewDecoder(requestQuery.Body).Decode(&user_return)
-			// g.Assert(err).Equal(nil)
-			// g.Assert(user_return.AvatarURL.Valid).Equal(true)
-
-		})
-
 	})
 
 }
@@ -299,6 +243,8 @@ func TestAccountChanges(t *testing.T) {
 		return
 	}
 
+	defer helper.NewAvatarFileHandle(1).Delete()
+
 	stores := NewStores(db)
 	rs := NewAccountResource(stores)
 
@@ -368,6 +314,62 @@ func TestAccountChanges(t *testing.T) {
 			g.Assert(user_after.FirstName).Equal("Peter")
 			g.Assert(user_after.LastName).Equal("Zwegat")
 			g.Assert(user_after.ConfirmEmailToken.Valid).Equal(true)
+		})
+
+		g.It("Should have empty avatar url when no avatar is given", func() {
+
+			// empty avatar url
+			requestQuery := helper.SimulateRequest(
+				helper.Payload{
+					Data:         helper.H{},
+					Method:       "POST",
+					AccessClaims: authenticate.NewAccessClaims(1, true),
+				},
+				rs.GetHandler,
+				authenticate.RequiredValidAccessClaims,
+			)
+			fmt.Println(requestQuery.Body)
+			g.Assert(requestQuery.Code).Equal(http.StatusOK)
+
+			user_return := model.User{}
+			err = json.NewDecoder(requestQuery.Body).Decode(&user_return)
+			g.Assert(err).Equal(nil)
+			g.Assert(user_return.AvatarURL.Valid).Equal(false)
+
+			// upload avatar
+			requestUpload := helper.SimulateFileRequest(
+				helper.Payload{
+					Data:         helper.H{},
+					Method:       "POST",
+					AccessClaims: authenticate.NewAccessClaims(1, true),
+				},
+				fmt.Sprintf("%s/default-avatar.jpg", viper.GetString("fixtures_dir")),
+				"avatar_data",
+				"image/jpg",
+				rs.ChangeAvatarHandler,
+				authenticate.RequiredValidAccessClaims,
+			)
+			fmt.Println(requestUpload.Body)
+			g.Assert(requestUpload.Code).Equal(http.StatusOK)
+
+			// NON-empty avatar url
+			requestQuery = helper.SimulateRequest(
+				helper.Payload{
+					Data:         helper.H{},
+					Method:       "POST",
+					AccessClaims: authenticate.NewAccessClaims(1, true),
+				},
+				rs.GetHandler,
+				authenticate.RequiredValidAccessClaims,
+			)
+			fmt.Println(requestQuery.Body)
+			g.Assert(requestQuery.Code).Equal(http.StatusOK)
+
+			user_return = model.User{}
+			err = json.NewDecoder(requestQuery.Body).Decode(&user_return)
+			g.Assert(err).Equal(nil)
+			g.Assert(user_return.AvatarURL.Valid).Equal(true)
+
 		})
 	})
 }
