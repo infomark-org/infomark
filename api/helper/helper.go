@@ -321,7 +321,8 @@ func init() {
 	// This allows to run all tests as transaction in isolated environemnts to make sure
 	// we do not accidentially alter the database in a persistent way. Hence,  all tests can run
 	// in an arbitrary order.
-	txdb.Register("psql_txdb", "postgres", "postgres://postgres:postgres@localhost/infomark?sslmode=disable")
+
+	txdb.Register("psql_txdb", "postgres", viper.GetString("database_connection"))
 }
 
 // TransactionDB creates a sql-driver which seemlessly supports transactions.
