@@ -1,6 +1,8 @@
 # InfoMark-Backend
 
-InfoMark is a CI inspired course app. The goal is to achieve auto grading of exercises with unit tests.
+[![Build Status](https://ci.patwie.com/api/badges/cgtuebingen/infomark-backend/status.svg)](http://ci.patwie.com/cgtuebingen/infomark-backend)
+
+InfoMark is a CI inspired online course management system. The goal is to achieve auto testing of exercises/homework using unit tests to ease the task of TAs.
 This repo hosts the backend of the application. It is written in [Go](https://golang.org/). The API is defined in this [repository](https://github.com/cgtuebingen/infomark-swagger)
 using [Swagger](https://swagger.io/).
 
@@ -8,16 +10,22 @@ The frontend is implemented in [Elm]((https://elm-lang.org/)) and is available [
 
 # Building
 
-1. Rrun `export GOPROXY="https://gomods.patwie.com"`
-2. Run `go build infomark-backend.go`
+Please have a look at the [`.drone.yml`](./.drone.yml) config for more details.
+
+```bash
+git clone <this repo>
+go build infomark-backend.go
+cp .informark-backend.yml.example ~/.informark-backend.yml
+edit ~/.informark-backend.yml
+```
+
+# Testing
+
+We ship unit tests and a database mock which is generated in Python. Read the docs [docs](./docs/) for more details of how to use a database mock. Running the tests is mandatory to ensure stability and we suggest to at least these tests once locally.
+
 
 # Running
 
-Read the docs [docs](./docs/)
-
-# Test
-
-```
-sudo docker build . -t infomark-test
-sudo docker run -it infomark-test bash
+```bash
+./infomark-backend server
 ```

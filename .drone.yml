@@ -1,0 +1,46 @@
+pipeline:
+  ping:
+    image: postgres
+    commands:
+      # wait for postgres service to become available
+      - |
+        until PGPASSWORD=postgres psql -U postgres -d infomark -h database \
+         -c "SELECT 1;" >/dev/null 2>&1; do sleep 1; done
+      # query the database
+      - |
+        PGPASSWORD=postgres psql -U postgres -d infomark -h database \
+          -c "SELECT * FROM pg_catalog.pg_tables;"
+  mock:
+    image: python:3
+    commands:
+      - cd database
+      - pip3 install -r requirements.txt
+      - python3 mock.py
+  seed:
+    image: postgres
+    commands:
+      - cd database
+      - PGPASSWORD=postgres psql -h 'database' -U 'postgres' -d 'infomark' -f schema.sql
+      - PGPASSWORD=postgres psql -h 'database' -U 'postgres' -d 'infomark' -f mock.sql
+  build:
+    image: golang
+    environment:
+      - GOPROXY=https://gomods.patwie.com/
+    commands:
+      - go build infomark-backend.go
+  test:
+    image: golang
+    environment:
+      - GOPROXY=https://gomods.patwie.com/
+    commands:
+      - cp .infomark-backend.yml.ci ~/.infomark-backend.yml
+      - cd api/app
+      - go test -cover -v
+
+services:
+  database:
+    image: postgres
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=infomark
