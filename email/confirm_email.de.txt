@@ -8,7 +8,7 @@ Sie müssen nun Ihre E-Mail-Adresse bestätigen:
 
 Bitte verwende den folgenden Link, um deine E-Mail-Adresse zu bestätigen:
 
-{{.confirm_email_url}}/{{.confirm_email_token}}
+{{.confirm_email_url}}/{{.confirm_email_address}}/{{.confirm_email_token}}
 
 If this does not work, please use the following token in the form:
 

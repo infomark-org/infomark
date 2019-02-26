@@ -190,10 +190,11 @@ func sendConfirmEmailForUser(user *model.User) error {
     "Confirm Account Instructions",
     "confirm_email.en.txt",
     map[string]string{
-      "first_name":          user.FirstName,
-      "last_name":           user.LastName,
-      "confirm_email_url":   fmt.Sprintf("%s/confirm_email", viper.GetString("url")),
-      "confirm_email_token": user.ConfirmEmailToken.String,
+      "first_name":            user.FirstName,
+      "last_name":             user.LastName,
+      "confirm_email_url":     fmt.Sprintf("%s/#/confirmation", viper.GetString("url")),
+      "confirm_email_address": user.Email,
+      "confirm_email_token":   user.ConfirmEmailToken.String,
     })
 
   if err != nil {

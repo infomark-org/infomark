@@ -40,6 +40,7 @@ import (
 func TestAccount(t *testing.T) {
 
 	email.DefaultMail = email.VoidMail
+	// email.DefaultMail = email.TerminalMail
 
 	logger := logging.NewLogger()
 	g := goblin.Goblin(t)
