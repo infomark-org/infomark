@@ -28,20 +28,16 @@ import (
 func TestCommon(t *testing.T) {
   g := goblin.Goblin(t)
 
-  tape := &Tape{}
-
-  var (
-    r *http.Request
-  )
+  tape := NewTape()
 
   g.Describe("Common", func() {
 
     g.BeforeEach(func() {
-      tape.BeforeEach(tape)
+      tape.BeforeEach()
     })
 
     g.It("Should pong", func() {
-      r, _ = http.NewRequest("GET", "/api/v1/ping", nil)
+      r, _ := http.NewRequest("GET", "/api/v1/ping", nil)
       w := tape.PlayRequest(r)
       g.Assert(w.Code).Equal(http.StatusOK)
       g.Assert(w.Body.String()).Equal("pong")

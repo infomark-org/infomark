@@ -19,13 +19,9 @@
 package app
 
 import (
-  "net/http"
-
   "github.com/cgtuebingen/infomark-backend/database"
-  "github.com/cgtuebingen/infomark-backend/logging"
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/jmoiron/sqlx"
-  "github.com/sirupsen/logrus"
 )
 
 type ctxKey int
@@ -128,6 +124,6 @@ func NewAPI(db *sqlx.DB) (*API, error) {
   return api, nil
 }
 
-func log(r *http.Request) logrus.FieldLogger {
-  return logging.GetLogEntry(r)
-}
+// func log(r *http.Request) logrus.FieldLogger {
+//   return logging.GetLogEntry(r)
+// }
