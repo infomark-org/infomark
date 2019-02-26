@@ -21,6 +21,7 @@ package app
 import (
   "context"
   "encoding/json"
+  "fmt"
   "net/http"
   "testing"
   "time"
@@ -29,6 +30,7 @@ import (
   "github.com/cgtuebingen/infomark-backend/email"
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/franela/goblin"
+  "github.com/spf13/viper"
 )
 
 func SetSheetContext(sheet *model.Sheet) func(http.Handler) http.Handler {
@@ -130,6 +132,39 @@ func TestSheet(t *testing.T) {
       sheets_after, err := stores.Sheet.SheetsOfCourse(course_active, false)
       g.Assert(err).Equal(nil)
       g.Assert(len(sheets_after)).Equal(len(sheets_before) + 1)
+    })
+
+    g.It("Should skip non-existent sheet file", func() {
+      w := tape.PlayWithClaims("GET", "/api/v1/sheets/1/file", 1, true)
+      g.Assert(w.Code).Equal(http.StatusNotFound)
+
+      // sheet_active, err := stores.Sheet.Get(1)
+      // g.Assert(err).Equal(nil)
+    })
+
+    g.It("Should upload sheet file", func() {
+
+      defer helper.NewSheetFileHandle(1).Delete()
+      g.Assert(helper.NewSheetFileHandle(1).Exists()).Equal(false)
+
+      // no file so far
+      sheet_active, err := stores.Sheet.Get(1)
+      g.Assert(err).Equal(nil)
+
+      // upload file
+      filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
+      body, ct, err := tape.CreateFileRequestBody(filename, "image/jpg")
+      g.Assert(err).Equal(nil)
+
+      r, _ := http.NewRequest("POST", "/api/v1/sheets/1/file", body)
+      r.Header.Set("Content-Type", ct)
+      w := tape.PlayRequestWithClaims(r, 1, true)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      // check disk
+      g.Assert(helper.NewSheetFileHandle(1).Exists()).Equal(true)
+
+      _ = sheet_active
     })
 
     g.AfterEach(func() {

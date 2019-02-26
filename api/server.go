@@ -26,6 +26,7 @@ import (
 	"os/signal"
 	"strings"
 
+	"github.com/cgtuebingen/infomark-backend/api/app"
 	"github.com/cgtuebingen/infomark-backend/logging"
 	"github.com/jmoiron/sqlx"
 	"github.com/spf13/viper"
@@ -49,7 +50,7 @@ func NewServer() (*Server, error) {
 		return nil, err
 	}
 
-	apiHandler, err := New(db, true)
+	apiHandler, err := app.New(db, true)
 	if err != nil {
 		return nil, err
 	}
