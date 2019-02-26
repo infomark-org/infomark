@@ -298,7 +298,7 @@ func (rs *AuthResource) ConfirmEmailHandler(w http.ResponseWriter, r *http.Reque
   // does such a user exists with request email adress?
   user, err := rs.Stores.User.FindByEmail(data.Email)
   if err != nil {
-    render.Render(w, r, ErrNotFound)
+    render.Render(w, r, ErrBadRequest)
     return
   }
 

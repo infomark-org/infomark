@@ -24,6 +24,7 @@ import (
 	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation"
+	"github.com/go-ozzo/ozzo-validation/is"
 	null "gopkg.in/guregu/null.v3"
 )
 
@@ -69,6 +70,7 @@ func (d *User) Validate() error {
 		validation.Field(
 			&d.Email,
 			validation.Required,
+			is.Email,
 		),
 		validation.Field(
 			&d.StudentNumber,

@@ -61,7 +61,7 @@ func TestAccount(t *testing.T) {
 			w := helper.SimulateRequest(
 				helper.Payload{
 					Data:   helper.H{},
-					Method: "POST",
+					Method: "GET",
 				},
 				rs.GetHandler,
 				authenticate.RequiredValidAccessClaims,
@@ -293,13 +293,10 @@ func TestAccountChanges(t *testing.T) {
 				helper.Payload{
 					Data: helper.H{
 						"account": helper.H{
-							"plain_password": "test",
+							"plain_password": "new_test",
+							"email":          "foo@uni-tuebingen.de",
 						},
-						"user": helper.H{
-							"email":      "foo@uni-tuebingen.de",
-							"first_name": "Peter",
-							"last_name":  "Zwegat",
-						},
+						"old_plain_password": "test",
 					},
 					Method:       "PATCH",
 					AccessClaims: authenticate.NewAccessClaims(1, true),
@@ -312,9 +309,103 @@ func TestAccountChanges(t *testing.T) {
 			user_after, err := stores.User.Get(1)
 			g.Assert(err).Equal(nil)
 			g.Assert(user_after.Email).Equal("foo@uni-tuebingen.de")
-			g.Assert(user_after.FirstName).Equal("Peter")
-			g.Assert(user_after.LastName).Equal("Zwegat")
+
+			password_valid := authpkg.CheckPasswordHash("new_test", user_after.EncryptedPassword)
+			g.Assert(password_valid).Equal(true)
 			g.Assert(user_after.ConfirmEmailToken.Valid).Equal(true)
+		})
+
+		g.It("Should change email and not password if password is empty", func() {
+			userID := int64(2)
+
+			user_before, err := stores.User.Get(userID)
+			g.Assert(err).Equal(nil)
+			password_valid := authpkg.CheckPasswordHash("test", user_before.EncryptedPassword)
+			g.Assert(password_valid).Equal(true)
+
+			w := helper.SimulateRequest(
+				helper.Payload{
+					Data: helper.H{
+						"account": helper.H{
+							"email": "fooer@uni-tuebingen.de",
+						},
+						"old_plain_password": "test",
+					},
+					Method:       "PATCH",
+					AccessClaims: authenticate.NewAccessClaims(userID, true),
+				},
+				rs.EditHandler,
+				authenticate.RequiredValidAccessClaims,
+			)
+			g.Assert(w.Code).Equal(http.StatusNoContent)
+
+			user_after, err := stores.User.Get(userID)
+			g.Assert(err).Equal(nil)
+			g.Assert(user_after.Email).Equal("fooer@uni-tuebingen.de")
+
+			// password_valid := authpkg.CheckPasswordHash("test", user_after.EncryptedPassword)
+			g.Assert(user_before.EncryptedPassword).Equal(user_after.EncryptedPassword)
+			// g.Assert(password_valid).Equal(true)
+			g.Assert(user_after.ConfirmEmailToken.Valid).Equal(true)
+		})
+
+		g.It("Should not change email and not password if password is empty and email is invalid", func() {
+			userID := int64(4)
+
+			user_before, err := stores.User.Get(userID)
+			g.Assert(err).Equal(nil)
+			password_valid := authpkg.CheckPasswordHash("test", user_before.EncryptedPassword)
+			g.Assert(password_valid).Equal(true)
+
+			w := helper.SimulateRequest(
+				helper.Payload{
+					Data: helper.H{
+						"account": helper.H{
+							"email": "fooer@uni-tuebingen",
+						},
+						"old_plain_password": "test",
+					},
+					Method:       "PATCH",
+					AccessClaims: authenticate.NewAccessClaims(userID, true),
+				},
+				rs.EditHandler,
+				authenticate.RequiredValidAccessClaims,
+			)
+			g.Assert(w.Code).Equal(http.StatusBadRequest)
+
+		})
+
+		g.It("Should change password and not email if email is empty", func() {
+			userID := int64(3)
+
+			user_before, err := stores.User.Get(userID)
+			g.Assert(err).Equal(nil)
+			password_valid := authpkg.CheckPasswordHash("test", user_before.EncryptedPassword)
+			g.Assert(password_valid).Equal(true)
+
+			w := helper.SimulateRequest(
+				helper.Payload{
+					Data: helper.H{
+						"account": helper.H{
+							"plain_password": "dummy3",
+						},
+						"old_plain_password": "test",
+					},
+					Method:       "PATCH",
+					AccessClaims: authenticate.NewAccessClaims(userID, true),
+				},
+				rs.EditHandler,
+				authenticate.RequiredValidAccessClaims,
+			)
+			g.Assert(w.Code).Equal(http.StatusNoContent)
+
+			user_after, err := stores.User.Get(userID)
+			g.Assert(err).Equal(nil)
+			g.Assert(user_before.Email).Equal(user_after.Email)
+			g.Assert(user_after.ConfirmEmailToken.Valid).Equal(false)
+			password_valid = authpkg.CheckPasswordHash("dummy3", user_after.EncryptedPassword)
+			g.Assert(password_valid).Equal(true)
+
 		})
 
 		g.It("Should have empty avatar url when no avatar is given", func() {
@@ -329,7 +420,7 @@ func TestAccountChanges(t *testing.T) {
 				rs.GetHandler,
 				authenticate.RequiredValidAccessClaims,
 			)
-			fmt.Println(requestQuery.Body)
+			// fmt.Println(requestQuery.Body)
 			g.Assert(requestQuery.Code).Equal(http.StatusOK)
 
 			user_return := model.User{}
@@ -350,7 +441,7 @@ func TestAccountChanges(t *testing.T) {
 				rs.ChangeAvatarHandler,
 				authenticate.RequiredValidAccessClaims,
 			)
-			fmt.Println(requestUpload.Body)
+			// fmt.Println(requestUpload.Body)
 			g.Assert(requestUpload.Code).Equal(http.StatusOK)
 
 			// NON-empty avatar url
@@ -363,7 +454,7 @@ func TestAccountChanges(t *testing.T) {
 				rs.GetHandler,
 				authenticate.RequiredValidAccessClaims,
 			)
-			fmt.Println(requestQuery.Body)
+			// fmt.Println(requestQuery.Body)
 			g.Assert(requestQuery.Code).Equal(http.StatusOK)
 
 			user_return = model.User{}

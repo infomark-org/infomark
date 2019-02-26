@@ -31,6 +31,8 @@ import (
   "github.com/cgtuebingen/infomark-backend/email"
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/go-chi/render"
+  validation "github.com/go-ozzo/ozzo-validation"
+  "github.com/go-ozzo/ozzo-validation/is"
   "github.com/spf13/viper"
   null "gopkg.in/guregu/null.v3"
 )
@@ -49,15 +51,70 @@ func NewAccountResource(stores *Stores) *AccountResource {
 
 // .............................................................................
 
+// userAccountRequest is the request payload for account management chaning name etc....
+type userAccountRequest struct {
+  User    *model.User  `json:"user"`
+  Account *accountInfo `json:"account"`
+}
+
+// Bind preprocesses a userAccountRequest.
+func (body *userAccountRequest) Bind(r *http.Request) error {
+  // sending the id via request is invalid as the id should be submitted in the url
+  if body.User != nil {
+    body.User.ID = 0
+
+    body.User.FirstName = strings.TrimSpace(body.User.FirstName)
+    body.User.LastName = strings.TrimSpace(body.User.LastName)
+
+    // encrypt password
+    hash, err := auth.HashPassword(body.Account.PlainPassword)
+    body.User.EncryptedPassword = hash
+    return err
+  }
+  if body.Account != nil {
+    body.Account.Email = strings.TrimSpace(body.Account.Email)
+    body.Account.Email = strings.ToLower(body.Account.Email)
+  }
+  return nil
+}
+
 type accountInfo struct {
-  Email         string `json:"email"`
-  PlainPassword string `json:"plain_password"`
+  Email             string `json:"email"`
+  PlainPassword     string `json:"plain_password"`
+  EncryptedPassword string `json:"-"`
 }
 
 // userAccountRequest is the request payload for account management chaning name etc....
-type userAccountRequest struct {
-  User    *model.User `json:"user"`
-  Account accountInfo `json:"account"`
+type accountRequest struct {
+  Account          *accountInfo `json:"account"`
+  OldPlainPassword string       `json:"old_plain_password"`
+}
+
+// Bind preprocesses a accountRequest.
+func (body *accountRequest) Bind(r *http.Request) error {
+  // sending the id via request is invalid as the id should be submitted in the url
+  if body.Account != nil {
+
+    body.Account.Email = strings.TrimSpace(body.Account.Email)
+    body.Account.Email = strings.ToLower(body.Account.Email)
+
+    // encrypt new password, when given
+    if body.Account.PlainPassword != "" {
+      hash, err := auth.HashPassword(body.Account.PlainPassword)
+      body.Account.EncryptedPassword = hash
+      return err
+    }
+
+    // validate
+    err := validation.ValidateStruct(body.Account,
+      validation.Field(&body.Account.Email, is.Email),
+    )
+
+    return err
+
+  }
+
+  return nil
 }
 
 // userAccountResponse is the response payload for account management.
@@ -70,23 +127,6 @@ func newUserAccountResponse(p *model.User) *userAccountResponse {
   return &userAccountResponse{
     User: p,
   }
-}
-
-// Bind preprocesses a userAccountRequest.
-func (d *userAccountRequest) Bind(r *http.Request) error {
-  // sending the id via request is invalid as the id should be submitted in the url
-  if d.User != nil {
-    d.User.ID = 0
-
-    d.User.FirstName = strings.TrimSpace(d.User.FirstName)
-    d.User.LastName = strings.TrimSpace(d.User.LastName)
-
-    // encrypt password
-    hash, err := auth.HashPassword(d.Account.PlainPassword)
-    d.User.EncryptedPassword = hash
-    return err
-  }
-  return nil
 }
 
 // Render post-processes a userAccountResponse.
@@ -221,15 +261,8 @@ func (rs *AccountResource) EditHandler(w http.ResponseWriter, r *http.Request) {
     return
   }
 
-  // we gonna alter this struct
-  newUser, err := rs.Stores.User.Get(accessClaims.LoginID)
-  if err != nil {
-    render.Render(w, r, ErrNotFound)
-    return
-  }
-
   // start from database data
-  data := &userAccountRequest{User: newUser}
+  data := &accountRequest{}
 
   // update struct from JSON request
   if err := render.Bind(r, data); err != nil {
@@ -238,49 +271,56 @@ func (rs *AccountResource) EditHandler(w http.ResponseWriter, r *http.Request) {
   }
 
   // we require the account-part with at least one value
-  if data.Account.PlainPassword == "" {
-    render.Render(w, r, ErrBadRequestWithDetails(errors.New("plain_password in request is missing")))
+  if data.OldPlainPassword == "" {
+    render.Render(w, r, ErrBadRequestWithDetails(errors.New("old_plain_password in request is missing")))
     return
   }
 
-  // does the submitted password match with the current active password?
-  if !auth.CheckPasswordHash(data.Account.PlainPassword, newUser.EncryptedPassword) {
+  // does the submitted old password match with the current active password?
+  if !auth.CheckPasswordHash(data.OldPlainPassword, oldUser.EncryptedPassword) {
     render.Render(w, r, ErrBadRequestWithDetails(errors.New("credentials are wrong")))
     return
   }
 
   // we require the user-part with at least one value
-  if data.User == nil {
-    render.Render(w, r, ErrBadRequestWithDetails(errors.New("user data in request is missing")))
+  if data.Account == nil {
+    render.Render(w, r, ErrBadRequestWithDetails(errors.New("account data in request is missing")))
     return
   }
 
-  data.User.ID = accessClaims.LoginID
+  emailHasChanged := false
+  if data.Account.Email != "" {
+    emailHasChanged = data.Account.Email != oldUser.Email
+  }
+  // emailHasChanged := data.Account.Email != oldUser.Email
+  passwordHasChanged := data.Account.PlainPassword != ""
 
-  // validate final model
-  if err := data.User.Validate(); err != nil {
-    render.Render(w, r, ErrBadRequestWithDetails(err))
+  // we gonna alter this struct
+  newUser, err := rs.Stores.User.Get(accessClaims.LoginID)
+  if err != nil {
+    render.Render(w, r, ErrNotFound)
     return
   }
-
-  emailHasChanged := newUser.Email != oldUser.Email
 
   // make sure email is valid
   if emailHasChanged {
     // we will ask the user to confirm their email address
-    data.User.ConfirmEmailToken = null.StringFrom(auth.GenerateToken(32))
+    newUser.ConfirmEmailToken = null.StringFrom(auth.GenerateToken(32))
+    newUser.Email = data.Account.Email
   }
 
-  // fmt.Println(data.User)
+  if passwordHasChanged {
+    newUser.EncryptedPassword = data.Account.EncryptedPassword
+  }
 
-  if err := rs.Stores.User.Update(data.User); err != nil {
+  if err := rs.Stores.User.Update(newUser); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return
   }
 
   // make sure email is valid
   if emailHasChanged {
-    err = sendConfirmEmailForUser(data.User)
+    err = sendConfirmEmailForUser(newUser)
     if err != nil {
       render.Render(w, r, ErrInternalServerErrorWithDetails(err))
       return
@@ -289,7 +329,7 @@ func (rs *AccountResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 
   render.Status(r, http.StatusNoContent)
 
-  if err := render.Render(w, r, newUserAccountResponse(data.User)); err != nil {
+  if err := render.Render(w, r, newUserAccountResponse(newUser)); err != nil {
     render.Render(w, r, ErrRender(err))
     return
   }

@@ -233,7 +233,7 @@ func addAccessClaimsIfNeeded(r *http.Request, request Payload) *http.Request {
 	// We currently support JWT only for testing.
 	if request.AccessClaims.LoginID != 0 {
 		// generate some valid claims
-		accessToken, err := tokenManager.CreateAccessJWT(authenticate.NewAccessClaims(1, true))
+		accessToken, err := tokenManager.CreateAccessJWT(authenticate.NewAccessClaims(request.AccessClaims.LoginID, request.AccessClaims.Root))
 		if err != nil {
 			panic(err)
 		}

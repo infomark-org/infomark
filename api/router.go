@@ -103,7 +103,7 @@ func New(db *sqlx.DB) (*chi.Mux, error) {
             r.Use(appAPI.User.Context)
             r.Get("/", appAPI.User.GetHandler)
             r.Patch("/", appAPI.User.EditHandler)
-            r.Post("/email", appAPI.User.SendEmailHandler)
+            r.Post("/emails", appAPI.User.SendEmailHandler)
           })
         })
 
