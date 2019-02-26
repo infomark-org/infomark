@@ -16,17 +16,15 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package api
+package app
 
 import (
-  "encoding/json"
   "net/http"
   "os"
   "path/filepath"
   "strings"
   "time"
 
-  "github.com/cgtuebingen/infomark-backend/api/app"
   "github.com/cgtuebingen/infomark-backend/auth/authenticate"
   "github.com/cgtuebingen/infomark-backend/logging"
   "github.com/go-chi/chi"
@@ -37,23 +35,8 @@ import (
   _ "github.com/lib/pq"
 )
 
-type H map[string]interface{}
-
-func WriteJSON(w http.ResponseWriter, obj interface{}) error {
-  jsonBytes, err := json.Marshal(obj)
-  if err != nil {
-    return err
-  }
-  w.Write(jsonBytes)
-  return nil
-}
-
-func EmptyHandler(w http.ResponseWriter, r *http.Request) {
-  WriteJSON(w, H{"EmptyHandler": "Not Implemented Yet"})
-}
-
 // New configures application resources and routes.
-func New(db *sqlx.DB) (*chi.Mux, error) {
+func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
   logger := logging.NewLogger()
 
   if err := db.Ping(); err != nil {
@@ -61,7 +44,7 @@ func New(db *sqlx.DB) (*chi.Mux, error) {
     return nil, err
   }
 
-  appAPI, err := app.NewAPI(db)
+  appAPI, err := NewAPI(db)
   if err != nil {
     logger.WithField("module", "app").Error(err)
     return nil, err
@@ -71,7 +54,9 @@ func New(db *sqlx.DB) (*chi.Mux, error) {
   r.Use(middleware.Recoverer)
   r.Use(middleware.RequestID)
   r.Use(middleware.Timeout(15 * time.Second))
-  r.Use(logging.NewStructuredLogger(logger))
+  if log {
+    r.Use(logging.NewStructuredLogger(logger))
+  }
   r.Use(render.SetContentType(render.ContentTypeJSON))
   r.Use(corsConfig().Handler)
 

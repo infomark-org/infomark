@@ -18,135 +18,125 @@
 
 package main
 
-import (
-  "bytes"
-  "fmt"
+// // SubmissionPayload holds all information necessary to pull the file, run the tests
+// // and publish the result
+// type SubmissionPayload struct {
+//   SubmissionID int
+//   Dockerfile   string
+// }
 
-  "github.com/docker/docker/api/types"
-  "github.com/docker/docker/api/types/container"
-  "github.com/docker/docker/client"
-  "golang.org/x/net/context"
-)
+// type DockerService struct {
+//   // the context docker is relate to
+//   Context context.Context
+//   // client is the interface to the docker runtime
+//   Client *client.Client
+// }
 
-// SubmissionPayload holds all information necessary to pull the file, run the tests
-// and publish the result
-type SubmissionPayload struct {
-  SubmissionID int
-  Dockerfile   string
-}
+// func NewDockerService() *DockerService {
+//     ctx := context.Background()
+//   cli, err := client.NewEnvClient()
+//   if err != nil {
+//     panic(err)
+//   }
 
-type DockerService struct {
-  // the context docker is relate to
-  Context context.Context
-  // client is the interface to the docker runtime
-  Client *client.Client
-}
+//   return &DockerService{
+//     Context: ctx,
+//     Client:  cli,
+//   }
+// }
 
-func NewDockerService() *DockerService {
-    ctx := context.Background()
-  cli, err := client.NewEnvClient()
-  if err != nil {
-    panic(err)
-  }
+// func (ds *DockerService) ListContainers() {
 
-  return &DockerService{
-    Context: ctx,
-    Client:  cli,
-  }
-}
+//   containers, err := ds.Client.ContainerList(ds.Context, types.ContainerListOptions{})
+//   if err != nil {
+//     panic(err)
+//   }
 
-func (ds *DockerService) ListContainers() {
+//   for _, container := range containers {
+//     fmt.Println(container.ID)
+//     fmt.Println(container.Names)
+//   }
+// }
 
-  containers, err := ds.Client.ContainerList(ds.Context, types.ContainerListOptions{})
-  if err != nil {
-    panic(err)
-  }
+// func (ds *DockerService) ListImages() {
 
-  for _, container := range containers {
-    fmt.Println(container.ID)
-    fmt.Println(container.Names)
-  }
-}
+//   images, err := ds.Client.ImageList(ds.Context, types.ImageListOptions{})
+//   if err != nil {
+//     panic(err)
+//   }
 
-func (ds *DockerService) ListImages() {
+//   for _, image := range images {
+//     fmt.Println(image.ID)
+//     fmt.Println(image.RepoTags)
+//     fmt.Println(image.Size)
+//     fmt.Println(image.VirtualSize)
+//     if len(image.RepoTags) > 0 {
+//       fmt.Println(image.RepoTags[0])
+//     }
+//     fmt.Println("")
+//   }
+// }
 
-  images, err := ds.Client.ImageList(ds.Context, types.ImageListOptions{})
-  if err != nil {
-    panic(err)
-  }
+// func (ds *DockerService) Pull(image string) (string, error) {
+//   // image example: "docker.io/library/alpine"
+//   outputReader, err := ds.Client.ImagePull(ds.Context, image, types.ImagePullOptions{})
+//   if err != nil {
+//     return "", err
+//   }
+//   // io.Copy(os.Stdout, reader)
 
-  for _, image := range images {
-    fmt.Println(image.ID)
-    fmt.Println(image.RepoTags)
-    fmt.Println(image.Size)
-    fmt.Println(image.VirtualSize)
-    if len(image.RepoTags) > 0 {
-      fmt.Println(image.RepoTags[0])
-    }
-    fmt.Println("")
-  }
-}
+//   buf := new(bytes.Buffer)
+//   buf.ReadFrom(outputReader)
 
-func (ds *DockerService) Pull(image string) (string, error) {
-  // image example: "docker.io/library/alpine"
-  outputReader, err := ds.Client.ImagePull(ds.Context, image, types.ImagePullOptions{})
-  if err != nil {
-    return "", err
-  }
-  // io.Copy(os.Stdout, reader)
+//   return buf.String(), nil
 
-  buf := new(bytes.Buffer)
-  buf.ReadFrom(outputReader)
+// }
 
-  return buf.String(), nil
+// // Run executes a docker conter and waits for the output
+// func (ds *DockerService) Run(image string, cmd []string) (string, int64, error) {
+//   // create some context for docker
 
-}
+//   cfg := &container.Config{
+//     Image: image,
+//     Cmd:   cmd,
+//     Tty:   true,
+//   }
 
-// Run executes a docker conter and waits for the output
-func (ds *DockerService) Run(image string, cmd []string) (string, int64, error) {
-  // create some context for docker
+//   resp, err := ds.Client.ContainerCreate(ds.Context, cfg, nil, nil, "")
+//   if err != nil {
+//     return "", 0, err
+//   }
 
-  cfg := &container.Config{
-    Image: image,
-    Cmd:   cmd,
-    Tty:   true,
-  }
+//   if err := ds.Client.ContainerStart(ds.Context, resp.ID, types.ContainerStartOptions{}); err != nil {
+//     return "", 0, err
+//   }
 
-  resp, err := ds.Client.ContainerCreate(ds.Context, cfg, nil, nil, "")
-  if err != nil {
-    return "", 0, err
-  }
+//   exitCode, err := ds.Client.ContainerWait(ds.Context, resp.ID)
+//   outputReader, err := ds.Client.ContainerLogs(ds.Context, resp.ID, types.ContainerLogsOptions{ShowStdout: true})
+//   if err != nil {
+//     return "", 0, err
+//   }
 
-  if err := ds.Client.ContainerStart(ds.Context, resp.ID, types.ContainerStartOptions{}); err != nil {
-    return "", 0, err
-  }
+//   buf := new(bytes.Buffer)
+//   buf.ReadFrom(outputReader)
 
-  exitCode, err := ds.Client.ContainerWait(ds.Context, resp.ID)
-  outputReader, err := ds.Client.ContainerLogs(ds.Context, resp.ID, types.ContainerLogsOptions{ShowStdout: true})
-  if err != nil {
-    return "", 0, err
-  }
+//   // io.Copy(os.Stdout, outputReader)
+//   return buf.String(), exitCode, nil
+// }
 
-  buf := new(bytes.Buffer)
-  buf.ReadFrom(outputReader)
+// func main() {
 
-  // io.Copy(os.Stdout, outputReader)
-  return buf.String(), exitCode, nil
-}
+//   ds := NewDockerService()
 
-func main() {
+//   ds.ListImages()
 
-  ds := NewDockerService()
+//   output, exitCode, err := ds.Run("alpine", []string{"echo", "hello world"})
+//   fmt.Println(output)
+//   fmt.Println(exitCode)
+//   fmt.Println(err)
 
-  ds.ListImages()
-
-  output, exitCode, err := ds.Run("alpine", []string{"echo", "hello world"})
-  fmt.Println(output)
-  fmt.Println(exitCode)
-  fmt.Println(err)
-
-  output, exitCode, err = ds.Run("alpine", []string{"cat", "x"})
-  fmt.Println(output)
-  fmt.Println(exitCode)
-  fmt.Println(err)
-}
+//   output, exitCode, err = ds.Run("alpine", []string{"cat", "x"})
+//   fmt.Println(output)
+//   fmt.Println(exitCode)
+//   fmt.Println(err)
+// }

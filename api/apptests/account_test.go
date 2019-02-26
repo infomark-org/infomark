@@ -16,7 +16,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package app
+package apptests
 
 import (
   "encoding/json"
@@ -27,7 +27,6 @@ import (
   "github.com/cgtuebingen/infomark-backend/auth"
   "github.com/cgtuebingen/infomark-backend/email"
   "github.com/cgtuebingen/infomark-backend/model"
-  "github.com/cgtuebingen/infomark-backend/tape"
   "github.com/franela/goblin"
   "github.com/spf13/viper"
 )
@@ -38,17 +37,15 @@ func TestAccount(t *testing.T) {
   g := goblin.Goblin(t)
   email.DefaultMail = email.VoidMail
 
-  tape := &tape.Tape{}
+  tape := &Tape{}
 
+  // var r *http.Request
   var w *httptest.ResponseRecorder
-  var stores *Stores
 
   g.Describe("Account", func() {
 
     g.BeforeEach(func() {
       tape.BeforeEach()
-      tape.Router, _ = New(tape.DB, false)
-      stores = NewStores(tape.DB)
     })
 
     g.It("Query should require valid claims", func() {
@@ -67,7 +64,7 @@ func TestAccount(t *testing.T) {
     })
 
     g.It("Should get all enrollments", func() {
-      enrollments_expected, err := stores.User.GetEnrollments(1)
+      enrollments_expected, err := tape.Stores.User.GetEnrollments(1)
       g.Assert(err).Equal(nil)
 
       w = tape.PlayWithClaims("GET", "/api/v1/account/enrollments", 1, true)
@@ -133,7 +130,7 @@ func TestAccount(t *testing.T) {
         })
       g.Assert(w.Code).Equal(http.StatusCreated)
 
-      user_after, err := stores.User.FindByEmail("foo@test.com")
+      user_after, err := tape.Stores.User.FindByEmail("foo@test.com")
       g.Assert(err).Equal(nil)
       g.Assert(user_after.Email).Equal("foo@test.com")
       g.Assert(user_after.ConfirmEmailToken.Valid).Equal(true)
@@ -191,7 +188,7 @@ func TestAccount(t *testing.T) {
       w = tape.PlayDataWithClaims("PUT", "/api/v1/account", data, 1, true)
       g.Assert(w.Code).Equal(http.StatusNoContent)
 
-      user_after, err := stores.User.Get(1)
+      user_after, err := tape.Stores.User.Get(1)
       g.Assert(err).Equal(nil)
       g.Assert(user_after.Email).Equal("foo@uni-tuebingen.de")
 
@@ -212,7 +209,7 @@ func TestAccount(t *testing.T) {
       w = tape.PlayDataWithClaims("PUT", "/api/v1/account", data, 1, true)
       g.Assert(w.Code).Equal(http.StatusNoContent)
 
-      user_after, err := stores.User.Get(1)
+      user_after, err := tape.Stores.User.Get(1)
       g.Assert(err).Equal(nil)
       g.Assert(user_after.Email).Equal("foo@uni-tuebingen.de")
 
@@ -246,7 +243,7 @@ func TestAccount(t *testing.T) {
       w = tape.PlayDataWithClaims("PUT", "/api/v1/account", data, 1, true)
       g.Assert(w.Code).Equal(http.StatusNoContent)
 
-      user_after, err := stores.User.Get(1)
+      user_after, err := tape.Stores.User.Get(1)
       g.Assert(err).Equal(nil)
       g.Assert(user_after.Email).Equal("test@uni-tuebingen.de")
 

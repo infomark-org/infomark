@@ -49,7 +49,7 @@ func NewServer() (*Server, error) {
 		return nil, err
 	}
 
-	apiHandler, err := New(db)
+	apiHandler, err := New(db, true)
 	if err != nil {
 		return nil, err
 	}
