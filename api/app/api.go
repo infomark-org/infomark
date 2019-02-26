@@ -40,6 +40,7 @@ type UserStore interface {
   Update(p *model.User) error
   GetAll() ([]model.User, error)
   Create(p *model.User) (*model.User, error)
+  Delete(userID int64) error
   FindByEmail(email string) (*model.User, error)
   GetEnrollments(userID int64) ([]model.Enrollment, error)
 }

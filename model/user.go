@@ -34,14 +34,14 @@ type User struct {
 	CreatedAt time.Time `json:"-" db:"created_at,omitempty"`
 	UpdatedAt time.Time `json:"-" db:"updated_at,omitempty"`
 
-	FirstName     string      `json:"first_name" db:"first_name"`
-	LastName      string      `json:"last_name" db:"last_name"`
-	AvatarURL     null.String `json:"avatar_url, omitempty" db:"avatar_url"`
-	Email         string      `json:"email" db:"email"`
-	StudentNumber string      `json:"student_number" db:"student_number"`
-	Semester      int         `json:"semester" db:"semester"`
-	Subject       string      `json:"subject" db:"subject"`
-	Language      string      `json:"language" db:"language"`
+	FirstName     string      `json:"first_name,omitempty" db:"first_name"`
+	LastName      string      `json:"last_name,omitempty" db:"last_name"`
+	AvatarURL     null.String `json:"avatar_url,omitempty" db:"avatar_url"`
+	Email         string      `json:"email,omitempty" db:"email"`
+	StudentNumber string      `json:"student_number,omitempty" db:"student_number"`
+	Semester      int         `json:"semester,omitempty" db:"semester"`
+	Subject       string      `json:"subject,omitempty" db:"subject"`
+	Language      string      `json:"language,omitempty" db:"language"`
 
 	EncryptedPassword  string      `json:"-" db:"encrypted_password"`
 	ResetPasswordToken null.String `json:"-" db:"reset_password_token"`

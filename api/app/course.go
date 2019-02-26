@@ -21,7 +21,6 @@ package app
 import (
   "context"
   "errors"
-  "fmt"
   "net/http"
   "strconv"
 
@@ -101,7 +100,28 @@ func (body *courseResponse) Render(w http.ResponseWriter, r *http.Request) error
 }
 
 type SheetPointsResponse struct {
-  SheetPoints model.SheetPoints
+  SheetPoints *model.SheetPoints `json:"sheet_points"`
+}
+
+func (rs *CourseResource) newSheetPointsResponse(p *model.SheetPoints) *SheetPointsResponse {
+
+  return &SheetPointsResponse{
+    SheetPoints: p,
+  }
+}
+
+// newCourseListResponse creates a response from a list of course models.
+func (rs *CourseResource) newSheetPointsListResponse(collection []model.SheetPoints) []render.Renderer {
+  list := []render.Renderer{}
+  for k := range collection {
+    list = append(list, rs.newSheetPointsResponse(&collection[k]))
+  }
+
+  return list
+}
+
+func (body *SheetPointsResponse) Render(w http.ResponseWriter, r *http.Request) error {
+  return nil
 }
 
 // .............................................................................
@@ -390,7 +410,12 @@ func (rs *CourseResource) PointsHandler(w http.ResponseWriter, r *http.Request) 
     return
   }
 
-  fmt.Println(sheetPoints)
+  // resp := &SheetPointsResponse{SheetPoints: sheetPoints}
+
+  if err := render.RenderList(w, r, rs.newSheetPointsListResponse(sheetPoints)); err != nil {
+    render.Render(w, r, ErrRender(err))
+    return
+  }
 
   render.Status(r, http.StatusOK)
 }

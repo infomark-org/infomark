@@ -21,6 +21,7 @@ package app
 import (
   "context"
   "errors"
+  "fmt"
   "net/http"
   "strconv"
   "strings"
@@ -52,35 +53,51 @@ func NewUserResource(stores *Stores) *UserResource {
 // userRequest is the request payload for user management.
 type userRequest struct {
   *model.User
-  ProtectedID   int64  `json:"id"`
-  PlainPassword string `json:"plain_password"`
-}
-
-// userResponse is the response payload for user management.
-type userResponse struct {
-  *model.User
-}
-
-// newUserResponse creates a response from a user model.
-func newUserResponse(p *model.User) *userResponse {
-  return &userResponse{
-    User: p,
-  }
-}
-
-// newUserListResponse creates a response from a list of user models.
-func newUserListResponse(users []model.User) []render.Renderer {
-  // https://stackoverflow.com/a/36463641/7443104
-  list := []render.Renderer{}
-  for k := range users {
-    list = append(list, newUserResponse(&users[k]))
-  }
-
-  return list
+  ProtectedID     int64  `json:"id"`
+  ProtectedAvatar string `json:"avatar_url"`
+  PlainPassword   string `json:"plain_password"`
 }
 
 // Bind preprocesses a userRequest.
 func (body *userRequest) Bind(r *http.Request) error {
+
+  if body.User == nil {
+    return errors.New("Empty body")
+  }
+
+  // Sending the id via request-body is invalid.
+  // The id should be submitted in the url.
+  body.ProtectedID = 0
+  body.Email = strings.TrimSpace(body.Email)
+  body.Email = strings.ToLower(body.Email)
+
+  err := validation.ValidateStruct(body,
+    validation.Field(&body.Email, validation.Required, is.Email),
+  )
+  if err != nil {
+    return err
+  }
+
+  // Encrypt plain password
+  hash, err := auth.HashPassword(body.PlainPassword)
+
+  body.User.EncryptedPassword = hash
+
+  return err
+
+}
+
+// userRequest is the request payload for user management.
+type userMeRequest struct {
+  *model.User
+  ProtectedID     int64  `json:"id"`
+  PlainPassword   string `json:"plain_password"`
+  ProtectedEmail  string `json:"email"`
+  ProtectedAvatar string `json:"avatar_url"`
+}
+
+// Bind preprocesses a userMeRequest.
+func (body *userMeRequest) Bind(r *http.Request) error {
 
   if body.User == nil {
     return errors.New("Empty body")
@@ -108,6 +125,29 @@ func (body *userRequest) Bind(r *http.Request) error {
 
 }
 
+// userResponse is the response payload for user management.
+type userResponse struct {
+  *model.User
+}
+
+// newUserResponse creates a response from a user model.
+func newUserResponse(p *model.User) *userResponse {
+  return &userResponse{
+    User: p,
+  }
+}
+
+// newUserListResponse creates a response from a list of user models.
+func newUserListResponse(users []model.User) []render.Renderer {
+  // https://stackoverflow.com/a/36463641/7443104
+  list := []render.Renderer{}
+  for k := range users {
+    list = append(list, newUserResponse(&users[k]))
+  }
+
+  return list
+}
+
 // Render post-processes a userResponse.
 func (u *userResponse) Render(w http.ResponseWriter, r *http.Request) error {
   // nothing to hide
@@ -117,22 +157,22 @@ func (u *userResponse) Render(w http.ResponseWriter, r *http.Request) error {
 // .............................................................................
 
 // bindValidate jointly binds data from json request and validates the model.
-func (rs *UserResource) bindValidate(w http.ResponseWriter, r *http.Request) (*userRequest, *ErrResponse) {
-  // get user from middle-ware context
-  data := &userRequest{User: r.Context().Value("user").(*model.User)}
+// func (rs *UserResource) bindValidate(w http.ResponseWriter, r *http.Request) (*userRequest, *ErrResponse) {
+//   // get user from middle-ware context
+//   data := &userRequest{User: r.Context().Value("user").(*model.User)}
 
-  // parse JSON request into struct
-  if err := render.Bind(r, data); err != nil {
-    return nil, ErrBadRequestWithDetails(err)
-  }
+//   // parse JSON request into struct
+//   if err := render.Bind(r, data); err != nil {
+//     return nil, ErrBadRequestWithDetails(err)
+//   }
 
-  // validate final model
-  if err := data.User.Validate(); err != nil {
-    return nil, ErrBadRequestWithDetails(err)
-  }
+//   // validate final model
+//   if err := data.User.Validate(); err != nil {
+//     return nil, ErrBadRequestWithDetails(err)
+//   }
 
-  return data, nil
-}
+//   return data, nil
+// }
 
 // Index is the enpoint for retrieving all users if claim.root is true.
 func (rs *UserResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
@@ -149,6 +189,24 @@ func (rs *UserResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 
   // render JSON reponse
   if err = render.RenderList(w, r, newUserListResponse(users)); err != nil {
+    render.Render(w, r, ErrRender(err))
+    return
+  }
+}
+
+// Get is the enpoint for retrieving a specific user.
+func (rs *UserResource) GetMeHandler(w http.ResponseWriter, r *http.Request) {
+  // `user` is retrieved via middle-ware
+  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  user, err := rs.Stores.User.Get(accessClaims.LoginID)
+
+  if err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
+  // render JSON reponse
+  if err := render.Render(w, r, newUserResponse(user)); err != nil {
     render.Render(w, r, ErrRender(err))
     return
   }
@@ -176,20 +234,73 @@ func (rs *UserResource) GetHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // Patch is the endpoint fro updating a specific user with given id.
+func (rs *UserResource) EditMeHandler(w http.ResponseWriter, r *http.Request) {
+
+  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+
+  startUser, err := rs.Stores.User.Get(accessClaims.LoginID)
+  if err != nil {
+    fmt.Println(startUser)
+    fmt.Println(startUser.FirstName)
+    fmt.Println(err)
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+  data := &userMeRequest{User: startUser}
+
+  // parse JSON request into struct
+  if err := render.Bind(r, data); err != nil {
+    render.Render(w, r, ErrBadRequestWithDetails(err))
+    return
+  }
+
+  // validate final model
+  if err := data.User.Validate(); err != nil {
+    render.Render(w, r, ErrBadRequestWithDetails(err))
+    return
+  }
+
+  data.User.ID = accessClaims.LoginID
+
+  // update database entry
+  if err := rs.Stores.User.Update(data.User); err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
+  render.Status(r, http.StatusNoContent)
+}
+
+// Patch is the endpoint fro updating a specific user with given id.
 func (rs *UserResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
 
-  data, errResponse := rs.bindValidate(w, r)
-  if errResponse != nil {
-    render.Render(w, r, errResponse)
+  if !accessClaims.Root {
+    render.Render(w, r, ErrUnauthorized)
     return
   }
 
-  // is request identity allowed to edit this user
-  if data.User.ID != accessClaims.LoginID {
-    if !accessClaims.Root {
-      render.Render(w, r, ErrUnauthorized)
+  startUser := r.Context().Value("user").(*model.User)
+  data := &userRequest{User: startUser}
+
+  // parse JSON request into struct
+  if err := render.Bind(r, data); err != nil {
+    render.Render(w, r, ErrBadRequestWithDetails(err))
+    return
+  }
+
+  // validate final model
+  if err := data.User.Validate(); err != nil {
+    render.Render(w, r, ErrBadRequestWithDetails(err))
+    return
+  }
+
+  if data.PlainPassword != "" {
+    var err error
+    data.User.EncryptedPassword, err = auth.HashPassword(data.PlainPassword)
+    if err != nil {
+      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
       return
     }
   }
@@ -231,6 +342,18 @@ func (rs *UserResource) SendEmailHandler(w http.ResponseWriter, r *http.Request)
     return
   }
 
+}
+
+func (rs *UserResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
+  user := r.Context().Value("user").(*model.User)
+
+  // update database entry
+  if err := rs.Stores.User.Delete(user.ID); err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
+  render.Status(r, http.StatusNoContent)
 }
 
 // .............................................................................

@@ -97,12 +97,15 @@ func New(db *sqlx.DB) (*chi.Mux, error) {
       r.Group(func(r chi.Router) {
         r.Use(authenticate.RequiredValidAccessClaims)
 
+        r.Get("/me", appAPI.User.GetMeHandler)
+        r.Put("/me", appAPI.User.EditMeHandler)
+
         r.Route("/users", func(r chi.Router) {
           r.Get("/", appAPI.User.IndexHandler)
           r.Route("/{userID}", func(r chi.Router) {
             r.Use(appAPI.User.Context)
             r.Get("/", appAPI.User.GetHandler)
-            r.Patch("/", appAPI.User.EditHandler)
+            r.Put("/", appAPI.User.EditHandler)
             r.Post("/emails", appAPI.User.SendEmailHandler)
           })
         })
@@ -113,7 +116,7 @@ func New(db *sqlx.DB) (*chi.Mux, error) {
           r.Route("/{courseID}", func(r chi.Router) {
             r.Use(appAPI.Course.Context)
             r.Get("/", appAPI.Course.GetHandler)
-            r.Patch("/", appAPI.Course.EditHandler)
+            r.Put("/", appAPI.Course.EditHandler)
             r.Delete("/", appAPI.Course.DeleteHandler)
 
             r.Get("/enrollments", appAPI.Course.IndexEnrollmentsHandler)
@@ -135,7 +138,7 @@ func New(db *sqlx.DB) (*chi.Mux, error) {
           r.Route("/{sheetID}", func(r chi.Router) {
             r.Use(appAPI.Sheet.Context)
             r.Get("/", appAPI.Sheet.GetHandler)
-            r.Patch("/", appAPI.Sheet.EditHandler)
+            r.Put("/", appAPI.Sheet.EditHandler)
             r.Delete("/", appAPI.Sheet.DeleteHandler)
 
             r.Route("/tasks", func(r chi.Router) {
@@ -156,7 +159,7 @@ func New(db *sqlx.DB) (*chi.Mux, error) {
           r.Route("/{taskID}", func(r chi.Router) {
             r.Use(appAPI.Task.Context)
             r.Get("/", appAPI.Task.GetHandler)
-            r.Patch("/", appAPI.Task.EditHandler)
+            r.Put("/", appAPI.Task.EditHandler)
             r.Delete("/", appAPI.Task.DeleteHandler)
           })
 
@@ -176,7 +179,7 @@ func New(db *sqlx.DB) (*chi.Mux, error) {
         r.Get("/account/avatar", appAPI.Account.GetAvatarHandler)
         r.Post("/account/avatar", appAPI.Account.ChangeAvatarHandler)
         r.Delete("/account/avatar", appAPI.Account.DeleteAvatarHandler)
-        r.Patch("/account", appAPI.Account.EditHandler)
+        r.Put("/account", appAPI.Account.EditHandler)
 
         r.Delete("/auth/sessions", appAPI.Auth.LogoutHandler)
 

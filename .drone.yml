@@ -35,8 +35,8 @@ pipeline:
       - GOPROXY=https://gomods.patwie.com/
     commands:
       - cp .infomark-backend.yml.ci ~/.infomark-backend.yml
-      - cd api/app
-      - go test -cover -v
+      - go test ./api/app -cover -v
+      - go test ./api/helper -cover -v
 
 services:
   database:

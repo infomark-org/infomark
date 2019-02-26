@@ -21,7 +21,7 @@ package app
 import (
 	"context"
 	"encoding/json"
-	_ "fmt"
+	"fmt"
 
 	// "io/ioutil"
 
@@ -135,6 +135,184 @@ func TestUser(t *testing.T) {
 		})
 
 		g.Xit("Should send email", func() {})
+
+	})
+
+}
+
+func TestUserChanges(t *testing.T) {
+
+	logger := logging.NewLogger()
+	g := goblin.Goblin(t)
+
+	db, err := helper.TransactionDB()
+	defer db.Close()
+	if err != nil {
+		logger.WithField("module", "database").Error(err)
+		return
+	}
+
+	stores := NewStores(db)
+	rs := NewUserResource(stores)
+
+	users_before, err := rs.Stores.User.GetAll()
+	g.Assert(err).Equal(nil)
+	user_before, err := stores.User.Get(1)
+	g.Assert(err).Equal(nil)
+
+	g.Describe("User Changes", func() {
+		g.It("Should require claims", func() {
+			w := helper.SimulateRequest(
+				helper.Payload{
+					Data:   helper.H{},
+					Method: "PATCH",
+				},
+				rs.EditHandler,
+				authenticate.RequiredValidAccessClaims,
+			)
+			g.Assert(w.Code).Equal(http.StatusUnauthorized)
+		})
+
+		g.It("Should perform updates (incl email)", func() {
+
+			user_sent := model.User{
+				FirstName: "Info2_update",
+				LastName:  "Lorem Ipsum_update",
+				Email:     "new@mail.com",
+			}
+
+			w := helper.SimulateRequest(
+				helper.Payload{
+					Data:         helper.ToH(user_sent),
+					Method:       "PATCH",
+					AccessClaims: authenticate.NewAccessClaims(1, true),
+				},
+				rs.EditHandler,
+				authenticate.RequiredValidAccessClaims,
+				SetUserContext(user_before),
+			)
+			// fmt.Println(w.Body)
+			g.Assert(w.Code).Equal(http.StatusOK)
+
+			user_after, err := stores.User.Get(1)
+			g.Assert(err).Equal(nil)
+
+			g.Assert(user_after.FirstName).Equal(user_sent.FirstName)
+			g.Assert(user_after.LastName).Equal(user_sent.LastName)
+			g.Assert(user_after.Email).Equal(user_sent.Email)
+
+		})
+
+		g.It("Should delete", func() {
+			w := helper.SimulateRequest(
+				helper.Payload{
+					Data:         helper.H{},
+					Method:       "DELETE",
+					AccessClaims: authenticate.NewAccessClaims(1, true),
+				},
+				rs.DeleteHandler,
+				authenticate.RequiredValidAccessClaims,
+				SetUserContext(user_before),
+			)
+			// TODO()
+			fmt.Println(w.Body)
+			g.Assert(w.Code).Equal(http.StatusOK)
+
+			users_after, err := rs.Stores.User.GetAll()
+			g.Assert(err).Equal(nil)
+			g.Assert(len(users_after)).Equal(len(users_before) - 1)
+		})
+	})
+
+}
+
+func TestMe(t *testing.T) {
+
+	email.DefaultMail = email.VoidMail
+
+	logger := logging.NewLogger()
+	g := goblin.Goblin(t)
+
+	db, err := helper.TransactionDB()
+	defer db.Close()
+	if err != nil {
+		logger.WithField("module", "database").Error(err)
+		return
+	}
+
+	stores := NewStores(db)
+	rs := NewUserResource(stores)
+
+	g.Describe("Me Query", func() {
+		g.It("Should require claims", func() {
+			w := helper.SimulateRequest(
+				helper.Payload{
+					Data:   helper.H{},
+					Method: "GET",
+				},
+				rs.GetMeHandler,
+				authenticate.RequiredValidAccessClaims,
+			)
+			g.Assert(w.Code).Equal(http.StatusUnauthorized)
+		})
+
+		g.It("Should list myself", func() {
+			user_expected, err := rs.Stores.User.Get(1)
+			g.Assert(err).Equal(nil)
+
+			w := helper.SimulateRequest(
+				helper.Payload{
+					Data:         helper.H{},
+					Method:       "GET",
+					AccessClaims: authenticate.NewAccessClaims(1, true),
+				},
+				rs.GetMeHandler,
+				authenticate.RequiredValidAccessClaims,
+			)
+			g.Assert(w.Code).Equal(http.StatusOK)
+
+			user_actual := model.User{}
+			err = json.NewDecoder(w.Body).Decode(&user_actual)
+			g.Assert(err).Equal(nil)
+
+			g.Assert(user_actual.FirstName).Equal(user_expected.FirstName)
+			g.Assert(user_actual.LastName).Equal(user_expected.LastName)
+			g.Assert(user_actual.Email).Equal(user_expected.Email)
+			g.Assert(user_actual.StudentNumber).Equal(user_expected.StudentNumber)
+			g.Assert(user_actual.Semester).Equal(user_expected.Semester)
+			g.Assert(user_actual.Subject).Equal(user_expected.Subject)
+			g.Assert(user_actual.Language).Equal(user_expected.Language)
+		})
+
+		g.It("Should edit myself (excl. email)", func() {
+			user_expected, err := rs.Stores.User.Get(1)
+			g.Assert(err).Equal(nil)
+
+			w := helper.SimulateRequest(
+				helper.Payload{
+					Data: helper.H{
+						"last_name": "Zwegat",
+						"email":     "Zwegat@aa.de",
+					},
+					Method:       "GET",
+					AccessClaims: authenticate.NewAccessClaims(1, true),
+				},
+				rs.EditMeHandler,
+				authenticate.RequiredValidAccessClaims,
+			)
+			g.Assert(w.Code).Equal(http.StatusOK)
+
+			user_after, err := rs.Stores.User.Get(1)
+			g.Assert(err).Equal(nil)
+
+			g.Assert(user_after.FirstName).Equal(user_expected.FirstName)
+			g.Assert(user_after.LastName).Equal("Zwegat")
+			g.Assert(user_after.Email).Equal(user_expected.Email)
+			g.Assert(user_after.StudentNumber).Equal(user_expected.StudentNumber)
+			g.Assert(user_after.Semester).Equal(user_expected.Semester)
+			g.Assert(user_after.Subject).Equal(user_expected.Subject)
+			g.Assert(user_after.Language).Equal(user_expected.Language)
+		})
 
 	})
 

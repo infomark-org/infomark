@@ -190,6 +190,8 @@ func (rs *AccountResource) CreateHandler(w http.ResponseWriter, r *http.Request)
     return
   }
 
+  data.User.AvatarURL = null.String{}
+
   // validate final model
   if err := data.User.Validate(); err != nil {
     render.Render(w, r, ErrBadRequestWithDetails(err))

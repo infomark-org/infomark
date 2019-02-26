@@ -21,6 +21,7 @@ infomark-backend
 infomark-worker
 local/
 database/mock.sql
+database/query.sql
 static/
 
 
