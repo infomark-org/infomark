@@ -249,25 +249,25 @@ func TestCourse(t *testing.T) {
       g.Assert(course_after.RequiredPercentage).Equal(course_sent.RequiredPercentage)
     })
 
-    g.It("Should delete", func() {
-      courses_before, err := stores.Course.GetAll()
+    g.It("Should delete when valid access claims", func() {
+      entries_before, err := stores.Course.GetAll()
       g.Assert(err).Equal(nil)
 
       w := tape.Play("DELETE", "/api/v1/courses/1")
       g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
       // verify nothing has changes
-      courses_after, err := stores.Course.GetAll()
+      entries_after, err := stores.Course.GetAll()
       g.Assert(err).Equal(nil)
-      g.Assert(len(courses_after)).Equal(len(courses_before))
+      g.Assert(len(entries_after)).Equal(len(entries_before))
 
       w = tape.PlayWithClaims("DELETE", "/api/v1/courses/1", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       // verify a course less exists
-      courses_after, err = stores.Course.GetAll()
+      entries_after, err = stores.Course.GetAll()
       g.Assert(err).Equal(nil)
-      g.Assert(len(courses_after)).Equal(len(courses_before) - 1)
+      g.Assert(len(entries_after)).Equal(len(entries_before) - 1)
     })
 
     g.AfterEach(func() {

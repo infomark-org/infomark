@@ -137,23 +137,17 @@ func TestSheet(t *testing.T) {
     g.It("Should skip non-existent sheet file", func() {
       w := tape.PlayWithClaims("GET", "/api/v1/sheets/1/file", 1, true)
       g.Assert(w.Code).Equal(http.StatusNotFound)
-
-      // sheet_active, err := stores.Sheet.Get(1)
-      // g.Assert(err).Equal(nil)
     })
 
     g.It("Should upload sheet file", func() {
-
       defer helper.NewSheetFileHandle(1).Delete()
-      g.Assert(helper.NewSheetFileHandle(1).Exists()).Equal(false)
 
       // no file so far
-      sheet_active, err := stores.Sheet.Get(1)
-      g.Assert(err).Equal(nil)
+      g.Assert(helper.NewSheetFileHandle(1).Exists()).Equal(false)
 
       // upload file
       filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
-      body, ct, err := tape.CreateFileRequestBody(filename, "image/jpg")
+      body, ct, err := tape.CreateFileRequestBody(filename, "application/zip")
       g.Assert(err).Equal(nil)
 
       r, _ := http.NewRequest("POST", "/api/v1/sheets/1/file", body)
@@ -164,7 +158,54 @@ func TestSheet(t *testing.T) {
       // check disk
       g.Assert(helper.NewSheetFileHandle(1).Exists()).Equal(true)
 
-      _ = sheet_active
+      // a file should be now served
+      w = tape.PlayWithClaims("GET", "/api/v1/sheets/1/file", 1, true)
+      g.Assert(w.Code).Equal(http.StatusOK)
+    })
+
+    g.It("Changes should require claims", func() {
+      w := tape.PlayData("PUT", "/api/v1/courses/1/sheets", H{})
+      g.Assert(w.Code).Equal(http.StatusUnauthorized)
+    })
+
+    g.It("Should perform updates", func() {
+
+      sheet_sent := model.Sheet{
+        Name:      "Sheet_update",
+        PublishAt: helper.Time(time.Now()),
+        DueAt:     helper.Time(time.Now()),
+      }
+
+      w := tape.PlayDataWithClaims("PUT", "/api/v1/sheets/1",
+        tape.ToH(sheet_sent), 1, true)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      sheet_after, err := stores.Sheet.Get(1)
+      g.Assert(err).Equal(nil)
+      g.Assert(sheet_after.Name).Equal("Sheet_update")
+      g.Assert(sheet_after.PublishAt.Equal(sheet_sent.PublishAt)).Equal(true)
+      g.Assert(sheet_after.DueAt.Equal(sheet_sent.DueAt)).Equal(true)
+    })
+
+    g.It("Should delete when valid access claims", func() {
+      entries_before, err := stores.Sheet.GetAll()
+      g.Assert(err).Equal(nil)
+
+      w := tape.Play("DELETE", "/api/v1/sheets/1")
+      g.Assert(w.Code).Equal(http.StatusUnauthorized)
+
+      // verify nothing has changes
+      entries_after, err := stores.Sheet.GetAll()
+      g.Assert(err).Equal(nil)
+      g.Assert(len(entries_after)).Equal(len(entries_before))
+
+      w = tape.PlayWithClaims("DELETE", "/api/v1/sheets/1", 1, true)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      // verify a sheet less exists
+      entries_after, err = stores.Sheet.GetAll()
+      g.Assert(err).Equal(nil)
+      g.Assert(len(entries_after)).Equal(len(entries_before) - 1)
     })
 
     g.AfterEach(func() {
