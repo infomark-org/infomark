@@ -47,17 +47,17 @@ func TestAccount(t *testing.T) {
     })
 
     g.It("Query should require valid claims", func() {
-      w := tape.Play("GET", "/api/v1/account")
+      w := tape.Get("/api/v1/account")
       g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
-      w = tape.PlayWithClaims("GET", "/api/v1/account", 1, true)
+      w = tape.GetWithClaims("/api/v1/account", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
     })
 
     g.Xit("Query should not return info when claims are invalid", func() {
       // we removed that endpoint
-      w := tape.PlayWithClaims("GET", "/api/v1/account", 0, true)
+      w := tape.GetWithClaims("/api/v1/account", 0, true)
       g.Assert(w.Code).Equal(http.StatusUnauthorized)
     })
 
@@ -65,7 +65,7 @@ func TestAccount(t *testing.T) {
       enrollments_expected, err := stores.User.GetEnrollments(1)
       g.Assert(err).Equal(nil)
 
-      w := tape.PlayWithClaims("GET", "/api/v1/account/enrollments", 1, true)
+      w := tape.GetWithClaims("/api/v1/account/enrollments", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       enrollments_actual := []model.Enrollment{}
@@ -82,7 +82,7 @@ func TestAccount(t *testing.T) {
     })
 
     g.It("Should not create invalid accounts (missing user data)", func() {
-      w := tape.PlayData("POST", "/api/v1/account",
+      w := tape.Post("/api/v1/account",
         H{
           "account": H{
             "email":          "foo@test.com",
@@ -100,7 +100,7 @@ func TestAccount(t *testing.T) {
       min_len := viper.GetInt("min_password_length")
       too_short_password := auth.GenerateToken(min_len - 1)
 
-      w := tape.PlayData("POST", "/api/v1/account",
+      w := tape.Post("/api/v1/account",
         H{
           "account": H{
             "email":          "foo@test.com",
@@ -118,7 +118,7 @@ func TestAccount(t *testing.T) {
       min_len := viper.GetInt("min_password_length")
       ok_password := auth.GenerateToken(min_len)
 
-      w := tape.PlayData("POST", "/api/v1/account",
+      w := tape.Post("/api/v1/account",
         H{
           "account": H{
             "email":          "foo@test.com",
@@ -159,10 +159,10 @@ func TestAccount(t *testing.T) {
         "old_plain_password": "test",
       }
 
-      w := tape.PlayData("PUT", "/api/v1/account", data)
+      w := tape.Put("/api/v1/account", data)
       g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
-      w = tape.PlayDataWithClaims("PUT", "/api/v1/account", data, 1, true)
+      w = tape.PutWithClaims("/api/v1/account", data, 1, true)
       g.Assert(w.Code).Equal(http.StatusNoContent)
     })
 
@@ -176,7 +176,7 @@ func TestAccount(t *testing.T) {
         "old_plain_password": "test_false",
       }
 
-      w := tape.PlayDataWithClaims("PUT", "/api/v1/account", data, 1, true)
+      w := tape.PutWithClaims("/api/v1/account", data, 1, true)
       g.Assert(w.Code).Equal(http.StatusBadRequest)
     })
 
@@ -190,7 +190,7 @@ func TestAccount(t *testing.T) {
         "old_plain_password": "test",
       }
 
-      w := tape.PlayDataWithClaims("PUT", "/api/v1/account", data, 1, true)
+      w := tape.PutWithClaims("/api/v1/account", data, 1, true)
       g.Assert(w.Code).Equal(http.StatusNoContent)
 
       user_after, err := stores.User.Get(1)
@@ -211,7 +211,7 @@ func TestAccount(t *testing.T) {
         "old_plain_password": "test",
       }
 
-      w := tape.PlayDataWithClaims("PUT", "/api/v1/account", data, 1, true)
+      w := tape.PutWithClaims("/api/v1/account", data, 1, true)
       g.Assert(w.Code).Equal(http.StatusNoContent)
 
       user_after, err := stores.User.Get(1)
@@ -232,7 +232,7 @@ func TestAccount(t *testing.T) {
         "old_plain_password": "test",
       }
 
-      w := tape.PlayDataWithClaims("PUT", "/api/v1/account", data, 1, true)
+      w := tape.PutWithClaims("/api/v1/account", data, 1, true)
       g.Assert(w.Code).Equal(http.StatusBadRequest)
     })
 
@@ -245,7 +245,7 @@ func TestAccount(t *testing.T) {
         "old_plain_password": "test",
       }
 
-      w := tape.PlayDataWithClaims("PUT", "/api/v1/account", data, 1, true)
+      w := tape.PutWithClaims("/api/v1/account", data, 1, true)
       g.Assert(w.Code).Equal(http.StatusNoContent)
 
       user_after, err := stores.User.Get(1)
@@ -262,7 +262,7 @@ func TestAccount(t *testing.T) {
       // defer helper.NewAvatarFileHandle(1).Delete()
 
       // no avatar by default
-      w := tape.PlayWithClaims("GET", "/api/v1/account", 1, true)
+      w := tape.GetWithClaims("/api/v1/account", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       user_return := model.User{}
@@ -272,16 +272,12 @@ func TestAccount(t *testing.T) {
 
       // upload avatar
       avatar_filename := fmt.Sprintf("%s/default-avatar.jpg", viper.GetString("fixtures_dir"))
-      body, ct, err := tape.CreateFileRequestBody(avatar_filename, "image/jpg")
+      w, err = tape.UploadWithClaims("/api/v1/account/avatar", avatar_filename, "image/jpg", 1, true)
       g.Assert(err).Equal(nil)
-
-      r, _ := http.NewRequest("POST", "/api/v1/account/avatar", body)
-      r.Header.Set("Content-Type", ct)
-      w = tape.PlayRequestWithClaims(r, 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       // there should be now an avatar
-      w = tape.PlayWithClaims("GET", "/api/v1/account", 1, true)
+      w = tape.GetWithClaims("/api/v1/account", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
       err = json.NewDecoder(w.Body).Decode(&user_return)
       g.Assert(err).Equal(nil)

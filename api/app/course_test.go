@@ -54,17 +54,17 @@ func TestCourse(t *testing.T) {
 
     g.It("Query should require claims", func() {
 
-      w := tape.Play("GET", "/api/v1/courses")
+      w := tape.Get("/api/v1/courses")
       g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
-      w = tape.PlayWithClaims("GET", "/api/v1/courses", 1, true)
+      w = tape.GetWithClaims("/api/v1/courses", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
     })
 
     g.It("Should list all courses", func() {
 
-      w := tape.PlayWithClaims("GET", "/api/v1/courses", 1, true)
+      w := tape.GetWithClaims("/api/v1/courses", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       courses_actual := []model.Course{}
@@ -76,7 +76,7 @@ func TestCourse(t *testing.T) {
 
     g.It("Should get a specific course", func() {
 
-      w := tape.PlayWithClaims("GET", "/api/v1/courses/1", 1, true)
+      w := tape.GetWithClaims("/api/v1/courses/1", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       course_actual := &model.Course{}
@@ -106,7 +106,7 @@ func TestCourse(t *testing.T) {
       )
       g.Assert(err).Equal(nil)
 
-      w := tape.PlayWithClaims("GET", "/api/v1/courses/1/enrollments", 1, true)
+      w := tape.GetWithClaims("/api/v1/courses/1/enrollments", 1, true)
       enrollments_actual := []model.UserCourse{}
       err = json.NewDecoder(w.Body).Decode(&enrollments_actual)
       g.Assert(err).Equal(nil)
@@ -124,7 +124,7 @@ func TestCourse(t *testing.T) {
       )
       g.Assert(err).Equal(nil)
 
-      w := tape.PlayWithClaims("GET", "/api/v1/courses/1/enrollments?roles=0", 1, true)
+      w := tape.GetWithClaims("/api/v1/courses/1/enrollments?roles=0", 1, true)
       enrollments_actual := []model.UserCourse{}
       err = json.NewDecoder(w.Body).Decode(&enrollments_actual)
       g.Assert(err).Equal(nil)
@@ -142,7 +142,7 @@ func TestCourse(t *testing.T) {
       )
       g.Assert(err).Equal(nil)
 
-      w := tape.PlayWithClaims("GET", "/api/v1/courses/1/enrollments?roles=1", 1, true)
+      w := tape.GetWithClaims("/api/v1/courses/1/enrollments?roles=1", 1, true)
       enrollments_actual := []model.UserCourse{}
       err = json.NewDecoder(w.Body).Decode(&enrollments_actual)
       g.Assert(err).Equal(nil)
@@ -160,7 +160,7 @@ func TestCourse(t *testing.T) {
       )
       g.Assert(err).Equal(nil)
 
-      w := tape.PlayWithClaims("GET", "/api/v1/courses/1/enrollments?roles=0,1", 1, true)
+      w := tape.GetWithClaims("/api/v1/courses/1/enrollments?roles=0,1", 1, true)
       enrollments_actual := []model.UserCourse{}
       err = json.NewDecoder(w.Body).Decode(&enrollments_actual)
       g.Assert(err).Equal(nil)
@@ -168,7 +168,7 @@ func TestCourse(t *testing.T) {
     })
 
     g.It("Creating course should require claims", func() {
-      w := tape.Play("POST", "/api/v1/courses")
+      w := tape.Post("/api/v1/courses", H{})
       g.Assert(w.Code).Equal(http.StatusUnauthorized)
     })
 
@@ -220,7 +220,7 @@ func TestCourse(t *testing.T) {
     g.Xit("Should send email to all enrolled users", func() {})
 
     g.It("Changes should require access claims", func() {
-      w := tape.Play("PUT", "/api/v1/courses/1")
+      w := tape.Put("/api/v1/courses/1", H{})
       g.Assert(w.Code).Equal(http.StatusUnauthorized)
     })
 
@@ -253,7 +253,7 @@ func TestCourse(t *testing.T) {
       entries_before, err := stores.Course.GetAll()
       g.Assert(err).Equal(nil)
 
-      w := tape.Play("DELETE", "/api/v1/courses/1")
+      w := tape.Delete("/api/v1/courses/1")
       g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
       // verify nothing has changes

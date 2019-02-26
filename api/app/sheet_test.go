@@ -60,16 +60,16 @@ func TestSheet(t *testing.T) {
 
     g.It("Query should require access claims", func() {
 
-      w := tape.Play("GET", "/api/v1/courses/1/sheets")
+      w := tape.Get("/api/v1/courses/1/sheets")
       g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
-      w = tape.PlayWithClaims("GET", "/api/v1/courses/1/sheets", 1, true)
+      w = tape.GetWithClaims("/api/v1/courses/1/sheets", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
     })
 
     g.It("Should list all sheets a course", func() {
 
-      w := tape.PlayWithClaims("GET", "/api/v1/courses/1/sheets", 1, true)
+      w := tape.GetWithClaims("/api/v1/courses/1/sheets", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       sheets_actual := []model.Sheet{}
@@ -83,7 +83,7 @@ func TestSheet(t *testing.T) {
       sheet_expected, err := stores.Sheet.Get(1)
       g.Assert(err).Equal(nil)
 
-      w := tape.PlayWithClaims("GET", "/api/v1/sheets/1", 1, true)
+      w := tape.GetWithClaims("/api/v1/sheets/1", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       sheet_actual := &model.Sheet{}
@@ -97,7 +97,7 @@ func TestSheet(t *testing.T) {
     })
 
     g.It("Creating a sheet should require access claims", func() {
-      w := tape.PlayData("POST", "/api/v1/courses/1/sheets", H{})
+      w := tape.Post("/api/v1/courses/1/sheets", H{})
       g.Assert(w.Code).Equal(http.StatusUnauthorized)
     })
 
@@ -135,7 +135,7 @@ func TestSheet(t *testing.T) {
     })
 
     g.It("Should skip non-existent sheet file", func() {
-      w := tape.PlayWithClaims("GET", "/api/v1/sheets/1/file", 1, true)
+      w := tape.GetWithClaims("/api/v1/sheets/1/file", 1, true)
       g.Assert(w.Code).Equal(http.StatusNotFound)
     })
 
@@ -147,24 +147,20 @@ func TestSheet(t *testing.T) {
 
       // upload file
       filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
-      body, ct, err := tape.CreateFileRequestBody(filename, "application/zip")
+      w, err := tape.UploadWithClaims("/api/v1/sheets/1/file", filename, "application/zip", 1, true)
       g.Assert(err).Equal(nil)
-
-      r, _ := http.NewRequest("POST", "/api/v1/sheets/1/file", body)
-      r.Header.Set("Content-Type", ct)
-      w := tape.PlayRequestWithClaims(r, 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       // check disk
       g.Assert(helper.NewSheetFileHandle(1).Exists()).Equal(true)
 
       // a file should be now served
-      w = tape.PlayWithClaims("GET", "/api/v1/sheets/1/file", 1, true)
+      w = tape.GetWithClaims("/api/v1/sheets/1/file", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
     })
 
     g.It("Changes should require claims", func() {
-      w := tape.PlayData("PUT", "/api/v1/courses/1/sheets", H{})
+      w := tape.Put("/api/v1/courses/1/sheets", H{})
       g.Assert(w.Code).Equal(http.StatusUnauthorized)
     })
 
@@ -176,7 +172,7 @@ func TestSheet(t *testing.T) {
         DueAt:     helper.Time(time.Now()),
       }
 
-      w := tape.PlayDataWithClaims("PUT", "/api/v1/sheets/1",
+      w := tape.PutWithClaims("/api/v1/sheets/1",
         tape.ToH(sheet_sent), 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
@@ -191,7 +187,7 @@ func TestSheet(t *testing.T) {
       entries_before, err := stores.Sheet.GetAll()
       g.Assert(err).Equal(nil)
 
-      w := tape.Play("DELETE", "/api/v1/sheets/1")
+      w := tape.Delete("/api/v1/sheets/1")
       g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
       // verify nothing has changes
@@ -199,7 +195,7 @@ func TestSheet(t *testing.T) {
       g.Assert(err).Equal(nil)
       g.Assert(len(entries_after)).Equal(len(entries_before))
 
-      w = tape.PlayWithClaims("DELETE", "/api/v1/sheets/1", 1, true)
+      w = tape.DeleteWithClaims("/api/v1/sheets/1", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       // verify a sheet less exists

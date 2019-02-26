@@ -122,17 +122,17 @@ func BuildDataRequest(method, url string, data map[string]interface{}) *http.Req
 }
 
 // Play will send a request without any request body (like GET)
-func (t *Tape) Play(method, url string) *httptest.ResponseRecorder {
-  h := make(map[string]interface{})
-  r := BuildDataRequest(method, url, h)
-  return t.PlayRequest(r)
-}
+// func (t *Tape) Play(method, url string) *httptest.ResponseRecorder {
+//   h := make(map[string]interface{})
+//   r := BuildDataRequest(method, url, h)
+//   return t.PlayRequest(r)
+// }
 
-// PlayData will send a request with given data in body
-func (t *Tape) PlayData(method, url string, data map[string]interface{}) *httptest.ResponseRecorder {
-  r := BuildDataRequest(method, url, data)
-  return t.PlayRequest(r)
-}
+// // PlayData will send a request with given data in body
+// func (t *Tape) PlayData(method, url string, data map[string]interface{}) *httptest.ResponseRecorder {
+//   r := BuildDataRequest(method, url, data)
+//   return t.PlayRequest(r)
+// }
 
 func (t *Tape) PlayRequest(r *http.Request) *httptest.ResponseRecorder {
   w := httptest.NewRecorder()
@@ -145,4 +145,26 @@ func (t *Tape) ToH(z interface{}) map[string]interface{} {
   var msgMapTemplate interface{}
   _ = json.Unmarshal(data, &msgMapTemplate)
   return msgMapTemplate.(map[string]interface{})
+}
+
+func (t *Tape) Get(url string) *httptest.ResponseRecorder {
+  h := make(map[string]interface{})
+  r := BuildDataRequest("GET", url, h)
+  return t.PlayRequest(r)
+}
+
+func (t *Tape) Post(url string, data map[string]interface{}) *httptest.ResponseRecorder {
+  r := BuildDataRequest("POST", url, data)
+  return t.PlayRequest(r)
+}
+
+func (t *Tape) Put(url string, data map[string]interface{}) *httptest.ResponseRecorder {
+  r := BuildDataRequest("PUT", url, data)
+  return t.PlayRequest(r)
+}
+
+func (t *Tape) Delete(url string) *httptest.ResponseRecorder {
+  h := make(map[string]interface{})
+  r := BuildDataRequest("DELETE", url, h)
+  return t.PlayRequest(r)
 }

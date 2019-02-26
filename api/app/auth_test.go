@@ -49,7 +49,7 @@ func TestAuth(t *testing.T) {
 
     g.It("Not existent user cannot log in", func() {
 
-      w = tape.PlayData("POST", "/api/v1/auth/sessions",
+      w = tape.Post("/api/v1/auth/sessions",
         H{
           "email":          "peter.zwegat@uni-tuebingen.de",
           "plain_password": "",
@@ -60,7 +60,7 @@ func TestAuth(t *testing.T) {
 
     g.It("Wrong credentials should fail", func() {
 
-      w = tape.PlayData("POST", "/api/v1/auth/sessions",
+      w = tape.Post("/api/v1/auth/sessions",
         H{
           "email":          "test@uni-tuebingen.de",
           "plain_password": "testOops",
@@ -79,7 +79,7 @@ func TestAuth(t *testing.T) {
       user_before.ConfirmEmailToken = null.StringFrom("testtoken")
       stores.User.Update(user_before)
 
-      w = tape.PlayData("POST", "/api/v1/auth/sessions",
+      w = tape.Post("/api/v1/auth/sessions",
         H{
           "email":          "test@uni-tuebingen.de",
           "plain_password": "test",
@@ -90,7 +90,7 @@ func TestAuth(t *testing.T) {
 
     g.It("Correct credentials should log in", func() {
 
-      w = tape.PlayData("POST", "/api/v1/auth/sessions",
+      w = tape.Post("/api/v1/auth/sessions",
         H{
           "email":          "test@uni-tuebingen.de",
           "plain_password": "test",
@@ -101,7 +101,7 @@ func TestAuth(t *testing.T) {
 
     g.It("Password-Reset will fail if email invalid", func() {
 
-      w = tape.PlayData("POST", "/api/v1/auth/request_password_reset",
+      w = tape.Post("/api/v1/auth/request_password_reset",
         H{
           "email": "test2@uni-tuebingen.de",
         },
@@ -117,7 +117,7 @@ func TestAuth(t *testing.T) {
       g.Assert(user_before.Email).Equal("test@uni-tuebingen.de")
       g.Assert(user_before.ResetPasswordToken.Valid).Equal(false)
 
-      w = tape.PlayData("POST", "/api/v1/auth/request_password_reset",
+      w = tape.Post("/api/v1/auth/request_password_reset",
         H{
           "email": "test@uni-tuebingen.de",
         },
@@ -131,7 +131,7 @@ func TestAuth(t *testing.T) {
       g.Assert(user_after.ResetPasswordToken.Valid).Equal(true)
 
       // use token to reset password
-      w = tape.PlayData("POST", "/api/v1/auth/update_password",
+      w = tape.Post("/api/v1/auth/update_password",
         H{
           "reset_password_token": user_after.ResetPasswordToken.String,
           "plain_password":       "new_password",
@@ -154,7 +154,7 @@ func TestAuth(t *testing.T) {
 
     g.It("Invalid Password-Reset-Token is denied", func() {
 
-      w = tape.PlayData("POST", "/api/v1/auth/update_password",
+      w = tape.Post("/api/v1/auth/update_password",
         H{
           "reset_password_token": "invalid_string",
           "plain_password":       "new_password",
@@ -177,7 +177,7 @@ func TestAuth(t *testing.T) {
       stores.User.Update(user_before)
       g.Assert(user_before.ConfirmEmailToken.Valid).Equal(true)
 
-      w = tape.PlayData("POST", "/api/v1/auth/confirm_email",
+      w = tape.Post("/api/v1/auth/confirm_email",
         H{
           "email":              "test@uni-tuebingen.de",
           "confirmation_token": "testtoken_wrong",
@@ -200,7 +200,7 @@ func TestAuth(t *testing.T) {
       stores.User.Update(user_before)
       g.Assert(user_before.ConfirmEmailToken.Valid).Equal(true)
 
-      w = tape.PlayData("POST", "/api/v1/auth/confirm_email",
+      w = tape.Post("/api/v1/auth/confirm_email",
         H{
           "email":              "test@uni-tuebingen.de",
           "confirmation_token": "testtoken",

@@ -119,3 +119,46 @@ func (t *Tape) PlayRequestWithClaims(r *http.Request, loginID int64, root bool) 
   t.Router.ServeHTTP(w, r)
   return w
 }
+
+func (t *Tape) GetWithClaims(url string, loginID int64, root bool) *httptest.ResponseRecorder {
+  h := make(map[string]interface{})
+  r := otape.BuildDataRequest("GET", url, h)
+  addJWTClaims(r, loginID, root)
+  return t.PlayRequest(r)
+}
+
+func (t *Tape) PostWithClaims(url string, data map[string]interface{}, loginID int64, root bool) *httptest.ResponseRecorder {
+  r := otape.BuildDataRequest("POST", url, data)
+  addJWTClaims(r, loginID, root)
+  return t.PlayRequest(r)
+}
+
+func (t *Tape) PutWithClaims(url string, data map[string]interface{}, loginID int64, root bool) *httptest.ResponseRecorder {
+  r := otape.BuildDataRequest("PUT", url, data)
+  addJWTClaims(r, loginID, root)
+  return t.PlayRequest(r)
+}
+
+func (t *Tape) DeleteWithClaims(url string, loginID int64, root bool) *httptest.ResponseRecorder {
+  h := make(map[string]interface{})
+  r := otape.BuildDataRequest("DELETE", url, h)
+  addJWTClaims(r, loginID, root)
+  return t.PlayRequest(r)
+}
+
+func (t *Tape) UploadWithClaims(url string, filename string, contentType string, loginID int64, root bool) (*httptest.ResponseRecorder, error) {
+
+  body, ct, err := t.CreateFileRequestBody(filename, contentType)
+  if err != nil {
+    return nil, err
+  }
+
+  r, err := http.NewRequest("POST", url, body)
+  if err != nil {
+    return nil, err
+  }
+  r.Header.Set("Content-Type", ct)
+
+  addJWTClaims(r, loginID, root)
+  return t.PlayRequest(r), nil
+}
