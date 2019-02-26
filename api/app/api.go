@@ -61,6 +61,7 @@ type CourseStore interface {
     filterEmail string,
     filterSubject string,
     filterLanguage string) ([]model.UserCourse, error)
+  PointsForUser(userID int64, courseID int64) ([]model.SheetPoints, error)
 }
 
 // SheetStore specifies required database queries for Sheet management.

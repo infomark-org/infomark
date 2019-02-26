@@ -34,7 +34,15 @@ type Sheet struct {
 }
 
 func (d *Sheet) Validate() error {
-
 	return nil
+}
 
+type SheetPoints struct {
+	AquiredPoints int `json:"acquired_points" db:"acquired_points"`
+	MaxPoints     int `json:"max_points" db:"max_points"`
+	SheetID       int `json:"sheet_id" db:"sheet_id"`
+}
+
+func (d *SheetPoints) Validate() error {
+	return nil
 }

@@ -344,7 +344,7 @@ func TestAccountChanges(t *testing.T) {
 					AccessClaims: authenticate.NewAccessClaims(1, true),
 				},
 				fmt.Sprintf("%s/default-avatar.jpg", viper.GetString("fixtures_dir")),
-				"avatar_data",
+				"file_data",
 				"image/jpg",
 				rs.ChangeAvatarHandler,
 				authenticate.RequiredValidAccessClaims,

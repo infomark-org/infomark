@@ -21,6 +21,7 @@ package app
 import (
   "context"
   "errors"
+  "fmt"
   "net/http"
   "strconv"
 
@@ -97,6 +98,10 @@ func (body *courseRequest) Bind(r *http.Request) error {
 // Render post-processes a courseResponse.
 func (body *courseResponse) Render(w http.ResponseWriter, r *http.Request) error {
   return nil
+}
+
+type SheetPointsResponse struct {
+  SheetPoints model.SheetPoints
 }
 
 // .............................................................................
@@ -376,8 +381,16 @@ func (rs *CourseResource) SendEmailHandler(w http.ResponseWriter, r *http.Reques
 // PointsHandler returns the point for the identity in a given course. This is
 // intented to serve data for a plot.
 func (rs *CourseResource) PointsHandler(w http.ResponseWriter, r *http.Request) {
-  // course := r.Context().Value("course").(*model.Course)
-  // accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  course := r.Context().Value("course").(*model.Course)
+  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+
+  sheetPoints, err := rs.Stores.Course.PointsForUser(accessClaims.LoginID, course.ID)
+  if err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
+  fmt.Println(sheetPoints)
 
   render.Status(r, http.StatusOK)
 }

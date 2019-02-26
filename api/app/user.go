@@ -196,7 +196,7 @@ func (rs *UserResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 
   // update database entry
   if err := rs.Stores.User.Update(data.User); err != nil {
-    render.Render(w, r, ErrInternalServerError)
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return
   }
 

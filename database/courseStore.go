@@ -138,22 +138,29 @@ func (s *CourseStore) EnrolledUsers(
   return p, err
 }
 
-func (s *CourseStore) PointsForUser(user_id int64) (model.UserCourse, error) {
-  p := model.UserCourse{}
+// PointsForUser returns all gather points in a given course for a given user accumulated.
+func (s *CourseStore) PointsForUser(userID int64, courseID int64) ([]model.SheetPoints, error) {
+  p := []model.SheetPoints{}
 
   err := s.db.Select(&p, `SELECT
-  SUM(g.acquired_points) acquired, SUM(t.max_points) possible, ts.sheet_id
-FROM
-  grades g
-INNER JOIN submissions sub ON g.submission_id = sub.id
-INNER JOIN tasks t ON sub.task_id = t.id
-INNER JOIN task_sheet ts ON ts.task_id = t.id
-INNER JOIN sheet_course sc ON sc.sheet_id = ts.sheet_id
-INNER JOIN courses c ON c.id = sc.course_id
-WHERE sub.user_id = $1
-AND c.id = 1
-GROUP BY(ts.sheet_id)
-ORDER BY ts.sheet_id`, user_id,
+    SUM(g.acquired_points) acquired_points,
+    SUM(t.max_points) max_points,
+    ts.sheet_id sheet_id
+  FROM
+    grades g
+  INNER JOIN submissions sub ON g.submission_id = sub.id
+  INNER JOIN tasks t ON sub.task_id = t.id
+  INNER JOIN task_sheet ts ON ts.task_id = t.id
+  INNER JOIN sheet_course sc ON sc.sheet_id = ts.sheet_id
+  INNER JOIN courses c ON c.id = sc.course_id
+  WHERE
+    sub.user_id = $1
+  AND
+    c.id = $2
+  GROUP BY
+    ts.sheet_id
+  ORDER BY
+    ts.sheet_id`, userID, courseID,
   )
   return p, err
 
