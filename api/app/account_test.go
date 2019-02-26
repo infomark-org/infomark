@@ -20,6 +20,7 @@ package app
 
 import (
   "encoding/json"
+  "fmt"
   "net/http"
   "net/http/httptest"
   "testing"
@@ -27,18 +28,15 @@ import (
   "github.com/cgtuebingen/infomark-backend/auth"
   "github.com/cgtuebingen/infomark-backend/email"
   "github.com/cgtuebingen/infomark-backend/model"
-  "github.com/cgtuebingen/infomark-backend/tape"
   "github.com/franela/goblin"
   "github.com/spf13/viper"
 )
-
-type H map[string]interface{}
 
 func TestAccount(t *testing.T) {
   g := goblin.Goblin(t)
   email.DefaultMail = email.VoidMail
 
-  tape := &tape.Tape{}
+  tape := &Tape{}
 
   var w *httptest.ResponseRecorder
   var stores *Stores
@@ -49,6 +47,7 @@ func TestAccount(t *testing.T) {
       tape.BeforeEach()
       tape.Router, _ = New(tape.DB, false)
       stores = NewStores(tape.DB)
+      _ = stores
     })
 
     g.It("Query should require valid claims", func() {
@@ -77,6 +76,13 @@ func TestAccount(t *testing.T) {
       err = json.NewDecoder(w.Body).Decode(&enrollments_actual)
       g.Assert(err).Equal(nil)
       g.Assert(len(enrollments_actual)).Equal(len(enrollments_expected))
+
+      for j := 0; j < len(enrollments_expected); j++ {
+        // fmt.Println(j)
+        g.Assert(enrollments_actual[j].Role).Equal(enrollments_expected[j].Role)
+        g.Assert(enrollments_actual[j].CourseID).Equal(enrollments_expected[j].CourseID)
+        g.Assert(enrollments_actual[j].ID).Equal(int64(0))
+      }
     })
 
     g.It("Should not create invalid accounts (missing user data)", func() {
@@ -253,6 +259,38 @@ func TestAccount(t *testing.T) {
       password_valid := auth.CheckPasswordHash("fooerrr", user_after.EncryptedPassword)
       g.Assert(password_valid).Equal(true)
       g.Assert(user_after.ConfirmEmailToken.Valid).Equal(false)
+    })
+
+    g.It("Should have empty avatar url when no avatar is given", func() {
+
+      // defer helper.NewAvatarFileHandle(1).Delete()
+
+      // no avatar by default
+      w = tape.PlayWithClaims("GET", "/api/v1/account", 1, true)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      user_return := model.User{}
+      err := json.NewDecoder(w.Body).Decode(&user_return)
+      g.Assert(err).Equal(nil)
+      g.Assert(user_return.AvatarURL.Valid).Equal(false)
+
+      // upload avatar
+      avatar_filename := fmt.Sprintf("%s/default-avatar.jpg", viper.GetString("fixtures_dir"))
+      body, ct, err := tape.CreateFileRequestBody(avatar_filename, "image/jpg")
+      g.Assert(err).Equal(nil)
+
+      r, _ := http.NewRequest("POST", "/api/v1/account/avatar", body)
+      r.Header.Set("Content-Type", ct)
+      w := tape.PlayRequestWithClaims(r, 1, true)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      // there should be now an avatar
+      w = tape.PlayWithClaims("GET", "/api/v1/account", 1, true)
+      g.Assert(w.Code).Equal(http.StatusOK)
+      err = json.NewDecoder(w.Body).Decode(&user_return)
+      g.Assert(err).Equal(nil)
+      g.Assert(user_return.AvatarURL.Valid).Equal(true)
+
     })
 
     g.AfterEach(func() {

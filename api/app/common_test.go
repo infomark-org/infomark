@@ -22,14 +22,13 @@ import (
   "net/http"
   "testing"
 
-  "github.com/cgtuebingen/infomark-backend/tape"
   "github.com/franela/goblin"
 )
 
 func TestCommon(t *testing.T) {
   g := goblin.Goblin(t)
 
-  tape := &tape.Tape{}
+  tape := &Tape{}
 
   var (
     r *http.Request
@@ -38,8 +37,7 @@ func TestCommon(t *testing.T) {
   g.Describe("Common", func() {
 
     g.BeforeEach(func() {
-      tape.BeforeEach()
-      tape.Router, _ = New(tape.DB, false)
+      tape.BeforeEach(tape)
     })
 
     g.It("Should pong", func() {

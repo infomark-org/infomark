@@ -179,7 +179,7 @@ func (rs *AuthResource) LoginHandler(w http.ResponseWriter, r *http.Request) {
   if potentialUser.ConfirmEmailToken.Valid {
     // Valid is true if String is not NULL
     // confirm token `potentialUser.ConfirmEmailToken.String` exists
-    render.Render(w, r, ErrRender(errors.New("email not confirmed")))
+    render.Render(w, r, ErrBadRequestWithDetails(errors.New("email not confirmed")))
     return
   }
 
@@ -218,7 +218,7 @@ func (rs *AuthResource) RequestPasswordResetHandler(w http.ResponseWriter, r *ht
   // does such a user exists with request email adress?
   user, err := rs.Stores.User.FindByEmail(data.Email)
   if err != nil {
-    render.Render(w, r, ErrNotFound)
+    render.Render(w, r, ErrBadRequest)
     return
   }
 
