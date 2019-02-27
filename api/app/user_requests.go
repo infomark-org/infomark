@@ -38,11 +38,7 @@ type userRequest struct {
 func (body *userRequest) Bind(r *http.Request) error {
 
 	if body.User == nil {
-		return errors.New("missing user data")
-	}
-
-	if err := body.User.Validate(); err != nil {
-		return err
+		return errors.New("missing \"user\" data")
 	}
 
 	// Sending the id via request-body is invalid.
@@ -51,9 +47,12 @@ func (body *userRequest) Bind(r *http.Request) error {
 
 	// Encrypt plain password
 	hash, err := auth.HashPassword(body.PlainPassword)
+	if err != nil {
+		return err
+	}
 	body.User.EncryptedPassword = hash
 
-	return err
+	return body.User.Validate()
 
 }
 
@@ -72,11 +71,7 @@ type userMeRequest struct {
 func (body *userMeRequest) Bind(r *http.Request) error {
 
 	if body.User == nil {
-		return errors.New("missing user data")
-	}
-
-	if err := body.User.Validate(); err != nil {
-		return err
+		return errors.New("missing \"user\" data")
 	}
 
 	// Sending the id via request-body is invalid.
@@ -85,8 +80,11 @@ func (body *userMeRequest) Bind(r *http.Request) error {
 
 	// Encrypt plain password
 	hash, err := auth.HashPassword(body.PlainPassword)
+	if err != nil {
+		return err
+	}
 	body.EncryptedPassword = hash
 
-	return err
+	return body.User.Validate()
 
 }

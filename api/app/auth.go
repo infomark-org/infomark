@@ -22,15 +22,12 @@ import (
   "errors"
   "fmt"
   "net/http"
-  "strings"
 
   "github.com/cgtuebingen/infomark-backend/auth"
   "github.com/cgtuebingen/infomark-backend/auth/authenticate"
   "github.com/cgtuebingen/infomark-backend/email"
   "github.com/go-chi/jwtauth"
   "github.com/go-chi/render"
-  validation "github.com/go-ozzo/ozzo-validation"
-  "github.com/go-ozzo/ozzo-validation/is"
   "github.com/spf13/viper"
   null "gopkg.in/guregu/null.v3"
 )
@@ -49,33 +46,9 @@ func NewAuthResource(stores *Stores) *AuthResource {
 
 // .............................................................................
 
-type authRequest struct {
-  Email         string `json:"email"`
-  PlainPassword string `json:"plain_password"`
-}
-
 type authResponse struct {
   AccessToken  string `json:"access_token,omitempty"`
   RefreshToken string `json:"refresh_token,omitempty"`
-}
-
-// Bind preprocesses a authRequest.
-func (body *authRequest) Bind(r *http.Request) error {
-  body.Email = strings.TrimSpace(body.Email)
-  body.Email = strings.ToLower(body.Email)
-
-  err := validation.ValidateStruct(body,
-    validation.Field(&body.Email, validation.Required, is.Email),
-    validation.Field(&body.PlainPassword,
-      validation.Required,
-    // validation.Length(7, 0)
-    ),
-  )
-  if err != nil {
-    return err
-  }
-
-  return nil
 }
 
 func (body *authResponse) Render(w http.ResponseWriter, r *http.Request) error {
@@ -89,62 +62,6 @@ type loginResponse struct {
 
 func (body *loginResponse) Render(w http.ResponseWriter, r *http.Request) error {
   // nothing to hide
-  return nil
-}
-
-// .............................................................................
-type resetPasswordRequest struct {
-  Email string `json:"email"`
-}
-
-func (body *resetPasswordRequest) Bind(r *http.Request) error {
-  body.Email = strings.TrimSpace(body.Email)
-  body.Email = strings.ToLower(body.Email)
-
-  err := validation.ValidateStruct(body,
-    validation.Field(&body.Email, validation.Required, is.Email),
-  )
-  if err != nil {
-    return err
-  }
-
-  return nil
-}
-
-// .............................................................................
-type updatePasswordRequest struct {
-  Email              string `json:"email"`
-  ResetPasswordToken string `json:"reset_password_token"`
-  PlainPassword      string `json:"plain_password"`
-}
-
-func (body *updatePasswordRequest) Bind(r *http.Request) error {
-  body.Email = strings.TrimSpace(body.Email)
-  body.Email = strings.ToLower(body.Email)
-
-  err := validation.ValidateStruct(body,
-    validation.Field(&body.Email, validation.Required, is.Email),
-    validation.Field(&body.ResetPasswordToken, validation.Required),
-    validation.Field(&body.PlainPassword,
-      validation.Required,
-      validation.Length(7, 0)),
-  )
-  if err != nil {
-    return err
-  }
-
-  return nil
-}
-
-// .............................................................................
-type confirmEmailRequest struct {
-  Email             string `json:"email"`
-  ConfirmEmailToken string `json:"confirmation_token"`
-}
-
-func (body *confirmEmailRequest) Bind(r *http.Request) error {
-  body.Email = strings.TrimSpace(body.Email)
-  body.Email = strings.ToLower(body.Email)
   return nil
 }
 

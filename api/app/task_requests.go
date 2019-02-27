@@ -16,31 +16,32 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package model
+package app
 
 import (
-	"time"
+	"errors"
+	"net/http"
 
-	validation "github.com/go-ozzo/ozzo-validation"
+	"github.com/cgtuebingen/infomark-backend/model"
 )
 
-type Task struct {
-	ID        int64     `json:"id" db:"id"`
-	CreatedAt time.Time `json:"-" db:"created_at,omitempty"`
-	UpdatedAt time.Time `json:"-" db:"updated_at,omitempty"`
-
-	MaxPoints int `json:"max_points" db:"max_points"`
-	// PublicTestPath     string `json:"-" db:"public_test_path"`
-	// PrivateTestPath    string `json:"-" db:"private_test_path"`
-	PublicDockerImage  string `json:"public_docker_image" db:"public_docker_image"`
-	PrivateDockerImage string `json:"private_docker_image" db:"private_docker_image"`
+// TaskRequest is the request payload for Task management.
+type TaskRequest struct {
+	*model.Task
+	ProtectedID int64 `json:"id"`
 }
 
-func (m *Task) Validate() error {
-	return validation.ValidateStruct(m,
-		validation.Field(
-			&m.MaxPoints,
-			validation.Min(0),
-		),
-	)
+// Bind preprocesses a TaskRequest.
+func (body *TaskRequest) Bind(r *http.Request) error {
+
+	if body.Task == nil {
+		return errors.New("missing \"task\" data")
+	}
+
+	// Sending the id via request-body is invalid.
+	// The id should be submitted in the url.
+	body.ProtectedID = 0
+
+	return body.Task.Validate()
+
 }

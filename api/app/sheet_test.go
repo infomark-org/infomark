@@ -96,6 +96,28 @@ func TestSheet(t *testing.T) {
       g.Assert(w.Code).Equal(http.StatusBadRequest)
     })
 
+    g.It("Should not create sheet with missing data", func() {
+      data := H{
+        "name":       "Sheet_new",
+        "publish_at": "2019-02-01T01:02:03Z",
+        // "due_at" is be missing
+      }
+
+      w := tape.PlayDataWithClaims("POST", "/api/v1/courses/1/sheets", data, 1, true)
+      g.Assert(w.Code).Equal(http.StatusBadRequest)
+    })
+
+    g.It("Should not create sheet with wrong times", func() {
+      data := H{
+        "name":       "Sheet_new",
+        "publish_at": "2019-02-01T01:02:03Z",
+        "due_at":     "2018-02-01T01:02:03Z", // time before publish
+      }
+
+      w := tape.PlayDataWithClaims("POST", "/api/v1/courses/1/sheets", data, 1, true)
+      g.Assert(w.Code).Equal(http.StatusBadRequest)
+    })
+
     g.It("Should create valid sheet", func() {
       sheets_before, err := stores.Sheet.SheetsOfCourse(1, false)
       g.Assert(err).Equal(nil)

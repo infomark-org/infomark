@@ -19,6 +19,7 @@
 package model
 
 import (
+	"errors"
 	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation"
@@ -37,17 +38,31 @@ type Course struct {
 	RequiredPercentage int       `json:"required_percentage" db:"required_percentage"`
 }
 
-func (d *Course) Validate() error {
+func (m *Course) Validate() error {
+	if m.EndsAt.Sub(m.BeginsAt).Seconds() < 0 {
+		return errors.New("ends_at should be later than begins_at")
+	}
 
-	return validation.ValidateStruct(d,
+	return validation.ValidateStruct(m,
 		validation.Field(
-			&d.Name,
+			&m.Name,
 			validation.Required,
 		),
 		validation.Field(
-			&d.Description,
+			&m.Description,
 			validation.Required,
+		),
+		validation.Field(
+			&m.BeginsAt,
+			validation.Required,
+		),
+		validation.Field(
+			&m.EndsAt,
+			validation.Required,
+		),
+		validation.Field(
+			&m.RequiredPercentage,
+			validation.Min(0),
 		),
 	)
-
 }

@@ -20,7 +20,6 @@ package app
 
 import (
   "context"
-  "errors"
   "net/http"
   "strconv"
 
@@ -44,12 +43,6 @@ func NewTaskResource(stores *Stores) *TaskResource {
 
 // .............................................................................
 
-// TaskRequest is the request payload for Task management.
-type TaskRequest struct {
-  *model.Task
-  ProtectedID int64 `json:"id"`
-}
-
 // TaskResponse is the response payload for Task management.
 type TaskResponse struct {
   *model.Task
@@ -71,23 +64,7 @@ func (rs *TaskResource) newTaskListResponse(Tasks []model.Task) []render.Rendere
   for k := range Tasks {
     list = append(list, rs.newTaskResponse(&Tasks[k]))
   }
-
   return list
-}
-
-// Bind preprocesses a TaskRequest.
-func (body *TaskRequest) Bind(r *http.Request) error {
-
-  if body.Task == nil {
-    return errors.New("Empty body")
-  }
-
-  // Sending the id via request-body is invalid.
-  // The id should be submitted in the url.
-  body.ProtectedID = 0
-
-  return nil
-
 }
 
 // Render post-processes a TaskResponse.
@@ -121,12 +98,6 @@ func (rs *TaskResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
 
   // parse JSON request into struct
   if err := render.Bind(r, data); err != nil {
-    render.Render(w, r, ErrBadRequestWithDetails(err))
-    return
-  }
-
-  // validate final model
-  if err := data.Task.Validate(); err != nil {
     render.Render(w, r, ErrBadRequestWithDetails(err))
     return
   }

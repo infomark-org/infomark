@@ -19,8 +19,10 @@
 package model
 
 import (
+	"errors"
 	"time"
-	// validation "github.com/go-ozzo/ozzo-validation"
+
+	validation "github.com/go-ozzo/ozzo-validation"
 )
 
 type Sheet struct {
@@ -33,8 +35,21 @@ type Sheet struct {
 	DueAt     time.Time `json:"due_at" db:"due_at"`
 }
 
-func (d *Sheet) Validate() error {
-	return nil
+func (m *Sheet) Validate() error {
+	if m.DueAt.Sub(m.PublishAt).Seconds() < 0 {
+		return errors.New("due_at should be later than publish_at")
+	}
+
+	return validation.ValidateStruct(m,
+		validation.Field(
+			&m.PublishAt,
+			validation.Required,
+		),
+		validation.Field(
+			&m.DueAt,
+			validation.Required,
+		),
+	)
 }
 
 type SheetPoints struct {
@@ -44,5 +59,6 @@ type SheetPoints struct {
 }
 
 func (d *SheetPoints) Validate() error {
+	// just a join and read only
 	return nil
 }

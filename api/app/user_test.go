@@ -20,6 +20,7 @@ package app
 
 import (
   "encoding/json"
+  "fmt"
   "net/http"
   "testing"
 
@@ -166,6 +167,19 @@ func TestUser(t *testing.T) {
       g.Assert(user_actual.Language).Equal(user_expected.Language)
     })
 
+    g.Xit("Should not perform self-updates when some data is missing", func() {
+      // This endpoint acts like a PATCH, since we need to start anyway from the
+      // database entry to avoid overriding "email".
+      // Theoretically (by definition of PUT) this endpoint must fail.
+      // But in practise, it is ever to act like PATCH here and pass also this request.
+      data_sent := H{
+        "first_name": "blub",
+      }
+
+      w := tape.PutWithClaims("/api/v1/me", data_sent, 1, true)
+      g.Assert(w.Code).Equal(http.StatusBadRequest)
+    })
+
     g.It("Should perform self-updates (excl email)", func() {
       user_before, err := stores.User.Get(1)
       g.Assert(err).Equal(nil)
@@ -183,6 +197,7 @@ func TestUser(t *testing.T) {
       g.Assert(err).Equal(nil)
 
       w := tape.PutWithClaims("/api/v1/me", helper.ToH(user_sent), 1, true)
+      fmt.Println(w.Body)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       user_after, err := stores.User.Get(1)

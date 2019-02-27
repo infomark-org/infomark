@@ -50,11 +50,11 @@ type createUserAccountRequest struct {
 func (body *createUserAccountRequest) Bind(r *http.Request) (err error) {
 	// sending the id via request is invalid as the id should be submitted in the url
 	if body.User == nil {
-		return errors.New("user data is missing")
+		return errors.New("missing \"user\" data")
 	}
 
 	if body.Account == nil {
-		return errors.New("account data is missing")
+		return errors.New("missing \"account\" data")
 	}
 
 	// override ID, IDs should be within the URL
@@ -72,9 +72,8 @@ func (body *createUserAccountRequest) Bind(r *http.Request) (err error) {
 	}
 	body.User.AvatarURL = null.String{}
 
-	if err := body.User.Validate(); err != nil {
-		return err
-	}
+	body.User.Email = strings.TrimSpace(body.User.Email)
+	body.User.Email = strings.ToLower(body.User.Email)
 
 	body.Account.Email = strings.TrimSpace(body.Account.Email)
 	body.Account.Email = strings.ToLower(body.Account.Email)
@@ -83,7 +82,7 @@ func (body *createUserAccountRequest) Bind(r *http.Request) (err error) {
 		return errors.New("email from user does not match email from account")
 	}
 
-	return nil
+	return body.User.Validate()
 }
 
 // -----------------------------------------------------------------------------
@@ -99,7 +98,7 @@ func (body *accountRequest) Bind(r *http.Request) error {
 	// this is the only patch function
 	// sending the id via request is invalid as the id should be submitted in the url
 	if body.Account == nil {
-		return errors.New("missing account data")
+		return errors.New("missing \"account\" data")
 	}
 
 	body.Account.Email = strings.TrimSpace(body.Account.Email)
@@ -116,6 +115,4 @@ func (body *accountRequest) Bind(r *http.Request) error {
 	return validation.ValidateStruct(body.Account,
 		validation.Field(&body.Account.Email, is.Email),
 	)
-
-	return nil
 }

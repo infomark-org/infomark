@@ -30,7 +30,6 @@ import (
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/go-chi/chi"
   "github.com/go-chi/render"
-  validation "github.com/go-ozzo/ozzo-validation"
 )
 
 // CourseResource specifies course management handler.
@@ -47,20 +46,18 @@ func NewCourseResource(stores *Stores) *CourseResource {
 
 // .............................................................................
 
-// courseRequest is the request payload for course management.
-type courseRequest struct {
-  *model.Course
-  ProtectedID int64 `json:"id"`
-}
-
 // courseResponse is the response payload for course management.
 type courseResponse struct {
   *model.Course
 }
 
+// Render post-processes a courseResponse.
+func (body *courseResponse) Render(w http.ResponseWriter, r *http.Request) error {
+  return nil
+}
+
 // newCourseResponse creates a response from a course model.
 func (rs *CourseResource) newCourseResponse(p *model.Course) *courseResponse {
-
   return &courseResponse{
     Course: p,
   }
@@ -73,38 +70,18 @@ func (rs *CourseResource) newCourseListResponse(courses []model.Course) []render
   for k := range courses {
     list = append(list, rs.newCourseResponse(&courses[k]))
   }
-
   return list
-}
-
-// Bind preprocesses a courseRequest.
-func (body *courseRequest) Bind(r *http.Request) error {
-
-  if body.Course == nil {
-    return errors.New("Empty body")
-  }
-
-  // Sending the id via request-body is invalid.
-  // The id should be submitted in the url.
-  body.ProtectedID = 0
-  err := validation.ValidateStruct(body,
-    validation.Field(&body.Name, validation.Required),
-  )
-  return err
-
-}
-
-// Render post-processes a courseResponse.
-func (body *courseResponse) Render(w http.ResponseWriter, r *http.Request) error {
-  return nil
 }
 
 type SheetPointsResponse struct {
   SheetPoints *model.SheetPoints `json:"sheet_points"`
 }
 
-func (rs *CourseResource) newSheetPointsResponse(p *model.SheetPoints) *SheetPointsResponse {
+func (body *SheetPointsResponse) Render(w http.ResponseWriter, r *http.Request) error {
+  return nil
+}
 
+func (rs *CourseResource) newSheetPointsResponse(p *model.SheetPoints) *SheetPointsResponse {
   return &SheetPointsResponse{
     SheetPoints: p,
   }
@@ -118,10 +95,6 @@ func (rs *CourseResource) newSheetPointsListResponse(collection []model.SheetPoi
   }
 
   return list
-}
-
-func (body *SheetPointsResponse) Render(w http.ResponseWriter, r *http.Request) error {
-  return nil
 }
 
 // .............................................................................
@@ -190,12 +163,6 @@ func (rs *CourseResource) CreateHandler(w http.ResponseWriter, r *http.Request) 
     return
   }
 
-  // validate final model
-  if err := data.Course.Validate(); err != nil {
-    render.Render(w, r, ErrBadRequestWithDetails(err))
-    return
-  }
-
   // create course entry in database
   newCourse, err := rs.Stores.Course.Create(data.Course)
   if err != nil {
@@ -251,7 +218,7 @@ func (rs *CourseResource) EditHandler(w http.ResponseWriter, r *http.Request) {
   }
 
   // TODO(patwie): change StatusNoContent
-  render.Status(r, http.StatusOK)
+  render.Status(r, http.StatusNoContent)
 }
 
 func (rs *CourseResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {

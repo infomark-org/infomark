@@ -53,17 +53,17 @@ type userAccountResponse struct {
   User *model.User `json:"user"`
 }
 
+// Render post-processes a userAccountResponse.
+func (u *userAccountResponse) Render(w http.ResponseWriter, r *http.Request) error {
+  // nothing to hide
+  return nil
+}
+
 // newUserAccountResponse creates a response from a user model.
 func newUserAccountResponse(p *model.User) *userAccountResponse {
   return &userAccountResponse{
     User: p,
   }
-}
-
-// Render post-processes a userAccountResponse.
-func (u *userAccountResponse) Render(w http.ResponseWriter, r *http.Request) error {
-  // nothing to hide
-  return nil
 }
 
 // userAccountResponse is the response payload for account management.
@@ -72,9 +72,14 @@ type userEnrollmentResponse struct {
   Role     int64 `json:"role"`
 }
 
+// Render post-processes a userAccountResponse.
+func (u *userEnrollmentResponse) Render(w http.ResponseWriter, r *http.Request) error {
+  // nothing to hide
+  return nil
+}
+
 // newCourseResponse creates a response from a course model.
 func (rs *AccountResource) newUserEnrollmentResponse(p *model.Enrollment) *userEnrollmentResponse {
-
   return &userEnrollmentResponse{
     CourseID: p.CourseID,
     Role:     p.Role,
@@ -89,12 +94,6 @@ func (rs *AccountResource) newUserEnrollmentsResponse(enrollments []model.Enroll
   }
 
   return list
-}
-
-// Render post-processes a userAccountResponse.
-func (u *userEnrollmentResponse) Render(w http.ResponseWriter, r *http.Request) error {
-  // nothing to hide
-  return nil
 }
 
 // .............................................................................

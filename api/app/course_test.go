@@ -186,7 +186,7 @@ func TestCourse(t *testing.T) {
         Name:               "Info2_new",
         Description:        "Lorem Ipsum_new",
         BeginsAt:           helper.Time(time.Now()),
-        EndsAt:             helper.Time(time.Now()),
+        EndsAt:             helper.Time(time.Now().Add(time.Hour * 1)),
         RequiredPercentage: 43,
       }
 

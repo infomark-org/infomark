@@ -20,7 +20,6 @@ package app
 
 import (
   "context"
-  "errors"
   "net/http"
   "strconv"
 
@@ -44,12 +43,6 @@ func NewSheetResource(stores *Stores) *SheetResource {
 
 // .............................................................................
 
-// SheetRequest is the request payload for Sheet management.
-type SheetRequest struct {
-  *model.Sheet
-  ProtectedID int64 `json:"id"`
-}
-
 // SheetResponse is the response payload for Sheet management.
 type SheetResponse struct {
   *model.Sheet
@@ -72,21 +65,6 @@ func (rs *SheetResource) newSheetListResponse(Sheets []model.Sheet) []render.Ren
   }
 
   return list
-}
-
-// Bind preprocesses a SheetRequest.
-func (body *SheetRequest) Bind(r *http.Request) error {
-
-  if body.Sheet == nil {
-    return errors.New("Empty body")
-  }
-
-  // Sending the id via request-body is invalid.
-  // The id should be submitted in the url.
-  body.ProtectedID = 0
-
-  return nil
-
 }
 
 // Render post-processes a SheetResponse.
@@ -121,12 +99,6 @@ func (rs *SheetResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
 
   // parse JSON request into struct
   if err := render.Bind(r, data); err != nil {
-    render.Render(w, r, ErrBadRequestWithDetails(err))
-    return
-  }
-
-  // validate final model
-  if err := data.Sheet.Validate(); err != nil {
     render.Render(w, r, ErrBadRequestWithDetails(err))
     return
   }
