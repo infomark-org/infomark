@@ -102,7 +102,7 @@ func (rs *TaskResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
   var err error
   // we use middle to detect whether there is a sheet given
   sheet := r.Context().Value("sheet").(*model.Sheet)
-  Tasks, err = rs.Stores.Task.TasksOfSheet(sheet, false)
+  Tasks, err = rs.Stores.Task.TasksOfSheet(sheet.ID, false)
 
   // render JSON reponse
   if err = render.RenderList(w, r, rs.newTaskListResponse(Tasks)); err != nil {
@@ -132,7 +132,7 @@ func (rs *TaskResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
   }
 
   // create Task entry in database
-  newTask, err := rs.Stores.Task.Create(data.Task, sheet)
+  newTask, err := rs.Stores.Task.Create(data.Task, sheet.ID)
   if err != nil {
     render.Render(w, r, ErrRender(err))
     return

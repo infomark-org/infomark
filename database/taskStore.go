@@ -45,7 +45,7 @@ func (s *TaskStore) GetAll() ([]model.Task, error) {
   return p, err
 }
 
-func (s *TaskStore) Create(p *model.Task, sheet *model.Sheet) (*model.Task, error) {
+func (s *TaskStore) Create(p *model.Task, sheetID int64) (*model.Task, error) {
   // create Task
   newID, err := Insert(s.db, "tasks", p)
   if err != nil {
@@ -54,7 +54,7 @@ func (s *TaskStore) Create(p *model.Task, sheet *model.Sheet) (*model.Task, erro
 
   // get maximum order
   var maxOrder int
-  err = s.db.Get(&maxOrder, "SELECT max(ordering) FROM task_sheet WHERE sheet_id = $1", sheet.ID)
+  err = s.db.Get(&maxOrder, "SELECT max(ordering) FROM task_sheet WHERE sheet_id = $1", sheetID)
   if err != nil {
     return nil, err
   }
@@ -62,7 +62,7 @@ func (s *TaskStore) Create(p *model.Task, sheet *model.Sheet) (*model.Task, erro
   // now associate sheet with course
   _, err = s.db.Exec(`INSERT INTO task_sheet
     (id,task_id,sheet_id,ordering)
-    VALUES (DEFAULT, $1, $2, $3);`, newID, sheet.ID, maxOrder+1)
+    VALUES (DEFAULT, $1, $2, $3);`, newID, sheetID, maxOrder+1)
   if err != nil {
     return nil, err
   }
@@ -78,7 +78,7 @@ func (s *TaskStore) Delete(taskID int64) error {
   return Delete(s.db, "tasks", taskID)
 }
 
-func (s *TaskStore) TasksOfSheet(sheet *model.Sheet, only_active bool) ([]model.Task, error) {
+func (s *TaskStore) TasksOfSheet(sheetID int64, only_active bool) ([]model.Task, error) {
   p := []model.Task{}
 
   // t.public_test_path, t.private_test_path,
@@ -94,6 +94,6 @@ func (s *TaskStore) TasksOfSheet(sheet *model.Sheet, only_active bool) ([]model.
     WHERE
       s.id = $1
     ORDER BY
-      ts.ordering ASC;`, sheet.ID)
+      ts.ordering ASC;`, sheetID)
   return p, err
 }

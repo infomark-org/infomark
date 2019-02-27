@@ -20,11 +20,8 @@ package app
 
 import (
   "context"
-  "errors"
-  "fmt"
   "net/http"
   "strconv"
-  "strings"
 
   "github.com/cgtuebingen/infomark-backend/auth"
   "github.com/cgtuebingen/infomark-backend/auth/authenticate"
@@ -32,8 +29,6 @@ import (
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/go-chi/chi"
   "github.com/go-chi/render"
-  validation "github.com/go-ozzo/ozzo-validation"
-  "github.com/go-ozzo/ozzo-validation/is"
 )
 
 // UserResource specifies user management handler.
@@ -49,81 +44,6 @@ func NewUserResource(stores *Stores) *UserResource {
 }
 
 // .............................................................................
-
-// userRequest is the request payload for user management.
-type userRequest struct {
-  *model.User
-  ProtectedID     int64  `json:"id"`
-  ProtectedAvatar string `json:"avatar_url"`
-  PlainPassword   string `json:"plain_password"`
-}
-
-// Bind preprocesses a userRequest.
-func (body *userRequest) Bind(r *http.Request) error {
-
-  if body.User == nil {
-    return errors.New("Empty body")
-  }
-
-  // Sending the id via request-body is invalid.
-  // The id should be submitted in the url.
-  body.ProtectedID = 0
-  body.Email = strings.TrimSpace(body.Email)
-  body.Email = strings.ToLower(body.Email)
-
-  err := validation.ValidateStruct(body,
-    validation.Field(&body.Email, validation.Required, is.Email),
-  )
-  if err != nil {
-    return err
-  }
-
-  // Encrypt plain password
-  hash, err := auth.HashPassword(body.PlainPassword)
-
-  body.User.EncryptedPassword = hash
-
-  return err
-
-}
-
-// userRequest is the request payload for user management.
-type userMeRequest struct {
-  *model.User
-  ProtectedID     int64  `json:"id"`
-  PlainPassword   string `json:"plain_password"`
-  ProtectedEmail  string `json:"email"`
-  ProtectedAvatar string `json:"avatar_url"`
-}
-
-// Bind preprocesses a userMeRequest.
-func (body *userMeRequest) Bind(r *http.Request) error {
-
-  if body.User == nil {
-    return errors.New("Empty body")
-  }
-
-  // Sending the id via request-body is invalid.
-  // The id should be submitted in the url.
-  body.ProtectedID = 0
-  body.Email = strings.TrimSpace(body.Email)
-  body.Email = strings.ToLower(body.Email)
-
-  err := validation.ValidateStruct(body,
-    validation.Field(&body.Email, validation.Required, is.Email),
-  )
-  if err != nil {
-    return err
-  }
-
-  // Encrypt plain password
-  hash, err := auth.HashPassword(body.PlainPassword)
-
-  body.EncryptedPassword = hash
-
-  return err
-
-}
 
 // userResponse is the response payload for user management.
 type userResponse struct {
@@ -155,24 +75,6 @@ func (u *userResponse) Render(w http.ResponseWriter, r *http.Request) error {
 }
 
 // .............................................................................
-
-// bindValidate jointly binds data from json request and validates the model.
-// func (rs *UserResource) bindValidate(w http.ResponseWriter, r *http.Request) (*userRequest, *ErrResponse) {
-//   // get user from middle-ware context
-//   data := &userRequest{User: r.Context().Value("user").(*model.User)}
-
-//   // parse JSON request into struct
-//   if err := render.Bind(r, data); err != nil {
-//     return nil, ErrBadRequestWithDetails(err)
-//   }
-
-//   // validate final model
-//   if err := data.User.Validate(); err != nil {
-//     return nil, ErrBadRequestWithDetails(err)
-//   }
-
-//   return data, nil
-// }
 
 // Index is the enpoint for retrieving all users if claim.root is true.
 func (rs *UserResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
@@ -238,11 +140,9 @@ func (rs *UserResource) EditMeHandler(w http.ResponseWriter, r *http.Request) {
 
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
 
+  // user is not allowed to change all entries, we use the database entry as a starting point
   startUser, err := rs.Stores.User.Get(accessClaims.LoginID)
   if err != nil {
-    fmt.Println(startUser)
-    fmt.Println(startUser.FirstName)
-    fmt.Println(err)
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return
   }
@@ -281,8 +181,8 @@ func (rs *UserResource) EditHandler(w http.ResponseWriter, r *http.Request) {
     return
   }
 
-  startUser := r.Context().Value("user").(*model.User)
-  data := &userRequest{User: startUser}
+  // startUser := r.Context().Value("user").(*model.User)
+  data := &userRequest{User: r.Context().Value("user").(*model.User)}
 
   // parse JSON request into struct
   if err := render.Bind(r, data); err != nil {
@@ -290,12 +190,7 @@ func (rs *UserResource) EditHandler(w http.ResponseWriter, r *http.Request) {
     return
   }
 
-  // validate final model
-  if err := data.User.Validate(); err != nil {
-    render.Render(w, r, ErrBadRequestWithDetails(err))
-    return
-  }
-
+  // all identities allowed to this endpoint are allowed to change the password
   if data.PlainPassword != "" {
     var err error
     data.User.EncryptedPassword, err = auth.HashPassword(data.PlainPassword)

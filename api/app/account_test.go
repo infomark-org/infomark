@@ -24,11 +24,13 @@ import (
   "net/http"
   "testing"
 
+  "github.com/cgtuebingen/infomark-backend/api/helper"
   "github.com/cgtuebingen/infomark-backend/auth"
   "github.com/cgtuebingen/infomark-backend/email"
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/franela/goblin"
   "github.com/spf13/viper"
+  null "gopkg.in/guregu/null.v3"
 )
 
 func TestAccount(t *testing.T) {
@@ -118,32 +120,42 @@ func TestAccount(t *testing.T) {
       min_len := viper.GetInt("min_password_length")
       ok_password := auth.GenerateToken(min_len)
 
+      user_sent := model.User{
+        ID:            300,                            // should be ignored
+        AvatarURL:     null.StringFrom("forgery.jpg"), // should be ignored
+        FirstName:     "Max  ",                        // contains whitespaces
+        LastName:      "  Mustermensch",               // contains whitespaces
+        Email:         "max@Mensch.com  ",             // contains uppercase
+        StudentNumber: "0815",
+        Semester:      2,
+        Subject:       "bio2",
+        Language:      "de",
+      }
+
       w := tape.Post("/api/v1/account",
         H{
           "account": H{
-            "email":          "foo@test.com",
+            "email":          user_sent.Email,
             "plain_password": ok_password,
           },
-          "user": H{
-            "first_name":     "Max",
-            "last_name":      "Mustermensch",
-            "semester":       2,
-            "student_number": "0815",
-            "subject":        "math",
-            "email":          "foo@test.com",
-          },
+          "user": helper.ToH(user_sent),
         })
       g.Assert(w.Code).Equal(http.StatusCreated)
 
-      user_after, err := stores.User.FindByEmail("foo@test.com")
+      user_after, err := stores.User.FindByEmail("max@mensch.com")
       g.Assert(err).Equal(nil)
-      g.Assert(user_after.Email).Equal("foo@test.com")
-      g.Assert(user_after.ConfirmEmailToken.Valid).Equal(true)
+
       g.Assert(user_after.FirstName).Equal("Max")
       g.Assert(user_after.LastName).Equal("Mustermensch")
-      g.Assert(user_after.Semester).Equal(2)
-      g.Assert(user_after.StudentNumber).Equal("0815")
-      g.Assert(user_after.Subject).Equal("math")
+      g.Assert(user_after.Email).Equal("max@mensch.com")
+      g.Assert(user_after.StudentNumber).Equal(user_sent.StudentNumber)
+      g.Assert(user_after.Semester).Equal(user_sent.Semester)
+      g.Assert(user_after.Subject).Equal(user_sent.Subject)
+      g.Assert(user_after.Language).Equal(user_sent.Language)
+
+      g.Assert(user_after.ConfirmEmailToken.Valid).Equal(true)
+      g.Assert(user_after.ResetPasswordToken.Valid).Equal(false)
+      g.Assert(user_after.AvatarURL.Valid).Equal(false)
 
       password_valid := auth.CheckPasswordHash(ok_password, user_after.EncryptedPassword)
       g.Assert(password_valid).Equal(true)
@@ -159,10 +171,10 @@ func TestAccount(t *testing.T) {
         "old_plain_password": "test",
       }
 
-      w := tape.Put("/api/v1/account", data)
+      w := tape.Patch("/api/v1/account", data)
       g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
-      w = tape.PutWithClaims("/api/v1/account", data, 1, true)
+      w = tape.PatchWithClaims("/api/v1/account", data, 1, true)
       g.Assert(w.Code).Equal(http.StatusNoContent)
     })
 
@@ -176,7 +188,7 @@ func TestAccount(t *testing.T) {
         "old_plain_password": "test_false",
       }
 
-      w := tape.PutWithClaims("/api/v1/account", data, 1, true)
+      w := tape.PatchWithClaims("/api/v1/account", data, 1, true)
       g.Assert(w.Code).Equal(http.StatusBadRequest)
     })
 
@@ -190,7 +202,7 @@ func TestAccount(t *testing.T) {
         "old_plain_password": "test",
       }
 
-      w := tape.PutWithClaims("/api/v1/account", data, 1, true)
+      w := tape.PatchWithClaims("/api/v1/account", data, 1, true)
       g.Assert(w.Code).Equal(http.StatusNoContent)
 
       user_after, err := stores.User.Get(1)
@@ -211,7 +223,7 @@ func TestAccount(t *testing.T) {
         "old_plain_password": "test",
       }
 
-      w := tape.PutWithClaims("/api/v1/account", data, 1, true)
+      w := tape.PatchWithClaims("/api/v1/account", data, 1, true)
       g.Assert(w.Code).Equal(http.StatusNoContent)
 
       user_after, err := stores.User.Get(1)
@@ -232,7 +244,7 @@ func TestAccount(t *testing.T) {
         "old_plain_password": "test",
       }
 
-      w := tape.PutWithClaims("/api/v1/account", data, 1, true)
+      w := tape.PatchWithClaims("/api/v1/account", data, 1, true)
       g.Assert(w.Code).Equal(http.StatusBadRequest)
     })
 
@@ -245,7 +257,7 @@ func TestAccount(t *testing.T) {
         "old_plain_password": "test",
       }
 
-      w := tape.PutWithClaims("/api/v1/account", data, 1, true)
+      w := tape.PatchWithClaims("/api/v1/account", data, 1, true)
       g.Assert(w.Code).Equal(http.StatusNoContent)
 
       user_after, err := stores.User.Get(1)
@@ -258,8 +270,10 @@ func TestAccount(t *testing.T) {
     })
 
     g.It("Should have empty avatar url when no avatar is given", func() {
+      defer helper.NewAvatarFileHandle(1).Delete()
 
-      // defer helper.NewAvatarFileHandle(1).Delete()
+      // no file so far
+      g.Assert(helper.NewAvatarFileHandle(1).Exists()).Equal(false)
 
       // no avatar by default
       w := tape.GetWithClaims("/api/v1/account", 1, true)
@@ -275,6 +289,11 @@ func TestAccount(t *testing.T) {
       w, err = tape.UploadWithClaims("/api/v1/account/avatar", avatar_filename, "image/jpg", 1, true)
       g.Assert(err).Equal(nil)
       g.Assert(w.Code).Equal(http.StatusOK)
+      g.Assert(helper.NewAvatarFileHandle(1).Exists()).Equal(true)
+
+      user, err := stores.User.Get(1)
+      g.Assert(err).Equal(nil)
+      g.Assert(user.AvatarURL.Valid).Equal(true)
 
       // there should be now an avatar
       w = tape.GetWithClaims("/api/v1/account", 1, true)

@@ -102,7 +102,7 @@ func (rs *SheetResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
   // we use middle to detect whether there is a course given
 
   course := r.Context().Value("course").(*model.Course)
-  sheets, err = rs.Stores.Sheet.SheetsOfCourse(course, false)
+  sheets, err = rs.Stores.Sheet.SheetsOfCourse(course.ID, false)
 
   // render JSON reponse
   if err = render.RenderList(w, r, rs.newSheetListResponse(sheets)); err != nil {
@@ -132,7 +132,7 @@ func (rs *SheetResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
   }
 
   // create Sheet entry in database
-  newSheet, err := rs.Stores.Sheet.Create(data.Sheet, course)
+  newSheet, err := rs.Stores.Sheet.Create(data.Sheet, course.ID)
   if err != nil {
     render.Render(w, r, ErrRender(err))
     return

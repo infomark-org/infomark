@@ -45,7 +45,7 @@ func (s *SheetStore) GetAll() ([]model.Sheet, error) {
   return p, err
 }
 
-func (s *SheetStore) Create(p *model.Sheet, c *model.Course) (*model.Sheet, error) {
+func (s *SheetStore) Create(p *model.Sheet, courseID int64) (*model.Sheet, error) {
 
   newID, err := Insert(s.db, "sheets", p)
   if err != nil {
@@ -54,7 +54,7 @@ func (s *SheetStore) Create(p *model.Sheet, c *model.Course) (*model.Sheet, erro
 
   // get maximum order
   var maxOrder int
-  err = s.db.Get(&maxOrder, "SELECT max(ordering) FROM sheet_course WHERE course_id = $1", c.ID)
+  err = s.db.Get(&maxOrder, "SELECT max(ordering) FROM sheet_course WHERE course_id = $1", courseID)
   if err != nil {
     return nil, err
   }
@@ -62,7 +62,7 @@ func (s *SheetStore) Create(p *model.Sheet, c *model.Course) (*model.Sheet, erro
   // now associate sheet with course
   _, err = s.db.Exec(`INSERT INTO sheet_course
     (id,sheet_id,course_id,ordering)
-    VALUES (DEFAULT, $1, $2, $3);`, newID, c.ID, maxOrder+1)
+    VALUES (DEFAULT, $1, $2, $3);`, newID, courseID, maxOrder+1)
   if err != nil {
     return nil, err
   }
@@ -78,7 +78,7 @@ func (s *SheetStore) Delete(sheetID int64) error {
   return Delete(s.db, "sheets", sheetID)
 }
 
-func (s *SheetStore) SheetsOfCourse(course *model.Course, only_active bool) ([]model.Sheet, error) {
+func (s *SheetStore) SheetsOfCourse(courseID int64, only_active bool) ([]model.Sheet, error) {
   p := []model.Sheet{}
 
   err := s.db.Select(&p, `
@@ -93,6 +93,6 @@ func (s *SheetStore) SheetsOfCourse(course *model.Course, only_active bool) ([]m
     WHERE
       sc.course_id = $1
     ORDER BY
-      sc.ordering ASC;`, course.ID)
+      sc.ordering ASC;`, courseID)
   return p, err
 }

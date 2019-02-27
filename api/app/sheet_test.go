@@ -19,7 +19,6 @@
 package app
 
 import (
-  "context"
   "encoding/json"
   "fmt"
   "net/http"
@@ -32,15 +31,6 @@ import (
   "github.com/franela/goblin"
   "github.com/spf13/viper"
 )
-
-func SetSheetContext(sheet *model.Sheet) func(http.Handler) http.Handler {
-  return func(next http.Handler) http.Handler {
-    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-      ctx := context.WithValue(r.Context(), "sheet", sheet)
-      next.ServeHTTP(w, r.WithContext(ctx))
-    })
-  }
-}
 
 func TestSheet(t *testing.T) {
   g := goblin.Goblin(t)
@@ -107,10 +97,7 @@ func TestSheet(t *testing.T) {
     })
 
     g.It("Should create valid sheet", func() {
-      course_active, err := stores.Course.Get(1)
-      g.Assert(err).Equal(nil)
-
-      sheets_before, err := stores.Sheet.SheetsOfCourse(course_active, false)
+      sheets_before, err := stores.Sheet.SheetsOfCourse(1, false)
       g.Assert(err).Equal(nil)
 
       sheet_sent := model.Sheet{
@@ -129,7 +116,7 @@ func TestSheet(t *testing.T) {
       g.Assert(sheet_return.PublishAt.Equal(sheet_sent.PublishAt)).Equal(true)
       g.Assert(sheet_return.DueAt.Equal(sheet_sent.DueAt)).Equal(true)
 
-      sheets_after, err := stores.Sheet.SheetsOfCourse(course_active, false)
+      sheets_after, err := stores.Sheet.SheetsOfCourse(1, false)
       g.Assert(err).Equal(nil)
       g.Assert(len(sheets_after)).Equal(len(sheets_before) + 1)
     })

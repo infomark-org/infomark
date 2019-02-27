@@ -205,7 +205,6 @@ func (f *FileHandle) WriteToDisk(r *http.Request, fieldName string) error {
 
   // copy file from request
   _, err = io.Copy(hnd, file)
-
   if err != nil {
     return err
   }

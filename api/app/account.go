@@ -23,7 +23,6 @@ import (
   "fmt"
   "net/http"
   "strconv"
-  "strings"
 
   "github.com/cgtuebingen/infomark-backend/api/helper"
   "github.com/cgtuebingen/infomark-backend/auth"
@@ -31,8 +30,6 @@ import (
   "github.com/cgtuebingen/infomark-backend/email"
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/go-chi/render"
-  validation "github.com/go-ozzo/ozzo-validation"
-  "github.com/go-ozzo/ozzo-validation/is"
   "github.com/spf13/viper"
   null "gopkg.in/guregu/null.v3"
 )
@@ -50,72 +47,6 @@ func NewAccountResource(stores *Stores) *AccountResource {
 }
 
 // .............................................................................
-
-// userAccountRequest is the request payload for account management chaning name etc....
-type userAccountRequest struct {
-  User    *model.User  `json:"user"`
-  Account *accountInfo `json:"account"`
-}
-
-// Bind preprocesses a userAccountRequest.
-func (body *userAccountRequest) Bind(r *http.Request) error {
-  // sending the id via request is invalid as the id should be submitted in the url
-  if body.User != nil {
-    body.User.ID = 0
-
-    body.User.FirstName = strings.TrimSpace(body.User.FirstName)
-    body.User.LastName = strings.TrimSpace(body.User.LastName)
-
-    // encrypt password
-    hash, err := auth.HashPassword(body.Account.PlainPassword)
-    body.User.EncryptedPassword = hash
-    return err
-  }
-  if body.Account != nil {
-    body.Account.Email = strings.TrimSpace(body.Account.Email)
-    body.Account.Email = strings.ToLower(body.Account.Email)
-  }
-  return nil
-}
-
-type accountInfo struct {
-  Email             string `json:"email"`
-  PlainPassword     string `json:"plain_password"`
-  EncryptedPassword string `json:"-"`
-}
-
-// userAccountRequest is the request payload for account management chaning name etc....
-type accountRequest struct {
-  Account          *accountInfo `json:"account"`
-  OldPlainPassword string       `json:"old_plain_password"`
-}
-
-// Bind preprocesses a accountRequest.
-func (body *accountRequest) Bind(r *http.Request) error {
-  // sending the id via request is invalid as the id should be submitted in the url
-  if body.Account != nil {
-
-    body.Account.Email = strings.TrimSpace(body.Account.Email)
-    body.Account.Email = strings.ToLower(body.Account.Email)
-
-    // encrypt new password, when given
-    if body.Account.PlainPassword != "" {
-      hash, err := auth.HashPassword(body.Account.PlainPassword)
-      body.Account.EncryptedPassword = hash
-      return err
-    }
-
-    // validate
-    err := validation.ValidateStruct(body.Account,
-      validation.Field(&body.Account.Email, is.Email),
-    )
-
-    return err
-
-  }
-
-  return nil
-}
 
 // userAccountResponse is the response payload for account management.
 type userAccountResponse struct {
@@ -171,29 +102,10 @@ func (u *userEnrollmentResponse) Render(w http.ResponseWriter, r *http.Request) 
 // Post is the enpoint for creating a new user account.
 func (rs *AccountResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
   // start from empty Request
-  data := &userAccountRequest{}
+  data := &createUserAccountRequest{}
 
   // parse JSON request into struct
   if err := render.Bind(r, data); err != nil {
-    render.Render(w, r, ErrBadRequestWithDetails(err))
-    return
-  }
-
-  // check password length
-  if len(data.Account.PlainPassword) < viper.GetInt("min_password_length") {
-    render.Render(w, r, ErrBadRequestWithDetails(errors.New("password to short")))
-    return
-  }
-
-  if data.User == nil {
-    render.Render(w, r, ErrBadRequestWithDetails(errors.New("user in request is missing")))
-    return
-  }
-
-  data.User.AvatarURL = null.String{}
-
-  // validate final model
-  if err := data.User.Validate(); err != nil {
     render.Render(w, r, ErrBadRequestWithDetails(err))
     return
   }

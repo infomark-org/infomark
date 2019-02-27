@@ -139,6 +139,12 @@ func (t *Tape) PutWithClaims(url string, data map[string]interface{}, loginID in
   return t.PlayRequest(r)
 }
 
+func (t *Tape) PatchWithClaims(url string, data map[string]interface{}, loginID int64, root bool) *httptest.ResponseRecorder {
+  r := otape.BuildDataRequest("PATCH", url, data)
+  addJWTClaims(r, loginID, root)
+  return t.PlayRequest(r)
+}
+
 func (t *Tape) DeleteWithClaims(url string, loginID int64, root bool) *httptest.ResponseRecorder {
   h := make(map[string]interface{})
   r := otape.BuildDataRequest("DELETE", url, h)

@@ -34,14 +34,14 @@ type User struct {
 	CreatedAt time.Time `json:"-" db:"created_at,omitempty"`
 	UpdatedAt time.Time `json:"-" db:"updated_at,omitempty"`
 
-	FirstName     string      `json:"first_name,omitempty" db:"first_name"`
-	LastName      string      `json:"last_name,omitempty" db:"last_name"`
+	FirstName     string      `json:"first_name" db:"first_name"`
+	LastName      string      `json:"last_name" db:"last_name"`
 	AvatarURL     null.String `json:"avatar_url,omitempty" db:"avatar_url"`
-	Email         string      `json:"email,omitempty" db:"email"`
-	StudentNumber string      `json:"student_number,omitempty" db:"student_number"`
-	Semester      int         `json:"semester,omitempty" db:"semester"`
-	Subject       string      `json:"subject,omitempty" db:"subject"`
-	Language      string      `json:"language,omitempty" db:"language"`
+	Email         string      `json:"email" db:"email"`
+	StudentNumber string      `json:"student_number" db:"student_number"`
+	Semester      int         `json:"semester" db:"semester"`
+	Subject       string      `json:"subject" db:"subject"`
+	Language      string      `json:"language" db:"language"`
 
 	EncryptedPassword  string      `json:"-" db:"encrypted_password"`
 	ResetPasswordToken null.String `json:"-" db:"reset_password_token"`
@@ -49,41 +49,50 @@ type User struct {
 	Root               bool        `json:"-" db:"root"`
 }
 
-func (d *User) FullName() string {
-	return fmt.Sprintf("%s %s", d.FirstName, d.LastName)
+func (m *User) FullName() string {
+	return fmt.Sprintf("%s %s", m.FirstName, m.LastName)
 }
 
-func (d *User) Validate() error {
+func (m *User) Validate() error {
 
-	d.Email = strings.TrimSpace(d.Email)
-	d.Email = strings.ToLower(d.Email)
+	m.FirstName = strings.TrimSpace(m.FirstName)
+	m.LastName = strings.TrimSpace(m.LastName)
 
-	return validation.ValidateStruct(d,
+	m.Email = strings.TrimSpace(m.Email)
+	m.Email = strings.ToLower(m.Email)
+
+	return validation.ValidateStruct(m,
 		validation.Field(
-			&d.FirstName,
+			&m.FirstName,
 			validation.Required,
 		),
 		validation.Field(
-			&d.LastName,
+			&m.LastName,
 			validation.Required,
 		),
 		validation.Field(
-			&d.Email,
+			&m.Email,
 			validation.Required,
 			is.Email,
 		),
 		validation.Field(
-			&d.StudentNumber,
+			&m.StudentNumber,
 			validation.Required,
 		),
 		validation.Field(
-			&d.Semester,
+			&m.Semester,
 			validation.Required,
 			validation.Min(1),
 		),
 		validation.Field(
-			&d.Subject,
+			&m.Subject,
 			validation.Required,
+		),
+
+		validation.Field(
+			&m.Language,
+			validation.Required,
+			validation.Length(2, 2),
 		),
 	)
 

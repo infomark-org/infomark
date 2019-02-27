@@ -16,39 +16,27 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package apptests
+package app
 
 import (
-  "net/http"
-  "testing"
+	"net/http"
 
-  "github.com/franela/goblin"
+	validation "github.com/go-ozzo/ozzo-validation"
 )
 
-func TestCommon(t *testing.T) {
-  g := goblin.Goblin(t)
+// userRequest is the request payload for user management.
+type EmailRequest struct {
+	Subject string `json:"subject"`
+	Body    string `json:"body"`
+}
 
-  tape := &Tape{}
+// Bind preprocesses a userRequest.
+func (body *EmailRequest) Bind(r *http.Request) error {
 
-  var r *http.Request
+	err := validation.ValidateStruct(body,
+		validation.Field(&body.Body, validation.Required),
+		validation.Field(&body.Subject, validation.Required),
+	)
 
-  g.Describe("Common", func() {
-
-    g.BeforeEach(func() {
-      tape.BeforeEach()
-    })
-
-    g.It("Should pong", func() {
-      r, _ = http.NewRequest("GET", "/api/v1/ping", nil)
-      w := tape.PlayRequest(r)
-      g.Assert(w.Code).Equal(http.StatusOK)
-      g.Assert(w.Body.String()).Equal("pong")
-
-    })
-
-    g.AfterEach(func() {
-      tape.AfterEach()
-    })
-  })
-
+	return err
 }

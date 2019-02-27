@@ -163,8 +163,39 @@ func (t *Tape) Put(url string, data map[string]interface{}) *httptest.ResponseRe
   return t.PlayRequest(r)
 }
 
+func (t *Tape) Patch(url string, data map[string]interface{}) *httptest.ResponseRecorder {
+  r := BuildDataRequest("PATCH", url, data)
+  return t.PlayRequest(r)
+}
+
 func (t *Tape) Delete(url string) *httptest.ResponseRecorder {
   h := make(map[string]interface{})
   r := BuildDataRequest("DELETE", url, h)
   return t.PlayRequest(r)
+}
+
+func (t *Tape) FormatRequest(r *http.Request) string {
+  // Create return string
+  var request []string
+  // Add the request string
+  url := fmt.Sprintf("%v %v %v", r.Method, r.URL, r.Proto)
+  request = append(request, url)
+  // Add the host
+  request = append(request, fmt.Sprintf("Host: %v", r.Host))
+  // Loop through headers
+  for name, headers := range r.Header {
+    name = strings.ToLower(name)
+    for _, h := range headers {
+      request = append(request, fmt.Sprintf("%v: %v", name, h))
+    }
+  }
+
+  // If this is a POST, add post data
+  if r.Method == "POST" {
+    r.ParseForm()
+    request = append(request, "\n")
+    request = append(request, r.Form.Encode())
+  }
+  // Return the request as a string
+  return strings.Join(request, "\n")
 }

@@ -91,6 +91,7 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
             r.Use(appAPI.User.Context)
             r.Get("/", appAPI.User.GetHandler)
             r.Put("/", appAPI.User.EditHandler)
+            r.Delete("/", appAPI.User.DeleteHandler)
             r.Post("/emails", appAPI.User.SendEmailHandler)
           })
         })
@@ -146,17 +147,18 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
             r.Get("/", appAPI.Task.GetHandler)
             r.Put("/", appAPI.Task.EditHandler)
             r.Delete("/", appAPI.Task.DeleteHandler)
+
+            r.Route("/public_file", func(r chi.Router) {
+              r.Get("/", appAPI.Task.GetPublicTestFileHandler)
+              r.Post("/", appAPI.Task.ChangePublicTestFileHandler)
+            })
+
+            r.Route("/private_file", func(r chi.Router) {
+              r.Get("/", appAPI.Task.GetPrivateTestFileHandler)
+              r.Post("/", appAPI.Task.ChangePrivateTestFileHandler)
+            })
           })
 
-          r.Route("/public_files", func(r chi.Router) {
-            r.Get("/", appAPI.Task.GetPublicTestFileHandler)
-            r.Post("/", appAPI.Task.ChangePublicTestFileHandler)
-          })
-
-          r.Route("/private_files", func(r chi.Router) {
-            r.Get("/", appAPI.Task.GetPrivateTestFileHandler)
-            r.Post("/", appAPI.Task.ChangePrivateTestFileHandler)
-          })
         })
 
         r.Get("/account", appAPI.Account.GetHandler)
@@ -164,8 +166,7 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
         r.Get("/account/avatar", appAPI.Account.GetAvatarHandler)
         r.Post("/account/avatar", appAPI.Account.ChangeAvatarHandler)
         r.Delete("/account/avatar", appAPI.Account.DeleteAvatarHandler)
-        r.Put("/account", appAPI.Account.EditHandler)
-
+        r.Patch("/account", appAPI.Account.EditHandler)
         r.Delete("/auth/sessions", appAPI.Auth.LogoutHandler)
 
       })

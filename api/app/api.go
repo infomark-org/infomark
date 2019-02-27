@@ -66,9 +66,9 @@ type SheetStore interface {
   Get(SheetID int64) (*model.Sheet, error)
   Update(p *model.Sheet) error
   GetAll() ([]model.Sheet, error)
-  Create(p *model.Sheet, c *model.Course) (*model.Sheet, error)
+  Create(p *model.Sheet, courseID int64) (*model.Sheet, error)
   Delete(SheetID int64) error
-  SheetsOfCourse(course *model.Course, only_active bool) ([]model.Sheet, error)
+  SheetsOfCourse(courseID int64, only_active bool) ([]model.Sheet, error)
 }
 
 // TaskStore specifies required database queries for Task management.
@@ -76,9 +76,9 @@ type TaskStore interface {
   Get(TaskID int64) (*model.Task, error)
   Update(p *model.Task) error
   GetAll() ([]model.Task, error)
-  Create(p *model.Task, s *model.Sheet) (*model.Task, error)
+  Create(p *model.Task, sheetID int64) (*model.Task, error)
   Delete(TaskID int64) error
-  TasksOfSheet(Sheet *model.Sheet, only_active bool) ([]model.Task, error)
+  TasksOfSheet(sheetID int64, only_active bool) ([]model.Task, error)
 }
 
 // API provides application resources and handlers.
