@@ -20,9 +20,12 @@ package app
 
 import (
   "context"
+  "fmt"
   "net/http"
   "strconv"
 
+  "github.com/cgtuebingen/infomark-backend/auth/authenticate"
+  "github.com/cgtuebingen/infomark-backend/database"
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/go-chi/chi"
   "github.com/go-chi/render"
@@ -131,6 +134,49 @@ func (rs *GroupResource) GetHandler(w http.ResponseWriter, r *http.Request) {
   }
 
   render.Status(r, http.StatusOK)
+}
+
+// GetMineHandler is the enpoint for retrieving a specific Group in a given course
+// containing the request entity.
+func (rs *GroupResource) GetMineHandler(w http.ResponseWriter, r *http.Request) {
+
+  // TODO(patwie): handle case when user is tutor in group
+
+  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  course := r.Context().Value("course").(*model.Course)
+  courseRole := r.Context().Value("course_role").(database.CourseRole)
+
+  var (
+    group *model.Group
+    err   error
+  )
+
+  if courseRole == database.STUDENT {
+    // here catch on the cases, when user is a student and enrolled in a group
+
+    group, err = rs.Stores.Group.GetInCourseWithUser(accessClaims.LoginID, course.ID)
+
+  } else {
+    // must be tutor
+    group, err = rs.Stores.Group.GetOfTutor(accessClaims.LoginID, course.ID)
+
+  }
+
+  // if we cannot find such an entry, this means the user have not been assigned to a group
+  if err != nil {
+    fmt.Println(err)
+    render.Render(w, r, ErrNotFound)
+    return
+  }
+
+  // render JSON reponse
+  if err := render.Render(w, r, rs.newGroupResponse(group)); err != nil {
+    render.Render(w, r, ErrRender(err))
+    return
+  }
+
+  render.Status(r, http.StatusOK)
+
 }
 
 // EditHandler is the endpoint fro updating a specific Task with given id.

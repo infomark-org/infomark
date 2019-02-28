@@ -75,3 +75,35 @@ func (s *GroupStore) GroupsOfCourse(courseID int64) ([]model.Group, error) {
       course_id = $1`, courseID)
   return p, err
 }
+
+func (s *GroupStore) GetInCourseWithUser(userID int64, courseID int64) (*model.Group, error) {
+  p := &model.Group{}
+
+  err := s.db.Get(p, `
+    SELECT
+      g.*
+    FROM
+      groups g
+    INNER JOIN
+      user_group ug on g.id = ug.group_id
+    WHERE
+      ug.user_id = $1
+    AND g.course_id = $2`, userID, courseID)
+  return p, err
+}
+
+func (s *GroupStore) GetOfTutor(tutorID int64, courseID int64) (*model.Group, error) {
+  p := &model.Group{}
+
+  err := s.db.Get(p, `
+    SELECT
+      g.*
+    FROM
+      groups g
+    WHERE
+      g.tutor_id = $1
+    AND
+      g.course_id = $2
+    `, tutorID, courseID)
+  return p, err
+}

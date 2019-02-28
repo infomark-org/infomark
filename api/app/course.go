@@ -396,17 +396,17 @@ func (rs *CourseResource) Context(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
     // TODO: check permission if inquirer of request is allowed to access this course
     // Should be done via another middleware
-    var course_id int64
+    var courseID int64
     var err error
 
     // try to get id from URL
-    if course_id, err = strconv.ParseInt(chi.URLParam(r, "courseID"), 10, 64); err != nil {
+    if courseID, err = strconv.ParseInt(chi.URLParam(r, "courseID"), 10, 64); err != nil {
       render.Render(w, r, ErrNotFound)
       return
     }
 
     // find specific course in database
-    course, err := rs.Stores.Course.Get(course_id)
+    course, err := rs.Stores.Course.Get(courseID)
     if err != nil {
       render.Render(w, r, ErrNotFound)
       return
@@ -414,6 +414,24 @@ func (rs *CourseResource) Context(next http.Handler) http.Handler {
 
     // serve next
     ctx := context.WithValue(r.Context(), "course", course)
+    next.ServeHTTP(w, r.WithContext(ctx))
+  })
+}
+
+func (rs *CourseResource) RoleContext(next http.Handler) http.Handler {
+  return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+    course := r.Context().Value("course").(*model.Course)
+    accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+
+    // find role in the course
+    courseRole, err := rs.Stores.Course.RoleInCourse(accessClaims.LoginID, course.ID)
+    if err != nil {
+      render.Render(w, r, ErrBadRequestWithDetails(err))
+      return
+    }
+
+    // serve next
+    ctx := context.WithValue(r.Context(), "course_role", courseRole)
     next.ServeHTTP(w, r.WithContext(ctx))
   })
 }

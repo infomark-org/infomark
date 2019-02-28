@@ -24,6 +24,14 @@ import (
   "github.com/lib/pq"
 )
 
+type CourseRole int32
+
+const (
+  STUDENT CourseRole = 0
+  TUTOR   CourseRole = 1
+  ADMIN   CourseRole = 2
+)
+
 type CourseStore struct {
   db *sqlx.DB
 }
@@ -163,5 +171,28 @@ func (s *CourseStore) PointsForUser(userID int64, courseID int64) ([]model.Sheet
     ts.sheet_id`, userID, courseID,
   )
   return p, err
+
+}
+
+func (s *CourseStore) RoleInCourse(userID int64, courseID int64) (CourseRole, error) {
+  var role_int int
+
+  err := s.db.Get(&role_int,
+    `Select role from user_course WHERE user_id = $1 and course_id = $2`,
+    userID, courseID,
+  )
+
+  if err != nil {
+    return STUDENT, err
+  } else {
+    switch role_int {
+    case 1:
+      return TUTOR, nil
+    case 2:
+      return ADMIN, nil
+    default:
+      return STUDENT, nil
+    }
+  }
 
 }

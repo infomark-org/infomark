@@ -59,6 +59,7 @@ type CourseStore interface {
     filterSubject string,
     filterLanguage string) ([]model.UserCourse, error)
   PointsForUser(userID int64, courseID int64) ([]model.SheetPoints, error)
+  RoleInCourse(userID int64, courseID int64) (database.CourseRole, error)
 }
 
 // SheetStore specifies required database queries for Sheet management.
@@ -89,6 +90,8 @@ type GroupStore interface {
   Update(p *model.Group) error
   Delete(taskID int64) error
   GroupsOfCourse(courseID int64) ([]model.Group, error)
+  GetInCourseWithUser(userID int64, courseID int64) (*model.Group, error)
+  GetOfTutor(tutorID int64, courseID int64) (*model.Group, error)
 }
 
 // API provides application resources and handlers.

@@ -2,6 +2,7 @@
 BEGIN;
 drop table if exists material_course;
 drop table if exists user_course;
+drop table if exists user_group;
 drop table if exists sheet_course;
 drop table if exists task_sheet;
 drop table if exists group_bids;
@@ -169,6 +170,16 @@ CREATE TABLE groups(
   -- PRIMARY KEY (tutor_id, course_id),
   FOREIGN KEY (tutor_id) REFERENCES users (id)    ON DELETE CASCADE,
   FOREIGN KEY (course_id) REFERENCES courses (id) ON DELETE CASCADE
+);
+
+CREATE TABLE user_group(
+  id SERIAL not null primary key,
+  user_id INT not null,
+  group_id INT not null,
+
+  -- PRIMARY KEY (user_id, group_id),
+  FOREIGN KEY (user_id)   REFERENCES users (id)    ON DELETE CASCADE,
+  FOREIGN KEY (group_id) REFERENCES groups (id)  ON DELETE CASCADE
 );
 
 -- ratings of task from students

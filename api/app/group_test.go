@@ -106,16 +106,18 @@ func TestGroup(t *testing.T) {
       w := tape.PostWithClaims("/api/v1/courses/1/groups", helper.ToH(group_sent), 1, true)
       g.Assert(w.Code).Equal(http.StatusCreated)
 
-      grop_return := &model.Group{}
-      err = json.NewDecoder(w.Body).Decode(&grop_return)
-      g.Assert(grop_return.TutorID).Equal(group_sent.TutorID)
-      g.Assert(grop_return.CourseID).Equal(group_sent.CourseID)
-      g.Assert(grop_return.Description).Equal(group_sent.Description)
+      group_return := &model.Group{}
+      err = json.NewDecoder(w.Body).Decode(&group_return)
+      g.Assert(group_return.TutorID).Equal(group_sent.TutorID)
+      g.Assert(group_return.CourseID).Equal(group_sent.CourseID)
+      g.Assert(group_return.Description).Equal(group_sent.Description)
 
       groups_after, err := stores.Group.GroupsOfCourse(1)
       g.Assert(err).Equal(nil)
       g.Assert(len(groups_after)).Equal(len(groups_before) + 1)
     })
+
+    g.Xit("Should update a group")
 
     g.It("Should delete when valid access claims", func() {
       entries_before, err := stores.Group.GetAll()
@@ -137,6 +139,47 @@ func TestGroup(t *testing.T) {
       g.Assert(err).Equal(nil)
       g.Assert(len(entries_after)).Equal(len(entries_before) - 1)
     })
+
+    g.It("Find my group when being a student", func() {
+      // a random student (checked via pgweb)
+      studentID := int64(112)
+
+      w := tape.Get("/api/v1/courses/1/group")
+      g.Assert(w.Code).Equal(http.StatusUnauthorized)
+
+      w = tape.GetWithClaims("/api/v1/courses/1/group", studentID, true)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      group_return := &model.Group{}
+      err := json.NewDecoder(w.Body).Decode(&group_return)
+      g.Assert(err).Equal(nil)
+
+      // we cannot check the other entries
+      g.Assert(group_return.CourseID).Equal(int64(1))
+    })
+
+    g.It("Find my group when being a tutor", func() {
+      // a random student (checked via pgweb)
+      studentID := int64(1)
+
+      w := tape.Get("/api/v1/courses/1/group")
+      g.Assert(w.Code).Equal(http.StatusUnauthorized)
+
+      w = tape.GetWithClaims("/api/v1/courses/1/group", studentID, true)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      group_return := &model.Group{}
+      err := json.NewDecoder(w.Body).Decode(&group_return)
+      g.Assert(err).Equal(nil)
+
+      // we cannot check the other entries
+      g.Assert(group_return.CourseID).Equal(int64(1))
+      g.Assert(group_return.TutorID).Equal(int64(1))
+    })
+
+    g.Xit("Should not delete a group being a student")
+    g.Xit("Should not delete a group being a tutor")
+    g.Xit("Should not delete a group being a admin")
 
     g.AfterEach(func() {
       tape.AfterEach()

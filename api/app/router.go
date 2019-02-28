@@ -101,6 +101,7 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
           r.Post("/", appAPI.Course.CreateHandler)
           r.Route("/{courseID}", func(r chi.Router) {
             r.Use(appAPI.Course.Context)
+            r.Use(appAPI.Course.RoleContext)
             r.Get("/", appAPI.Course.GetHandler)
             r.Put("/", appAPI.Course.EditHandler)
             r.Delete("/", appAPI.Course.DeleteHandler)
@@ -118,6 +119,8 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
               r.Get("/", appAPI.Group.IndexHandler)
               r.Post("/", appAPI.Group.CreateHandler)
             })
+
+            r.Get("/group", appAPI.Group.GetMineHandler)
 
             r.Post("/emails", appAPI.Course.SendEmailHandler)
 

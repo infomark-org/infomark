@@ -208,6 +208,16 @@ def create_group(fake, tutor_id, course_id):
 
   return data
 
+
+def create_user_group(user_id, group_id):
+  data = OrderedDict([
+      ('id', VAL.DEFAULT),
+      ('user_id', user_id),
+      ('group_id', group_id),
+  ])
+
+  return data
+
 # """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 # """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 # """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -378,5 +388,12 @@ if __name__ == "__main__":
     f.write('ALTER SEQUENCE groups_id_seq RESTART WITH 1;\n')
     for el in groups:
       f.write(to_statement('groups', el))
+
+    # groups-enrollments
+    f.write('ALTER SEQUENCE user_group_id_seq RESTART WITH 1;\n')
+    for k, admin in enumerate(students):
+      group_id = fake.random_int(1, len(groups))
+      user_id = k + 1
+      f.write(to_statement('user_group', create_user_group(user_id, group_id)))
 
     f.write('COMMIT;')
