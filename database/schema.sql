@@ -121,7 +121,7 @@ CREATE TABLE submissions(
 
   user_id INT not null,
   task_id INT not null,
-  -- not necessary we use schema "{taskid}_{userid}.zip"
+  -- not necessary we use schema "{submission_id}.zip"
   -- file_path TEXT not null,
 
   -- PRIMARY KEY (user_id, task_id),
@@ -163,12 +163,12 @@ CREATE TABLE groups(
   updated_at TIMESTAMP not null DEFAULT current_timestamp,
 
   tutor_id INT not null,
-  description TEXT not null,
   course_id INT not null,
+  description TEXT not null,
 
   -- PRIMARY KEY (tutor_id, course_id),
-  FOREIGN KEY (tutor_id) REFERENCES users (id),
-  FOREIGN KEY (course_id) REFERENCES courses (id)
+  FOREIGN KEY (tutor_id) REFERENCES users (id)    ON DELETE CASCADE,
+  FOREIGN KEY (course_id) REFERENCES courses (id) ON DELETE CASCADE
 );
 
 -- ratings of task from students
@@ -193,8 +193,8 @@ CREATE TABLE group_bids(
   bid INT DEFAULT 0,
 
   -- PRIMARY KEY (user_id, group_id),
-  FOREIGN KEY (user_id) REFERENCES users (id),
-  FOREIGN KEY (group_id) REFERENCES groups (id)
+  FOREIGN KEY (user_id) REFERENCES users (id)   ON DELETE CASCADE,
+  FOREIGN KEY (group_id) REFERENCES groups (id) ON DELETE CASCADE
 );
 
 CREATE TABLE materials(
@@ -206,7 +206,7 @@ CREATE TABLE materials(
   -- should be unique in one course (keep original filename as it has some meaning)
   file_path TEXT not null,
   -- 0: slide, 1: supplementary
-  type INT DEFAULT 0,
+  kind INT DEFAULT 0,
   publish_at TIMESTAMP not null,
   lecture_at TIMESTAMP not null
 );

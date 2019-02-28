@@ -29,9 +29,7 @@ type Task struct {
 	CreatedAt time.Time `json:"-" db:"created_at,omitempty"`
 	UpdatedAt time.Time `json:"-" db:"updated_at,omitempty"`
 
-	MaxPoints int `json:"max_points" db:"max_points"`
-	// PublicTestPath     string `json:"-" db:"public_test_path"`
-	// PrivateTestPath    string `json:"-" db:"private_test_path"`
+	MaxPoints          int    `json:"max_points" db:"max_points"`
 	PublicDockerImage  string `json:"public_docker_image" db:"public_docker_image"`
 	PrivateDockerImage string `json:"private_docker_image" db:"private_docker_image"`
 }

@@ -103,6 +103,10 @@ func TestTask(t *testing.T) {
         PublicDockerImage:  "TestImage-Public",
         PrivateDockerImage: "TestImage-Private",
       }
+
+      err = task_sent.Validate()
+      g.Assert(err).Equal(nil)
+
       w := tape.PostWithClaims("/api/v1/sheets/1/tasks", helper.ToH(task_sent), 1, true)
       g.Assert(w.Code).Equal(http.StatusCreated)
 

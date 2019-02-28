@@ -17,3 +17,40 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package app
+
+import (
+	"net/http"
+
+	validation "github.com/go-ozzo/ozzo-validation"
+)
+
+// GradeRequest is the request payload for submission management.
+// This will mostly handle the Feedback from tutors. Other changes like
+// execution state will be handle internally and is not user-facing.
+type GradeRequest struct {
+	SubmissionID   int64  `json:"submission_id"`
+	AcquiredPoints int    `json:"acquired_points"`
+	Feedback       string `json:"feedback"`
+}
+
+// Bind preprocesses a GradeRequest.
+func (body *GradeRequest) Bind(r *http.Request) error {
+	return body.Validate()
+}
+
+func (m *GradeRequest) Validate() error {
+	return validation.ValidateStruct(m,
+		validation.Field(
+			&m.SubmissionID,
+			validation.Required,
+		),
+		validation.Field(
+			&m.AcquiredPoints,
+			validation.Required,
+		),
+		validation.Field(
+			&m.Feedback,
+			validation.Required,
+		),
+	)
+}

@@ -17,3 +17,30 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 package app
+
+import (
+	"net/http"
+
+	"github.com/cgtuebingen/infomark-backend/model"
+)
+
+// groupRequest is the request payload for course management.
+type groupRequest struct {
+	*model.Group
+	ProtectedID int64 `json:"id"`
+}
+
+// Bind preprocesses a groupRequest.
+func (body *groupRequest) Bind(r *http.Request) error {
+
+	// if body.Group == nil {
+	// 	return errors.New("missing \"course\" data")
+	// }
+
+	// Sending the id via request-body is invalid.
+	// The id should be submitted in the url.
+	body.ProtectedID = 0
+
+	return body.Group.Validate()
+
+}

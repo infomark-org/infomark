@@ -81,6 +81,16 @@ type TaskStore interface {
   TasksOfSheet(sheetID int64, only_active bool) ([]model.Task, error)
 }
 
+// GroupStore specifies required database queries for Task management.
+type GroupStore interface {
+  Get(groupID int64) (*model.Group, error)
+  GetAll() ([]model.Group, error)
+  Create(p *model.Group) (*model.Group, error)
+  Update(p *model.Group) error
+  Delete(taskID int64) error
+  GroupsOfCourse(courseID int64) ([]model.Group, error)
+}
+
 // API provides application resources and handlers.
 type API struct {
   User    *UserResource
@@ -89,6 +99,7 @@ type API struct {
   Course  *CourseResource
   Sheet   *SheetResource
   Task    *TaskResource
+  Group   *GroupResource
 }
 
 type Stores struct {
@@ -96,6 +107,7 @@ type Stores struct {
   User   UserStore
   Sheet  SheetStore
   Task   TaskStore
+  Group  GroupStore
 }
 
 func NewStores(db *sqlx.DB) *Stores {
@@ -105,6 +117,7 @@ func NewStores(db *sqlx.DB) *Stores {
     User:   database.NewUserStore(db),
     Sheet:  database.NewSheetStore(db),
     Task:   database.NewTaskStore(db),
+    Group:  database.NewGroupStore(db),
   }
 }
 
@@ -120,6 +133,7 @@ func NewAPI(db *sqlx.DB) (*API, error) {
     Course:  NewCourseResource(stores),
     Sheet:   NewSheetResource(stores),
     Task:    NewTaskResource(stores),
+    Group:   NewGroupResource(stores),
   }
   return api, nil
 }

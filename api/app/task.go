@@ -1,5 +1,5 @@
-// InfoMark - a platform for managing Tasks with
-//            distributing exercise Tasks and testing exercise submissions
+// InfoMark - a platform for managing courses with
+//            distributing exercise sheets and testing exercise submissions
 // Copyright (C) 2019  ComputerGraphics Tuebingen
 // Authors: Patrick Wieschollek
 //
@@ -117,17 +117,15 @@ func (rs *TaskResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
     return
   }
 
-  _ = sheet
-
 }
 
 // GetHandler is the enpoint for retrieving a specific Task.
 func (rs *TaskResource) GetHandler(w http.ResponseWriter, r *http.Request) {
   // `Task` is retrieved via middle-ware
-  Task := r.Context().Value("task").(*model.Task)
+  task := r.Context().Value("task").(*model.Task)
 
   // render JSON reponse
-  if err := render.Render(w, r, rs.newTaskResponse(Task)); err != nil {
+  if err := render.Render(w, r, rs.newTaskResponse(task)); err != nil {
     render.Render(w, r, ErrRender(err))
     return
   }
@@ -135,7 +133,7 @@ func (rs *TaskResource) GetHandler(w http.ResponseWriter, r *http.Request) {
   render.Status(r, http.StatusOK)
 }
 
-// PatchHandler is the endpoint fro updating a specific Task with given id.
+// EditHandler is the endpoint fro updating a specific Task with given id.
 func (rs *TaskResource) EditHandler(w http.ResponseWriter, r *http.Request) {
   // start from empty Request
   data := &TaskRequest{
@@ -225,22 +223,22 @@ func (rs *TaskResource) ChangePrivateTestFileHandler(w http.ResponseWriter, r *h
 // Context middleware is used to load an Task object from
 // the URL parameter `TaskID` passed through as the request. In case
 // the Task could not be found, we stop here and return a 404.
-// We do NOT check whether the Task is authorized to get this Task.
+// We do NOT check whether the identity is authorized to get this Task.
 func (d *TaskResource) Context(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
     // TODO: check permission if inquirer of request is allowed to access this Task
     // Should be done via another middleware
-    var Task_id int64
+    var taskID int64
     var err error
 
     // try to get id from URL
-    if Task_id, err = strconv.ParseInt(chi.URLParam(r, "taskID"), 10, 64); err != nil {
+    if taskID, err = strconv.ParseInt(chi.URLParam(r, "taskID"), 10, 64); err != nil {
       render.Render(w, r, ErrNotFound)
       return
     }
 
     // find specific Task in database
-    Task, err := d.Stores.Task.Get(Task_id)
+    Task, err := d.Stores.Task.Get(taskID)
     if err != nil {
       render.Render(w, r, ErrNotFound)
       return

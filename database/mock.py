@@ -10,7 +10,6 @@ NUM_TUTORS = 10
 NUM_ADMINS = 1
 
 
-
 class VAL(Enum):
   DEFAULT = 1
   NULL = 2
@@ -76,14 +75,14 @@ def create_user(fake, role='student'):
   return data
 
 
-def create_course(name):
+def create_course(fake, name):
   data = OrderedDict([
       ('id', VAL.DEFAULT),
       ('created_at', VAL.TIMESTAMP),
       ('updated_at', VAL.TIMESTAMP),
 
       ('name', name),
-      ('description', 'Lorem Ipsum'),
+      ('description', fake.text()),
       ('begins_at', time_stamp(datetime.datetime(2019, 2, 1, 1, 2, 3))),
       ('ends_at', time_stamp(datetime.datetime(2019, 7, 30, 23, 59, 59))),
       ('required_percentage', fake.random_int(10, 100)),
@@ -193,6 +192,22 @@ def create_grade(submission_id, tutor_id, max_points):
 
   return data
 
+
+def create_group(fake, tutor_id, course_id):
+  data = OrderedDict([
+      ('id', VAL.DEFAULT),
+      ('created_at', VAL.TIMESTAMP),
+      ('updated_at', VAL.TIMESTAMP),
+
+      ('tutor_id', tutor_id),
+      ('course_id', course_id),
+
+      ('description', fake.text()),
+
+  ])
+
+  return data
+
 # """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 # """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 # """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -239,7 +254,7 @@ if __name__ == "__main__":
 
   admins[0]['email'] = 'test@uni-tuebingen.de'
 
-  courses = [create_course('Info2'), create_course('Info3')]
+  courses = [create_course(fake, 'Info2'), create_course(fake, 'Info3')]
 
   course_id = 1
 
@@ -279,6 +294,17 @@ if __name__ == "__main__":
         submissions.append(s)
         tid = fake.random_int(1, len(tutors))
         grades.append(create_grade(len(submissions), tid, max_pts))
+
+  # we just do groups for course with id 1
+  groups = []
+  for i in range(len(tutors)):
+    groups.append(create_group(fake, tutor_id=i + 1, course_id=1))
+
+  # enroll students in random groups
+  group_enrollments = []
+  for i in range(len(students)):
+    student_id = NUM_ADMINS + NUM_TUTORS + i + 1
+    group_id = fake.random_int(1, len(groups))
 
   with open('mock.sql', 'w') as f:
     f.write('BEGIN;')
@@ -347,5 +373,10 @@ if __name__ == "__main__":
     f.write('ALTER SEQUENCE grades_id_seq RESTART WITH 1;\n')
     for el in grades:
       f.write(to_statement('grades', el))
+
+    # groups
+    f.write('ALTER SEQUENCE groups_id_seq RESTART WITH 1;\n')
+    for el in groups:
+      f.write(to_statement('groups', el))
 
     f.write('COMMIT;')

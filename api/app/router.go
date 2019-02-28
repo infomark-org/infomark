@@ -114,6 +114,11 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
               r.Post("/", appAPI.Sheet.CreateHandler)
             })
 
+            r.Route("/groups", func(r chi.Router) {
+              r.Get("/", appAPI.Group.IndexHandler)
+              r.Post("/", appAPI.Group.CreateHandler)
+            })
+
             r.Post("/emails", appAPI.Course.SendEmailHandler)
 
             r.Get("/points", appAPI.Course.PointsHandler)
@@ -157,6 +162,16 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
               r.Get("/", appAPI.Task.GetPrivateTestFileHandler)
               r.Post("/", appAPI.Task.ChangePrivateTestFileHandler)
             })
+          })
+
+        })
+
+        r.Route("/groups", func(r chi.Router) {
+          r.Route("/{groupID}", func(r chi.Router) {
+            r.Use(appAPI.Group.Context)
+            r.Get("/", appAPI.Group.GetHandler)
+            r.Put("/", appAPI.Group.EditHandler)
+            r.Delete("/", appAPI.Group.DeleteHandler)
           })
 
         })

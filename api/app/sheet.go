@@ -1,4 +1,4 @@
-// InfoMark - a platform for managing Sheets with
+// InfoMark - a platform for managing courses with
 //            distributing exercise sheets and testing exercise submissions
 // Copyright (C) 2019  ComputerGraphics Tuebingen
 // Authors: Patrick Wieschollek
