@@ -19,6 +19,7 @@
 package app
 
 import (
+  "github.com/cgtuebingen/infomark-backend/auth/authorize"
   "github.com/cgtuebingen/infomark-backend/database"
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/jmoiron/sqlx"
@@ -59,7 +60,7 @@ type CourseStore interface {
     filterSubject string,
     filterLanguage string) ([]model.UserCourse, error)
   PointsForUser(userID int64, courseID int64) ([]model.SheetPoints, error)
-  RoleInCourse(userID int64, courseID int64) (database.CourseRole, error)
+  RoleInCourse(userID int64, courseID int64) (authorize.CourseRole, error)
 }
 
 // SheetStore specifies required database queries for Sheet management.
@@ -70,6 +71,7 @@ type SheetStore interface {
   Create(p *model.Sheet, courseID int64) (*model.Sheet, error)
   Delete(SheetID int64) error
   SheetsOfCourse(courseID int64, only_active bool) ([]model.Sheet, error)
+  IdentifyCourseOfSheet(sheetID int64) (*model.Course, error)
 }
 
 // TaskStore specifies required database queries for Task management.
@@ -80,6 +82,7 @@ type TaskStore interface {
   Create(p *model.Task, sheetID int64) (*model.Task, error)
   Delete(TaskID int64) error
   TasksOfSheet(sheetID int64, only_active bool) ([]model.Task, error)
+  IdentifyCourseOfTask(taskID int64) (*model.Course, error)
 }
 
 // GroupStore specifies required database queries for Task management.
@@ -92,6 +95,7 @@ type GroupStore interface {
   GroupsOfCourse(courseID int64) ([]model.Group, error)
   GetInCourseWithUser(userID int64, courseID int64) (*model.Group, error)
   GetOfTutor(tutorID int64, courseID int64) (*model.Group, error)
+  IdentifyCourseOfGroup(groupID int64) (*model.Course, error)
 }
 
 // API provides application resources and handlers.

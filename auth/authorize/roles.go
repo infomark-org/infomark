@@ -22,31 +22,64 @@ import (
   "net/http"
 
   "github.com/cgtuebingen/infomark-backend/auth"
+  "github.com/cgtuebingen/infomark-backend/auth/authenticate"
   "github.com/go-chi/render"
+)
 
-  "github.com/dhax/go-base/auth/jwt"
+type CourseRole int32
+
+const (
+  NOCOURSEROLE CourseRole = 0
+  STUDENT      CourseRole = 1
+  TUTOR        CourseRole = 2
+  ADMIN        CourseRole = 3
 )
 
 // RequiresRole middleware restricts access to accounts having role parameter in their jwt claims.
-func RequiresRole(role string) func(next http.Handler) http.Handler {
+func RequiresAtLeastCourseRole(requiredRole CourseRole) func(next http.Handler) http.Handler {
   return func(next http.Handler) http.Handler {
     hfn := func(w http.ResponseWriter, r *http.Request) {
-      claims := jwt.ClaimsFromCtx(r.Context())
-      if !hasRole(role, claims.Roles) {
+      if HasAtLeastRole(requiredRole, r) {
+        next.ServeHTTP(w, r)
+      } else {
         render.Render(w, r, auth.ErrUnauthorized)
-        return
       }
-      next.ServeHTTP(w, r)
     }
     return http.HandlerFunc(hfn)
   }
 }
 
-func hasRole(role string, roles []string) bool {
-  // for _, r := range roles {
-  //   if r == role {
-  //     return true
-  //   }
-  // }
-  return false
+func HasAtLeastRole(requiredRole CourseRole, r *http.Request) bool {
+  // global root can lever out this check
+  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  if accessClaims.Root {
+    // oh dear, sorry to ask. Please pass this check
+    return true
+  }
+
+  givenRole, ok := r.Context().Value("course_role").(CourseRole)
+  if !ok {
+    return false
+  }
+
+  if givenRole < requiredRole {
+    return false
+  }
+
+  return true
+}
+
+func EndpointRequiresRole(endpoint http.HandlerFunc, requiredRole CourseRole) http.HandlerFunc {
+
+  fn := func(w http.ResponseWriter, r *http.Request) {
+
+    if HasAtLeastRole(requiredRole, r) {
+      endpoint.ServeHTTP(w, r)
+    } else {
+      render.Render(w, r, auth.ErrUnauthorized)
+    }
+  }
+
+  return http.HandlerFunc(fn)
+
 }

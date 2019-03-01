@@ -25,7 +25,7 @@ import (
   "strconv"
 
   "github.com/cgtuebingen/infomark-backend/auth/authenticate"
-  "github.com/cgtuebingen/infomark-backend/database"
+  "github.com/cgtuebingen/infomark-backend/auth/authorize"
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/go-chi/chi"
   "github.com/go-chi/render"
@@ -144,14 +144,14 @@ func (rs *GroupResource) GetMineHandler(w http.ResponseWriter, r *http.Request) 
 
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
   course := r.Context().Value("course").(*model.Course)
-  courseRole := r.Context().Value("course_role").(database.CourseRole)
+  courseRole := r.Context().Value("course_role").(authorize.CourseRole)
 
   var (
     group *model.Group
     err   error
   )
 
-  if courseRole == database.STUDENT {
+  if courseRole == authorize.STUDENT {
     // here catch on the cases, when user is a student and enrolled in a group
 
     group, err = rs.Stores.Group.GetInCourseWithUser(accessClaims.LoginID, course.ID)
@@ -218,7 +218,7 @@ func (rs *GroupResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 // the URL parameter `TaskID` passed through as the request. In case
 // the group could not be found, we stop here and return a 404.
 // We do NOT check whether the identity is authorized to get this group.
-func (d *GroupResource) Context(next http.Handler) http.Handler {
+func (rs *GroupResource) Context(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
     // TODO: check permission if inquirer of request is allowed to access this group
     // Should be done via another middleware
@@ -232,14 +232,26 @@ func (d *GroupResource) Context(next http.Handler) http.Handler {
     }
 
     // find specific group in database
-    group, err := d.Stores.Group.Get(groupID)
+    group, err := rs.Stores.Group.Get(groupID)
     if err != nil {
       render.Render(w, r, ErrNotFound)
       return
     }
 
-    // serve next
     ctx := context.WithValue(r.Context(), "group", group)
+
+    // when there is a groupID in the url, there is NOT a courseID in the url,
+    // BUT: when there is a group, there is a course
+
+    course, err := rs.Stores.Group.IdentifyCourseOfGroup(group.ID)
+    if err != nil {
+      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+      return
+    }
+
+    ctx = context.WithValue(ctx, "course", course)
+
+    // serve next
     next.ServeHTTP(w, r.WithContext(ctx))
   })
 }

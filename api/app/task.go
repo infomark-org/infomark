@@ -224,7 +224,7 @@ func (rs *TaskResource) ChangePrivateTestFileHandler(w http.ResponseWriter, r *h
 // the URL parameter `TaskID` passed through as the request. In case
 // the Task could not be found, we stop here and return a 404.
 // We do NOT check whether the identity is authorized to get this Task.
-func (d *TaskResource) Context(next http.Handler) http.Handler {
+func (rs *TaskResource) Context(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
     // TODO: check permission if inquirer of request is allowed to access this Task
     // Should be done via another middleware
@@ -238,14 +238,26 @@ func (d *TaskResource) Context(next http.Handler) http.Handler {
     }
 
     // find specific Task in database
-    Task, err := d.Stores.Task.Get(taskID)
+    task, err := rs.Stores.Task.Get(taskID)
     if err != nil {
       render.Render(w, r, ErrNotFound)
       return
     }
 
+    ctx := context.WithValue(r.Context(), "task", task)
+
+    // when there is a taskID in the url, there is NOT a courseID in the url,
+    // BUT: when there is a task, there is a course
+
+    course, err := rs.Stores.Task.IdentifyCourseOfTask(task.ID)
+    if err != nil {
+      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+      return
+    }
+
+    ctx = context.WithValue(ctx, "course", course)
+
     // serve next
-    ctx := context.WithValue(r.Context(), "task", Task)
     next.ServeHTTP(w, r.WithContext(ctx))
   })
 }

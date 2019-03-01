@@ -63,7 +63,6 @@ func TestCourse(t *testing.T) {
     })
 
     g.It("Should list all courses", func() {
-
       w := tape.GetWithClaims("/api/v1/courses", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
@@ -71,7 +70,6 @@ func TestCourse(t *testing.T) {
       err := json.NewDecoder(w.Body).Decode(&courses_actual)
       g.Assert(err).Equal(nil)
       g.Assert(len(courses_actual)).Equal(2)
-
     })
 
     g.It("Should get a specific course", func() {
@@ -92,7 +90,6 @@ func TestCourse(t *testing.T) {
       g.Assert(course_actual.BeginsAt.Equal(course_expected.BeginsAt)).Equal(true)
       g.Assert(course_actual.EndsAt.Equal(course_expected.EndsAt)).Equal(true)
       g.Assert(course_actual.RequiredPercentage).Equal(course_expected.RequiredPercentage)
-
     })
 
     g.It("Should be able to filter enrollments (all)", func() {
@@ -167,6 +164,25 @@ func TestCourse(t *testing.T) {
       g.Assert(len(enrollments_actual)).Equal(number_enrollments_expected)
     })
 
+    g.It("Should be able to filter enrollments (but receive only tutors + admins), when role=student", func() {
+      course_active, err := stores.Course.Get(1)
+      g.Assert(err).Equal(nil)
+
+      number_enrollments_expected, err := countEnrollments(
+        tape,
+        "SELECT count(*) FROM user_course WHERE course_id = $1 and role IN (1, 2)",
+        course_active.ID,
+      )
+      g.Assert(err).Equal(nil)
+
+      // 112 is a student
+      w := tape.GetWithClaims("/api/v1/courses/1/enrollments?roles=0", 112, true)
+      enrollments_actual := []model.UserCourse{}
+      err = json.NewDecoder(w.Body).Decode(&enrollments_actual)
+      g.Assert(err).Equal(nil)
+      g.Assert(len(enrollments_actual)).Equal(number_enrollments_expected)
+    })
+
     g.It("Creating course should require claims", func() {
       w := tape.Post("/api/v1/courses", H{})
       g.Assert(w.Code).Equal(http.StatusUnauthorized)
@@ -190,8 +206,20 @@ func TestCourse(t *testing.T) {
         RequiredPercentage: 43,
       }
 
-      w := tape.PlayDataWithClaims("POST", "/api/v1/courses",
-        tape.ToH(course_sent), 1, true)
+      // students
+      w := tape.PlayDataWithClaims("POST", "/api/v1/courses", tape.ToH(course_sent), 112, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+
+      // tutors
+      w = tape.PlayDataWithClaims("POST", "/api/v1/courses", tape.ToH(course_sent), 2, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+
+      // admin in course (cannot be admin, course does not exists yet)
+      w = tape.PlayDataWithClaims("POST", "/api/v1/courses", tape.ToH(course_sent), 1, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+
+      // admin
+      w = tape.PlayDataWithClaims("POST", "/api/v1/courses", tape.ToH(course_sent), 1, true)
       g.Assert(w.Code).Equal(http.StatusCreated)
 
       // verify body
@@ -234,9 +262,16 @@ func TestCourse(t *testing.T) {
         RequiredPercentage: 99,
       }
 
-      w := tape.PlayDataWithClaims("PUT", "/api/v1/courses/1",
-        tape.ToH(course_sent), 1, true)
+      // students
+      w := tape.PlayDataWithClaims("PUT", "/api/v1/courses/1", tape.ToH(course_sent), 112, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
 
+      // tutors
+      w = tape.PlayDataWithClaims("PUT", "/api/v1/courses/1", tape.ToH(course_sent), 2, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+
+      // admin
+      w = tape.PlayDataWithClaims("PUT", "/api/v1/courses/1", tape.ToH(course_sent), 1, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       course_after, err := stores.Course.Get(1)
@@ -261,13 +296,70 @@ func TestCourse(t *testing.T) {
       g.Assert(err).Equal(nil)
       g.Assert(len(entries_after)).Equal(len(entries_before))
 
-      w = tape.PlayWithClaims("DELETE", "/api/v1/courses/1", 1, true)
+      // students
+      w = tape.PlayWithClaims("DELETE", "/api/v1/courses/1", 112, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+
+      // tutors
+      w = tape.PlayWithClaims("DELETE", "/api/v1/courses/1", 2, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+
+      // admin
+      w = tape.PlayWithClaims("DELETE", "/api/v1/courses/1", 1, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       // verify a course less exists
       entries_after, err = stores.Course.GetAll()
       g.Assert(err).Equal(nil)
       g.Assert(len(entries_after)).Equal(len(entries_before) - 1)
+    })
+
+    g.It("Can disenroll from course", func() {
+
+      courseID := int64(1)
+
+      number_enrollments_before, err := countEnrollments(
+        tape,
+        "SELECT count(*) FROM user_course WHERE course_id = $1 and role = 0",
+        courseID,
+      )
+      g.Assert(err).Equal(nil)
+
+      w := tape.DeleteWithClaims("/api/v1/courses/1/enrollments", 112, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      number_enrollments_after, err := countEnrollments(
+        tape,
+        "SELECT count(*) FROM user_course WHERE course_id = $1 and role = 0",
+        courseID,
+      )
+      g.Assert(err).Equal(nil)
+      g.Assert(number_enrollments_after).Equal(number_enrollments_before - 1)
+
+    })
+
+    g.It("Permission test", func() {
+      url := "/api/v1/courses/1"
+
+      // global root can do whatever they want
+      w := tape.GetWithClaims(url, 1, true)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      // enrolled tutors can access
+      w = tape.GetWithClaims(url, 2, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      // enrolled students can access
+      w = tape.GetWithClaims(url, 112, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      // disenroll student
+      w = tape.DeleteWithClaims("/api/v1/courses/1/enrollments", 112, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      // cannot access anymore
+      w = tape.GetWithClaims(url, 112, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
     })
 
     g.AfterEach(func() {

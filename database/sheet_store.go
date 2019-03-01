@@ -60,9 +60,13 @@ func (s *SheetStore) Create(p *model.Sheet, courseID int64) (*model.Sheet, error
   }
 
   // now associate sheet with course
-  _, err = s.db.Exec(`INSERT INTO sheet_course
-    (id,sheet_id,course_id,ordering)
-    VALUES (DEFAULT, $1, $2, $3);`, newID, courseID, maxOrder+1)
+  _, err = s.db.Exec(`
+INSERT INTO
+  sheet_course
+  (id,sheet_id,course_id,ordering)
+VALUES
+  (DEFAULT, $1, $2, $3);`,
+    newID, courseID, maxOrder+1)
   if err != nil {
     return nil, err
   }
@@ -82,17 +86,37 @@ func (s *SheetStore) SheetsOfCourse(courseID int64, only_active bool) ([]model.S
   p := []model.Sheet{}
 
   err := s.db.Select(&p, `
-    SELECT
-      s.id, s.created_at, s.updated_at, s.name, s.publish_at, s.due_at
-    FROM
-      sheet_course sc
-    INNER JOIN
-      courses c ON sc.course_id = c.id
-    INNER JOIN
-      sheets s ON sc.sheet_id = s.id
-    WHERE
-      sc.course_id = $1
-    ORDER BY
-      sc.ordering ASC;`, courseID)
+SELECT
+  s.id, s.created_at, s.updated_at, s.name, s.publish_at, s.due_at
+FROM
+  sheet_course sc
+INNER JOIN
+  courses c ON sc.course_id = c.id
+INNER JOIN
+  sheets s ON sc.sheet_id = s.id
+WHERE
+  sc.course_id = $1
+ORDER BY
+  sc.ordering ASC;`, courseID)
   return p, err
+}
+
+func (s *SheetStore) IdentifyCourseOfSheet(sheetID int64) (*model.Course, error) {
+
+  course := &model.Course{}
+  err := s.db.Get(course,
+    `
+SELECT
+  c.*
+FROM
+  sheet_course sc
+INNER JOIN
+  courses c ON sc.course_id = c.id
+WHERE sc.sheet_id = $1`,
+    sheetID)
+  if err != nil {
+    return nil, err
+  }
+
+  return course, err
 }

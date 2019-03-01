@@ -19,17 +19,10 @@
 package database
 
 import (
+  "github.com/cgtuebingen/infomark-backend/auth/authorize"
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/jmoiron/sqlx"
   "github.com/lib/pq"
-)
-
-type CourseRole int32
-
-const (
-  STUDENT CourseRole = 0
-  TUTOR   CourseRole = 1
-  ADMIN   CourseRole = 2
 )
 
 type CourseStore struct {
@@ -174,24 +167,26 @@ func (s *CourseStore) PointsForUser(userID int64, courseID int64) ([]model.Sheet
 
 }
 
-func (s *CourseStore) RoleInCourse(userID int64, courseID int64) (CourseRole, error) {
+func (s *CourseStore) RoleInCourse(userID int64, courseID int64) (authorize.CourseRole, error) {
   var role_int int
 
   err := s.db.Get(&role_int,
     `Select role from user_course WHERE user_id = $1 and course_id = $2`,
     userID, courseID,
   )
-
   if err != nil {
-    return STUDENT, err
+    // meaning there is no entry
+    return authorize.NOCOURSEROLE, nil
   } else {
     switch role_int {
+    case 0:
+      return authorize.STUDENT, nil
     case 1:
-      return TUTOR, nil
+      return authorize.TUTOR, nil
     case 2:
-      return ADMIN, nil
+      return authorize.ADMIN, nil
     default:
-      return STUDENT, nil
+      return authorize.NOCOURSEROLE, nil
     }
   }
 

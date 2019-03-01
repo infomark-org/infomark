@@ -26,6 +26,7 @@ import (
 
   "github.com/cgtuebingen/infomark-backend/api/helper"
   "github.com/cgtuebingen/infomark-backend/auth/authenticate"
+  "github.com/cgtuebingen/infomark-backend/auth/authorize"
   "github.com/cgtuebingen/infomark-backend/email"
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/go-chi/chi"
@@ -154,6 +155,12 @@ func (rs *CourseResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 
 // CreateHandler is the enpoint for retrieving all courses if claim.root is true.
 func (rs *CourseResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
+  // only root admins can create a course
+  // accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  // if accessClaims.Root != true{
+
+  // }
+
   // start from empty Request
   data := &courseRequest{}
 
@@ -250,6 +257,13 @@ func (rs *CourseResource) IndexEnrollmentsHandler(w http.ResponseWriter, r *http
   filterEmail := helper.StringFromUrl(r, "email", "%%")
   filterSubject := helper.StringFromUrl(r, "subject", "%%")
   filterLanguage := helper.StringFromUrl(r, "language", "%%")
+
+  givenRole := r.Context().Value("course_role").(authorize.CourseRole)
+
+  if givenRole == authorize.STUDENT {
+    // students cannot query other students
+    filterRoles = []string{"1", "2"}
+  }
 
   enrolledUsers, err := rs.Stores.Course.EnrolledUsers(course,
     filterRoles, filterFirstName, filterLastName, filterEmail,

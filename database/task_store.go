@@ -97,3 +97,25 @@ func (s *TaskStore) TasksOfSheet(sheetID int64, only_active bool) ([]model.Task,
       ts.ordering ASC;`, sheetID)
   return p, err
 }
+
+func (s *TaskStore) IdentifyCourseOfTask(taskID int64) (*model.Course, error) {
+
+  course := &model.Course{}
+  err := s.db.Get(course,
+    `
+SELECT
+  c.*
+FROM
+  task_sheet ts
+INNER JOIN
+  sheet_course sc ON sc.sheet_id = ts.sheet_id
+INNER JOIN
+  courses c ON c.id = sc.course_ID
+WHERE ts.task_id = $1`,
+    taskID)
+  if err != nil {
+    return nil, err
+  }
+
+  return course, err
+}

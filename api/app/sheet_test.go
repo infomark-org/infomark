@@ -69,7 +69,6 @@ func TestSheet(t *testing.T) {
     })
 
     g.It("Should get a specific sheet", func() {
-
       sheet_expected, err := stores.Sheet.Get(1)
       g.Assert(err).Equal(nil)
 
@@ -128,8 +127,17 @@ func TestSheet(t *testing.T) {
         DueAt:     helper.Time(time.Now()),
       }
 
-      w := tape.PlayDataWithClaims("POST", "/api/v1/courses/1/sheets",
-        tape.ToH(sheet_sent), 1, true)
+      // students
+      w := tape.PlayDataWithClaims("POST", "/api/v1/courses/1/sheets", tape.ToH(sheet_sent), 112, false)
+      g.Assert(err).Equal(nil)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+
+      // tutors
+      w = tape.PlayDataWithClaims("POST", "/api/v1/courses/1/sheets", tape.ToH(sheet_sent), 2, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+
+      // admin
+      w = tape.PlayDataWithClaims("POST", "/api/v1/courses/1/sheets", tape.ToH(sheet_sent), 1, false)
       g.Assert(w.Code).Equal(http.StatusCreated)
 
       sheet_return := &model.Sheet{}
@@ -153,10 +161,19 @@ func TestSheet(t *testing.T) {
 
       // no file so far
       g.Assert(helper.NewSheetFileHandle(1).Exists()).Equal(false)
-
-      // upload file
       filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
-      w, err := tape.UploadWithClaims("/api/v1/sheets/1/file", filename, "application/zip", 1, true)
+
+      // students
+      w, err := tape.UploadWithClaims("/api/v1/sheets/1/file", filename, "application/zip", 112, false)
+      g.Assert(err).Equal(nil)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+
+      // tutors
+      w, err = tape.UploadWithClaims("/api/v1/sheets/1/file", filename, "application/zip", 2, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+
+      // admin
+      w, err = tape.UploadWithClaims("/api/v1/sheets/1/file", filename, "application/zip", 1, false)
       g.Assert(err).Equal(nil)
       g.Assert(w.Code).Equal(http.StatusOK)
 
@@ -181,8 +198,16 @@ func TestSheet(t *testing.T) {
         DueAt:     helper.Time(time.Now()),
       }
 
-      w := tape.PutWithClaims("/api/v1/sheets/1",
-        tape.ToH(sheet_sent), 1, true)
+      // students
+      w := tape.PutWithClaims("/api/v1/sheets/1", tape.ToH(sheet_sent), 122, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+
+      // tutors
+      w = tape.PutWithClaims("/api/v1/sheets/1", tape.ToH(sheet_sent), 2, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+
+      // admin
+      w = tape.PutWithClaims("/api/v1/sheets/1", tape.ToH(sheet_sent), 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       sheet_after, err := stores.Sheet.Get(1)
@@ -199,18 +224,51 @@ func TestSheet(t *testing.T) {
       w := tape.Delete("/api/v1/sheets/1")
       g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
+      // students
+      w = tape.DeleteWithClaims("/api/v1/sheets/1", 112, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+
+      // tutors
+      w = tape.DeleteWithClaims("/api/v1/sheets/1", 2, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+
       // verify nothing has changes
       entries_after, err := stores.Sheet.GetAll()
       g.Assert(err).Equal(nil)
       g.Assert(len(entries_after)).Equal(len(entries_before))
 
-      w = tape.DeleteWithClaims("/api/v1/sheets/1", 1, true)
+      // admin
+      w = tape.DeleteWithClaims("/api/v1/sheets/1", 1, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       // verify a sheet less exists
       entries_after, err = stores.Sheet.GetAll()
       g.Assert(err).Equal(nil)
       g.Assert(len(entries_after)).Equal(len(entries_before) - 1)
+    })
+
+    g.It("Permission test", func() {
+      url := "/api/v1/courses/1/sheets"
+
+      // global root can do whatever they want
+      w := tape.GetWithClaims(url, 1, true)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      // enrolled tutors can access
+      w = tape.GetWithClaims(url, 2, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      // enrolled students can access
+      w = tape.GetWithClaims(url, 112, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      // disenroll student
+      w = tape.DeleteWithClaims("/api/v1/courses/1/enrollments", 112, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      // cannot access anymore
+      w = tape.GetWithClaims(url, 112, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
     })
 
     g.AfterEach(func() {

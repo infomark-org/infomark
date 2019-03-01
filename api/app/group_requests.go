@@ -19,6 +19,7 @@
 package app
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/cgtuebingen/infomark-backend/model"
@@ -33,9 +34,9 @@ type groupRequest struct {
 // Bind preprocesses a groupRequest.
 func (body *groupRequest) Bind(r *http.Request) error {
 
-	// if body.Group == nil {
-	// 	return errors.New("missing \"course\" data")
-	// }
+	if body.Group == nil {
+		return errors.New("missing \"group\" data")
+	}
 
 	// Sending the id via request-body is invalid.
 	// The id should be submitted in the url.

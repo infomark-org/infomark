@@ -181,6 +181,30 @@ func TestGroup(t *testing.T) {
     g.Xit("Should not delete a group being a tutor")
     g.Xit("Should not delete a group being a admin")
 
+    g.It("Permission test", func() {
+      url := "/api/v1/courses/1/groups"
+
+      // global root can do whatever they want
+      w := tape.GetWithClaims(url, 1, true)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      // enrolled tutors can access
+      w = tape.GetWithClaims(url, 2, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      // enrolled students can access
+      w = tape.GetWithClaims(url, 112, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      // disenroll student
+      w = tape.DeleteWithClaims("/api/v1/courses/1/enrollments", 112, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      // cannot access anymore
+      w = tape.GetWithClaims(url, 112, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+    })
+
     g.AfterEach(func() {
       tape.AfterEach()
     })

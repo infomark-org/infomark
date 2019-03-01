@@ -199,7 +199,7 @@ func (rs *SheetResource) ChangeFileHandler(w http.ResponseWriter, r *http.Reques
 // the URL parameter `SheetID` passed through as the request. In case
 // the Sheet could not be found, we stop here and return a 404.
 // We do NOT check whether the Sheet is authorized to get this Sheet.
-func (d *SheetResource) Context(next http.Handler) http.Handler {
+func (rs *SheetResource) Context(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
     // TODO: check permission if inquirer of request is allowed to access this Sheet
     // Should be done via another middleware
@@ -213,14 +213,26 @@ func (d *SheetResource) Context(next http.Handler) http.Handler {
     }
 
     // find specific Sheet in database
-    Sheet, err := d.Stores.Sheet.Get(Sheet_id)
+    sheet, err := rs.Stores.Sheet.Get(Sheet_id)
     if err != nil {
       render.Render(w, r, ErrNotFound)
       return
     }
 
+    ctx := context.WithValue(r.Context(), "sheet", sheet)
+
+    // when there is a sheetID in the url, there is NOT a courseID in the url,
+    // BUT: when there is a sheet, there is a course
+
+    course, err := rs.Stores.Sheet.IdentifyCourseOfSheet(sheet.ID)
+    if err != nil {
+      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+      return
+    }
+
+    ctx = context.WithValue(ctx, "course", course)
+
     // serve next
-    ctx := context.WithValue(r.Context(), "sheet", Sheet)
     next.ServeHTTP(w, r.WithContext(ctx))
   })
 }

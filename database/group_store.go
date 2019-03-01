@@ -107,3 +107,23 @@ func (s *GroupStore) GetOfTutor(tutorID int64, courseID int64) (*model.Group, er
     `, tutorID, courseID)
   return p, err
 }
+
+func (s *GroupStore) IdentifyCourseOfGroup(groupID int64) (*model.Course, error) {
+
+  course := &model.Course{}
+  err := s.db.Get(course,
+    `
+SELECT
+  c.*
+FROM
+  groups g
+INNER JOIN
+  courses c ON c.id = g.course_ID
+WHERE g.id = $1`,
+    groupID)
+  if err != nil {
+    return nil, err
+  }
+
+  return course, err
+}

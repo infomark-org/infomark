@@ -222,6 +222,31 @@ func TestTask(t *testing.T) {
       g.Assert(len(entries_after)).Equal(len(entries_before) - 1)
     })
 
+    g.It("Permission test", func() {
+      // sheet (id=1) belongs to group(id=1)
+      url := "/api/v1/sheets/1/tasks"
+
+      // global root can do whatever they want
+      w := tape.GetWithClaims(url, 1, true)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      // enrolled tutors can access
+      w = tape.GetWithClaims(url, 2, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      // enrolled students can access
+      w = tape.GetWithClaims(url, 112, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      // disenroll student
+      w = tape.DeleteWithClaims("/api/v1/courses/1/enrollments", 112, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      // cannot access anymore
+      w = tape.GetWithClaims(url, 112, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+    })
+
     g.AfterEach(func() {
       tape.AfterEach()
     })
