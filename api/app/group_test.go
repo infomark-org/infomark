@@ -65,20 +65,20 @@ func TestGroup(t *testing.T) {
     })
 
     g.It("Should get a specific group", func() {
-      group_expected, err := stores.Group.Get(1)
+      entry_expected, err := stores.Group.Get(1)
       g.Assert(err).Equal(nil)
 
       w := tape.GetWithClaims("/api/v1/groups/1", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      group_actual := &model.Group{}
-      err = json.NewDecoder(w.Body).Decode(group_actual)
+      entry_actual := &model.Group{}
+      err = json.NewDecoder(w.Body).Decode(entry_actual)
       g.Assert(err).Equal(nil)
 
-      g.Assert(group_actual.ID).Equal(group_expected.ID)
-      g.Assert(group_actual.TutorID).Equal(group_expected.TutorID)
-      g.Assert(group_actual.CourseID).Equal(group_expected.CourseID)
-      g.Assert(group_actual.Description).Equal(group_expected.Description)
+      g.Assert(entry_actual.ID).Equal(entry_expected.ID)
+      g.Assert(entry_actual.TutorID).Equal(entry_expected.TutorID)
+      g.Assert(entry_actual.CourseID).Equal(entry_expected.CourseID)
+      g.Assert(entry_actual.Description).Equal(entry_expected.Description)
     })
 
     g.It("Creating should require claims", func() {
@@ -91,33 +91,59 @@ func TestGroup(t *testing.T) {
     })
 
     g.It("Should create valid group", func() {
-      groups_before, err := stores.Group.GroupsOfCourse(1)
+      entries_before, err := stores.Group.GroupsOfCourse(1)
       g.Assert(err).Equal(nil)
 
-      group_sent := model.Group{
+      entry_sent := model.Group{
         TutorID:     1,
         CourseID:    1,
         Description: "blah blahe",
       }
 
-      err = group_sent.Validate()
+      err = entry_sent.Validate()
       g.Assert(err).Equal(nil)
 
-      w := tape.PostWithClaims("/api/v1/courses/1/groups", helper.ToH(group_sent), 1, true)
+      w := tape.PostWithClaims("/api/v1/courses/1/groups", helper.ToH(entry_sent), 1, true)
       g.Assert(w.Code).Equal(http.StatusCreated)
 
-      group_return := &model.Group{}
-      err = json.NewDecoder(w.Body).Decode(&group_return)
-      g.Assert(group_return.TutorID).Equal(group_sent.TutorID)
-      g.Assert(group_return.CourseID).Equal(group_sent.CourseID)
-      g.Assert(group_return.Description).Equal(group_sent.Description)
+      entry_return := &model.Group{}
+      err = json.NewDecoder(w.Body).Decode(&entry_return)
+      g.Assert(entry_return.TutorID).Equal(entry_sent.TutorID)
+      g.Assert(entry_return.CourseID).Equal(entry_sent.CourseID)
+      g.Assert(entry_return.Description).Equal(entry_sent.Description)
 
-      groups_after, err := stores.Group.GroupsOfCourse(1)
+      entries_after, err := stores.Group.GroupsOfCourse(1)
       g.Assert(err).Equal(nil)
-      g.Assert(len(groups_after)).Equal(len(groups_before) + 1)
+      g.Assert(len(entries_after)).Equal(len(entries_before) + 1)
     })
 
-    g.Xit("Should update a group")
+    g.It("Should update a group", func() {
+      // group (id=1) belongs to course(id=1)
+      entry_sent := model.Group{
+        TutorID:     9,
+        CourseID:    1,
+        Description: "new descr",
+      }
+
+      // students
+      w := tape.PlayDataWithClaims("PUT", "/api/v1/groups/1", tape.ToH(entry_sent), 112, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+
+      // tutors
+      w = tape.PlayDataWithClaims("PUT", "/api/v1/groups/1", tape.ToH(entry_sent), 2, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+
+      // admin
+      w = tape.PlayDataWithClaims("PUT", "/api/v1/groups/1", tape.ToH(entry_sent), 1, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      entry_after, err := stores.Group.Get(1)
+      g.Assert(err).Equal(nil)
+
+      g.Assert(entry_after.TutorID).Equal(entry_sent.TutorID)
+      g.Assert(entry_after.CourseID).Equal(entry_sent.CourseID)
+      g.Assert(entry_after.CourseID).Equal(entry_sent.CourseID)
+    })
 
     g.It("Should delete when valid access claims", func() {
       entries_before, err := stores.Group.GetAll()
@@ -131,7 +157,16 @@ func TestGroup(t *testing.T) {
       g.Assert(err).Equal(nil)
       g.Assert(len(entries_after)).Equal(len(entries_before))
 
-      w = tape.DeleteWithClaims("/api/v1/groups/1", 1, true)
+      // students
+      w = tape.DeleteWithClaims("/api/v1/groups/1", 112, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+
+      // tutors
+      w = tape.DeleteWithClaims("/api/v1/groups/1", 2, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+
+      // admin
+      w = tape.DeleteWithClaims("/api/v1/groups/1", 1, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       // verify a sheet less exists
@@ -142,44 +177,40 @@ func TestGroup(t *testing.T) {
 
     g.It("Find my group when being a student", func() {
       // a random student (checked via pgweb)
-      studentID := int64(112)
+      loginID := int64(112)
 
       w := tape.Get("/api/v1/courses/1/group")
       g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
-      w = tape.GetWithClaims("/api/v1/courses/1/group", studentID, true)
+      w = tape.GetWithClaims("/api/v1/courses/1/group", loginID, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      group_return := &model.Group{}
-      err := json.NewDecoder(w.Body).Decode(&group_return)
+      entry_return := &model.Group{}
+      err := json.NewDecoder(w.Body).Decode(&entry_return)
       g.Assert(err).Equal(nil)
 
       // we cannot check the other entries
-      g.Assert(group_return.CourseID).Equal(int64(1))
+      g.Assert(entry_return.CourseID).Equal(int64(1))
     })
 
     g.It("Find my group when being a tutor", func() {
       // a random student (checked via pgweb)
-      studentID := int64(1)
+      loginID := int64(2)
 
       w := tape.Get("/api/v1/courses/1/group")
       g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
-      w = tape.GetWithClaims("/api/v1/courses/1/group", studentID, true)
+      w = tape.GetWithClaims("/api/v1/courses/1/group", loginID, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      group_return := &model.Group{}
-      err := json.NewDecoder(w.Body).Decode(&group_return)
+      entry_return := &model.Group{}
+      err := json.NewDecoder(w.Body).Decode(&entry_return)
       g.Assert(err).Equal(nil)
 
       // we cannot check the other entries
-      g.Assert(group_return.CourseID).Equal(int64(1))
-      g.Assert(group_return.TutorID).Equal(int64(1))
+      g.Assert(entry_return.CourseID).Equal(int64(1))
+      g.Assert(entry_return.TutorID).Equal(loginID)
     })
-
-    g.Xit("Should not delete a group being a student")
-    g.Xit("Should not delete a group being a tutor")
-    g.Xit("Should not delete a group being a admin")
 
     g.It("Permission test", func() {
       url := "/api/v1/courses/1/groups"

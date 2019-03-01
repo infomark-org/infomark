@@ -198,7 +198,7 @@ func TestCourse(t *testing.T) {
       courses_before, err := stores.Course.GetAll()
       g.Assert(err).Equal(nil)
 
-      course_sent := model.Course{
+      entry_sent := model.Course{
         Name:               "Info2_new",
         Description:        "Lorem Ipsum_new",
         BeginsAt:           helper.Time(time.Now()),
@@ -207,29 +207,29 @@ func TestCourse(t *testing.T) {
       }
 
       // students
-      w := tape.PlayDataWithClaims("POST", "/api/v1/courses", tape.ToH(course_sent), 112, false)
+      w := tape.PlayDataWithClaims("POST", "/api/v1/courses", tape.ToH(entry_sent), 112, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // tutors
-      w = tape.PlayDataWithClaims("POST", "/api/v1/courses", tape.ToH(course_sent), 2, false)
+      w = tape.PlayDataWithClaims("POST", "/api/v1/courses", tape.ToH(entry_sent), 2, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // admin in course (cannot be admin, course does not exists yet)
-      w = tape.PlayDataWithClaims("POST", "/api/v1/courses", tape.ToH(course_sent), 1, false)
+      w = tape.PlayDataWithClaims("POST", "/api/v1/courses", tape.ToH(entry_sent), 1, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // admin
-      w = tape.PlayDataWithClaims("POST", "/api/v1/courses", tape.ToH(course_sent), 1, true)
+      w = tape.PlayDataWithClaims("POST", "/api/v1/courses", tape.ToH(entry_sent), 1, true)
       g.Assert(w.Code).Equal(http.StatusCreated)
 
       // verify body
       course_return := &model.Course{}
       err = json.NewDecoder(w.Body).Decode(&course_return)
-      g.Assert(course_return.Name).Equal(course_sent.Name)
-      g.Assert(course_return.Description).Equal(course_sent.Description)
-      g.Assert(course_return.BeginsAt.Equal(course_sent.BeginsAt)).Equal(true)
-      g.Assert(course_return.EndsAt.Equal(course_sent.EndsAt)).Equal(true)
-      g.Assert(course_return.RequiredPercentage).Equal(course_sent.RequiredPercentage)
+      g.Assert(course_return.Name).Equal(entry_sent.Name)
+      g.Assert(course_return.Description).Equal(entry_sent.Description)
+      g.Assert(course_return.BeginsAt.Equal(entry_sent.BeginsAt)).Equal(true)
+      g.Assert(course_return.EndsAt.Equal(entry_sent.EndsAt)).Equal(true)
+      g.Assert(course_return.RequiredPercentage).Equal(entry_sent.RequiredPercentage)
 
       // verify database
       course_new, err := stores.Course.Get(course_return.ID)
@@ -254,7 +254,7 @@ func TestCourse(t *testing.T) {
 
     g.It("Should perform updates", func() {
 
-      course_sent := model.Course{
+      entry_sent := model.Course{
         Name:               "Info2_update",
         Description:        "Lorem Ipsum_update",
         BeginsAt:           helper.Time(time.Now()),
@@ -263,25 +263,25 @@ func TestCourse(t *testing.T) {
       }
 
       // students
-      w := tape.PlayDataWithClaims("PUT", "/api/v1/courses/1", tape.ToH(course_sent), 112, false)
+      w := tape.PlayDataWithClaims("PUT", "/api/v1/courses/1", tape.ToH(entry_sent), 112, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // tutors
-      w = tape.PlayDataWithClaims("PUT", "/api/v1/courses/1", tape.ToH(course_sent), 2, false)
+      w = tape.PlayDataWithClaims("PUT", "/api/v1/courses/1", tape.ToH(entry_sent), 2, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // admin
-      w = tape.PlayDataWithClaims("PUT", "/api/v1/courses/1", tape.ToH(course_sent), 1, false)
+      w = tape.PlayDataWithClaims("PUT", "/api/v1/courses/1", tape.ToH(entry_sent), 1, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      course_after, err := stores.Course.Get(1)
+      entry_after, err := stores.Course.Get(1)
       g.Assert(err).Equal(nil)
 
-      g.Assert(course_after.Name).Equal(course_sent.Name)
-      g.Assert(course_after.Description).Equal(course_sent.Description)
-      g.Assert(course_after.BeginsAt.Equal(course_sent.BeginsAt)).Equal(true)
-      g.Assert(course_after.EndsAt.Equal(course_sent.EndsAt)).Equal(true)
-      g.Assert(course_after.RequiredPercentage).Equal(course_sent.RequiredPercentage)
+      g.Assert(entry_after.Name).Equal(entry_sent.Name)
+      g.Assert(entry_after.Description).Equal(entry_sent.Description)
+      g.Assert(entry_after.BeginsAt.Equal(entry_sent.BeginsAt)).Equal(true)
+      g.Assert(entry_after.EndsAt.Equal(entry_sent.EndsAt)).Equal(true)
+      g.Assert(entry_after.RequiredPercentage).Equal(entry_sent.RequiredPercentage)
     })
 
     g.It("Should delete when valid access claims", func() {
@@ -337,6 +337,7 @@ func TestCourse(t *testing.T) {
       g.Assert(number_enrollments_after).Equal(number_enrollments_before - 1)
 
     })
+    g.Xit("Cannot disenroll as a tutor from course", func() {})
 
     g.It("Permission test", func() {
       url := "/api/v1/courses/1"
