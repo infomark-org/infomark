@@ -37,6 +37,7 @@ const (
   SheetCategory       FileCategory = 1
   PublicTestCategory  FileCategory = 2
   PrivateTestCategory FileCategory = 3
+  MaterialCategory    FileCategory = 4
 )
 
 type FileManager interface {
@@ -60,24 +61,31 @@ func NewAvatarFileHandle(userID int64) *FileHandle {
   }
 }
 
-func NewSheetFileHandle(sheetID int64) *FileHandle {
+func NewSheetFileHandle(ID int64) *FileHandle {
   return &FileHandle{
     Category: SheetCategory,
-    ID:       sheetID,
+    ID:       ID,
   }
 }
 
-func NewPublicTestFileHandle(sheetID int64) *FileHandle {
+func NewPublicTestFileHandle(ID int64) *FileHandle {
   return &FileHandle{
     Category: PublicTestCategory,
-    ID:       sheetID,
+    ID:       ID,
   }
 }
 
-func NewPrivateTestFileHandle(sheetID int64) *FileHandle {
+func NewPrivateTestFileHandle(ID int64) *FileHandle {
   return &FileHandle{
     Category: PrivateTestCategory,
-    ID:       sheetID,
+    ID:       ID,
+  }
+}
+
+func NewMaterialFileHandle(ID int64) *FileHandle {
+  return &FileHandle{
+    Category: MaterialCategory,
+    ID:       ID,
   }
 }
 
@@ -96,6 +104,9 @@ func (f *FileHandle) Path(fallback bool) string {
 
   case PrivateTestCategory:
     return fmt.Sprintf("%s/tasks/%s-private.zip", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
+
+  case MaterialCategory:
+    return fmt.Sprintf("%s/materials/%s.zip", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
   }
   return ""
 }
@@ -187,6 +198,15 @@ func (f *FileHandle) WriteToDisk(r *http.Request, fieldName string) error {
 
     }
   case SheetCategory, PublicTestCategory, PrivateTestCategory:
+    switch givenContentType {
+    case "application/zip", "application/octet-stream":
+
+    default:
+      return errors.New(fmt.Sprintf("We support ZIP files only. But %s was given", givenContentType))
+
+    }
+
+  case MaterialCategory:
     switch givenContentType {
     case "application/zip", "application/octet-stream":
 

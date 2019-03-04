@@ -32,7 +32,7 @@ type Material struct {
 
 	Name      string    `json:"name" db:"name"`
 	Filename  string    `json:"filename" db:"filename"` // we keep the original name, since it is meaningful
-	Kind      int       `json:"user_id" db:"user_id"`
+	Kind      int       `json:"kind" db:"kind"`
 	PublishAt time.Time `json:"publish_at" db:"publish_at"`
 	LectureAt time.Time `json:"lecture_at" db:"lecture_at"`
 }
@@ -55,6 +55,12 @@ func (m *Material) Validate() error {
 		validation.Field(
 			&m.LectureAt,
 			validation.Required,
+		),
+		validation.Field(
+			&m.Kind,
+			// validation.Required,
+			validation.Min(0),
+			validation.Max(1),
 		),
 	)
 }

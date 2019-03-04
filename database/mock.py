@@ -240,6 +240,31 @@ def create_group_bid(student_id, group_id):
 
   return data
 
+
+def create_material(fake):
+  data = OrderedDict([
+      ('id', VAL.DEFAULT),
+      ('created_at', VAL.TIMESTAMP),
+      ('updated_at', VAL.TIMESTAMP),
+
+      ('name', fake.text()),
+      ('filename', "path2"),
+      ('kind', fake.random_int(0, 1)),
+      ('publish_at', VAL.TIMESTAMP),
+      ('lecture_at', VAL.TIMESTAMP),
+  ])
+
+  return data
+
+
+def create_material_course(material_id, course_id):
+  data = OrderedDict([
+      ('id', VAL.DEFAULT),
+      ('material_id', material_id),
+      ('course_id', course_id),
+  ])
+
+  return data
 # """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 # """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 # """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -352,6 +377,15 @@ if __name__ == "__main__":
       group_id = j + 1
       group_bids.append(create_group_bid(student_id, group_id))
 
+  materials = []
+  material_course = []
+  for i in range(10):
+    course_id = 1
+    materials.append(create_material(fake))
+    material_course.append(create_material_course(i + 1, 1))
+
+
+
   with open('mock.sql', 'w') as f:
     f.write('BEGIN;')
     # users
@@ -439,5 +473,13 @@ if __name__ == "__main__":
     f.write('ALTER SEQUENCE group_bids_id_seq RESTART WITH 1;\n')
     for t in group_bids:
       f.write(to_statement('group_bids', t))
+
+    f.write('ALTER SEQUENCE materials_id_seq RESTART WITH 1;\n')
+    for t in materials:
+      f.write(to_statement('materials', t))
+
+    f.write('ALTER SEQUENCE material_course_id_seq RESTART WITH 1;\n')
+    for t in material_course:
+      f.write(to_statement('material_course', t))
 
     f.write('COMMIT;')

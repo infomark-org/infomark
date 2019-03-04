@@ -309,7 +309,10 @@ func (d *DatabaseSyntax) PackStatementData(src interface{}) ([]StatementData, er
           })
         }
       } else {
-        if !isZero(current_value) {
+        // cannot handle int(0) properly
+        // TODO(patwie): materials.kind = 0 is an issue
+        // if !isZero(current_value) {
+        if true {
           // fmt.Println("field ", name, " is NOT zero", current_value.Interface()) // DEBUG
           statementDatas = append(statementDatas, StatementData{
             Column: name,

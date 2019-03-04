@@ -110,6 +110,16 @@ type GroupStore interface {
   UpdateBidOfUserForGroup(userID int64, groupID int64, bid int) (int, error)
 }
 
+type MaterialStore interface {
+  Get(sheetID int64) (*model.Material, error)
+  Create(p *model.Material, courseID int64) (*model.Material, error)
+  Update(p *model.Material) error
+  Delete(sheetID int64) error
+  MaterialsOfCourse(courseID int64, only_active bool) ([]model.Material, error)
+  IdentifyCourseOfMaterial(sheetID int64) (*model.Course, error)
+  GetAll() ([]model.Material, error)
+}
+
 type SubmissionStore interface {
   Get(submissionID int64) (*model.Submission, error)
 }
@@ -125,6 +135,7 @@ type API struct {
   Group      *GroupResource
   TaskRating *TaskRatingResource
   Submission *SubmissionResource
+  Material   *MaterialResource
 }
 
 type Stores struct {
@@ -134,6 +145,7 @@ type Stores struct {
   Task       TaskStore
   Group      GroupStore
   Submission SubmissionStore
+  Material   MaterialStore
 }
 
 func NewStores(db *sqlx.DB) *Stores {
@@ -145,6 +157,7 @@ func NewStores(db *sqlx.DB) *Stores {
     Task:       database.NewTaskStore(db),
     Group:      database.NewGroupStore(db),
     Submission: database.NewSubmissionStore(db),
+    Material:   database.NewMaterialStore(db),
   }
 }
 
@@ -163,6 +176,7 @@ func NewAPI(db *sqlx.DB) (*API, error) {
     Group:      NewGroupResource(stores),
     TaskRating: NewTaskRatingResource(stores),
     Submission: NewSubmissionResource(stores),
+    Material:   NewMaterialResource(stores),
   }
   return api, nil
 }

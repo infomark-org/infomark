@@ -116,6 +116,7 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
                 r.Post("/sheets", appAPI.Sheet.CreateHandler)
                 r.Post("/groups", appAPI.Group.CreateHandler)
                 r.Post("/emails", appAPI.Course.SendEmailHandler)
+                r.Post("/materials", appAPI.Material.CreateHandler)
 
                 r.Put("/", appAPI.Course.EditHandler)
                 r.Delete("/", appAPI.Course.DeleteHandler)
@@ -130,6 +131,7 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 
               r.Get("/group", appAPI.Group.GetMineHandler)
               r.Get("/points", appAPI.Course.PointsHandler)
+              r.Get("/materials", appAPI.Material.IndexHandler)
             })
 
           })
@@ -204,6 +206,27 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
               r.Use(authorize.RequiresAtLeastCourseRole(authorize.ADMIN))
               r.Put("/", appAPI.Group.EditHandler)
               r.Delete("/", appAPI.Group.DeleteHandler)
+            })
+          })
+        })
+
+        r.Route("/materials", func(r chi.Router) {
+          r.Route("/{materialID}", func(r chi.Router) {
+            r.Use(appAPI.Material.Context)
+            r.Use(appAPI.Course.RoleContext)
+
+            // ensures user is enrolled in the associated course
+            r.Use(authorize.RequiresAtLeastCourseRole(authorize.STUDENT))
+
+            r.Get("/", appAPI.Material.GetHandler)
+            r.Get("/file", appAPI.Material.GetFileHandler)
+
+            r.Route("/", func(r chi.Router) {
+              r.Use(authorize.RequiresAtLeastCourseRole(authorize.ADMIN))
+
+              r.Put("/", appAPI.Material.EditHandler)
+              r.Delete("/", appAPI.Material.DeleteHandler)
+              r.Post("/file", appAPI.Material.ChangeFileHandler)
             })
           })
         })

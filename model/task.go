@@ -61,6 +61,12 @@ func (m *TaskRating) Validate() error {
 			&m.TaskID,
 			validation.Required,
 		),
+		validation.Field(
+			&m.Rating,
+			validation.Required,
+			validation.Min(1),
+			validation.Max(5),
+		),
 	)
 }
 

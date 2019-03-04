@@ -16,35 +16,31 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package model
+package app
 
 import (
-	validation "github.com/go-ozzo/ozzo-validation"
+	"errors"
+	"net/http"
+
+	"github.com/cgtuebingen/infomark-backend/model"
 )
 
-type GroupBid struct {
-	ID int64 `json:"id" db:"id"`
-
-	UserID  int64 `json:"user_id" db:"user_id"`
-	GroupID int64 `json:"group_id" db:"group_id"`
-	Bid     int   `json:"bid" db:"bid"`
+// MaterialRequest is the request payload for Material management.
+type MaterialRequest struct {
+	*model.Material
+	ProtectedID int64 `json:"id"`
 }
 
-func (m *GroupBid) Validate() error {
-	return validation.ValidateStruct(m,
-		validation.Field(
-			&m.UserID,
-			validation.Required,
-		),
-		validation.Field(
-			&m.GroupID,
-			validation.Required,
-		),
-		validation.Field(
-			&m.Bid,
-			validation.Required,
-			validation.Min(0),
-			validation.Max(10),
-		),
-	)
+// Bind preprocesses a MaterialRequest.
+func (body *MaterialRequest) Bind(r *http.Request) error {
+
+	if body.Material == nil {
+		return errors.New("missing \"materials\" data")
+	}
+
+	// Sending the id via request-body is invalid.
+	// The id should be submitted in the url.
+	body.ProtectedID = 0
+
+	return body.Material.Validate()
 }
