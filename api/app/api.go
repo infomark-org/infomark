@@ -108,6 +108,9 @@ type GroupStore interface {
   GetBidOfUserForGroup(userID int64, groupID int64) (bid int, err error)
   InsertBidOfUserForGroup(userID int64, groupID int64, bid int) (int, error)
   UpdateBidOfUserForGroup(userID int64, groupID int64, bid int) (int, error)
+
+  GetBidsForCourseForUser(courseID int64, userID int64) ([]model.GroupBid, error)
+  GetBidsForCourse(courseID int64) ([]model.GroupBid, error)
 }
 
 type MaterialStore interface {
@@ -122,6 +125,7 @@ type MaterialStore interface {
 
 type SubmissionStore interface {
   Get(submissionID int64) (*model.Submission, error)
+  GetByUserAndTask(userID int64, taskID int64) (*model.Submission, error)
 }
 
 // API provides application resources and handlers.

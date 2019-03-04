@@ -131,6 +131,7 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 
               r.Get("/group", appAPI.Group.GetMineHandler)
               r.Get("/points", appAPI.Course.PointsHandler)
+              r.Get("/bids", appAPI.Course.BidsHandler)
               r.Get("/materials", appAPI.Material.IndexHandler)
             })
 
@@ -175,6 +176,9 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 
             r.Get("/ratings", appAPI.TaskRating.GetHandler)
             r.Post("/ratings", appAPI.TaskRating.ChangeHandler)
+
+            r.Get("/submission", appAPI.Submission.GetFileHandler)
+            r.Post("/submission", appAPI.Submission.UploadFileHandler)
 
             r.Route("/", func(r chi.Router) {
               r.Use(authorize.RequiresAtLeastCourseRole(authorize.ADMIN))
@@ -228,6 +232,19 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
               r.Delete("/", appAPI.Material.DeleteHandler)
               r.Post("/file", appAPI.Material.ChangeFileHandler)
             })
+          })
+        })
+
+        r.Route("/submissions", func(r chi.Router) {
+          r.Route("/{submissionID}", func(r chi.Router) {
+            r.Use(appAPI.Submission.Context)
+            r.Use(appAPI.Course.RoleContext)
+
+            // ensures user is enrolled in the associated course
+            r.Use(authorize.RequiresAtLeastCourseRole(authorize.STUDENT))
+
+            r.Get("/", appAPI.Submission.GetFileByIdHandler)
+
           })
         })
 

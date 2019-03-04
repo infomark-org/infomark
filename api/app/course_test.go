@@ -373,6 +373,22 @@ func TestCourse(t *testing.T) {
       g.Assert(number_enrollments_after).Equal(number_enrollments_before)
     })
 
+    g.It("should see bids in course", func() {
+
+      // tutors cannot use this
+      w := tape.GetWithClaims("/api/v1/courses/1/bids", 2, false)
+      g.Assert(w.Code).Equal(http.StatusBadRequest)
+
+      // admins will see all
+      w = tape.GetWithClaims("/api/v1/courses/1/bids", 1, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      // students will see their own
+      w = tape.GetWithClaims("/api/v1/courses/1/bids", 112, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+    })
+
     g.It("Permission test", func() {
       url := "/api/v1/courses/1"
 

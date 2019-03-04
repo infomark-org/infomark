@@ -204,6 +204,7 @@ func (rs *TaskResource) ChangePublicTestFileHandler(w http.ResponseWriter, r *ht
   // the file will be located
   if err := helper.NewPublicTestFileHandle(task.ID).WriteToDisk(r, "file_data"); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
   }
   render.Status(r, http.StatusOK)
 }
@@ -215,6 +216,7 @@ func (rs *TaskResource) ChangePrivateTestFileHandler(w http.ResponseWriter, r *h
   // the file will be located
   if err := helper.NewPrivateTestFileHandle(task.ID).WriteToDisk(r, "file_data"); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
   }
   render.Status(r, http.StatusOK)
 }

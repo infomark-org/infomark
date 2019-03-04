@@ -38,6 +38,7 @@ const (
   PublicTestCategory  FileCategory = 2
   PrivateTestCategory FileCategory = 3
   MaterialCategory    FileCategory = 4
+  SubmissionCategory  FileCategory = 5
 )
 
 type FileManager interface {
@@ -89,6 +90,13 @@ func NewMaterialFileHandle(ID int64) *FileHandle {
   }
 }
 
+func NewSubmissionFileHandle(ID int64) *FileHandle {
+  return &FileHandle{
+    Category: SubmissionCategory,
+    ID:       ID,
+  }
+}
+
 // Path returns a path without checking if it exists. If fallback is true,
 // the method tries to use the default value.
 func (f *FileHandle) Path(fallback bool) string {
@@ -107,6 +115,9 @@ func (f *FileHandle) Path(fallback bool) string {
 
   case MaterialCategory:
     return fmt.Sprintf("%s/materials/%s.zip", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
+
+  case SubmissionCategory:
+    return fmt.Sprintf("%s/submissions/%s.zip", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
   }
   return ""
 }
@@ -206,7 +217,7 @@ func (f *FileHandle) WriteToDisk(r *http.Request, fieldName string) error {
 
     }
 
-  case MaterialCategory:
+  case MaterialCategory, SubmissionCategory:
     switch givenContentType {
     case "application/zip", "application/octet-stream":
 

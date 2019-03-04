@@ -20,9 +20,13 @@ package app
 
 import (
   "context"
+  "fmt"
   "net/http"
   "strconv"
 
+  "github.com/cgtuebingen/infomark-backend/api/helper"
+  "github.com/cgtuebingen/infomark-backend/auth/authenticate"
+  "github.com/cgtuebingen/infomark-backend/auth/authorize"
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/go-chi/chi"
   "github.com/go-chi/render"
@@ -45,12 +49,14 @@ func NewSubmissionResource(stores *Stores) *SubmissionResource {
 // SubmissionResponse is the response payload for Submission management.
 type SubmissionResponse struct {
   *model.Submission
+  FileURL string `json="file_url`
 }
 
 // newSubmissionResponse creates a response from a Submission model.
 func (rs *SubmissionResource) newSubmissionResponse(p *model.Submission) *SubmissionResponse {
   return &SubmissionResponse{
     Submission: p,
+    FileURL:    fmt.Sprintf("/api/v1/submissions/%s/file", strconv.FormatInt(p.ID, 10)),
   }
 }
 
@@ -69,20 +75,109 @@ func (body *SubmissionResponse) Render(w http.ResponseWriter, r *http.Request) e
   return nil
 }
 
-// IndexHandler is the enpoint for retrieving all Submissions if claim.root is true.
-func (rs *SubmissionResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
+// // IndexHandler is the enpoint for retrieving all Submissions if claim.root is true.
+// func (rs *SubmissionResource) GetHandler(w http.ResponseWriter, r *http.Request) {
 
-  // var Submissions []model.Submission
-  // var err error
+//   task := r.Context().Value("task").(*model.Task)
+//   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
 
-  // submission := r.Context().Value("submission").(*model.Course)
-  // Submissions, err = rs.Stores.Submission.SubmissionsOfCourse(submission.ID)
+//   submission, err := rs.Stores.Submission.GetByUserAndTask(accessClaims.LoginID, task.ID)
+//   if err != nil {
+//     render.Render(w, r, ErrNotFound)
+//     return
+//   }
 
-  // // render JSON reponse
-  // if err = render.RenderList(w, r, rs.newSubmissionListResponse(Submissions)); err != nil {
-  //   render.Render(w, r, ErrRender(err))
-  //   return
-  // }
+//   // render JSON reponse
+//   if err = render.Render(w, r, rs.newSubmissionResponse(submission)); err != nil {
+//     render.Render(w, r, ErrRender(err))
+//     return
+//   }
+// }
+
+func (rs *SubmissionResource) GetFileHandler(w http.ResponseWriter, r *http.Request) {
+  task := r.Context().Value("task").(*model.Task)
+  // submission := r.Context().Value("submission").(*model.Submission)
+  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  givenRole := r.Context().Value("course_role").(authorize.CourseRole)
+
+  submission, err := rs.Stores.Submission.GetByUserAndTask(accessClaims.LoginID, task.ID)
+  if err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
+  // students can only access their own files
+  if submission.UserID != accessClaims.LoginID {
+    if givenRole == authorize.STUDENT {
+      render.Render(w, r, ErrUnauthorized)
+      return
+    }
+  }
+
+  hnd := helper.NewSubmissionFileHandle(submission.ID)
+
+  if !hnd.Exists() {
+    render.Render(w, r, ErrNotFound)
+    return
+  } else {
+    if err := hnd.WriteToBody(w); err != nil {
+      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+      return
+    }
+  }
+}
+
+func (rs *SubmissionResource) GetFileByIdHandler(w http.ResponseWriter, r *http.Request) {
+
+  submission := r.Context().Value("submission").(*model.Submission)
+  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  givenRole := r.Context().Value("course_role").(authorize.CourseRole)
+
+  submission, err := rs.Stores.Submission.Get(submission.ID)
+  if err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
+  // students can only access their own files
+  if submission.UserID != accessClaims.LoginID {
+    if givenRole == authorize.STUDENT {
+      render.Render(w, r, ErrUnauthorized)
+      return
+    }
+  }
+
+  hnd := helper.NewSubmissionFileHandle(submission.ID)
+
+  if !hnd.Exists() {
+    render.Render(w, r, ErrNotFound)
+    return
+  } else {
+    if err := hnd.WriteToBody(w); err != nil {
+      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+      return
+    }
+  }
+}
+
+func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.Request) {
+  // will always be a POST
+  task := r.Context().Value("task").(*model.Task)
+  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  // todo create submission if not exists
+
+  submission, err := rs.Stores.Submission.GetByUserAndTask(accessClaims.LoginID, task.ID)
+  if err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
+  // the file will be located
+  if err := helper.NewSubmissionFileHandle(submission.ID).WriteToDisk(r, "file_data"); err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+  render.Status(r, http.StatusOK)
 }
 
 // .............................................................................
@@ -104,24 +199,37 @@ func (rs *SubmissionResource) Context(next http.Handler) http.Handler {
     }
 
     // find specific Submission in database
-    Submission, err := rs.Stores.Submission.Get(submissionID)
+    submission, err := rs.Stores.Submission.Get(submissionID)
     if err != nil {
       render.Render(w, r, ErrNotFound)
       return
     }
 
-    ctx := context.WithValue(r.Context(), "Submission", Submission)
+    ctx := context.WithValue(r.Context(), "submission", submission)
 
-    // when there is a submissionID in the url, there is NOT a courseID in the url,
-    // BUT: when there is a Submission, there is a course
+    // when there is a submissionID in the url, there is NOT a taskID in the url,
+    // BUT: when there is a Submission, there is a task
+    // BUT: when there is a task, there is a course (other middlewarwe)
 
-    // course, err := rs.Stores.Submission.IdentifyCourseOfSubmission(Submission.ID)
-    // if err != nil {
-    //   render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-    //   return
-    // }
+    // find specific Task in database
+    var task *model.Task
+    task, err = rs.Stores.Task.Get(submission.TaskID)
+    if err != nil {
+      render.Render(w, r, ErrNotFound)
+      return
+    }
 
-    // ctx = context.WithValue(ctx, "course", course)
+    ctx = context.WithValue(ctx, "task", task)
+
+    // find course
+
+    course, err := rs.Stores.Task.IdentifyCourseOfTask(task.ID)
+    if err != nil {
+      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+      return
+    }
+
+    ctx = context.WithValue(ctx, "course", course)
 
     // serve next
     next.ServeHTTP(w, r.WithContext(ctx))

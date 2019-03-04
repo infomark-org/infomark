@@ -99,6 +99,32 @@ func newSheetPointsListResponse(collection []model.SheetPoints) []render.Rendere
 }
 
 // .............................................................................
+type groupBidsResponse struct {
+  *model.GroupBid
+}
+
+// Render post-processes a groupBidsResponse.
+func (body *groupBidsResponse) Render(w http.ResponseWriter, r *http.Request) error {
+  return nil
+}
+
+// newCourseResponse creates a response from a course model.
+func newGroupBidsResponse(p *model.GroupBid) *groupBidsResponse {
+  return &groupBidsResponse{
+    GroupBid: p,
+  }
+}
+
+func newGroupBidsListResponse(collection []model.GroupBid) []render.Renderer {
+  list := []render.Renderer{}
+  for k := range collection {
+    list = append(list, newGroupBidsResponse(&collection[k]))
+  }
+
+  return list
+}
+
+// .............................................................................
 
 // courseResponse is the response payload for course management.
 type enrollmentResponse struct {
@@ -414,19 +440,32 @@ func (rs *CourseResource) BidsHandler(w http.ResponseWriter, r *http.Request) {
   course := r.Context().Value("course").(*model.Course)
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
 
-  // students only see their own bids
-  // tutors see nothing
-  // admins see all (to later setup the bid)
+  givenRole := r.Context().Value("course_role").(authorize.CourseRole)
 
-  sheetPoints, err := rs.Stores.Course.PointsForUser(accessClaims.LoginID, course.ID)
+  var bids []model.GroupBid
+  var err error
+
+  if givenRole == authorize.TUTOR {
+    // tutors see nothing
+    render.Render(w, r, ErrBadRequestWithDetails(errors.New("tutors cannot have bids for a group in a course")))
+    return
+
+  }
+
+  if givenRole == authorize.STUDENT {
+    // students only see their own bids
+    bids, err = rs.Stores.Group.GetBidsForCourseForUser(course.ID, accessClaims.LoginID)
+  } else {
+    // admins see all (to later setup the bid)
+    bids, err = rs.Stores.Group.GetBidsForCourse(course.ID)
+  }
+
   if err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return
   }
 
-  // resp := &SheetPointsResponse{SheetPoints: sheetPoints}
-
-  if err := render.RenderList(w, r, newSheetPointsListResponse(sheetPoints)); err != nil {
+  if err := render.RenderList(w, r, newGroupBidsListResponse(bids)); err != nil {
     render.Render(w, r, ErrRender(err))
     return
   }

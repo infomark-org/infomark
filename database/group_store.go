@@ -181,3 +181,34 @@ WHERE
 
   return s.GetBidOfUserForGroup(userID, groupID)
 }
+
+func (s *GroupStore) GetBidsForCourseForUser(courseID int64, userID int64) ([]model.GroupBid, error) {
+
+  p := []model.GroupBid{}
+
+  err := s.db.Select(&p, `
+SELECT gb.*
+FROM
+group_bids gb
+INNER JOIN
+  groups g ON gb.group_id = g.id
+WHERE gb.user_id = $2
+AND g.course_id = $1`, courseID, userID)
+  return p, err
+
+}
+
+func (s *GroupStore) GetBidsForCourse(courseID int64) ([]model.GroupBid, error) {
+
+  p := []model.GroupBid{}
+
+  err := s.db.Select(&p, `
+SELECT gb.*
+FROM
+group_bids gb
+INNER JOIN
+  groups g ON gb.group_id = g.id
+AND g.course_id = $1`, courseID)
+  return p, err
+
+}

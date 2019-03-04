@@ -142,6 +142,7 @@ func TestSheet(t *testing.T) {
 
       sheet_return := &model.Sheet{}
       err = json.NewDecoder(w.Body).Decode(&sheet_return)
+      g.Assert(err).Equal(nil)
       g.Assert(sheet_return.Name).Equal("Sheet_new")
       g.Assert(sheet_return.PublishAt.Equal(sheet_sent.PublishAt)).Equal(true)
       g.Assert(sheet_return.DueAt.Equal(sheet_sent.DueAt)).Equal(true)
