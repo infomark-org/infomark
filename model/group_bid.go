@@ -19,15 +19,11 @@
 package model
 
 import (
-	"time"
-
 	validation "github.com/go-ozzo/ozzo-validation"
 )
 
 type GroupBid struct {
-	ID        int64     `json:"id" db:"id"`
-	CreatedAt time.Time `json:"-" db:"created_at,omitempty"`
-	UpdatedAt time.Time `json:"-" db:"updated_at,omitempty"`
+	ID int64 `json:"id" db:"id"`
 
 	UserID  int64 `json:"user_id" db:"user_id"`
 	GroupID int64 `json:"group_id" db:"group_id"`

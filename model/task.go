@@ -63,3 +63,14 @@ func (m *TaskRating) Validate() error {
 		),
 	)
 }
+
+type TaskPoints struct {
+	AquiredPoints int `json:"acquired_points" db:"acquired_points"`
+	MaxPoints     int `json:"max_points" db:"max_points"`
+	TaskID        int `json:"task_id" db:"task_id"`
+}
+
+func (d *TaskPoints) Validate() error {
+	// just a join and read only
+	return nil
+}

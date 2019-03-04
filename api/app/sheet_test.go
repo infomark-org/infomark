@@ -247,6 +247,17 @@ func TestSheet(t *testing.T) {
       g.Assert(len(entries_after)).Equal(len(entries_before) - 1)
     })
 
+    g.It("Should see points for a sheet", func() {
+      userID := int64(112)
+
+      w := tape.Get("/api/v1/sheets/1/points")
+      g.Assert(w.Code).Equal(http.StatusUnauthorized)
+
+      w = tape.GetWithClaims("/api/v1/sheets/1/points", userID, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+    })
+
     g.It("Permission test", func() {
       url := "/api/v1/courses/1/sheets"
 

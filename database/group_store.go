@@ -76,6 +76,21 @@ func (s *GroupStore) GroupsOfCourse(courseID int64) ([]model.Group, error) {
   return p, err
 }
 
+func (s *GroupStore) GetMembers(groupID int64) ([]model.User, error) {
+  p := []model.User{}
+
+  err := s.db.Select(&p, `
+SELECT
+  u.*
+FROM
+  users u
+INNER JOIN
+  user_group ug ON ug.user_id = u.id
+WHERE
+  ug.group_id = $1`, groupID)
+  return p, err
+}
+
 func (s *GroupStore) GetInCourseWithUser(userID int64, courseID int64) (*model.Group, error) {
   p := &model.Group{}
 
@@ -126,4 +141,43 @@ WHERE g.id = $1`,
   }
 
   return course, err
+}
+
+func (s *GroupStore) GetBidOfUserForGroup(userID int64, groupID int64) (bid int, err error) {
+  err = s.db.Get(&bid, `
+SELECT
+  bid
+FROM
+  group_bids
+WHERE
+  user_id = $1 and group_id = $2
+LIMIT 1`, userID, groupID)
+  return bid, err
+}
+
+func (s *GroupStore) InsertBidOfUserForGroup(userID int64, groupID int64, bid int) (int, error) {
+
+  // insert
+  _, err := Insert(s.db, "group_bids", &model.GroupBid{UserID: userID, GroupID: groupID, Bid: bid})
+  if err != nil {
+    return 0, err
+  }
+
+  return s.GetBidOfUserForGroup(userID, groupID)
+}
+
+func (s *GroupStore) UpdateBidOfUserForGroup(userID int64, groupID int64, bid int) (int, error) {
+
+  // update
+  _, err := s.db.Exec(`
+UPDATE
+  group_bids
+SET bid = $3
+WHERE
+  user_id = $1 and group_id = $2`, userID, groupID, bid)
+  if err != nil {
+    return 0, err
+  }
+
+  return s.GetBidOfUserForGroup(userID, groupID)
 }

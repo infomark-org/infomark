@@ -175,6 +175,34 @@ func TestGroup(t *testing.T) {
       g.Assert(len(entries_after)).Equal(len(entries_before) - 1)
     })
 
+    g.It("Should change a bid to a group", func() {
+      userID := int64(112)
+
+      // admins are not allowed
+      w := tape.PostWithClaims("/api/v1/groups/1/bids", H{"bid": 4}, 1, false)
+      g.Assert(w.Code).Equal(http.StatusBadRequest)
+
+      // tutors are not allowed
+      w = tape.PostWithClaims("/api/v1/groups/1/bids", H{"bid": 4}, 2, false)
+      g.Assert(w.Code).Equal(http.StatusBadRequest)
+
+      // students
+      w = tape.PostWithClaims("/api/v1/groups/1/bids", H{"bid": 4}, userID, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+      // no content
+
+      // delete to test insert
+      tape.DB.Exec(`DELETE FROM group_bids where user_id = $1`, userID)
+
+      w = tape.PostWithClaims("/api/v1/groups/1/bids", H{"bid": 4}, userID, false)
+      g.Assert(w.Code).Equal(http.StatusCreated)
+      entry_return := &GroupBidResponse{}
+      err := json.NewDecoder(w.Body).Decode(&entry_return)
+      g.Assert(err).Equal(nil)
+      g.Assert(entry_return.Bid).Equal(4)
+
+    })
+
     g.It("Find my group when being a student", func() {
       // a random student (checked via pgweb)
       loginID := int64(112)
@@ -210,6 +238,24 @@ func TestGroup(t *testing.T) {
       // we cannot check the other entries
       g.Assert(entry_return.CourseID).Equal(int64(1))
       g.Assert(entry_return.TutorID).Equal(loginID)
+    })
+
+    g.It("Only tutors and admins can send emails to a group", func() {
+      w := tape.Post("/api/v1/groups/1/emails", H{"subject": "subj", "body": "body"})
+      g.Assert(w.Code).Equal(http.StatusUnauthorized)
+
+      // student
+      w = tape.PostWithClaims("/api/v1/groups/1/emails", H{"subject": "subj", "body": "body"}, 112, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+
+      // tutor
+      w = tape.PostWithClaims("/api/v1/groups/1/emails", H{"subject": "subj", "body": "body"}, 2, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      // admin
+      w = tape.PostWithClaims("/api/v1/groups/1/emails", H{"subject": "subj", "body": "body"}, 1, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
     })
 
     g.It("Permission test", func() {

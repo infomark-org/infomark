@@ -72,6 +72,7 @@ type SheetStore interface {
   Delete(SheetID int64) error
   SheetsOfCourse(courseID int64, only_active bool) ([]model.Sheet, error)
   IdentifyCourseOfSheet(sheetID int64) (*model.Course, error)
+  PointsForUser(userID int64, sheetID int64) ([]model.TaskPoints, error)
 }
 
 // TaskStore specifies required database queries for Task management.
@@ -100,8 +101,13 @@ type GroupStore interface {
   Delete(taskID int64) error
   GroupsOfCourse(courseID int64) ([]model.Group, error)
   GetInCourseWithUser(userID int64, courseID int64) (*model.Group, error)
+  GetMembers(groupID int64) ([]model.User, error)
   GetOfTutor(tutorID int64, courseID int64) (*model.Group, error)
   IdentifyCourseOfGroup(groupID int64) (*model.Course, error)
+
+  GetBidOfUserForGroup(userID int64, groupID int64) (bid int, err error)
+  InsertBidOfUserForGroup(userID int64, groupID int64, bid int) (int, error)
+  UpdateBidOfUserForGroup(userID int64, groupID int64, bid int) (int, error)
 }
 
 type SubmissionStore interface {

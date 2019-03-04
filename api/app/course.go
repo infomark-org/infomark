@@ -82,17 +82,17 @@ func (body *SheetPointsResponse) Render(w http.ResponseWriter, r *http.Request) 
   return nil
 }
 
-func (rs *CourseResource) newSheetPointsResponse(p *model.SheetPoints) *SheetPointsResponse {
+func newSheetPointsResponse(p *model.SheetPoints) *SheetPointsResponse {
   return &SheetPointsResponse{
     SheetPoints: p,
   }
 }
 
 // newCourseListResponse creates a response from a list of course models.
-func (rs *CourseResource) newSheetPointsListResponse(collection []model.SheetPoints) []render.Renderer {
+func newSheetPointsListResponse(collection []model.SheetPoints) []render.Renderer {
   list := []render.Renderer{}
   for k := range collection {
-    list = append(list, rs.newSheetPointsResponse(&collection[k]))
+    list = append(list, newSheetPointsResponse(&collection[k]))
   }
 
   return list
@@ -155,12 +155,6 @@ func (rs *CourseResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 
 // CreateHandler is the enpoint for retrieving all courses if claim.root is true.
 func (rs *CourseResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
-  // only root admins can create a course
-  // accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
-  // if accessClaims.Root != true{
-
-  // }
-
   // start from empty Request
   data := &courseRequest{}
 
@@ -274,6 +268,11 @@ func (rs *CourseResource) IndexEnrollmentsHandler(w http.ResponseWriter, r *http
     return
   }
 
+  // users and tutors will not see student number
+  for k, _ := range enrolledUsers {
+    enrolledUsers[k].StudentNumber = ""
+  }
+
   // render JSON reponse
   if err = render.RenderList(w, r, rs.newEnrollmentListResponse(enrolledUsers)); err != nil {
     render.Render(w, r, ErrRender(err))
@@ -318,6 +317,13 @@ func (rs *CourseResource) EnrollHandler(w http.ResponseWriter, r *http.Request) 
 func (rs *CourseResource) DisenrollHandler(w http.ResponseWriter, r *http.Request) {
   course := r.Context().Value("course").(*model.Course)
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+
+  givenRole := r.Context().Value("course_role").(authorize.CourseRole)
+
+  if givenRole == authorize.TUTOR {
+    render.Render(w, r, ErrBadRequestWithDetails(errors.New("tutors cannot disenroll from a course")))
+    return
+  }
 
   // update database entry
   if err := rs.Stores.Course.Disenroll(course.ID, accessClaims.LoginID); err != nil {
@@ -393,7 +399,34 @@ func (rs *CourseResource) PointsHandler(w http.ResponseWriter, r *http.Request) 
 
   // resp := &SheetPointsResponse{SheetPoints: sheetPoints}
 
-  if err := render.RenderList(w, r, rs.newSheetPointsListResponse(sheetPoints)); err != nil {
+  if err := render.RenderList(w, r, newSheetPointsListResponse(sheetPoints)); err != nil {
+    render.Render(w, r, ErrRender(err))
+    return
+  }
+
+  render.Status(r, http.StatusOK)
+}
+
+// BidsHandler  Show your group bids or if allowed show all bids.
+// url: /course/{course_id}/bids
+// mwethod: GET
+func (rs *CourseResource) BidsHandler(w http.ResponseWriter, r *http.Request) {
+  course := r.Context().Value("course").(*model.Course)
+  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+
+  // students only see their own bids
+  // tutors see nothing
+  // admins see all (to later setup the bid)
+
+  sheetPoints, err := rs.Stores.Course.PointsForUser(accessClaims.LoginID, course.ID)
+  if err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
+  // resp := &SheetPointsResponse{SheetPoints: sheetPoints}
+
+  if err := render.RenderList(w, r, newSheetPointsListResponse(sheetPoints)); err != nil {
     render.Render(w, r, ErrRender(err))
     return
   }

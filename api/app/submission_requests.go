@@ -25,32 +25,23 @@ import (
 	"github.com/cgtuebingen/infomark-backend/model"
 )
 
-// groupRequest is the request payload for course management.
-type groupRequest struct {
-	*model.Group
+// SubmissionRequest is the request payload for submission management.
+type SubmissionRequest struct {
+	*model.Submission
 	ProtectedID int64 `json:"id"`
 }
 
-// Bind preprocesses a groupRequest.
-func (body *groupRequest) Bind(r *http.Request) error {
+// Bind preprocesses a SubmissionRequest.
+func (body *SubmissionRequest) Bind(r *http.Request) error {
 
-	if body.Group == nil {
-		return errors.New("missing \"group\" data")
+	if body.Submission == nil {
+		return errors.New("missing \"submission\" data")
 	}
 
 	// Sending the id via request-body is invalid.
 	// The id should be submitted in the url.
 	body.ProtectedID = 0
 
-	return body.Group.Validate()
+	return body.Submission.Validate()
 
-}
-
-type groupBidRequest struct {
-	Bid int `json:"bid"`
-}
-
-// Bind preprocesses a groupRequest.
-func (body *groupBidRequest) Bind(r *http.Request) error {
-	return nil
 }

@@ -304,6 +304,36 @@ func TestAccount(t *testing.T) {
 
     })
 
+    g.It("Should have a way to delete own avatar", func() {
+      defer helper.NewAvatarFileHandle(1).Delete()
+
+      // no file so far
+      g.Assert(helper.NewAvatarFileHandle(1).Exists()).Equal(false)
+
+      // upload avatar
+      avatar_filename := fmt.Sprintf("%s/default-avatar.jpg", viper.GetString("fixtures_dir"))
+      w, err := tape.UploadWithClaims("/api/v1/account/avatar", avatar_filename, "image/jpg", 1, false)
+      g.Assert(err).Equal(nil)
+      g.Assert(w.Code).Equal(http.StatusOK)
+      g.Assert(helper.NewAvatarFileHandle(1).Exists()).Equal(true)
+
+      // there should be now an avatar
+      w = tape.GetWithClaims("/api/v1/account", 1, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      user_return := model.User{}
+      err = json.NewDecoder(w.Body).Decode(&user_return)
+      g.Assert(err).Equal(nil)
+      g.Assert(user_return.AvatarURL.Valid).Equal(true)
+
+      // delete
+      w = tape.DeleteWithClaims("/api/v1/account/avatar", 1, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      g.Assert(helper.NewAvatarFileHandle(1).Exists()).Equal(false)
+
+    })
+
     g.AfterEach(func() {
       tape.AfterEach()
     })

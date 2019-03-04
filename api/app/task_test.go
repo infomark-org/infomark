@@ -45,7 +45,6 @@ func TestTask(t *testing.T) {
     g.BeforeEach(func() {
       tape.BeforeEach()
       stores = NewStores(tape.DB)
-      _ = stores
     })
 
     g.It("Query should require access claims", func() {
@@ -252,14 +251,17 @@ func TestTask(t *testing.T) {
       userID := int64(112)
       taskID := int64(1)
 
+      givenRating, err := stores.Task.GetRatingOfTaskByUser(taskID, userID)
+      g.Assert(err).Equal(nil)
+
       w := tape.GetWithClaims("/api/v1/tasks/1/ratings", userID, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       task_rating_actual := &TaskRatingResponse{}
-      err := json.NewDecoder(w.Body).Decode(task_rating_actual)
+      err = json.NewDecoder(w.Body).Decode(task_rating_actual)
       g.Assert(err).Equal(nil)
 
-      g.Assert(task_rating_actual.OwnRating).Equal(2)
+      g.Assert(task_rating_actual.OwnRating).Equal(givenRating.Rating)
       g.Assert(task_rating_actual.TaskID).Equal(taskID)
 
       // update rating (mock had rating 2)

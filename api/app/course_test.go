@@ -122,7 +122,7 @@ func TestCourse(t *testing.T) {
       g.Assert(err).Equal(nil)
 
       w := tape.GetWithClaims("/api/v1/courses/1/enrollments?roles=0", 1, true)
-      enrollments_actual := []model.UserCourse{}
+      enrollments_actual := []enrollmentResponse{}
       err = json.NewDecoder(w.Body).Decode(&enrollments_actual)
       g.Assert(err).Equal(nil)
       g.Assert(len(enrollments_actual)).Equal(number_enrollments_expected)
@@ -140,7 +140,7 @@ func TestCourse(t *testing.T) {
       g.Assert(err).Equal(nil)
 
       w := tape.GetWithClaims("/api/v1/courses/1/enrollments?roles=1", 1, true)
-      enrollments_actual := []model.UserCourse{}
+      enrollments_actual := []enrollmentResponse{}
       err = json.NewDecoder(w.Body).Decode(&enrollments_actual)
       g.Assert(err).Equal(nil)
       g.Assert(len(enrollments_actual)).Equal(number_enrollments_expected)
@@ -158,7 +158,7 @@ func TestCourse(t *testing.T) {
       g.Assert(err).Equal(nil)
 
       w := tape.GetWithClaims("/api/v1/courses/1/enrollments?roles=0,1", 1, true)
-      enrollments_actual := []model.UserCourse{}
+      enrollments_actual := []enrollmentResponse{}
       err = json.NewDecoder(w.Body).Decode(&enrollments_actual)
       g.Assert(err).Equal(nil)
       g.Assert(len(enrollments_actual)).Equal(number_enrollments_expected)
@@ -177,10 +177,23 @@ func TestCourse(t *testing.T) {
 
       // 112 is a student
       w := tape.GetWithClaims("/api/v1/courses/1/enrollments?roles=0", 112, true)
-      enrollments_actual := []model.UserCourse{}
+      enrollments_actual := []enrollmentResponse{}
       err = json.NewDecoder(w.Body).Decode(&enrollments_actual)
       g.Assert(err).Equal(nil)
       g.Assert(len(enrollments_actual)).Equal(number_enrollments_expected)
+    })
+
+    g.It("Should be able to filter enrollments (but not see field protected by privacy), when role=tutor,student", func() {
+      // 112 is a student
+      userID := int64(112)
+      w := tape.GetWithClaims("/api/v1/courses/1/enrollments?roles=0", userID, true)
+      enrollments_actual := []enrollmentResponse{}
+      err := json.NewDecoder(w.Body).Decode(&enrollments_actual)
+      g.Assert(err).Equal(nil)
+
+      for _, el := range enrollments_actual {
+        g.Assert(el.User.StudentNumber).Equal("")
+      }
     })
 
     g.It("Creating course should require claims", func() {
@@ -337,7 +350,28 @@ func TestCourse(t *testing.T) {
       g.Assert(number_enrollments_after).Equal(number_enrollments_before - 1)
 
     })
-    g.Xit("Cannot disenroll as a tutor from course", func() {})
+    g.It("Cannot disenroll as a tutor from course", func() {
+      courseID := int64(1)
+      userID := int64(2)
+
+      number_enrollments_before, err := countEnrollments(
+        tape,
+        "SELECT count(*) FROM user_course WHERE course_id = $1 and role = 0",
+        courseID,
+      )
+      g.Assert(err).Equal(nil)
+
+      w := tape.DeleteWithClaims("/api/v1/courses/1/enrollments", userID, false)
+      g.Assert(w.Code).Equal(http.StatusBadRequest)
+
+      number_enrollments_after, err := countEnrollments(
+        tape,
+        "SELECT count(*) FROM user_course WHERE course_id = $1 and role = 0",
+        courseID,
+      )
+      g.Assert(err).Equal(nil)
+      g.Assert(number_enrollments_after).Equal(number_enrollments_before)
+    })
 
     g.It("Permission test", func() {
       url := "/api/v1/courses/1"

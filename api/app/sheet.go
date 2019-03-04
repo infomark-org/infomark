@@ -24,6 +24,7 @@ import (
   "strconv"
 
   "github.com/cgtuebingen/infomark-backend/api/helper"
+  "github.com/cgtuebingen/infomark-backend/auth/authenticate"
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/go-chi/chi"
   "github.com/go-chi/render"
@@ -86,6 +87,30 @@ func (rs *SheetResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
     render.Render(w, r, ErrRender(err))
     return
   }
+}
+
+type TaskPointsResponse struct {
+  TaskPoints *model.TaskPoints `json:"task_points"`
+}
+
+func (body *TaskPointsResponse) Render(w http.ResponseWriter, r *http.Request) error {
+  return nil
+}
+
+func newTaskPointsResponse(p *model.TaskPoints) *TaskPointsResponse {
+  return &TaskPointsResponse{
+    TaskPoints: p,
+  }
+}
+
+// newCourseListResponse creates a response from a list of course models.
+func newTaskPointsListResponse(collection []model.TaskPoints) []render.Renderer {
+  list := []render.Renderer{}
+  for k := range collection {
+    list = append(list, newTaskPointsResponse(&collection[k]))
+  }
+
+  return list
 }
 
 // CreateHandler is the enpoint for retrieving all Sheets if claim.root is true.
@@ -190,6 +215,27 @@ func (rs *SheetResource) ChangeFileHandler(w http.ResponseWriter, r *http.Reques
   if err := helper.NewSheetFileHandle(sheet.ID).WriteToDisk(r, "file_data"); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
   }
+  render.Status(r, http.StatusOK)
+}
+
+// PointsHandler returns the point for the identity in a given course. This is
+// intented to serve data for a plot.
+func (rs *SheetResource) PointsHandler(w http.ResponseWriter, r *http.Request) {
+  sheet := r.Context().Value("sheet").(*model.Sheet)
+  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+
+  taskPoints, err := rs.Stores.Sheet.PointsForUser(accessClaims.LoginID, sheet.ID)
+  if err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
+  // resp := &SheetPointsResponse{SheetPoints: taskPoints}
+  if err := render.RenderList(w, r, newTaskPointsListResponse(taskPoints)); err != nil {
+    render.Render(w, r, ErrRender(err))
+    return
+  }
+
   render.Status(r, http.StatusOK)
 }
 

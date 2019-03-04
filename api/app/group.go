@@ -20,12 +20,14 @@ package app
 
 import (
   "context"
+  "errors"
   "fmt"
   "net/http"
   "strconv"
 
   "github.com/cgtuebingen/infomark-backend/auth/authenticate"
   "github.com/cgtuebingen/infomark-backend/auth/authorize"
+  "github.com/cgtuebingen/infomark-backend/email"
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/go-chi/chi"
   "github.com/go-chi/render"
@@ -42,8 +44,6 @@ func NewGroupResource(stores *Stores) *GroupResource {
     Stores: stores,
   }
 }
-
-// .............................................................................
 
 // GroupResponse is the response payload for Group management.
 type GroupResponse struct {
@@ -71,6 +71,17 @@ func (rs *GroupResource) newGroupListResponse(Groups []model.Group) []render.Ren
 func (body *GroupResponse) Render(w http.ResponseWriter, r *http.Request) error {
   return nil
 }
+
+type GroupBidResponse struct {
+  Bid int `json:"bid`
+}
+
+// Render post-processes a GroupResponse.
+func (body *GroupBidResponse) Render(w http.ResponseWriter, r *http.Request) error {
+  return nil
+}
+
+// .............................................................................
 
 // IndexHandler is the enpoint for retrieving all Groups if claim.root is true.
 func (rs *GroupResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
@@ -210,6 +221,101 @@ func (rs *GroupResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
   }
 
   render.Status(r, http.StatusNoContent)
+}
+
+// ChangeBidHandler is the endpoint fro updating a specific Task with given id.
+// url: /groups/{course_id}/bid
+// method: POST
+func (rs *GroupResource) ChangeBidHandler(w http.ResponseWriter, r *http.Request) {
+
+  courseRole := r.Context().Value("course_role").(authorize.CourseRole)
+
+  if courseRole != authorize.STUDENT {
+    render.Render(w, r, ErrBadRequestWithDetails(errors.New("Only students in a course can bid for a group")))
+    return
+  }
+
+  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+
+  // start from empty Request
+  group := r.Context().Value("group").(*model.Group)
+
+  data := &groupBidRequest{}
+
+  // parse JSON request into struct
+  if err := render.Bind(r, data); err != nil {
+    render.Render(w, r, ErrBadRequestWithDetails(err))
+    return
+  }
+
+  _, exists_err := rs.Stores.Group.GetBidOfUserForGroup(accessClaims.LoginID, group.ID)
+  if exists_err == nil {
+    // exists
+    // update database entry
+    if _, err := rs.Stores.Group.UpdateBidOfUserForGroup(accessClaims.LoginID, group.ID, data.Bid); err != nil {
+      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+      return
+    }
+    render.Status(r, http.StatusNoContent)
+  } else {
+    // insert
+    // insert database entry
+    if _, err := rs.Stores.Group.InsertBidOfUserForGroup(accessClaims.LoginID, group.ID, data.Bid); err != nil {
+      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+      return
+    }
+    render.Status(r, http.StatusCreated)
+
+    resp := &GroupBidResponse{Bid: data.Bid}
+
+    if err := render.Render(w, r, resp); err != nil {
+      render.Render(w, r, ErrRender(err))
+      return
+    }
+  }
+
+  render.Status(r, http.StatusNoContent)
+}
+
+// SendEmailHandler will send email to entiure group
+// url: /api/v1/groups/{groupID}/email
+// method: POST
+func (rs *GroupResource) SendEmailHandler(w http.ResponseWriter, r *http.Request) {
+
+  group := r.Context().Value("group").(*model.Group)
+  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  accessUser, _ := rs.Stores.User.Get(accessClaims.LoginID)
+
+  data := &EmailRequest{}
+
+  // parse JSON request into struct
+  if err := render.Bind(r, data); err != nil {
+    render.Render(w, r, ErrBadRequestWithDetails(err))
+    return
+  }
+
+  recipients, err := rs.Stores.Group.GetMembers(group.ID)
+
+  if err != nil {
+    render.Render(w, r, ErrBadRequestWithDetails(err))
+    return
+  }
+
+  for _, recipient := range recipients {
+    // add sender identity
+    msg := email.NewEmailFromUser(
+      recipient.Email,
+      data.Subject,
+      data.Body,
+      accessUser,
+    )
+
+    if err := email.DefaultMail.Send(msg); err != nil {
+      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+      return
+    }
+  }
+
 }
 
 // .............................................................................

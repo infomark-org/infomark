@@ -146,6 +146,7 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 
             r.Get("/tasks", appAPI.Task.IndexHandler)
             r.Get("/file", appAPI.Sheet.GetFileHandler)
+            r.Get("/points", appAPI.Sheet.PointsHandler)
 
             r.Route("/", func(r chi.Router) {
               r.Use(authorize.RequiresAtLeastCourseRole(authorize.ADMIN))
@@ -194,10 +195,13 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
             // ensures user is enrolled in the associated course
             r.Use(authorize.RequiresAtLeastCourseRole(authorize.STUDENT))
 
+            r.Post("/bids", appAPI.Group.ChangeBidHandler)
+            r.Post("/emails", authorize.EndpointRequiresRole(appAPI.Group.SendEmailHandler, authorize.TUTOR))
+
             r.Get("/", appAPI.Group.GetHandler)
+
             r.Route("/", func(r chi.Router) {
               r.Use(authorize.RequiresAtLeastCourseRole(authorize.ADMIN))
-
               r.Put("/", appAPI.Group.EditHandler)
               r.Delete("/", appAPI.Group.DeleteHandler)
             })
