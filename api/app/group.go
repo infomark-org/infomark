@@ -48,7 +48,6 @@ func NewGroupResource(stores *Stores) *GroupResource {
 // GroupResponse is the response payload for Group management.
 type GroupResponse struct {
   *model.Group
-  Groups []model.Group `json:"Groups"`
 }
 
 // newGroupResponse creates a response from a Group model.

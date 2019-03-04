@@ -83,6 +83,12 @@ type TaskStore interface {
   Delete(TaskID int64) error
   TasksOfSheet(sheetID int64, only_active bool) ([]model.Task, error)
   IdentifyCourseOfTask(taskID int64) (*model.Course, error)
+
+  GetAverageRating(taskID int64) (float32, error)
+  GetRatingOfTaskByUser(taskID int64, userID int64) (*model.TaskRating, error)
+  GetRating(taskRatingID int64) (*model.TaskRating, error)
+  CreateRating(p *model.TaskRating) (*model.TaskRating, error)
+  UpdateRating(p *model.TaskRating) error
 }
 
 // GroupStore specifies required database queries for Task management.
@@ -98,33 +104,41 @@ type GroupStore interface {
   IdentifyCourseOfGroup(groupID int64) (*model.Course, error)
 }
 
+type SubmissionStore interface {
+  Get(submissionID int64) (*model.Submission, error)
+}
+
 // API provides application resources and handlers.
 type API struct {
-  User    *UserResource
-  Account *AccountResource
-  Auth    *AuthResource
-  Course  *CourseResource
-  Sheet   *SheetResource
-  Task    *TaskResource
-  Group   *GroupResource
+  User       *UserResource
+  Account    *AccountResource
+  Auth       *AuthResource
+  Course     *CourseResource
+  Sheet      *SheetResource
+  Task       *TaskResource
+  Group      *GroupResource
+  TaskRating *TaskRatingResource
+  Submission *SubmissionResource
 }
 
 type Stores struct {
-  Course CourseStore
-  User   UserStore
-  Sheet  SheetStore
-  Task   TaskStore
-  Group  GroupStore
+  Course     CourseStore
+  User       UserStore
+  Sheet      SheetStore
+  Task       TaskStore
+  Group      GroupStore
+  Submission SubmissionStore
 }
 
 func NewStores(db *sqlx.DB) *Stores {
 
   return &Stores{
-    Course: database.NewCourseStore(db),
-    User:   database.NewUserStore(db),
-    Sheet:  database.NewSheetStore(db),
-    Task:   database.NewTaskStore(db),
-    Group:  database.NewGroupStore(db),
+    Course:     database.NewCourseStore(db),
+    User:       database.NewUserStore(db),
+    Sheet:      database.NewSheetStore(db),
+    Task:       database.NewTaskStore(db),
+    Group:      database.NewGroupStore(db),
+    Submission: database.NewSubmissionStore(db),
   }
 }
 
@@ -134,13 +148,15 @@ func NewAPI(db *sqlx.DB) (*API, error) {
   stores := NewStores(db)
 
   api := &API{
-    Account: NewAccountResource(stores),
-    Auth:    NewAuthResource(stores),
-    User:    NewUserResource(stores),
-    Course:  NewCourseResource(stores),
-    Sheet:   NewSheetResource(stores),
-    Task:    NewTaskResource(stores),
-    Group:   NewGroupResource(stores),
+    Account:    NewAccountResource(stores),
+    Auth:       NewAuthResource(stores),
+    User:       NewUserResource(stores),
+    Course:     NewCourseResource(stores),
+    Sheet:      NewSheetResource(stores),
+    Task:       NewTaskResource(stores),
+    Group:      NewGroupResource(stores),
+    TaskRating: NewTaskRatingResource(stores),
+    Submission: NewSubmissionResource(stores),
   }
   return api, nil
 }

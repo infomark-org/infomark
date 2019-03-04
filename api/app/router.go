@@ -170,6 +170,9 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
             r.Get("/public_file", appAPI.Task.GetPublicTestFileHandler)
             r.Get("/private_file", appAPI.Task.GetPrivateTestFileHandler)
 
+            r.Get("/ratings", appAPI.TaskRating.GetHandler)
+            r.Post("/ratings", appAPI.TaskRating.ChangeHandler)
+
             r.Route("/", func(r chi.Router) {
               r.Use(authorize.RequiresAtLeastCourseRole(authorize.ADMIN))
 

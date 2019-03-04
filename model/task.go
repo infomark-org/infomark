@@ -42,3 +42,24 @@ func (m *Task) Validate() error {
 		),
 	)
 }
+
+type TaskRating struct {
+	ID int64 `json:"id" db:"id"`
+
+	UserID int64 `json:"user_id" db:"user_id"`
+	TaskID int64 `json:"task_id" db:"task_id"`
+	Rating int   `json:"rating" db:"rating"`
+}
+
+func (m *TaskRating) Validate() error {
+	return validation.ValidateStruct(m,
+		validation.Field(
+			&m.UserID,
+			validation.Required,
+		),
+		validation.Field(
+			&m.TaskID,
+			validation.Required,
+		),
+	)
+}

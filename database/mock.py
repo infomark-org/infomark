@@ -218,6 +218,17 @@ def create_user_group(user_id, group_id):
 
   return data
 
+
+def create_task_rating(student_id, task_id):
+  data = OrderedDict([
+      ('id', VAL.DEFAULT),
+      ('user_id', student_id),
+      ('task_id', task_id),
+      ('rating', fake.random_int(1, 5)),
+  ])
+
+  return data
+
 # """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 # """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 # """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -316,6 +327,13 @@ if __name__ == "__main__":
     student_id = NUM_ADMINS + NUM_TUTORS + i + 1
     group_id = fake.random_int(1, len(groups))
 
+  task_ratings = []
+  for i in range(len(students)):
+    student_id = NUM_ADMINS + NUM_TUTORS + i + 1
+    for j in range(len(tasks)):
+      task_id = j + 1
+      task_ratings.append(create_task_rating(student_id, task_id))
+
   with open('mock.sql', 'w') as f:
     f.write('BEGIN;')
     # users
@@ -395,5 +413,9 @@ if __name__ == "__main__":
       group_id = fake.random_int(1, len(groups))
       user_id = k + 1
       f.write(to_statement('user_group', create_user_group(user_id, group_id)))
+
+    f.write('ALTER SEQUENCE task_ratings_id_seq RESTART WITH 1;\n')
+    for t in task_ratings:
+      f.write(to_statement('task_ratings', t))
 
     f.write('COMMIT;')

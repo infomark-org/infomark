@@ -119,3 +119,41 @@ WHERE ts.task_id = $1`,
 
   return course, err
 }
+
+func (s *TaskStore) GetAverageRating(taskID int64) (float32, error) {
+  var averageRating float32
+  err := s.db.Get(&averageRating, `
+SELECT
+  AVG(rating) average_rating
+FROM
+  task_ratings tr
+WHERE tr.task_id  = $1`, taskID)
+  return averageRating, err
+}
+
+func (s *TaskStore) GetRatingOfTaskByUser(taskID int64, userID int64) (*model.TaskRating, error) {
+
+  p := model.TaskRating{}
+  err := s.db.Get(&p, `
+    SELECT * from task_ratings where user_id = $1 and task_id = $2 LIMIT 1`, userID, taskID)
+  return &p, err
+}
+
+func (s *TaskStore) GetRating(taskRatingID int64) (*model.TaskRating, error) {
+  p := model.TaskRating{ID: taskRatingID}
+  err := s.db.Get(&p, "SELECT * FROM task_ratings WHERE id = $1 LIMIT 1;", p.ID)
+  return &p, err
+}
+
+func (s *TaskStore) CreateRating(p *model.TaskRating) (*model.TaskRating, error) {
+  // create Task
+  newID, err := Insert(s.db, "task_ratings", p)
+  if err != nil {
+    return nil, err
+  }
+  return s.GetRating(newID)
+}
+
+func (s *TaskStore) UpdateRating(p *model.TaskRating) error {
+  return Update(s.db, "task_ratings", p.ID, p)
+}

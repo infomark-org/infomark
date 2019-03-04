@@ -46,7 +46,6 @@ func NewSheetResource(stores *Stores) *SheetResource {
 // SheetResponse is the response payload for Sheet management.
 type SheetResponse struct {
   *model.Sheet
-  Tasks []model.Task `json:"tasks"`
 }
 
 // newSheetResponse creates a response from a Sheet model.

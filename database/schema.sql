@@ -6,7 +6,9 @@ drop table if exists user_group;
 drop table if exists sheet_course;
 drop table if exists task_sheet;
 drop table if exists group_bids;
-drop table if exists task_feedbacks;
+--  renamed to task_ratings
+-- drop table if exists task_feedbacks;
+drop table if exists task_ratings;
 
 drop table if exists materials;
 drop table if exists groups;
@@ -183,7 +185,7 @@ CREATE TABLE user_group(
 );
 
 -- ratings of task from students
-CREATE TABLE task_feedbacks(
+CREATE TABLE task_ratings(
   id SERIAL not null primary key,
 
   user_id INT not null,

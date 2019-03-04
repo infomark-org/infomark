@@ -45,3 +45,23 @@ func (body *TaskRequest) Bind(r *http.Request) error {
 	return body.Task.Validate()
 
 }
+
+// TaskRequest is the request payload for Task management.
+type TaskRatingRequest struct {
+	*model.TaskRating
+	ProtectedID int64 `json:"id"`
+}
+
+// Bind preprocesses a TaskRequest.
+func (body *TaskRatingRequest) Bind(r *http.Request) error {
+
+	if body.TaskRating == nil {
+		return errors.New("missing \"task_rating\" data")
+	}
+
+	// Sending the id via request-body is invalid.
+	// The id should be submitted in the url.
+	body.ProtectedID = 0
+	return body.TaskRating.Validate()
+
+}
