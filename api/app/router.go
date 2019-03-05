@@ -135,6 +135,7 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
               r.Get("/materials", appAPI.Material.IndexHandler)
 
               r.Get("/submissions", authorize.EndpointRequiresRole(appAPI.Submission.IndexHandler, authorize.TUTOR))
+              r.Get("/grades", authorize.EndpointRequiresRole(appAPI.Grade.IndexHandler, authorize.TUTOR))
 
             })
 

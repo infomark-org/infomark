@@ -35,7 +35,7 @@ type Grade struct {
 	PublicTestStatus  int    `json:"public_test_status" db:"public_test_status"`
 	PrivateTestStatus int    `json:"private_test_status" db:"private_test_status"`
 	AcquiredPoints    int    `json:"acquired_points" db:"acquired_points"`
-	Feedback          int    `json:"feedback" db:"feedback"`
+	Feedback          string `json:"feedback" db:"feedback"`
 	TutorID           int64  `json:"tutor_id" db:"tutor_id"`
 	SubmissionID      int64  `json:"submission_id" db:"submission_id"`
 }

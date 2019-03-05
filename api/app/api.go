@@ -129,6 +129,22 @@ type SubmissionStore interface {
   Create(p *model.Submission) (*model.Submission, error)
   GetFiltered(filterCourseID, filterGroupID, filterUserID, filterSheetID, filterTaskID int64) ([]model.Submission, error)
 }
+type GradeStore interface {
+  GetFiltered(
+    courseID int64,
+    sheetID int64,
+    taskID int64,
+    groupID int64,
+    userID int64,
+    tutorID int64,
+    feedback string,
+    acquiredPoints int,
+    publicTestStatus int,
+    privateTestStatus int,
+    executationState int,
+  ) ([]model.Grade, error)
+  Get(id int64) (*model.Grade, error)
+}
 
 // API provides application resources and handlers.
 type API struct {
@@ -142,6 +158,7 @@ type API struct {
   TaskRating *TaskRatingResource
   Submission *SubmissionResource
   Material   *MaterialResource
+  Grade      *GradeResource
 }
 
 type Stores struct {
@@ -152,6 +169,7 @@ type Stores struct {
   Group      GroupStore
   Submission SubmissionStore
   Material   MaterialStore
+  Grade      GradeStore
 }
 
 func NewStores(db *sqlx.DB) *Stores {
@@ -164,6 +182,7 @@ func NewStores(db *sqlx.DB) *Stores {
     Group:      database.NewGroupStore(db),
     Submission: database.NewSubmissionStore(db),
     Material:   database.NewMaterialStore(db),
+    Grade:      database.NewGradeStore(db),
   }
 }
 
@@ -183,6 +202,7 @@ func NewAPI(db *sqlx.DB) (*API, error) {
     TaskRating: NewTaskRatingResource(stores),
     Submission: NewSubmissionResource(stores),
     Material:   NewMaterialResource(stores),
+    Grade:      NewGradeResource(stores),
   }
   return api, nil
 }

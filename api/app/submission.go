@@ -180,10 +180,10 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
 func (rs *SubmissionResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
   course := r.Context().Value("course").(*model.Course)
 
-  filterGroupID := helper.IntFromUrl(r, "group_id", 0)
-  filterUserID := helper.IntFromUrl(r, "user_id", 0)
-  filterSheetID := helper.IntFromUrl(r, "sheet_id", 0)
-  filterTaskID := helper.IntFromUrl(r, "task_id", 0)
+  filterGroupID := helper.Int64FromUrl(r, "group_id", 0)
+  filterUserID := helper.Int64FromUrl(r, "user_id", 0)
+  filterSheetID := helper.Int64FromUrl(r, "sheet_id", 0)
+  filterTaskID := helper.Int64FromUrl(r, "task_id", 0)
 
   submissions, err := rs.Stores.Submission.GetFiltered(course.ID, filterGroupID, filterUserID, filterSheetID, filterTaskID)
   if err != nil {
