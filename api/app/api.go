@@ -126,6 +126,8 @@ type MaterialStore interface {
 type SubmissionStore interface {
   Get(submissionID int64) (*model.Submission, error)
   GetByUserAndTask(userID int64, taskID int64) (*model.Submission, error)
+  Create(p *model.Submission) (*model.Submission, error)
+  GetFiltered(filterCourseID, filterGroupID, filterUserID, filterSheetID, filterTaskID int64) ([]model.Submission, error)
 }
 
 // API provides application resources and handlers.

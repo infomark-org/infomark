@@ -69,6 +69,21 @@ func StringFromUrl(r *http.Request, name string, standard string) string {
 	}
 }
 
+func IntFromUrl(r *http.Request, name string, standard int64) int64 {
+	str := StringFromUrl(r, name, "uglyhardcoded")
+	if str == "uglyhardcoded" {
+		return standard
+	} else {
+		i, err := strconv.Atoi(str)
+		if err != nil {
+			return standard
+		} else {
+			return int64(i)
+		}
+	}
+
+}
+
 // similar to gin.H as a neat wrapper
 type H map[string]interface{}
 

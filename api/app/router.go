@@ -133,6 +133,9 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
               r.Get("/points", appAPI.Course.PointsHandler)
               r.Get("/bids", appAPI.Course.BidsHandler)
               r.Get("/materials", appAPI.Material.IndexHandler)
+
+              r.Get("/submissions", authorize.EndpointRequiresRole(appAPI.Submission.IndexHandler, authorize.TUTOR))
+
             })
 
           })

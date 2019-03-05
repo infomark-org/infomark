@@ -46,3 +46,36 @@ func (s *SubmissionStore) GetByUserAndTask(userID int64, taskID int64) (*model.S
     userID, taskID)
   return &p, err
 }
+
+func (s *SubmissionStore) Create(p *model.Submission) (*model.Submission, error) {
+  newID, err := Insert(s.db, "submissions", p)
+  if err != nil {
+    return nil, err
+  }
+  return s.Get(newID)
+}
+
+func (s *SubmissionStore) GetFiltered(filterCourseID, filterGroupID, filterUserID, filterSheetID, filterTaskID int64) ([]model.Submission, error) {
+
+  p := []model.Submission{}
+  err := s.db.Select(&p,
+    `
+SELECT s.*
+FROM submissions s
+INNER JOIN user_group ug ON ug.user_id = s.user_id
+INNER JOIN groups g ON g.id = ug.group_id
+INNEr JOIN task_sheet ts ON ts.task_id = s.task_id
+WHERE
+  ($1 = 0 or s.user_id = $1)
+AND
+  ($2 = 0 or s.task_id = $2)
+AND
+  ($3 = 0 or ug.group_id = $3)
+AND
+  ($4 = 0 or ts.sheet_id = $4)
+AND
+  ($5 = 0 or g.course_id = $5)
+`,
+    filterUserID, filterTaskID, filterGroupID, filterSheetID, filterCourseID)
+  return p, err
+}

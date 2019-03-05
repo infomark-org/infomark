@@ -75,25 +75,9 @@ func (body *SubmissionResponse) Render(w http.ResponseWriter, r *http.Request) e
   return nil
 }
 
-// // IndexHandler is the enpoint for retrieving all Submissions if claim.root is true.
-// func (rs *SubmissionResource) GetHandler(w http.ResponseWriter, r *http.Request) {
-
-//   task := r.Context().Value("task").(*model.Task)
-//   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
-
-//   submission, err := rs.Stores.Submission.GetByUserAndTask(accessClaims.LoginID, task.ID)
-//   if err != nil {
-//     render.Render(w, r, ErrNotFound)
-//     return
-//   }
-
-//   // render JSON reponse
-//   if err = render.Render(w, r, rs.newSubmissionResponse(submission)); err != nil {
-//     render.Render(w, r, ErrRender(err))
-//     return
-//   }
-// }
-
+// GetFileHandler returns the submission file from a given task
+// URL: /api/v1/tasks/1/submission
+// METHOD: GET
 func (rs *SubmissionResource) GetFileHandler(w http.ResponseWriter, r *http.Request) {
   task := r.Context().Value("task").(*model.Task)
   // submission := r.Context().Value("submission").(*model.Submission)
@@ -102,7 +86,7 @@ func (rs *SubmissionResource) GetFileHandler(w http.ResponseWriter, r *http.Requ
 
   submission, err := rs.Stores.Submission.GetByUserAndTask(accessClaims.LoginID, task.ID)
   if err != nil {
-    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    render.Render(w, r, ErrNotFound)
     return
   }
 
@@ -127,6 +111,9 @@ func (rs *SubmissionResource) GetFileHandler(w http.ResponseWriter, r *http.Requ
   }
 }
 
+// GetFileByIdHandler returns the submission file from a given id
+// URL: /api/v1/submissions/{submissionID}
+// METHOD: GET
 func (rs *SubmissionResource) GetFileByIdHandler(w http.ResponseWriter, r *http.Request) {
 
   submission := r.Context().Value("submission").(*model.Submission)
@@ -135,7 +122,7 @@ func (rs *SubmissionResource) GetFileByIdHandler(w http.ResponseWriter, r *http.
 
   submission, err := rs.Stores.Submission.Get(submission.ID)
   if err != nil {
-    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    render.Render(w, r, ErrNotFound)
     return
   }
 
@@ -160,16 +147,23 @@ func (rs *SubmissionResource) GetFileByIdHandler(w http.ResponseWriter, r *http.
   }
 }
 
+// GetFileHandler returns the submission file from a given task
+// URL: /api/v1/tasks/1/submission
+// METHOD: POST
 func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.Request) {
-  // will always be a POST
   task := r.Context().Value("task").(*model.Task)
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
   // todo create submission if not exists
 
+  // create ssubmisison if not exists
   submission, err := rs.Stores.Submission.GetByUserAndTask(accessClaims.LoginID, task.ID)
   if err != nil {
-    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-    return
+    // no such submission
+    submission, err = rs.Stores.Submission.Create(&model.Submission{UserID: accessClaims.LoginID, TaskID: task.ID})
+    if err != nil {
+      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+      return
+    }
   }
 
   // the file will be located
@@ -178,6 +172,33 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
     return
   }
   render.Status(r, http.StatusOK)
+}
+
+// GetFileHandler returns the submission file from a given task
+// URL: /submissions?sheet_id=?&task_id=?&group_id=?&user_id=?
+// METHOD: GET
+func (rs *SubmissionResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
+  course := r.Context().Value("course").(*model.Course)
+
+  filterGroupID := helper.IntFromUrl(r, "group_id", 0)
+  filterUserID := helper.IntFromUrl(r, "user_id", 0)
+  filterSheetID := helper.IntFromUrl(r, "sheet_id", 0)
+  filterTaskID := helper.IntFromUrl(r, "task_id", 0)
+
+  submissions, err := rs.Stores.Submission.GetFiltered(course.ID, filterGroupID, filterUserID, filterSheetID, filterTaskID)
+  if err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
+  // render JSON reponse
+  if err = render.RenderList(w, r, rs.newSubmissionListResponse(submissions)); err != nil {
+    render.Render(w, r, ErrRender(err))
+    return
+  }
+
+  render.Status(r, http.StatusOK)
+
 }
 
 // .............................................................................
