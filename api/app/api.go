@@ -61,6 +61,7 @@ type CourseStore interface {
     filterLanguage string) ([]model.UserCourse, error)
   PointsForUser(userID int64, courseID int64) ([]model.SheetPoints, error)
   RoleInCourse(userID int64, courseID int64) (authorize.CourseRole, error)
+  UpdateRole(courseID, userID int64, role int) error
 }
 
 // SheetStore specifies required database queries for Sheet management.
@@ -90,6 +91,7 @@ type TaskStore interface {
   GetRating(taskRatingID int64) (*model.TaskRating, error)
   CreateRating(p *model.TaskRating) (*model.TaskRating, error)
   UpdateRating(p *model.TaskRating) error
+  GetAllMissingTasksForUser(userID int64) ([]model.MissingTask, error)
 }
 
 // GroupStore specifies required database queries for Task management.
@@ -144,6 +146,10 @@ type GradeStore interface {
     executationState int,
   ) ([]model.Grade, error)
   Get(id int64) (*model.Grade, error)
+  GetForSubmission(id int64) (*model.Grade, error)
+  Update(p *model.Grade) error
+  IdentifyCourseOfGrade(gradeID int64) (*model.Course, error)
+  GetAllMissingGrades(tutorID int64) ([]model.MissingGrade, error)
 }
 
 // API provides application resources and handlers.

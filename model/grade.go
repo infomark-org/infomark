@@ -52,3 +52,10 @@ func (m *Grade) Validate() error {
 		),
 	)
 }
+
+type MissingGrade struct {
+	*Grade
+	CourseID int64 `json:"course_id" db:"course_id"`
+	SheetID  int64 `json:"sheet_id" db:"sheet_id"`
+	TaskID   int64 `json:"task_id" db:"task_id"`
+}

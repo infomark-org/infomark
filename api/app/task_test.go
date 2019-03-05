@@ -222,6 +222,27 @@ func TestTask(t *testing.T) {
       g.Assert(len(entries_after)).Equal(len(entries_before) - 1)
     })
 
+    g.It("students should see public results", func() {
+      w := tape.Get("/api/v1/tasks/1/result")
+      g.Assert(w.Code).Equal(http.StatusUnauthorized)
+
+      w = tape.GetWithClaims("/api/v1/tasks/1/result", 1, false)
+      g.Assert(w.Code).Equal(http.StatusBadRequest)
+
+      w = tape.GetWithClaims("/api/v1/tasks/1/result", 2, false)
+      g.Assert(w.Code).Equal(http.StatusBadRequest)
+
+      w = tape.GetWithClaims("/api/v1/tasks/1/result", 112, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      actual := &GradeResponse{}
+      err := json.NewDecoder(w.Body).Decode(actual)
+      g.Assert(err).Equal(nil)
+      g.Assert(actual.PrivateTestLog).Equal("")
+      g.Assert(actual.PrivateTestStatus).Equal(-1)
+
+    })
+
     g.It("Permission test", func() {
       // sheet (id=1) belongs to group(id=1)
       url := "/api/v1/sheets/1/tasks"
@@ -313,6 +334,24 @@ func TestTask(t *testing.T) {
 
       g.Assert(task_rating_actual2.OwnRating).Equal(4)
       g.Assert(task_rating_actual2.TaskID).Equal(taskID)
+    })
+
+    g.It("Should get all missing tasks", func() {
+      // in the mock script each student has a submission to all tasks
+      // therefore we need to delete it temporarily
+      _, err := tape.DB.Exec("DELETE FROM submissions WHERE task_id = 2")
+      g.Assert(err).Equal(nil)
+
+      w := tape.GetWithClaims("/api/v1/tasks/missing", 112, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      result := []MissingTaskResponse{}
+      err = json.NewDecoder(w.Body).Decode(&result)
+      g.Assert(err).Equal(nil)
+      for _, el := range result {
+        g.Assert(el.Task.ID).Equal(int64(2))
+      }
+
     })
 
     g.AfterEach(func() {

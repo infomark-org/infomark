@@ -24,6 +24,8 @@ import (
   "strconv"
 
   "github.com/cgtuebingen/infomark-backend/api/helper"
+  "github.com/cgtuebingen/infomark-backend/auth/authenticate"
+  "github.com/cgtuebingen/infomark-backend/auth/authorize"
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/go-chi/chi"
   "github.com/go-chi/render"
@@ -46,25 +48,13 @@ func NewTaskResource(stores *Stores) *TaskResource {
 // TaskResponse is the response payload for Task management.
 type TaskResponse struct {
   *model.Task
-  Tasks []model.Task `json:"tasks"`
 }
 
 // newTaskResponse creates a response from a Task model.
-func (rs *TaskResource) newTaskResponse(p *model.Task) *TaskResponse {
-
+func newTaskResponse(p *model.Task) *TaskResponse {
   return &TaskResponse{
     Task: p,
   }
-}
-
-// newTaskListResponse creates a response from a list of Task models.
-func (rs *TaskResource) newTaskListResponse(Tasks []model.Task) []render.Renderer {
-  // https://stackoverflow.com/a/36463641/7443104
-  list := []render.Renderer{}
-  for k := range Tasks {
-    list = append(list, rs.newTaskResponse(&Tasks[k]))
-  }
-  return list
 }
 
 // Render post-processes a TaskResponse.
@@ -72,17 +62,82 @@ func (body *TaskResponse) Render(w http.ResponseWriter, r *http.Request) error {
   return nil
 }
 
+// newTaskListResponse creates a response from a list of Task models.
+func newTaskListResponse(Tasks []model.Task) []render.Renderer {
+  // https://stackoverflow.com/a/36463641/7443104
+  list := []render.Renderer{}
+  for k := range Tasks {
+    list = append(list, newTaskResponse(&Tasks[k]))
+  }
+  return list
+}
+
+// TaskResponse is the response payload for Task management.
+type MissingTaskResponse struct {
+  Task     *model.Task `json="task"`
+  CourseID int64       `json="course_id"`
+  SheetID  int64       `json="sheet_id"`
+}
+
+// newTaskResponse creates a response from a Task model.
+func newMissingTaskResponse(p *model.MissingTask) *MissingTaskResponse {
+  return &MissingTaskResponse{
+    Task:     p.Task,
+    CourseID: p.CourseID,
+    SheetID:  p.SheetID,
+  }
+}
+
+// Render post-processes a TaskResponse.
+func (body *MissingTaskResponse) Render(w http.ResponseWriter, r *http.Request) error {
+  return nil
+}
+
+// newTaskListResponse creates a response from a list of Task models.
+func newMissingTaskListResponse(Tasks []model.MissingTask) []render.Renderer {
+  // https://stackoverflow.com/a/36463641/7443104
+  list := []render.Renderer{}
+  for k := range Tasks {
+    list = append(list, newMissingTaskResponse(&Tasks[k]))
+  }
+  return list
+}
+
+// .............................................................................
+//
 // IndexHandler is the enpoint for retrieving all Tasks if claim.root is true.
 func (rs *TaskResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 
-  var Tasks []model.Task
+  var tasks []model.Task
   var err error
   // we use middle to detect whether there is a sheet given
   sheet := r.Context().Value("sheet").(*model.Sheet)
-  Tasks, err = rs.Stores.Task.TasksOfSheet(sheet.ID, false)
+  tasks, err = rs.Stores.Task.TasksOfSheet(sheet.ID, false)
 
   // render JSON reponse
-  if err = render.RenderList(w, r, rs.newTaskListResponse(Tasks)); err != nil {
+  if err = render.RenderList(w, r, newTaskListResponse(tasks)); err != nil {
+    render.Render(w, r, ErrRender(err))
+    return
+  }
+}
+
+// MissingIndexHandler is the enpoint for retrieving all task without a submission form the request identity
+// URL : /tasks/missing
+// METHOD: GET
+func (rs *TaskResource) MissingIndexHandler(w http.ResponseWriter, r *http.Request) {
+
+  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+
+  tasks, err := rs.Stores.Task.GetAllMissingTasksForUser(accessClaims.LoginID)
+
+  // TODO empty list
+  if err != nil {
+    render.Render(w, r, ErrBadRequestWithDetails(err))
+    return
+  }
+
+  // render JSON reponse
+  if err = render.RenderList(w, r, newMissingTaskListResponse(tasks)); err != nil {
     render.Render(w, r, ErrRender(err))
     return
   }
@@ -112,7 +167,7 @@ func (rs *TaskResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
   render.Status(r, http.StatusCreated)
 
   // return Task information of created entry
-  if err := render.Render(w, r, rs.newTaskResponse(newTask)); err != nil {
+  if err := render.Render(w, r, newTaskResponse(newTask)); err != nil {
     render.Render(w, r, ErrRender(err))
     return
   }
@@ -125,7 +180,7 @@ func (rs *TaskResource) GetHandler(w http.ResponseWriter, r *http.Request) {
   task := r.Context().Value("task").(*model.Task)
 
   // render JSON reponse
-  if err := render.Render(w, r, rs.newTaskResponse(task)); err != nil {
+  if err := render.Render(w, r, newTaskResponse(task)); err != nil {
     render.Render(w, r, ErrRender(err))
     return
   }
@@ -218,6 +273,47 @@ func (rs *TaskResource) ChangePrivateTestFileHandler(w http.ResponseWriter, r *h
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return
   }
+  render.Status(r, http.StatusOK)
+}
+
+// GetSubmissionResultHandler returns the public submission result information
+// URL: /task/{task_id}/result
+// METHOD: GET
+func (rs *TaskResource) GetSubmissionResultHandler(w http.ResponseWriter, r *http.Request) {
+  givenRole := r.Context().Value("course_role").(authorize.CourseRole)
+
+  if givenRole != authorize.STUDENT {
+    render.Render(w, r, ErrBadRequest)
+    return
+  }
+
+  // `Task` is retrieved via middle-ware
+  task := r.Context().Value("task").(*model.Task)
+  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+
+  submission, err := rs.Stores.Submission.GetByUserAndTask(accessClaims.LoginID, task.ID)
+  if err != nil {
+    render.Render(w, r, ErrNotFound)
+    return
+  }
+
+  grade, err := rs.Stores.Grade.GetForSubmission(submission.ID)
+  if err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
+  // TODO (patwie): does not make sense for TUTOR, ADMIN anyway
+
+  grade.PrivateTestStatus = -1
+  grade.PrivateTestLog = ""
+
+  // render JSON reponse
+  if err := render.Render(w, r, newGradeResponse(grade)); err != nil {
+    render.Render(w, r, ErrRender(err))
+    return
+  }
+
   render.Status(r, http.StatusOK)
 }
 

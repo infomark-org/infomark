@@ -389,6 +389,54 @@ func TestCourse(t *testing.T) {
 
     })
 
+    g.It("Show user enrollement info", func() {
+
+      w := tape.GetWithClaims("/api/v1/courses/1/enrollments/2", 122, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+
+      w = tape.GetWithClaims("/api/v1/courses/1/enrollments/2", 3, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+
+      result := enrollmentResponse{}
+
+      w = tape.GetWithClaims("/api/v1/courses/1/enrollments/2", 1, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+      err := json.NewDecoder(w.Body).Decode(&result)
+      g.Assert(err).Equal(nil)
+      g.Assert(result.User.ID).Equal(int64(2))
+      g.Assert(result.Role).Equal(int64(1))
+
+      w = tape.GetWithClaims("/api/v1/courses/1/enrollments/112", 1, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+      err = json.NewDecoder(w.Body).Decode(&result)
+      g.Assert(err).Equal(nil)
+      g.Assert(result.User.ID).Equal(int64(112))
+      g.Assert(result.Role).Equal(int64(0))
+
+    })
+
+    g.It("Should update role", func() {
+
+      w := tape.PutWithClaims("/api/v1/courses/1/enrollments/112", H{"role": 1}, 112, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+
+      w = tape.PutWithClaims("/api/v1/courses/1/enrollments/112", H{"role": 1}, 3, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+
+      w = tape.PutWithClaims("/api/v1/courses/1/enrollments/112", H{"role": 1}, 1, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      w = tape.GetWithClaims("/api/v1/courses/1/enrollments/112", 1, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      result := enrollmentResponse{}
+      err := json.NewDecoder(w.Body).Decode(&result)
+      g.Assert(err).Equal(nil)
+      g.Assert(result.User.ID).Equal(int64(112))
+      g.Assert(result.Role).Equal(int64(1))
+
+    })
+
     g.It("Permission test", func() {
       url := "/api/v1/courses/1"
 

@@ -53,19 +53,21 @@ type SubmissionResponse struct {
 }
 
 // newSubmissionResponse creates a response from a Submission model.
-func (rs *SubmissionResource) newSubmissionResponse(p *model.Submission) *SubmissionResponse {
-  return &SubmissionResponse{
+func newSubmissionResponse(p *model.Submission) *SubmissionResponse {
+  sr := &SubmissionResponse{
     Submission: p,
     FileURL:    fmt.Sprintf("/api/v1/submissions/%s/file", strconv.FormatInt(p.ID, 10)),
   }
+
+  return sr
 }
 
 // newSubmissionListResponse creates a response from a list of Submission models.
-func (rs *SubmissionResource) newSubmissionListResponse(Submissions []model.Submission) []render.Renderer {
+func newSubmissionListResponse(Submissions []model.Submission) []render.Renderer {
   // https://stackoverflow.com/a/36463641/7443104
   list := []render.Renderer{}
   for k := range Submissions {
-    list = append(list, rs.newSubmissionResponse(&Submissions[k]))
+    list = append(list, newSubmissionResponse(&Submissions[k]))
   }
   return list
 }
@@ -192,7 +194,7 @@ func (rs *SubmissionResource) IndexHandler(w http.ResponseWriter, r *http.Reques
   }
 
   // render JSON reponse
-  if err = render.RenderList(w, r, rs.newSubmissionListResponse(submissions)); err != nil {
+  if err = render.RenderList(w, r, newSubmissionListResponse(submissions)); err != nil {
     render.Render(w, r, ErrRender(err))
     return
   }

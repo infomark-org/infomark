@@ -123,6 +123,8 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
               })
 
               // we handle permission dependent chnages WITHIN this endpoint
+              //
+
               r.Get("/enrollments", appAPI.Course.IndexEnrollmentsHandler)
               r.Delete("/enrollments", appAPI.Course.DisenrollHandler)
 
@@ -136,6 +138,15 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 
               r.Get("/submissions", authorize.EndpointRequiresRole(appAPI.Submission.IndexHandler, authorize.TUTOR))
               r.Get("/grades", authorize.EndpointRequiresRole(appAPI.Grade.IndexHandler, authorize.TUTOR))
+
+              r.Route("/enrollments/{userID}", func(r chi.Router) {
+                r.Use(authorize.RequiresAtLeastCourseRole(authorize.ADMIN))
+
+                r.Use(appAPI.User.Context)
+                r.Get("/", appAPI.Course.GetEnrollmentsHandler)
+                r.Put("/", appAPI.Course.ChangeRole)
+
+              })
 
             })
 
@@ -167,6 +178,9 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
         })
 
         r.Route("/tasks", func(r chi.Router) {
+
+          r.Get("/missing", appAPI.Task.MissingIndexHandler)
+
           r.Route("/{taskID}", func(r chi.Router) {
             r.Use(appAPI.Task.Context)
             r.Use(appAPI.Course.RoleContext)
@@ -183,6 +197,8 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 
             r.Get("/submission", appAPI.Submission.GetFileHandler)
             r.Post("/submission", appAPI.Submission.UploadFileHandler)
+
+            r.Get("/result", appAPI.Task.GetSubmissionResultHandler)
 
             r.Route("/", func(r chi.Router) {
               r.Use(authorize.RequiresAtLeastCourseRole(authorize.ADMIN))
@@ -215,6 +231,21 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
               r.Put("/", appAPI.Group.EditHandler)
               r.Delete("/", appAPI.Group.DeleteHandler)
             })
+          })
+        })
+
+        r.Route("/grades", func(r chi.Router) {
+          // does not require a role
+          r.Get("/missing", appAPI.Grade.IndexMissingHandler)
+          r.Route("/{gradeID}", func(r chi.Router) {
+            r.Use(appAPI.Grade.Context)
+            r.Use(appAPI.Course.RoleContext)
+
+            // ensures user is enrolled in the associated course
+            r.Use(authorize.RequiresAtLeastCourseRole(authorize.TUTOR))
+
+            r.Put("/", appAPI.Grade.EditHandler)
+
           })
         })
 

@@ -80,3 +80,10 @@ func (d *TaskPoints) Validate() error {
 	// just a join and read only
 	return nil
 }
+
+type MissingTask struct {
+	*Task
+
+	SheetID  int64 `json:"sheet_id" db:"sheet_id"`
+	CourseID int64 `json:"course_id" db:"course_id"`
+}

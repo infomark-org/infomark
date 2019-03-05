@@ -39,6 +39,30 @@ func (s *GradeStore) Get(id int64) (*model.Grade, error) {
   return &p, err
 }
 
+func (s *GradeStore) GetForSubmission(id int64) (*model.Grade, error) {
+  p := model.Grade{}
+  err := s.db.Get(&p, "SELECT * FROM grades WHERE submission_id = $1 LIMIT 1;", id)
+  return &p, err
+}
+
+func (s *GradeStore) GetAllMissingGrades(tutorID int64) ([]model.MissingGrade, error) {
+  p := []model.MissingGrade{}
+
+  err := s.db.Select(&p,
+    `
+SELECT g.*, ts.task_id, ts.sheet_id, sg.course_id from grades g
+INNER JOIN submissions s ON s.id = g.submission_id
+INNER JOIN task_sheet ts ON ts.task_id = s.task_id
+INNER JOIN sheet_course sg ON sg.sheet_id = ts.sheet_id
+WHERE g.feedback like '' and tutor_id = $1;
+  `, tutorID)
+  return p, err
+}
+
+func (s *GradeStore) Update(p *model.Grade) error {
+  return Update(s.db, "grades", p.ID, p)
+}
+
 func (s *GradeStore) GetFiltered(
   courseID int64,
   sheetID int64,
@@ -90,6 +114,26 @@ AND ($11 = -1 OR g.execution_state = $11)
     executationState,  // $11
   )
   return p, err
+}
+
+func (s *GradeStore) IdentifyCourseOfGrade(gradeID int64) (*model.Course, error) {
+
+  course := &model.Course{}
+  err := s.db.Get(course,
+    `
+SELECT c.*
+FROM grades g
+INNER JOIN submissions s ON s.id = g.submission_id
+INNER JOIN task_sheet ts ON ts.task_id = s.task_id
+INNER JOIN sheet_course sc ON sc.sheet_id = ts.sheet_id
+INNER JOIN courses c ON sc.course_id = c.id
+WHERE g.id = $1`,
+    gradeID)
+  if err != nil {
+    return nil, err
+  }
+
+  return course, err
 }
 
 // SELECT

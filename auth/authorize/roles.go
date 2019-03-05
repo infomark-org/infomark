@@ -29,10 +29,10 @@ import (
 type CourseRole int32
 
 const (
-  NOCOURSEROLE CourseRole = 0
-  STUDENT      CourseRole = 1
-  TUTOR        CourseRole = 2
-  ADMIN        CourseRole = 3
+  NOCOURSEROLE CourseRole = -1
+  STUDENT      CourseRole = 0
+  TUTOR        CourseRole = 1
+  ADMIN        CourseRole = 2
 )
 
 // RequiresRole middleware restricts access to accounts having role parameter in their jwt claims.

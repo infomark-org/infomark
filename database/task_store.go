@@ -33,6 +33,17 @@ func NewTaskStore(db *sqlx.DB) *TaskStore {
   }
 }
 
+func (s *TaskStore) GetAllMissingTasksForUser(userID int64) ([]model.MissingTask, error) {
+  p := []model.MissingTask{}
+  err := s.db.Select(&p, `
+SELECT t.*, ts.sheet_id, sc.course_id from tasks  t
+INNER JOIN task_sheet ts ON ts.task_id = t.id
+INNER JOIN sheet_course sc ON sc.sheet_id = ts.sheet_id
+WHERE t.id NOT IN (SELECT task_id FROM submissions s WHERE s.user_id = $1);
+    `, userID)
+  return p, err
+}
+
 func (s *TaskStore) Get(taskID int64) (*model.Task, error) {
   p := model.Task{ID: taskID}
   err := s.db.Get(&p, "SELECT * FROM tasks WHERE id = $1 LIMIT 1;", p.ID)

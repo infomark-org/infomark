@@ -59,6 +59,11 @@ func (s *CourseStore) Update(p *model.Course) error {
   return Update(s.db, "courses", p.ID, p)
 }
 
+func (s *CourseStore) UpdateRole(courseID, userID int64, role int) error {
+  _, err := s.db.Exec("UPDATE user_course SET role = $3 WHERE user_ID = $1 AND course_id = $2", userID, courseID, role)
+  return err
+}
+
 func (s *CourseStore) Delete(courseID int64) error {
 
   // we handle the deletion iwth cascade foreign keys.

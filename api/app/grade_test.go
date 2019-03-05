@@ -93,6 +93,77 @@ func TestGrade(t *testing.T) {
       }
     })
 
+    g.It("Should perform updates", func() {
+
+      data := H{
+        "acquired_points": 3,
+        "feedback":        "Lorem Ipsum_update",
+      }
+
+      w := tape.Put("/api/v1/grades/1", data)
+      g.Assert(w.Code).Equal(http.StatusUnauthorized)
+
+      // students
+      w = tape.PutWithClaims("/api/v1/grades/1", data, 112, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+
+      // admin
+      w = tape.PutWithClaims("/api/v1/grades/1", data, 1, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      // tutors
+      w = tape.PutWithClaims("/api/v1/grades/1", data, 3, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      entry_after, err := stores.Grade.Get(1)
+      g.Assert(err).Equal(nil)
+
+      g.Assert(entry_after.Feedback).Equal("Lorem Ipsum_update")
+      g.Assert(entry_after.AcquiredPoints).Equal(3)
+      g.Assert(entry_after.TutorID).Equal(int64(3))
+    })
+
+    g.It("Should list missing grades", func() {
+      result := []MissingGradeResponse{}
+      // students have no missing data
+      // but we do not know if a user is student in a course
+      w := tape.GetWithClaims("/api/v1/grades/missing", 112, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+      err := json.NewDecoder(w.Body).Decode(&result)
+      g.Assert(err).Equal(nil)
+      g.Assert(len(result)).Equal(0)
+
+      // admin (mock creates feed back for all submissions)
+      w = tape.GetWithClaims("/api/v1/grades/missing", 1, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+      err = json.NewDecoder(w.Body).Decode(&result)
+      g.Assert(err).Equal(nil)
+      g.Assert(len(result)).Equal(0)
+
+      // tutors (mock creates feed back for all submissions)
+      w = tape.GetWithClaims("/api/v1/grades/missing", 3, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+      err = json.NewDecoder(w.Body).Decode(&result)
+      g.Assert(err).Equal(nil)
+      g.Assert(len(result)).Equal(0)
+
+      _, err = tape.DB.Exec("UPDATE grades SET feedback='' WHERE tutor_id = 3 ")
+      g.Assert(err).Equal(nil)
+
+      // tutors (mock creates feed back for all submissions)
+      w = tape.GetWithClaims("/api/v1/grades/missing", 3, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+      err = json.NewDecoder(w.Body).Decode(&result)
+      g.Assert(err).Equal(nil)
+      // see mock.py
+      g.Assert(len(result)).Equal(901)
+
+      for _, el := range result {
+        g.Assert(el.TutorID).Equal(int64(3))
+        g.Assert(el.Feedback).Equal("")
+      }
+    })
+
     g.AfterEach(func() {
       tape.AfterEach()
     })

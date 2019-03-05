@@ -308,6 +308,60 @@ func (rs *CourseResource) IndexEnrollmentsHandler(w http.ResponseWriter, r *http
   render.Status(r, http.StatusOK)
 }
 
+// GetEnrollmentsHandler
+// URL /api/v1/course/{course_id}/enrollments/{user_id}
+// METHOD: GET
+func (rs *CourseResource) GetEnrollmentsHandler(w http.ResponseWriter, r *http.Request) {
+  // /courses/1/enrollments?roles=0,1
+  course := r.Context().Value("course").(*model.Course)
+  user := r.Context().Value("user").(*model.User)
+
+  // find role in the course
+  courseRole, err := rs.Stores.Course.RoleInCourse(user.ID, course.ID)
+  if err != nil {
+    render.Render(w, r, ErrBadRequestWithDetails(err))
+    return
+  }
+
+  resp := &enrollmentResponse{
+    Role: int64(courseRole),
+    User: user,
+  }
+
+  // render JSON reponse
+  if err = render.Render(w, r, resp); err != nil {
+    render.Render(w, r, ErrRender(err))
+    return
+  }
+
+  render.Status(r, http.StatusOK)
+}
+
+// ChangeRole
+// URL /api/v1/course/{course_id}/enrollments/{user_id}
+// METHOD: PUT
+func (rs *CourseResource) ChangeRole(w http.ResponseWriter, r *http.Request) {
+  // /courses/1/enrollments?roles=0,1
+
+  course := r.Context().Value("course").(*model.Course)
+  user := r.Context().Value("user").(*model.User)
+
+  data := &changeRoleInCourseRequest{}
+  // parse JSON request into struct
+  if err := render.Bind(r, data); err != nil {
+    render.Render(w, r, ErrBadRequestWithDetails(err))
+    return
+  }
+
+  // update database entry
+  if err := rs.Stores.Course.UpdateRole(course.ID, user.ID, data.Role); err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
+  render.Status(r, http.StatusOK)
+}
+
 // EnrollHandler will enroll the current identity into the given course
 func (rs *CourseResource) EnrollHandler(w http.ResponseWriter, r *http.Request) {
   course := r.Context().Value("course").(*model.Course)

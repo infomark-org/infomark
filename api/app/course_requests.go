@@ -45,3 +45,11 @@ func (body *courseRequest) Bind(r *http.Request) error {
 	return body.Course.Validate()
 
 }
+
+type changeRoleInCourseRequest struct {
+	Role int `json="role`
+}
+
+func (body *changeRoleInCourseRequest) Bind(r *http.Request) error {
+	return nil
+}

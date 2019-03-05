@@ -25,6 +25,7 @@ import (
   "strconv"
 
   "github.com/cgtuebingen/infomark-backend/api/helper"
+  "github.com/cgtuebingen/infomark-backend/auth/authenticate"
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/go-chi/chi"
   "github.com/go-chi/render"
@@ -42,33 +43,122 @@ func NewGradeResource(stores *Stores) *GradeResource {
   }
 }
 
+func ExecutionStateToString(state int) string {
+  switch state {
+  case 0:
+    return "pending"
+  case 1:
+    return "running"
+  case 2:
+    return "finished"
+  default:
+    return "pending"
+  }
+}
+
+func TestStatusToString(state int) string {
+  switch state {
+  case 0:
+    return "passed"
+  case 1:
+    return "failed"
+  default:
+    return "failed"
+  }
+}
+
 // .............................................................................
 
 // GradeResponse is the response payload for Grade management.
 type GradeResponse struct {
   *model.Grade
-}
-
-// newGradeResponse creates a response from a Grade model.
-func (rs *GradeResource) newGradeResponse(p *model.Grade) *GradeResponse {
-  return &GradeResponse{
-    Grade: p,
-  }
-}
-
-// newGradeListResponse creates a response from a list of Grade models.
-func (rs *GradeResource) newGradeListResponse(Grades []model.Grade) []render.Renderer {
-  // https://stackoverflow.com/a/36463641/7443104
-  list := []render.Renderer{}
-  for k := range Grades {
-    list = append(list, rs.newGradeResponse(&Grades[k]))
-  }
-  return list
+  ProtectedExecutionState string `json="execution_state`
+  PublicTestStatus        string `json="public_test_status`
 }
 
 // Render post-processes a GradeResponse.
 func (body *GradeResponse) Render(w http.ResponseWriter, r *http.Request) error {
   return nil
+}
+
+// newGradeResponse creates a response from a Grade model.
+func newGradeResponse(p *model.Grade) *GradeResponse {
+  return &GradeResponse{
+    Grade:                   p,
+    ProtectedExecutionState: ExecutionStateToString(p.ExecutionState),
+    PublicTestStatus:        TestStatusToString(p.PublicTestStatus),
+  }
+}
+
+// newGradeListResponse creates a response from a list of Grade models.
+func newGradeListResponse(Grades []model.Grade) []render.Renderer {
+  // https://stackoverflow.com/a/36463641/7443104
+  list := []render.Renderer{}
+  for k := range Grades {
+    list = append(list, newGradeResponse(&Grades[k]))
+  }
+  return list
+}
+
+// .............................................................................
+
+// GradeResponse is the response payload for Grade management.
+type MissingGradeResponse struct {
+  *model.Grade
+  CourseID int64 `json="course_id"`
+  SheetID  int64 `json="sheet_id"`
+  TaskID   int64 `json="task_id"`
+}
+
+// Render post-processes a MissingGradeResponse.
+func (body *MissingGradeResponse) Render(w http.ResponseWriter, r *http.Request) error {
+  return nil
+}
+
+// newMissingGradeResponse creates a response from a Grade model.
+func newMissingGradeResponse(p *model.MissingGrade) *MissingGradeResponse {
+  return &MissingGradeResponse{
+    Grade:    p.Grade,
+    CourseID: p.CourseID,
+    SheetID:  p.SheetID,
+    TaskID:   p.TaskID,
+  }
+}
+
+// newMissingGradeListResponse creates a response from a list of Grade models.
+func newMissingGradeListResponse(Grades []model.MissingGrade) []render.Renderer {
+  // https://stackoverflow.com/a/36463641/7443104
+  list := []render.Renderer{}
+  for k := range Grades {
+    list = append(list, newMissingGradeResponse(&Grades[k]))
+  }
+  return list
+}
+
+// .............................................................................
+
+// PatchHandler is the endpoint fro updating a specific Sheet with given id.
+func (rs *GradeResource) EditHandler(w http.ResponseWriter, r *http.Request) {
+  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+
+  currentGrade := r.Context().Value("grade").(*model.Grade)
+  data := &GradeRequest{}
+  // parse JSON request into struct
+  if err := render.Bind(r, data); err != nil {
+    render.Render(w, r, ErrBadRequestWithDetails(err))
+    return
+  }
+  currentGrade.Feedback = data.Feedback
+  currentGrade.AcquiredPoints = data.AcquiredPoints
+  currentGrade.TutorID = accessClaims.LoginID
+
+  // update database entry
+  if err := rs.Stores.Grade.Update(currentGrade); err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
+  render.Status(r, http.StatusNoContent)
 }
 
 // GetFileHandler returns the submission file from a given task
@@ -113,7 +203,29 @@ func (rs *GradeResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
   }
 
   // render JSON reponse
-  if err = render.RenderList(w, r, rs.newGradeListResponse(submissions)); err != nil {
+  if err = render.RenderList(w, r, newGradeListResponse(submissions)); err != nil {
+    render.Render(w, r, ErrRender(err))
+    return
+  }
+
+  render.Status(r, http.StatusOK)
+
+}
+
+// IndexMissingHandler the missing grades for the request identity
+// URL: /grades/missing
+// METHOD: GET
+func (rs *GradeResource) IndexMissingHandler(w http.ResponseWriter, r *http.Request) {
+  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+
+  grades, err := rs.Stores.Grade.GetAllMissingGrades(accessClaims.LoginID)
+  if err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
+  // render JSON reponse
+  if err = render.RenderList(w, r, newMissingGradeListResponse(grades)); err != nil {
     render.Render(w, r, ErrRender(err))
     return
   }
@@ -149,6 +261,18 @@ func (rs *GradeResource) Context(next http.Handler) http.Handler {
 
     // serve next
     ctx := context.WithValue(r.Context(), "grade", grade)
+
+    // when there is a gradeID in the url, there is NOT a courseID in the url,
+    // BUT: when there is a grade, there is a course
+
+    course, err := rs.Stores.Grade.IdentifyCourseOfGrade(grade.ID)
+    if err != nil {
+      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+      return
+    }
+
+    ctx = context.WithValue(ctx, "course", course)
+
     next.ServeHTTP(w, r.WithContext(ctx))
   })
 }
