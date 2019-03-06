@@ -29,8 +29,8 @@ import (
 type (
 	// loginRequest is the request for the login process
 	loginRequest struct {
-		Email         string `json:"email" example:"test@uni-tuebingen.de"`
-		PlainPassword string `json:"plain_password" example:"tester"`
+		Email         string `json:"email" example:"test@uni-tuebingen.de" required:"true"`
+		PlainPassword string `json:"plain_password" example:"tester" required:"true"`
 	}
 )
 

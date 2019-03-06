@@ -40,11 +40,60 @@ type accountInfo struct {
 
 // -----------------------------------------------------------------------------
 
-// createUserAccountRequest is the request payload when registering a new user.
-type createUserAccountRequest struct {
-	User    *model.User  `json:"user"`
-	Account *accountInfo `json:"account"`
-}
+type (
+	// createUserAccountRequest is the request payload when registering a new user.
+	// type: object
+	// properties:
+	//   user:
+	//     type: object
+	//     required:
+	//       - id
+	//       - first_name
+	//       - last_name
+	//       - email
+	//       - student_number
+	//       - semester
+	//       - subject
+	//       - language
+	//     properties:
+	//       id:
+	//         type: integer
+	//         format: int64
+	//       first_name:
+	//         type: string
+	//       last_name:
+	//         type: string
+	//       email:
+	//         type: string
+	//         format: email
+	//       student_number:
+	//         type: string
+	//       semester:
+	//         type: integer
+	//         minimum: 1
+	//       subject:
+	//         type: string
+	//       language:
+	//         type: string
+	//         length: 2
+	//         properties:
+	//   account:
+	//     type: object
+	//     properties:
+	//       email:
+	//         type: string
+	//         format: email
+	//       plain_password:
+	//         type: string
+	//         format: password
+	//       required:
+	//         - email
+	//         - plain_password
+	createUserAccountRequest struct {
+		User    *model.User  `json:"user"`
+		Account *accountInfo `json:"account"`
+	}
+)
 
 // Bind preprocesses a createUserAccountRequest.
 func (body *createUserAccountRequest) Bind(r *http.Request) (err error) {

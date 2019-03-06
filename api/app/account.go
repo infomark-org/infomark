@@ -48,57 +48,19 @@ func NewAccountResource(stores *Stores) *AccountResource {
 
 // .............................................................................
 
-// userAccountResponse is the response payload for account management.
-type userAccountResponse struct {
-  User *model.User `json:"user"`
-}
-
-// Render post-processes a userAccountResponse.
-func (u *userAccountResponse) Render(w http.ResponseWriter, r *http.Request) error {
-  // nothing to hide
-  return nil
-}
-
-// newUserAccountResponse creates a response from a user model.
-func newUserAccountResponse(p *model.User) *userAccountResponse {
-  return &userAccountResponse{
-    User: p,
-  }
-}
-
-// userAccountResponse is the response payload for account management.
-type userEnrollmentResponse struct {
-  CourseID int64 `json:"course_id"`
-  Role     int64 `json:"role"`
-}
-
-// Render post-processes a userAccountResponse.
-func (u *userEnrollmentResponse) Render(w http.ResponseWriter, r *http.Request) error {
-  // nothing to hide
-  return nil
-}
-
-// newCourseResponse creates a response from a course model.
-func (rs *AccountResource) newUserEnrollmentResponse(p *model.Enrollment) *userEnrollmentResponse {
-  return &userEnrollmentResponse{
-    CourseID: p.CourseID,
-    Role:     p.Role,
-  }
-}
-
-func (rs *AccountResource) newUserEnrollmentsResponse(enrollments []model.Enrollment) []render.Renderer {
-  // https://stackoverflow.com/a/36463641/7443104
-  list := []render.Renderer{}
-  for k := range enrollments {
-    list = append(list, rs.newUserEnrollmentResponse(&enrollments[k]))
-  }
-
-  return list
-}
-
-// .............................................................................
-
 // Post is the enpoint for creating a new user account.
+// CreateHandler is public endpoint for
+// URL: /account
+// METHOD: post
+// SECTION: account
+// REQUEST: createUserAccountRequest
+// RESPONSE: 201,userAccountCreatedResponse
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  Create a new user account
+// DESCRIPTION:
+// The account will be created and a confirmation email will be sent.
 func (rs *AccountResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
   // start from empty Request
   data := &createUserAccountRequest{}
@@ -122,7 +84,7 @@ func (rs *AccountResource) CreateHandler(w http.ResponseWriter, r *http.Request)
   render.Status(r, http.StatusCreated)
 
   // return user information of created entry
-  if err := render.Render(w, r, newUserAccountResponse(newUser)); err != nil {
+  if err := render.Render(w, r, newUserAccountCreatedResponse(newUser)); err != nil {
     render.Render(w, r, ErrRender(err))
     return
   }
@@ -161,8 +123,19 @@ func sendConfirmEmailForUser(user *model.User) error {
   return nil
 }
 
-// Patch is the endpoint fro updating the specific account from the requesting
-// identity.
+// EditHandler is public endpoint for
+// URL: /account
+// METHOD: patch
+// SECTION: account
+// REQUEST: UserAccountChangeRequest
+// RESPONSE: 204,NoContent
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  Change the account information (email or password)
+// DESCRIPTION:
+// This is the only PATCH endpoint which detects whether the email or plain_password
+// is empty.
 func (rs *AccountResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
@@ -242,7 +215,7 @@ func (rs *AccountResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 
   render.Status(r, http.StatusNoContent)
 
-  if err := render.Render(w, r, newUserAccountResponse(newUser)); err != nil {
+  if err := render.Render(w, r, newUserAccountCreatedResponse(newUser)); err != nil {
     render.Render(w, r, ErrRender(err))
     return
   }

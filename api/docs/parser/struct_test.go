@@ -16,40 +16,46 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package app
+package parser
 
 import (
-	"errors"
-	"net/http"
-
-	"github.com/cgtuebingen/infomark-backend/model"
+  "fmt"
+  "go/ast"
+  "go/parser"
+  "go/token"
+  "testing"
 )
 
-// courseRequest is the request payload for course management.
-type courseRequest struct {
-	*model.Course
-	ProtectedID int64 `json:"id" required:"false"`
-}
+func TestStruct(t *testing.T) {
 
-// Bind preprocesses a courseRequest.
-func (body *courseRequest) Bind(r *http.Request) error {
+  fset := token.NewFileSet() // positions are relative to fset
 
-	if body.Course == nil {
-		return errors.New("missing \"course\" data")
-	}
+  d, err := parser.ParseDir(fset, "./fixture", nil, parser.ParseComments)
+  if err != nil {
+    fmt.Println(err)
+    return
+  }
 
-	// Sending the id via request-body is invalid.
-	// The id should be submitted in the url.
-	body.ProtectedID = 0
+  // gather structs
+  for _, pkg := range d {
+    ast.Inspect(pkg, func(n ast.Node) bool {
+      switch x := n.(type) {
+      case *ast.TypeSpec:
 
-	return body.Course.Validate()
+        result, _ := ParseStruct(x)
+        fmt.Println(result.Name)
 
-}
+        for k, f := range result.Fields {
+          // fmt.Println("type:  ", f.Type, " tag ", f.Tag)
+          fmt.Println("  ", k, f)
+        }
+        // fmt.Println(result.Comments)
+        fmt.Println(parseRequestComments(result.Comments))
 
-type changeRoleInCourseRequest struct {
-	Role int `json:"role"`
-}
+      }
 
-func (body *changeRoleInCourseRequest) Bind(r *http.Request) error {
-	return nil
+      return true
+    })
+  }
+
 }

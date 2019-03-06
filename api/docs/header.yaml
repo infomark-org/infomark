@@ -1,0 +1,56 @@
+openapi: 3.0.0
+
+info:
+  title: "InfoMark"
+  version: "1.0.0"
+  description: >
+    A CI based course framework. All enums should be send as strings and returned as strings.
+    Everything
+  contact:
+    - name: Mark Boss
+      email: mark.boss@uni-tuebingen.de
+      url: https://uni-tuebingen.de
+    - name: Patrick Wieschollek
+      email: Patrick.Wieschollek@uni-tuebingen.de
+      url: https://uni-tuebingen.de
+servers:
+  - url: http://localhost:3000/api/v1
+  - url: http://info-cg.informatik.uni-tuebingen.de/api/v1
+security:
+  - bearerAuth: []
+  - cookieAuth: []
+tags:
+  - name: status
+    description: Server status related requests
+  - name: login
+    description: Login related requests
+  - name: email
+    description: Email related requests
+  - name: user
+    description: User related requests
+  - name: course
+    description: Course related requests
+  - name: sheets
+    description: Exercise sheets related requests
+  - name: tasks
+    description: Exercise tasks related requests
+  - name: submissions
+    description: Submissions related requests
+  - name: grades
+    description: Gradings related requests
+  - name: groups
+    description: Exercise groups related requests
+  - name: enrollments
+    description: Enrollments related requests
+  - name: material
+    description: Exercise material related requests
+  - name: role_tutor
+    description: Endpoints for tutors
+  - name: role_supertutor
+    description: Endpoints for super tutors
+  - name: role_student
+    description: Endpoint for student
+  - name: role_admin
+    description: Endpoint for admin
+  - name: implemented
+    description: All endpoints that are implemented

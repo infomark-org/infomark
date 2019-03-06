@@ -179,7 +179,6 @@ func (rs *CourseResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
   }
 }
 
-// CreateHandler is the enpoint for retrieving all courses if claim.root is true.
 func (rs *CourseResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
   // start from empty Request
   data := &courseRequest{}
