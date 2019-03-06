@@ -26,14 +26,16 @@ import (
 	"github.com/go-ozzo/ozzo-validation/is"
 )
 
-// authRequest is the request whenever a user wants to login
-type authRequest struct {
-	Email         string `json:"email"`
-	PlainPassword string `json:"plain_password"`
-}
+type (
+	// loginRequest is the request for the login process
+	loginRequest struct {
+		Email         string `json:"email" example:"test@uni-tuebingen.de"`
+		PlainPassword string `json:"plain_password" example:"tester"`
+	}
+)
 
-// Bind preprocesses a authRequest.
-func (body *authRequest) Bind(r *http.Request) error {
+// Bind preprocesses a loginRequest.
+func (body *loginRequest) Bind(r *http.Request) error {
 	body.Email = strings.TrimSpace(body.Email)
 	body.Email = strings.ToLower(body.Email)
 

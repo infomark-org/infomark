@@ -67,10 +67,129 @@ func (body *loginResponse) Render(w http.ResponseWriter, r *http.Request) error 
 
 // .............................................................................
 
+// RefreshAccessTokenHandler is public endpoint for
+// URL: /auth/token
+// METHOD: POST
+// REQUEST: loginRequest
+// DESCRIPTION:
+// Login with an email and password to get the generated JWT refresh
+// and access tokens. Alternatively, if the refresh token is already present
+// n the header a new access token is returned.
+func (rs *AuthResource) RefreshAccessTokenHandler(w http.ResponseWriter, r *http.Request) {
+  // Login with your username and password to get the generated JWT refresh and
+  // access tokens. Alternatively, if the refresh token is already present in
+  // the header the access token is returned.
+  // This is a corner case, so we do not rely on middleware here
+
+  // access the underlying JWT functions
+  tokenManager, err := authenticate.NewTokenAuth()
+  if err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
+  // we test wether there is already a JWT Token
+  if authenticate.HasHeaderToken(r) {
+
+    // parse string from header
+    tokenStr := jwtauth.TokenFromHeader(r)
+
+    // ok, there is a token in the header
+    refreshClaims := &authenticate.RefreshClaims{}
+    err := refreshClaims.ParseRefreshClaimsFromToken(tokenStr)
+
+    if err != nil {
+      // something went wrong during getting the claims
+      fmt.Println(err)
+      render.Render(w, r, ErrUnauthorized)
+      return
+    }
+
+    fmt.Println("refreshClaims.LoginID", refreshClaims.LoginID)
+    fmt.Println("refreshClaims.AccessNotRefresh", refreshClaims.AccessNotRefresh)
+
+    // everything ok
+    targetUser, err := rs.Stores.User.Get(refreshClaims.LoginID)
+    if err != nil {
+      render.Render(w, r, ErrNotFound)
+      return
+    }
+
+    // we just need to return an access-token
+    accessToken, err := tokenManager.CreateAccessJWT(authenticate.NewAccessClaims(targetUser.ID, targetUser.Root))
+    if err != nil {
+      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+      return
+    }
+
+    resp := &authResponse{
+      AccessToken: accessToken,
+    }
+
+    // return access token only
+    if err := render.Render(w, r, resp); err != nil {
+      render.Render(w, r, ErrRender(err))
+      return
+    }
+
+  } else {
+
+    // we are given email-password credentials
+    data := &loginRequest{}
+
+    // parse JSON request into struct
+    if err := render.Bind(r, data); err != nil {
+      render.Render(w, r, ErrBadRequestWithDetails(err))
+      return
+    }
+
+    // does such a user exists with request email adress?
+    potentialUser, err := rs.Stores.User.FindByEmail(data.Email)
+    if err != nil {
+      render.Render(w, r, ErrNotFound)
+      return
+    }
+
+    // does the password match?
+    if !auth.CheckPasswordHash(data.PlainPassword, potentialUser.EncryptedPassword) {
+      render.Render(w, r, ErrNotFound)
+      return
+    }
+
+    refreshToken, err := tokenManager.CreateRefreshJWT(authenticate.NewRefreshClaims(potentialUser.ID))
+
+    if err != nil {
+      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+      return
+    }
+
+    accessToken, err := tokenManager.CreateAccessJWT(authenticate.NewAccessClaims(potentialUser.ID, potentialUser.Root))
+
+    if err != nil {
+      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+      return
+    }
+
+    resp := &authResponse{
+      AccessToken:  accessToken,
+      RefreshToken: refreshToken,
+    }
+
+    // return user information of created entry
+    if err := render.Render(w, r, resp); err != nil {
+      render.Render(w, r, ErrRender(err))
+      return
+    }
+
+  }
+
+}
+
+// LoginHandler
 func (rs *AuthResource) LoginHandler(w http.ResponseWriter, r *http.Request) {
   // we are given email-password credentials
 
-  data := &authRequest{}
+  data := &loginRequest{}
 
   // parse JSON request into struct
   if err := render.Bind(r, data); err != nil {
@@ -234,115 +353,4 @@ func (rs *AuthResource) ConfirmEmailHandler(w http.ResponseWriter, r *http.Reque
   }
 
   render.Status(r, http.StatusOK)
-}
-
-// Post is endpoint
-func (rs *AuthResource) RefreshAccessTokenHandler(w http.ResponseWriter, r *http.Request) {
-  // Login with your username and password to get the generated JWT refresh and
-  // access tokens. Alternatively, if the refresh token is already present in
-  // the header the access token is returned.
-  // This is a corner case, so we do not rely on middleware here
-
-  // access the underlying JWT functions
-  tokenManager, err := authenticate.NewTokenAuth()
-  if err != nil {
-    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-    return
-  }
-
-  // we test wether there is already a JWT Token
-  if authenticate.HasHeaderToken(r) {
-
-    // parse string from header
-    tokenStr := jwtauth.TokenFromHeader(r)
-
-    // ok, there is a token in the header
-    refreshClaims := &authenticate.RefreshClaims{}
-    err := refreshClaims.ParseRefreshClaimsFromToken(tokenStr)
-
-    if err != nil {
-      // something went wrong during getting the claims
-      fmt.Println(err)
-      render.Render(w, r, ErrUnauthorized)
-      return
-    }
-
-    fmt.Println("refreshClaims.LoginID", refreshClaims.LoginID)
-    fmt.Println("refreshClaims.AccessNotRefresh", refreshClaims.AccessNotRefresh)
-
-    // everything ok
-    targetUser, err := rs.Stores.User.Get(refreshClaims.LoginID)
-    if err != nil {
-      render.Render(w, r, ErrNotFound)
-      return
-    }
-
-    // we just need to return an access-token
-    accessToken, err := tokenManager.CreateAccessJWT(authenticate.NewAccessClaims(targetUser.ID, targetUser.Root))
-    if err != nil {
-      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-      return
-    }
-
-    resp := &authResponse{
-      AccessToken: accessToken,
-    }
-
-    // return access token only
-    if err := render.Render(w, r, resp); err != nil {
-      render.Render(w, r, ErrRender(err))
-      return
-    }
-
-  } else {
-
-    // we are given email-password credentials
-    data := &authRequest{}
-
-    // parse JSON request into struct
-    if err := render.Bind(r, data); err != nil {
-      render.Render(w, r, ErrBadRequestWithDetails(err))
-      return
-    }
-
-    // does such a user exists with request email adress?
-    potentialUser, err := rs.Stores.User.FindByEmail(data.Email)
-    if err != nil {
-      render.Render(w, r, ErrNotFound)
-      return
-    }
-
-    // does the password match?
-    if !auth.CheckPasswordHash(data.PlainPassword, potentialUser.EncryptedPassword) {
-      render.Render(w, r, ErrNotFound)
-      return
-    }
-
-    refreshToken, err := tokenManager.CreateRefreshJWT(authenticate.NewRefreshClaims(potentialUser.ID))
-
-    if err != nil {
-      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-      return
-    }
-
-    accessToken, err := tokenManager.CreateAccessJWT(authenticate.NewAccessClaims(potentialUser.ID, potentialUser.Root))
-
-    if err != nil {
-      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-      return
-    }
-
-    resp := &authResponse{
-      AccessToken:  accessToken,
-      RefreshToken: refreshToken,
-    }
-
-    // return user information of created entry
-    if err := render.Render(w, r, resp); err != nil {
-      render.Render(w, r, ErrRender(err))
-      return
-    }
-
-  }
-
 }

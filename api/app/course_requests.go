@@ -47,7 +47,7 @@ func (body *courseRequest) Bind(r *http.Request) error {
 }
 
 type changeRoleInCourseRequest struct {
-	Role int `json="role`
+	Role int `json:"role"`
 }
 
 func (body *changeRoleInCourseRequest) Bind(r *http.Request) error {
