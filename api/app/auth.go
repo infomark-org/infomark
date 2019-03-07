@@ -44,11 +44,10 @@ func NewAuthResource(stores *Stores) *AuthResource {
   }
 }
 
-// CreateHandler is public endpoint for
 // RefreshAccessTokenHandler is public endpoint for
 // URL: /auth/token
 // METHOD: post
-// SECTION: account
+// TAG: account
 // REQUEST: loginRequest
 // RESPONSE: 201,authResponse
 // RESPONSE: 400,BadRequest
@@ -168,7 +167,17 @@ func (rs *AuthResource) RefreshAccessTokenHandler(w http.ResponseWriter, r *http
 
 }
 
-// LoginHandler
+// LoginHandler is public endpoint for
+// URL: /auth/sessions
+// METHOD: post
+// TAG: account
+// REQUEST: loginRequest
+// RESPONSE: 200,loginResponse
+// RESPONSE: 400,BadRequest
+// SUMMARY:  Start a session
+// DESCRIPTION:
+// This endpoint will generate the access token without login credentials
+// if the refresh token is given.
 func (rs *AuthResource) LoginHandler(w http.ResponseWriter, r *http.Request) {
   // we are given email-password credentials
 
@@ -222,11 +231,26 @@ func (rs *AuthResource) LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// LogoutHandler is public endpoint for
+// URL: /auth/sessions
+// METHOD: delete
+// TAG: account
+// RESPONSE: 200,OK
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// SUMMARY:  Destroy a session
 func (rs *AuthResource) LogoutHandler(w http.ResponseWriter, r *http.Request) {
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
   accessClaims.DestroyInSession(w, r)
 }
 
+// RequestPasswordResetHandler is public endpoint for
+// URL: /auth/request_password_reset
+// METHOD: post
+// TAG: account
+// RESPONSE: 200,OK
+// RESPONSE: 400,BadRequest
+// SUMMARY:  will send an email with password reset link
 func (rs *AuthResource) RequestPasswordResetHandler(w http.ResponseWriter, r *http.Request) {
   data := &resetPasswordRequest{}
   if err := render.Bind(r, data); err != nil {
@@ -269,6 +293,13 @@ func (rs *AuthResource) RequestPasswordResetHandler(w http.ResponseWriter, r *ht
   render.Status(r, http.StatusOK)
 }
 
+// UpdatePasswordHandler is public endpoint for
+// URL: /auth/update_password
+// METHOD: post
+// TAG: account
+// RESPONSE: 200,OK
+// RESPONSE: 400,BadRequest
+// SUMMARY:  sets a new password
 func (rs *AuthResource) UpdatePasswordHandler(w http.ResponseWriter, r *http.Request) {
   data := &updatePasswordRequest{}
   if err := render.Bind(r, data); err != nil {
@@ -307,6 +338,13 @@ func (rs *AuthResource) UpdatePasswordHandler(w http.ResponseWriter, r *http.Req
   render.Status(r, http.StatusOK)
 }
 
+// ConfirmEmailHandler is public endpoint for
+// URL: /auth/confirm_email
+// METHOD: post
+// TAG: account
+// RESPONSE: 200,OK
+// RESPONSE: 400,BadRequest
+// SUMMARY:  handles the confirmation link and activate an account
 func (rs *AuthResource) ConfirmEmailHandler(w http.ResponseWriter, r *http.Request) {
   data := &confirmEmailRequest{}
   if err := render.Bind(r, data); err != nil {

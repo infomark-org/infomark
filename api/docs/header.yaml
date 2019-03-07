@@ -20,8 +20,8 @@ security:
   - bearerAuth: []
   - cookieAuth: []
 tags:
-  - name: status
-    description: Server status related requests
+  - name: common
+    description: common request
   - name: account
     description: account related requests
   - name: email

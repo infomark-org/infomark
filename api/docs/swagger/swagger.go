@@ -95,7 +95,7 @@ func SwaggerStructs(structDescr *Struct, depth int) {
         if x.X.(*ast.Ident).Name == "time" && x.Sel.Name == "Time" {
           fmt.Printf("%s    type: string\n", pre)
           fmt.Printf("%s    format: date-time\n", pre)
-          fieldDescr.Tag.Required = false
+          fieldDescr.Tag.Required = true
 
           examples[fieldDescr.Tag.Name] = "'2019-07-30T23:59:59Z'"
         }

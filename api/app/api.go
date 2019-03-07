@@ -166,6 +166,7 @@ type API struct {
   Submission *SubmissionResource
   Material   *MaterialResource
   Grade      *GradeResource
+  Common     *CommonResource
 }
 
 type Stores struct {
@@ -210,6 +211,7 @@ func NewAPI(db *sqlx.DB) (*API, error) {
     Submission: NewSubmissionResource(stores),
     Material:   NewMaterialResource(stores),
     Grade:      NewGradeResource(stores),
+    Common:     NewCommonResource(stores),
   }
   return api, nil
 }

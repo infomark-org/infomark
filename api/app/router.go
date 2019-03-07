@@ -74,9 +74,7 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
         r.Post("/auth/update_password", appAPI.Auth.UpdatePasswordHandler)
         r.Post("/auth/confirm_email", appAPI.Auth.ConfirmEmailHandler)
         r.Post("/account", appAPI.Account.CreateHandler)
-        r.Get("/ping", func(w http.ResponseWriter, r *http.Request) {
-          w.Write([]byte("pong"))
-        })
+        r.Get("/ping", appAPI.Common.PingHandler)
       })
 
       // protected routes
