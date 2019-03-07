@@ -22,8 +22,8 @@ security:
 tags:
   - name: status
     description: Server status related requests
-  - name: login
-    description: Login related requests
+  - name: account
+    description: account related requests
   - name: email
     description: Email related requests
   - name: user

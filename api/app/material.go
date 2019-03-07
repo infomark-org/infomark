@@ -41,36 +41,6 @@ func NewMaterialResource(stores *Stores) *MaterialResource {
   }
 }
 
-// .............................................................................
-
-// MaterialResponse is the response payload for Material management.
-type MaterialResponse struct {
-  *model.Material
-}
-
-// newMaterialResponse creates a response from a Material model.
-func (rs *MaterialResource) newMaterialResponse(p *model.Material) *MaterialResponse {
-  return &MaterialResponse{
-    Material: p,
-  }
-}
-
-// newMaterialListResponse creates a response from a list of Material models.
-func (rs *MaterialResource) newMaterialListResponse(Materials []model.Material) []render.Renderer {
-  // https://stackoverflow.com/a/36463641/7443104
-  list := []render.Renderer{}
-  for k := range Materials {
-    list = append(list, rs.newMaterialResponse(&Materials[k]))
-  }
-
-  return list
-}
-
-// Render post-processes a MaterialResponse.
-func (body *MaterialResponse) Render(w http.ResponseWriter, r *http.Request) error {
-  return nil
-}
-
 // IndexHandler is the enpoint for retrieving all Materials if claim.root is true.
 func (rs *MaterialResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 
@@ -107,8 +77,16 @@ func (rs *MaterialResource) CreateHandler(w http.ResponseWriter, r *http.Request
     return
   }
 
+  material := &model.Material{
+    Name:      data.Name,
+    Kind:      data.Kind,
+    Filename:  data.Filename,
+    PublishAt: data.PublishAt,
+    LectureAt: data.LectureAt,
+  }
+
   // create Material entry in database
-  newMaterial, err := rs.Stores.Material.Create(data.Material, course.ID)
+  newMaterial, err := rs.Stores.Material.Create(material, course.ID)
   if err != nil {
     render.Render(w, r, ErrRender(err))
     return
@@ -141,9 +119,7 @@ func (rs *MaterialResource) GetHandler(w http.ResponseWriter, r *http.Request) {
 // PatchHandler is the endpoint fro updating a specific Material with given id.
 func (rs *MaterialResource) EditHandler(w http.ResponseWriter, r *http.Request) {
   // start from empty Request
-  data := &MaterialRequest{
-    Material: r.Context().Value("material").(*model.Material),
-  }
+  data := &MaterialRequest{}
 
   // parse JSON request into struct
   if err := render.Bind(r, data); err != nil {
@@ -151,8 +127,16 @@ func (rs *MaterialResource) EditHandler(w http.ResponseWriter, r *http.Request) 
     return
   }
 
+  material := r.Context().Value("material").(*model.Material)
+
+  material.Name = data.Name
+  material.Kind = data.Kind
+  material.Filename = data.Filename
+  material.PublishAt = data.PublishAt
+  material.LectureAt = data.LectureAt
+
   // update database entry
-  if err := rs.Stores.Material.Update(data.Material); err != nil {
+  if err := rs.Stores.Material.Update(material); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return
   }

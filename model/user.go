@@ -20,80 +20,32 @@ package model
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
-	validation "github.com/go-ozzo/ozzo-validation"
-	"github.com/go-ozzo/ozzo-validation/is"
 	null "gopkg.in/guregu/null.v3"
 )
 
 // User holds specific application settings linked to an entity, who can login.
 type User struct {
-	ID        int64     `json:"id" db:"id"`
-	CreatedAt time.Time `json:"-" db:"created_at,omitempty"`
-	UpdatedAt time.Time `json:"-" db:"updated_at,omitempty"`
+	ID        int64     `db:"id"`
+	CreatedAt time.Time `db:"created_at,omitempty"`
+	UpdatedAt time.Time `db:"updated_at,omitempty"`
 
-	FirstName     string      `json:"first_name" db:"first_name"`
-	LastName      string      `json:"last_name" db:"last_name"`
-	AvatarURL     null.String `json:"avatar_url,omitempty" db:"avatar_url"`
-	Email         string      `json:"email" db:"email"`
-	StudentNumber string      `json:"student_number" db:"student_number"`
-	Semester      int         `json:"semester" db:"semester"`
-	Subject       string      `json:"subject" db:"subject"`
-	Language      string      `json:"language" db:"language"`
+	FirstName     string      `db:"first_name"`
+	LastName      string      `db:"last_name"`
+	AvatarURL     null.String `db:"avatar_url"`
+	Email         string      `db:"email"`
+	StudentNumber string      `db:"student_number"`
+	Semester      int         `db:"semester"`
+	Subject       string      `db:"subject"`
+	Language      string      `db:"language"`
 
-	EncryptedPassword  string      `json:"-" db:"encrypted_password"`
-	ResetPasswordToken null.String `json:"-" db:"reset_password_token"`
-	ConfirmEmailToken  null.String `json:"-" db:"confirm_email_token"`
-	Root               bool        `json:"-" db:"root"`
+	EncryptedPassword  string      `db:"encrypted_password"`
+	ResetPasswordToken null.String `db:"reset_password_token"`
+	ConfirmEmailToken  null.String `db:"confirm_email_token"`
+	Root               bool        `db:"root"`
 }
 
 func (m *User) FullName() string {
 	return fmt.Sprintf("%s %s", m.FirstName, m.LastName)
-}
-
-func (m *User) Validate() error {
-
-	m.FirstName = strings.TrimSpace(m.FirstName)
-	m.LastName = strings.TrimSpace(m.LastName)
-
-	m.Email = strings.TrimSpace(m.Email)
-	m.Email = strings.ToLower(m.Email)
-
-	return validation.ValidateStruct(m,
-		validation.Field(
-			&m.FirstName,
-			validation.Required,
-		),
-		validation.Field(
-			&m.LastName,
-			validation.Required,
-		),
-		validation.Field(
-			&m.Email,
-			validation.Required,
-			is.Email,
-		),
-		validation.Field(
-			&m.StudentNumber,
-			validation.Required,
-		),
-		validation.Field(
-			&m.Semester,
-			validation.Required,
-			validation.Min(1),
-		),
-		validation.Field(
-			&m.Subject,
-			validation.Required,
-		),
-
-		validation.Field(
-			&m.Language,
-			validation.Required,
-			validation.Length(2, 2),
-		),
-	)
-
 }

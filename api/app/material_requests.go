@@ -21,26 +21,54 @@ package app
 import (
 	"errors"
 	"net/http"
+	"time"
 
-	"github.com/cgtuebingen/infomark-backend/model"
+	validation "github.com/go-ozzo/ozzo-validation"
 )
 
 // MaterialRequest is the request payload for Material management.
 type MaterialRequest struct {
-	*model.Material
-	ProtectedID int64 `json:"id"`
+	Name      string    `json:"name"`
+	Kind      int       `json:"kind"`
+	Filename  string    `json:"filename"`
+	PublishAt time.Time `json:"publish_at"`
+	LectureAt time.Time `json:"lecture_at"`
 }
 
 // Bind preprocesses a MaterialRequest.
 func (body *MaterialRequest) Bind(r *http.Request) error {
 
-	if body.Material == nil {
+	if body == nil {
 		return errors.New("missing \"materials\" data")
 	}
 
-	// Sending the id via request-body is invalid.
-	// The id should be submitted in the url.
-	body.ProtectedID = 0
+	return body.Validate()
+}
 
-	return body.Material.Validate()
+// Validate validates a `Material` object.
+func (m *MaterialRequest) Validate() error {
+	return validation.ValidateStruct(m,
+		validation.Field(
+			&m.Name,
+			validation.Required,
+		),
+		validation.Field(
+			&m.Filename,
+			validation.Required,
+		),
+		validation.Field(
+			&m.PublishAt,
+			validation.Required,
+		),
+		validation.Field(
+			&m.LectureAt,
+			validation.Required,
+		),
+		validation.Field(
+			&m.Kind,
+			// validation.Required,
+			validation.Min(0),
+			validation.Max(1),
+		),
+	)
 }

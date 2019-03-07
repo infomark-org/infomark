@@ -16,29 +16,27 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package model
+package app
 
 import (
-	"time"
+	"net/http"
 )
 
-type Sheet struct {
-	ID        int64     `json:"id" db:"id"`
-	CreatedAt time.Time `json:"-" db:"created_at,omitempty"`
-	UpdatedAt time.Time `json:"-" db:"updated_at,omitempty"`
-
-	Name      string    `json:"name" db:"name"`
-	PublishAt time.Time `json:"publish_at" db:"publish_at"`
-	DueAt     time.Time `json:"due_at" db:"due_at"`
+type authResponse struct {
+	AccessToken  string `json:"access_token" example:"eyJhbGciOiJIUzI1...rZikwLEI7XhY"`
+	RefreshToken string `json:"refresh_token" example:"eyJhbGciOiJIUzI1...EYCBjslOydswU"`
 }
 
-type SheetPoints struct {
-	AquiredPoints int `json:"acquired_points" db:"acquired_points"`
-	MaxPoints     int `json:"max_points" db:"max_points"`
-	SheetID       int `json:"sheet_id" db:"sheet_id"`
+func (body *authResponse) Render(w http.ResponseWriter, r *http.Request) error {
+	return nil
 }
 
-func (d *SheetPoints) Validate() error {
-	// just a join and read only
+// .............................................................................
+type loginResponse struct {
+	Root bool `json:"root" example:"false"`
+}
+
+func (body *loginResponse) Render(w http.ResponseWriter, r *http.Request) error {
+	// nothing to hide
 	return nil
 }

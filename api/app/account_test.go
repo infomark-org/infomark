@@ -30,7 +30,6 @@ import (
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/franela/goblin"
   "github.com/spf13/viper"
-  null "gopkg.in/guregu/null.v3"
 )
 
 func TestAccount(t *testing.T) {
@@ -120,26 +119,23 @@ func TestAccount(t *testing.T) {
       min_len := viper.GetInt("min_password_length")
       ok_password := auth.GenerateToken(min_len)
 
-      user_sent := model.User{
-        ID:            300,                            // should be ignored
-        AvatarURL:     null.StringFrom("forgery.jpg"), // should be ignored
-        FirstName:     "Max  ",                        // contains whitespaces
-        LastName:      "  Mustermensch",               // contains whitespaces
-        Email:         "max@Mensch.com  ",             // contains uppercase
-        StudentNumber: "0815",
-        Semester:      2,
-        Subject:       "bio2",
-        Language:      "de",
+      request := H{
+        "user": H{
+          "first_name":     "Max  ",
+          "last_name":      "  Mustermensch",   // contains whitespaces
+          "email":          "max@Mensch.com  ", // contains uppercase
+          "student_number": "0815",
+          "semester":       2,
+          "subject":        "bio2",
+          "language":       "de",
+        },
+        "account": H{
+          "email":          "max@Mensch.com  ",
+          "plain_password": ok_password,
+        },
       }
 
-      w := tape.Post("/api/v1/account",
-        H{
-          "account": H{
-            "email":          user_sent.Email,
-            "plain_password": ok_password,
-          },
-          "user": helper.ToH(user_sent),
-        })
+      w := tape.Post("/api/v1/account", request)
       g.Assert(w.Code).Equal(http.StatusCreated)
 
       user_after, err := stores.User.FindByEmail("max@mensch.com")
@@ -148,10 +144,10 @@ func TestAccount(t *testing.T) {
       g.Assert(user_after.FirstName).Equal("Max")
       g.Assert(user_after.LastName).Equal("Mustermensch")
       g.Assert(user_after.Email).Equal("max@mensch.com")
-      g.Assert(user_after.StudentNumber).Equal(user_sent.StudentNumber)
-      g.Assert(user_after.Semester).Equal(user_sent.Semester)
-      g.Assert(user_after.Subject).Equal(user_sent.Subject)
-      g.Assert(user_after.Language).Equal(user_sent.Language)
+      g.Assert(user_after.StudentNumber).Equal("0815")
+      g.Assert(user_after.Semester).Equal(2)
+      g.Assert(user_after.Subject).Equal("bio2")
+      g.Assert(user_after.Language).Equal("de")
 
       g.Assert(user_after.ConfirmEmailToken.Valid).Equal(true)
       g.Assert(user_after.ResetPasswordToken.Valid).Equal(false)
@@ -279,8 +275,8 @@ func TestAccount(t *testing.T) {
       w := tape.GetWithClaims("/api/v1/account", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      user_return := model.User{}
-      err := json.NewDecoder(w.Body).Decode(&user_return)
+      user_return := &userResponse{}
+      err := json.NewDecoder(w.Body).Decode(user_return)
       g.Assert(err).Equal(nil)
       g.Assert(user_return.AvatarURL.Valid).Equal(false)
 
@@ -321,8 +317,8 @@ func TestAccount(t *testing.T) {
       w = tape.GetWithClaims("/api/v1/account", 1, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      user_return := model.User{}
-      err = json.NewDecoder(w.Body).Decode(&user_return)
+      user_return := &userResponse{}
+      err = json.NewDecoder(w.Body).Decode(user_return)
       g.Assert(err).Equal(nil)
       g.Assert(user_return.AvatarURL.Valid).Equal(true)
 

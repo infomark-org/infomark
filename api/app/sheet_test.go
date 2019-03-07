@@ -193,7 +193,7 @@ func TestSheet(t *testing.T) {
 
     g.It("Should perform updates", func() {
 
-      sheet_sent := model.Sheet{
+      sheet_sent := SheetRequest{
         Name:      "Sheet_update",
         PublishAt: helper.Time(time.Now()),
         DueAt:     helper.Time(time.Now()),

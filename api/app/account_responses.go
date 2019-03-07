@@ -23,53 +23,21 @@ import (
 
 	"github.com/cgtuebingen/infomark-backend/model"
 	"github.com/go-chi/render"
+	null "gopkg.in/guregu/null.v3"
 )
 
-type (
-	// userAccountCreatedResponse is the response payload for account management.
-	// description: Account has been created.
-	// content:
-	//   application/json:
-	//     schema:
-	//       type: object
-	//       required:
-	//         - id
-	//         - first_name
-	//         - last_name
-	//         - email
-	//         - student_number
-	//         - semester
-	//         - subject
-	//         - language
-	//       properties:
-	//         id:
-	//           type: integer
-	//           format: int64
-	//         first_name:
-	//           type: string
-	//         last_name:
-	//           type: string
-	//         avatar_url:
-	//           type: string
-	//           format: uri
-	//         email:
-	//           type: string
-	//           format: email
-	//         student_number:
-	//           type: string
-	//         semester:
-	//           type: integer
-	//           minimum: 1
-	//         subject:
-	//           type: string
-	//         language:
-	//           type: string
-	//           length: 2
-	//           properties:
-	userAccountCreatedResponse struct {
-		*model.User
-	}
-)
+type userAccountCreatedResponse struct {
+	ID            int64       `json:"id"`
+	FirstName     string      `json:"first_name"`
+	LastName      string      `json:"last_name"`
+	AvatarURL     null.String `json:"avatar_url"`
+	Email         string      `json:"email"`
+	StudentNumber string      `json:"student_number"`
+	Semester      int         `json:"semester"`
+	Subject       string      `json:"subject"`
+	Language      string      `json:"language"`
+	Root          bool        `json:"root"`
+}
 
 // Render post-processes a userAccountCreatedResponse.
 func (u *userAccountCreatedResponse) Render(w http.ResponseWriter, r *http.Request) error {
@@ -80,7 +48,16 @@ func (u *userAccountCreatedResponse) Render(w http.ResponseWriter, r *http.Reque
 // newUserAccountCreatedResponse creates a response from a user model.
 func newUserAccountCreatedResponse(p *model.User) *userAccountCreatedResponse {
 	return &userAccountCreatedResponse{
-		User: p,
+		ID:            p.ID,
+		FirstName:     p.FirstName,
+		LastName:      p.LastName,
+		AvatarURL:     p.AvatarURL,
+		Email:         p.Email,
+		StudentNumber: p.StudentNumber,
+		Semester:      p.Semester,
+		Subject:       p.Subject,
+		Language:      p.Language,
+		Root:          p.Root,
 	}
 }
 

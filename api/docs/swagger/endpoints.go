@@ -1,6 +1,26 @@
-package parser
+// InfoMark - a platform for managing courses with
+//            distributing exercise sheets and testing exercise submissions
+// Copyright (C) 2019  ComputerGraphics Tuebingen
+// Authors: Patrick Wieschollek
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+package swagger
 
 import (
+    "errors"
+    "fmt"
     "go/ast"
     "strconv"
     "strings"
@@ -24,6 +44,17 @@ func ParseResponse(source string) (*Response, error) {
 
 }
 
+func ParseParameter(source string) (*Parameter, error) {
+    tmp := strings.Split(source, ",")
+    if len(tmp) != 2 {
+        return nil, errors.New(fmt.Sprintf("error in \"%s\"", source))
+    }
+    stringName := strings.TrimSpace(tmp[0])
+    stringType := strings.TrimSpace(tmp[1])
+
+    return &Parameter{Name: stringName, Type: stringType}, nil
+}
+
 type Endpoint struct {
     Node     ast.Node
     Info     *ast.FuncDecl
@@ -31,11 +62,18 @@ type Endpoint struct {
     Details  EndpointDetails
 }
 
+type Parameter struct {
+    Name string
+    Type string
+}
+
 type EndpointDetails struct {
     URL         string
     Method      string
+    URLParams   []*Parameter
+    QueryParams []*Parameter
     Request     string
-    Section     string
+    Tags        []string
     Responses   []*Response
     Description string
     Summary     string
@@ -56,36 +94,50 @@ func parseComments(group *ast.CommentGroup) EndpointDetails {
     for k, el := range group.List {
         if el != nil {
             // fmt.Println(el.Text)
-            if strings.Contains(el.Text, "METHOD") {
+            if strings.Contains(el.Text, "METHOD:") {
                 tmp := strings.Split(el.Text, ":")
                 descrp.Method = strings.TrimSpace(tmp[1])
             }
-            if strings.Contains(el.Text, "URL") {
+            if strings.Contains(el.Text, "URL:") {
                 tmp := strings.Split(el.Text, ":")
                 descrp.URL = strings.TrimSpace(tmp[1])
             }
-            if strings.Contains(el.Text, "REQUEST") {
+            if strings.Contains(el.Text, "REQUEST:") {
                 tmp := strings.Split(el.Text, ":")
                 descrp.Request = strings.TrimSpace(tmp[1])
             }
-            if strings.Contains(el.Text, "SECTION") {
+            if strings.Contains(el.Text, "TAG:") {
                 tmp := strings.Split(el.Text, ":")
-                descrp.Section = strings.TrimSpace(tmp[1])
+
+                descrp.Tags = append(descrp.Tags, strings.TrimSpace(tmp[1]))
             }
-            if strings.Contains(el.Text, "SUMMARY") {
+            if strings.Contains(el.Text, "SUMMARY:") {
                 tmp := strings.Split(el.Text, ":")
                 descrp.Summary = strings.TrimSpace(tmp[1])
             }
-            if strings.Contains(el.Text, "RESPONSE") {
+            if strings.Contains(el.Text, "RESPONSE:") {
                 tmp := strings.Split(el.Text, ":")
                 resp, err := ParseResponse(tmp[1])
                 if err == nil {
                     // descrp.Responses = append(descrp.Responses, strings.TrimSpace(tmp[1]))
                     descrp.Responses = append(descrp.Responses, resp)
-
                 }
             }
-            if strings.Contains(el.Text, "DESCRIPTION") {
+            if strings.Contains(el.Text, "URLPARAM:") {
+                tmp := strings.Split(el.Text, ":")
+                resp, err := ParseParameter(tmp[1])
+                if err == nil {
+                    descrp.URLParams = append(descrp.URLParams, resp)
+                }
+            }
+            if strings.Contains(el.Text, "QUERYPARAM:") {
+                tmp := strings.Split(el.Text, ":")
+                resp, err := ParseParameter(tmp[1])
+                if err == nil {
+                    descrp.QueryParams = append(descrp.QueryParams, resp)
+                }
+            }
+            if strings.Contains(el.Text, "DESCRIPTION:") {
                 descrStart = k + 1
                 break
             }

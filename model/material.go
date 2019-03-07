@@ -20,47 +20,17 @@ package model
 
 import (
 	"time"
-
-	validation "github.com/go-ozzo/ozzo-validation"
 )
 
 // Material are elements in a course like slides, additional code examples, ...
 type Material struct {
-	ID        int64     `json:"id" db:"id"`
-	CreatedAt time.Time `json:"-" db:"created_at,omitempty"`
-	UpdatedAt time.Time `json:"-" db:"updated_at,omitempty"`
+	ID        int64     `db:"id"`
+	CreatedAt time.Time `db:"created_at,omitempty"`
+	UpdatedAt time.Time `db:"updated_at,omitempty"`
 
-	Name      string    `json:"name" db:"name"`
-	Filename  string    `json:"filename" db:"filename"` // we keep the original name, since it is meaningful
-	Kind      int       `json:"kind" db:"kind"`
-	PublishAt time.Time `json:"publish_at" db:"publish_at"`
-	LectureAt time.Time `json:"lecture_at" db:"lecture_at"`
-}
-
-// Validate validates a `Material` object.
-func (m *Material) Validate() error {
-	return validation.ValidateStruct(m,
-		validation.Field(
-			&m.Name,
-			validation.Required,
-		),
-		validation.Field(
-			&m.Filename,
-			validation.Required,
-		),
-		validation.Field(
-			&m.PublishAt,
-			validation.Required,
-		),
-		validation.Field(
-			&m.LectureAt,
-			validation.Required,
-		),
-		validation.Field(
-			&m.Kind,
-			// validation.Required,
-			validation.Min(0),
-			validation.Max(1),
-		),
-	)
+	Name      string    `db:"name"`
+	Filename  string    `db:"filename"` // we keep the original name, since it is meaningful
+	Kind      int       `db:"kind"`
+	PublishAt time.Time `db:"publish_at"`
+	LectureAt time.Time `db:"lecture_at"`
 }

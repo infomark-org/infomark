@@ -73,7 +73,7 @@ func (body *GroupResponse) Render(w http.ResponseWriter, r *http.Request) error 
 }
 
 type GroupBidResponse struct {
-  Bid int `json:"bid`
+  Bid int `json:"bid"`
 }
 
 // Render post-processes a GroupResponse.

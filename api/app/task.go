@@ -74,9 +74,9 @@ func newTaskListResponse(Tasks []model.Task) []render.Renderer {
 
 // TaskResponse is the response payload for Task management.
 type MissingTaskResponse struct {
-  Task     *model.Task `json="task"`
-  CourseID int64       `json="course_id"`
-  SheetID  int64       `json="sheet_id"`
+  Task     *model.Task `json:"task"`
+  CourseID int64       `json:"course_id"`
+  SheetID  int64       `json:"sheet_id"`
 }
 
 // newTaskResponse creates a response from a Task model.

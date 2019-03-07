@@ -44,37 +44,20 @@ func NewAuthResource(stores *Stores) *AuthResource {
   }
 }
 
-// .............................................................................
-
-type authResponse struct {
-  AccessToken  string `json:"access_token,omitempty"`
-  RefreshToken string `json:"refresh_token,omitempty"`
-}
-
-func (body *authResponse) Render(w http.ResponseWriter, r *http.Request) error {
-  return nil
-}
-
-// .............................................................................
-type loginResponse struct {
-  Root bool `json:"root"`
-}
-
-func (body *loginResponse) Render(w http.ResponseWriter, r *http.Request) error {
-  // nothing to hide
-  return nil
-}
-
-// .............................................................................
-
+// CreateHandler is public endpoint for
 // RefreshAccessTokenHandler is public endpoint for
 // URL: /auth/token
-// METHOD: POST
+// METHOD: post
+// SECTION: account
 // REQUEST: loginRequest
+// RESPONSE: 201,authResponse
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  Refresh or Generate Access token
 // DESCRIPTION:
-// Login with an email and password to get the generated JWT refresh
-// and access tokens. Alternatively, if the refresh token is already present
-// n the header a new access token is returned.
+// This endpoint will generate the access token without login credentials
+// if the refresh token is given.
 func (rs *AuthResource) RefreshAccessTokenHandler(w http.ResponseWriter, r *http.Request) {
   // Login with your username and password to get the generated JWT refresh and
   // access tokens. Alternatively, if the refresh token is already present in

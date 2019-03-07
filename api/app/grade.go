@@ -43,101 +43,18 @@ func NewGradeResource(stores *Stores) *GradeResource {
   }
 }
 
-func ExecutionStateToString(state int) string {
-  switch state {
-  case 0:
-    return "pending"
-  case 1:
-    return "running"
-  case 2:
-    return "finished"
-  default:
-    return "pending"
-  }
-}
-
-func TestStatusToString(state int) string {
-  switch state {
-  case 0:
-    return "passed"
-  case 1:
-    return "failed"
-  default:
-    return "failed"
-  }
-}
-
-// .............................................................................
-
-// GradeResponse is the response payload for Grade management.
-type GradeResponse struct {
-  *model.Grade
-  ProtectedExecutionState string `json="execution_state`
-  PublicTestStatus        string `json="public_test_status`
-}
-
-// Render post-processes a GradeResponse.
-func (body *GradeResponse) Render(w http.ResponseWriter, r *http.Request) error {
-  return nil
-}
-
-// newGradeResponse creates a response from a Grade model.
-func newGradeResponse(p *model.Grade) *GradeResponse {
-  return &GradeResponse{
-    Grade:                   p,
-    ProtectedExecutionState: ExecutionStateToString(p.ExecutionState),
-    PublicTestStatus:        TestStatusToString(p.PublicTestStatus),
-  }
-}
-
-// newGradeListResponse creates a response from a list of Grade models.
-func newGradeListResponse(Grades []model.Grade) []render.Renderer {
-  // https://stackoverflow.com/a/36463641/7443104
-  list := []render.Renderer{}
-  for k := range Grades {
-    list = append(list, newGradeResponse(&Grades[k]))
-  }
-  return list
-}
-
-// .............................................................................
-
-// GradeResponse is the response payload for Grade management.
-type MissingGradeResponse struct {
-  *model.Grade
-  CourseID int64 `json="course_id"`
-  SheetID  int64 `json="sheet_id"`
-  TaskID   int64 `json="task_id"`
-}
-
-// Render post-processes a MissingGradeResponse.
-func (body *MissingGradeResponse) Render(w http.ResponseWriter, r *http.Request) error {
-  return nil
-}
-
-// newMissingGradeResponse creates a response from a Grade model.
-func newMissingGradeResponse(p *model.MissingGrade) *MissingGradeResponse {
-  return &MissingGradeResponse{
-    Grade:    p.Grade,
-    CourseID: p.CourseID,
-    SheetID:  p.SheetID,
-    TaskID:   p.TaskID,
-  }
-}
-
-// newMissingGradeListResponse creates a response from a list of Grade models.
-func newMissingGradeListResponse(Grades []model.MissingGrade) []render.Renderer {
-  // https://stackoverflow.com/a/36463641/7443104
-  list := []render.Renderer{}
-  for k := range Grades {
-    list = append(list, newMissingGradeResponse(&Grades[k]))
-  }
-  return list
-}
-
-// .............................................................................
-
-// PatchHandler is the endpoint fro updating a specific Sheet with given id.
+// EditHandler is public endpoint for
+// RefreshAccessTokenHandler is public endpoint for
+// URL: /grades/{grade_id}
+// URLPARAM: grade_id,integer
+// METHOD: put
+// SECTION: grade
+// REQUEST: GradeRequest
+// RESPONSE: 204,NoContent
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  Refresh or Generate Access token
 func (rs *GradeResource) EditHandler(w http.ResponseWriter, r *http.Request) {
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
 
@@ -164,6 +81,26 @@ func (rs *GradeResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 // GetFileHandler returns the submission file from a given task
 // URL: /submissions?sheet_id=?&task_id=?&group_id=?&user_id=?
 // METHOD: GET
+// IndexHandler is public endpoint for
+// URL: /courses/{course_id}/grades
+// URLPARAM: course_id,integer
+// QUERYPARAM: sheet_id,integer
+// QUERYPARAM: task_id,integer
+// QUERYPARAM: group_id,integer
+// QUERYPARAM: user_id,integer
+// QUERYPARAM: tutor_id,integer
+// QUERYPARAM: feedback,string
+// QUERYPARAM: acquired_points,integer
+// QUERYPARAM: public_test_status,integer
+// QUERYPARAM: private_test_status,integer
+// QUERYPARAM: execution_state,integer
+// METHOD: get
+// TAG: grades
+// RESPONSE: 200,GradeResponseList
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  Query grades in a course
 func (rs *GradeResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
   course := r.Context().Value("course").(*model.Course)
 
@@ -178,7 +115,7 @@ func (rs *GradeResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 
   filterUserID := helper.Int64FromUrl(r, "user_id", 0)
   filterTutorID := helper.Int64FromUrl(r, "tutor_id", 0)
-  filterFeedback := helper.StringFromUrl(r, "execution_state", "%%")
+  filterFeedback := helper.StringFromUrl(r, "feedback", "%%")
   filterAcquiredPoints := helper.IntFromUrl(r, "acquired_points", -1)
   filterPublicTestStatus := helper.IntFromUrl(r, "public_test_status", 0)
   filterPrivateTestStatus := helper.IntFromUrl(r, "private_test_status", 0)

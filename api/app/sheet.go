@@ -42,37 +42,18 @@ func NewSheetResource(stores *Stores) *SheetResource {
   }
 }
 
-// .............................................................................
-
-// SheetResponse is the response payload for Sheet management.
-type SheetResponse struct {
-  *model.Sheet
-}
-
-// newSheetResponse creates a response from a Sheet model.
-func (rs *SheetResource) newSheetResponse(p *model.Sheet) *SheetResponse {
-  return &SheetResponse{
-    Sheet: p,
-  }
-}
-
-// newSheetListResponse creates a response from a list of Sheet models.
-func (rs *SheetResource) newSheetListResponse(Sheets []model.Sheet) []render.Renderer {
-  // https://stackoverflow.com/a/36463641/7443104
-  list := []render.Renderer{}
-  for k := range Sheets {
-    list = append(list, rs.newSheetResponse(&Sheets[k]))
-  }
-
-  return list
-}
-
-// Render post-processes a SheetResponse.
-func (body *SheetResponse) Render(w http.ResponseWriter, r *http.Request) error {
-  return nil
-}
-
-// IndexHandler is the enpoint for retrieving all Sheets if claim.root is true.
+// IndexHandler is public endpoint for
+// URL: /courses/{course_id}/sheets
+// URLPARAM: course_id,integer
+// METHOD: get
+// TAG: sheets
+// RESPONSE: 200,SheetResponseList
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  get all sheets in course
+// DESCRIPTION:
+// The sheets are ordered by their names
 func (rs *SheetResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 
   var sheets []model.Sheet
@@ -89,31 +70,17 @@ func (rs *SheetResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
   }
 }
 
-type TaskPointsResponse struct {
-  TaskPoints *model.TaskPoints `json:"task_points"`
-}
-
-func (body *TaskPointsResponse) Render(w http.ResponseWriter, r *http.Request) error {
-  return nil
-}
-
-func newTaskPointsResponse(p *model.TaskPoints) *TaskPointsResponse {
-  return &TaskPointsResponse{
-    TaskPoints: p,
-  }
-}
-
-// newCourseListResponse creates a response from a list of course models.
-func newTaskPointsListResponse(collection []model.TaskPoints) []render.Renderer {
-  list := []render.Renderer{}
-  for k := range collection {
-    list = append(list, newTaskPointsResponse(&collection[k]))
-  }
-
-  return list
-}
-
-// CreateHandler is the enpoint for retrieving all Sheets if claim.root is true.
+// CreateHandler is public endpoint for
+// URL: /courses/{course_id}/sheets
+// URLPARAM: course_id,integer
+// METHOD: post
+// TAG: sheets
+// REQUEST: SheetRequest
+// RESPONSE: 204,SheetResponse
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  create a new sheet
 func (rs *SheetResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
 
   course := r.Context().Value("course").(*model.Course)
@@ -127,8 +94,14 @@ func (rs *SheetResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
     return
   }
 
+  sheet := &model.Sheet{
+    Name:      data.Name,
+    PublishAt: data.PublishAt,
+    DueAt:     data.DueAt,
+  }
+
   // create Sheet entry in database
-  newSheet, err := rs.Stores.Sheet.Create(data.Sheet, course.ID)
+  newSheet, err := rs.Stores.Sheet.Create(sheet, course.ID)
   if err != nil {
     render.Render(w, r, ErrRender(err))
     return
@@ -144,7 +117,16 @@ func (rs *SheetResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// GetHandler is the enpoint for retrieving a specific Sheet.
+// GetHandler is public endpoint for
+// URL: /sheets/{sheet_id}
+// URLPARAM: sheet_id,integer
+// METHOD: get
+// TAG: sheets
+// RESPONSE: 200,SheetResponse
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  get a specific sheet
 func (rs *SheetResource) GetHandler(w http.ResponseWriter, r *http.Request) {
   // `Sheet` is retrieved via middle-ware
   Sheet := r.Context().Value("sheet").(*model.Sheet)
@@ -158,12 +140,22 @@ func (rs *SheetResource) GetHandler(w http.ResponseWriter, r *http.Request) {
   render.Status(r, http.StatusOK)
 }
 
-// PatchHandler is the endpoint fro updating a specific Sheet with given id.
+// EditHandler is public endpoint for
+// URL: /sheets/{sheet_id}
+// URLPARAM: sheet_id,integer
+// METHOD: put
+// TAG: sheets
+// REQUEST: SheetRequest
+// RESPONSE: 200,SheetResponse
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  get a specific sheet
 func (rs *SheetResource) EditHandler(w http.ResponseWriter, r *http.Request) {
+  sheet := r.Context().Value("sheet").(*model.Sheet)
+
   // start from empty Request
-  data := &SheetRequest{
-    Sheet: r.Context().Value("sheet").(*model.Sheet),
-  }
+  data := &SheetRequest{}
 
   // parse JSON request into struct
   if err := render.Bind(r, data); err != nil {
@@ -171,8 +163,12 @@ func (rs *SheetResource) EditHandler(w http.ResponseWriter, r *http.Request) {
     return
   }
 
+  sheet.Name = data.Name
+  sheet.PublishAt = data.PublishAt
+  sheet.DueAt = data.DueAt
+
   // update database entry
-  if err := rs.Stores.Sheet.Update(data.Sheet); err != nil {
+  if err := rs.Stores.Sheet.Update(sheet); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return
   }
@@ -180,6 +176,16 @@ func (rs *SheetResource) EditHandler(w http.ResponseWriter, r *http.Request) {
   render.Status(r, http.StatusNoContent)
 }
 
+// EditHandler is public endpoint for
+// URL: /sheets/{sheet_id}
+// URLPARAM: sheet_id,integer
+// METHOD: delete
+// TAG: sheets
+// RESPONSE: 204,NoContent
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  delete a specific sheet
 func (rs *SheetResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
   Sheet := r.Context().Value("sheet").(*model.Sheet)
 
@@ -192,6 +198,16 @@ func (rs *SheetResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
   render.Status(r, http.StatusNoContent)
 }
 
+// GetFileHandler is public endpoint for
+// URL: /sheets/{sheet_id}/file
+// URLPARAM: sheet_id,integer
+// METHOD: get
+// TAG: sheets
+// RESPONSE: 200,ZipFile
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  get the zip file of a sheet
 func (rs *SheetResource) GetFileHandler(w http.ResponseWriter, r *http.Request) {
 
   sheet := r.Context().Value("sheet").(*model.Sheet)
@@ -207,6 +223,17 @@ func (rs *SheetResource) GetFileHandler(w http.ResponseWriter, r *http.Request) 
   }
 }
 
+// GetFileHandler is public endpoint for
+// URL: /sheets/{sheet_id}/file
+// URLPARAM: sheet_id,integer
+// METHOD: put
+// TAG: sheets
+// REQUEST: zipfile
+// RESPONSE: 204,NoContent
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  change the zip file of a sheet
 func (rs *SheetResource) ChangeFileHandler(w http.ResponseWriter, r *http.Request) {
   // will always be a POST
   sheet := r.Context().Value("sheet").(*model.Sheet)

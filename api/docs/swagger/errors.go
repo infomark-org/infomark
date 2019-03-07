@@ -16,46 +16,16 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package parser
+package swagger
 
-import (
-  "fmt"
-  "go/ast"
-  "go/parser"
-  "go/token"
-  "testing"
+import "errors"
+
+var (
+	errTagSyntax      = errors.New("bad syntax for struct tag pair")
+	errTagKeySyntax   = errors.New("bad syntax for struct tag key")
+	errTagValueSyntax = errors.New("bad syntax for struct tag value")
+
+	errKeyNotSet      = errors.New("tag key does not exist")
+	errTagNotExist    = errors.New("tag does not exist")
+	errTagKeyMismatch = errors.New("mismatch between key and tag.key")
 )
-
-func TestStruct(t *testing.T) {
-
-  fset := token.NewFileSet() // positions are relative to fset
-
-  d, err := parser.ParseDir(fset, "./fixture", nil, parser.ParseComments)
-  if err != nil {
-    fmt.Println(err)
-    return
-  }
-
-  // gather structs
-  for _, pkg := range d {
-    ast.Inspect(pkg, func(n ast.Node) bool {
-      switch x := n.(type) {
-      case *ast.TypeSpec:
-
-        result, _ := ParseStruct(x)
-        fmt.Println(result.Name)
-
-        for k, f := range result.Fields {
-          // fmt.Println("type:  ", f.Type, " tag ", f.Tag)
-          fmt.Println("  ", k, f)
-        }
-        // fmt.Println(result.Comments)
-        fmt.Println(parseRequestComments(result.Comments))
-
-      }
-
-      return true
-    })
-  }
-
-}

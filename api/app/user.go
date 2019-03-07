@@ -45,38 +45,14 @@ func NewUserResource(stores *Stores) *UserResource {
 
 // .............................................................................
 
-// userResponse is the response payload for user management.
-type userResponse struct {
-  *model.User
-}
-
-// newUserResponse creates a response from a user model.
-func newUserResponse(p *model.User) *userResponse {
-  return &userResponse{
-    User: p,
-  }
-}
-
-// newUserListResponse creates a response from a list of user models.
-func newUserListResponse(users []model.User) []render.Renderer {
-  // https://stackoverflow.com/a/36463641/7443104
-  list := []render.Renderer{}
-  for k := range users {
-    list = append(list, newUserResponse(&users[k]))
-  }
-
-  return list
-}
-
-// Render post-processes a userResponse.
-func (u *userResponse) Render(w http.ResponseWriter, r *http.Request) error {
-  // nothing to hide
-  return nil
-}
-
-// .............................................................................
-
-// Index is the enpoint for retrieving all users if claim.root is true.
+// IndexHandler is public endpoint for
+// URL: /users
+// METHOD: get
+// TAG: user
+// RESPONSE: 200,userResponseList
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// SUMMARY:  Get own user details (requires root)
 func (rs *UserResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
@@ -96,7 +72,14 @@ func (rs *UserResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
   }
 }
 
-// Get is the enpoint for retrieving a specific user.
+// GetHandler is public endpoint for
+// URL: /me
+// METHOD: get
+// TAG: user
+// RESPONSE: 200,userResponse
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// SUMMARY:  Get own user details
 func (rs *UserResource) GetMeHandler(w http.ResponseWriter, r *http.Request) {
   // `user` is retrieved via middle-ware
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
@@ -114,7 +97,15 @@ func (rs *UserResource) GetMeHandler(w http.ResponseWriter, r *http.Request) {
   }
 }
 
-// Get is the enpoint for retrieving a specific user.
+// GetHandler is public endpoint for
+// URL: /users/{user_id}
+// URLPARAM: user_id,integer
+// METHOD: get
+// TAG: user
+// RESPONSE: 200,userResponse
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// SUMMARY:  Get user details
 func (rs *UserResource) GetHandler(w http.ResponseWriter, r *http.Request) {
   // `user` is retrieved via middle-ware
   user := r.Context().Value("user").(*model.User)
@@ -135,18 +126,20 @@ func (rs *UserResource) GetHandler(w http.ResponseWriter, r *http.Request) {
   }
 }
 
-// Patch is the endpoint fro updating a specific user with given id.
+// EditMeHandler is public endpoint for
+// URL: /me
+// METHOD: put
+// TAG: user
+// REQUEST: userMeRequest
+// RESPONSE: 204,NoContent
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// SUMMARY:  updating a the user record of the request identity
 func (rs *UserResource) EditMeHandler(w http.ResponseWriter, r *http.Request) {
 
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
 
-  // user is not allowed to change all entries, we use the database entry as a starting point
-  startUser, err := rs.Stores.User.Get(accessClaims.LoginID)
-  if err != nil {
-    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-    return
-  }
-  data := &userMeRequest{User: startUser}
+  data := &userMeRequest{}
 
   // parse JSON request into struct
   if err := render.Bind(r, data); err != nil {
@@ -154,16 +147,23 @@ func (rs *UserResource) EditMeHandler(w http.ResponseWriter, r *http.Request) {
     return
   }
 
-  // validate final model
-  if err := data.User.Validate(); err != nil {
-    render.Render(w, r, ErrBadRequestWithDetails(err))
+  // user is not allowed to change all entries, we use the database entry as a starting point
+  user, err := rs.Stores.User.Get(accessClaims.LoginID)
+  if err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return
   }
 
-  data.User.ID = accessClaims.LoginID
+  user.FirstName = data.FirstName
+  user.LastName = data.LastName
+  // no email update here
+  user.StudentNumber = data.StudentNumber
+  user.Semester = data.Semester
+  user.Subject = data.Subject
+  user.Language = data.Language
 
   // update database entry
-  if err := rs.Stores.User.Update(data.User); err != nil {
+  if err := rs.Stores.User.Update(user); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return
   }
@@ -171,7 +171,16 @@ func (rs *UserResource) EditMeHandler(w http.ResponseWriter, r *http.Request) {
   render.Status(r, http.StatusNoContent)
 }
 
-// Patch is the endpoint fro updating a specific user with given id.
+// EditMeHandler is public endpoint for
+// URL: /users/{user_id}
+// URLPARAM: user_id,integer
+// METHOD: put
+// TAG: user
+// REQUEST: userRequest
+// RESPONSE: 204,NoContent
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// SUMMARY:  updating a specific user with given id.
 func (rs *UserResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
@@ -181,8 +190,7 @@ func (rs *UserResource) EditHandler(w http.ResponseWriter, r *http.Request) {
     return
   }
 
-  // startUser := r.Context().Value("user").(*model.User)
-  data := &userRequest{User: r.Context().Value("user").(*model.User)}
+  data := &userRequest{}
 
   // parse JSON request into struct
   if err := render.Bind(r, data); err != nil {
@@ -190,10 +198,20 @@ func (rs *UserResource) EditHandler(w http.ResponseWriter, r *http.Request) {
     return
   }
 
+  user := r.Context().Value("user").(*model.User)
+
+  user.FirstName = data.FirstName
+  user.LastName = data.LastName
+  user.Email = data.Email
+  user.StudentNumber = data.StudentNumber
+  user.Semester = data.Semester
+  user.Subject = data.Subject
+  user.Language = data.Language
+
   // all identities allowed to this endpoint are allowed to change the password
   if data.PlainPassword != "" {
     var err error
-    data.User.EncryptedPassword, err = auth.HashPassword(data.PlainPassword)
+    user.EncryptedPassword, err = auth.HashPassword(data.PlainPassword)
     if err != nil {
       render.Render(w, r, ErrInternalServerErrorWithDetails(err))
       return
@@ -201,7 +219,7 @@ func (rs *UserResource) EditHandler(w http.ResponseWriter, r *http.Request) {
   }
 
   // update database entry
-  if err := rs.Stores.User.Update(data.User); err != nil {
+  if err := rs.Stores.User.Update(user); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return
   }
@@ -209,7 +227,16 @@ func (rs *UserResource) EditHandler(w http.ResponseWriter, r *http.Request) {
   render.Status(r, http.StatusNoContent)
 }
 
-// Patch is the endpoint fro updating a specific user with given id.
+// SendEmailHandler is public endpoint for
+// URL: /users/{user_id}/emails
+// URLPARAM: user_id,integer
+// METHOD: post
+// TAG: user
+// REQUEST: EmailRequest
+// RESPONSE: 200,OK
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// SUMMARY:  send email to a specific user
 func (rs *UserResource) SendEmailHandler(w http.ResponseWriter, r *http.Request) {
 
   user := r.Context().Value("user").(*model.User)

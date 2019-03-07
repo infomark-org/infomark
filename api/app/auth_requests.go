@@ -26,13 +26,11 @@ import (
 	"github.com/go-ozzo/ozzo-validation/is"
 )
 
-type (
-	// loginRequest is the request for the login process
-	loginRequest struct {
-		Email         string `json:"email" example:"test@uni-tuebingen.de" required:"true"`
-		PlainPassword string `json:"plain_password" example:"tester" required:"true"`
-	}
-)
+// loginRequest is the request for the login process
+type loginRequest struct {
+	Email         string `json:"email" example:"test@uni-tuebingen.de"`
+	PlainPassword string `json:"plain_password" example:"test"`
+}
 
 // Bind preprocesses a loginRequest.
 func (body *loginRequest) Bind(r *http.Request) error {
@@ -49,7 +47,7 @@ func (body *loginRequest) Bind(r *http.Request) error {
 // resetPasswordRequest is the request whenever a user forgot his password and wants
 // to receive an email with a new one.
 type resetPasswordRequest struct {
-	Email string `json:"email"`
+	Email string `json:"email" example:"test@uni-tuebingen.de"`
 }
 
 func (body *resetPasswordRequest) Bind(r *http.Request) error {
@@ -63,9 +61,9 @@ func (body *resetPasswordRequest) Bind(r *http.Request) error {
 
 // -----------------------------------------------------------------------------
 type updatePasswordRequest struct {
-	Email              string `json:"email"`
-	ResetPasswordToken string `json:"reset_password_token"`
-	PlainPassword      string `json:"plain_password"`
+	Email              string `json:"email" example:"test@uni-tuebingen.de"`
+	ResetPasswordToken string `json:"reset_password_token" example:"SDFOI34FZH4HUFH"`
+	PlainPassword      string `json:"plain_password" example:"test"`
 }
 
 func (body *updatePasswordRequest) Bind(r *http.Request) error {
@@ -81,8 +79,8 @@ func (body *updatePasswordRequest) Bind(r *http.Request) error {
 
 // -----------------------------------------------------------------------------
 type confirmEmailRequest struct {
-	Email             string `json:"email"`
-	ConfirmEmailToken string `json:"confirmation_token"`
+	Email             string `json:"email" example:"test@uni-tuebingen.de"`
+	ConfirmEmailToken string `json:"confirmation_token" example:"SDFOI34FZH4HUFH"`
 }
 
 func (body *confirmEmailRequest) Bind(r *http.Request) error {

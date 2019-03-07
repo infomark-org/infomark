@@ -4,8 +4,9 @@ import (
     "fmt"
     "go/parser"
     "go/token"
+    "strings"
 
-    myparser "github.com/cgtuebingen/infomark-backend/api/docs/parser"
+    "github.com/cgtuebingen/infomark-backend/api/docs/swagger"
 )
 
 // Main docs
@@ -13,15 +14,12 @@ func main() {
 
     fset := token.NewFileSet() // positions are relative to fset
 
-    // pkg, err := parser.ParseDir(fset, "./parser/fixture", nil, parser.ParseComments)
-    pkg, err := parser.ParseDir(fset, "../app", nil, parser.ParseComments)
+    pkgs, err := parser.ParseDir(fset, "../app", nil, parser.ParseComments)
     if err != nil {
         panic(err)
     }
 
-    requests := myparser.GetRequestStructs(pkg)
-    responses := myparser.GetResponseStructs(pkg)
-    endpoints := myparser.GetEndpoints(pkg)
+    endpoints := swagger.GetEndpoints(pkgs)
 
     fmt.Printf("components:\n")
     fmt.Printf("  securitySchemes:\n")
@@ -34,16 +32,36 @@ func main() {
     fmt.Printf("        in: cookie\n")
     fmt.Printf("        name: SESSIONID\n")
     fmt.Printf("  schemas:\n")
-    for _, request := range requests {
-        if request.Comments != nil {
-            fmt.Printf("    %s:\n", request.Name)
-            schema, err := myparser.GetRequestSchema(request.Comments)
-            if err == nil {
-                fmt.Println(myparser.IdentString(schema, 6))
-            }
-        }
-    }
+    fmt.Printf("    Error:\n")
+    fmt.Printf("      type: object\n")
+    fmt.Printf("      properties:\n")
+    fmt.Printf("        code:\n")
+    fmt.Printf("          type: string\n")
+    fmt.Printf("        message:\n")
+    fmt.Printf("          type: string\n")
+    fmt.Printf("      required:\n")
+    fmt.Printf("        - code\n")
+    fmt.Printf("        - message\n")
+
+    swagger.SwaggerStructsWithSuffix(pkgs, "Request", 4)
+    swagger.SwaggerStructsWithSuffix(pkgs, "Response", 4)
     fmt.Printf("  responses:\n")
+    fmt.Printf("    ZipFile:\n")
+    fmt.Printf("      description: A file as a download.\n")
+    fmt.Printf("      content:\n")
+    fmt.Printf("        application/zip:\n")
+    fmt.Printf("          schema:\n")
+    fmt.Printf("            type: string\n")
+    fmt.Printf("            format: binary\n")
+    fmt.Printf("    ImageFile:\n")
+    fmt.Printf("      description: A file as a download.\n")
+    fmt.Printf("      content:\n")
+    fmt.Printf("        image/jpeg:\n")
+    fmt.Printf("          schema:\n")
+    fmt.Printf("            type: string\n")
+    fmt.Printf("            format: binary\n")
+    fmt.Printf("    OK:\n")
+    fmt.Printf("      description: Post successfully delivered.\n")
     fmt.Printf("    NoContent:\n")
     fmt.Printf("      description: Update was successful.\n")
     fmt.Printf("    BadRequest:\n")
@@ -65,14 +83,27 @@ func main() {
     fmt.Printf("          schema:\n")
     fmt.Printf("            $ref: \"#/components/schemas/Error\"\n")
 
-    for _, response := range responses {
-        if response.Comments != nil {
-            fmt.Printf("    %s:\n", response.Name)
-            schema, err := myparser.GetResponseSchema(response.Comments)
-            if err == nil {
-                fmt.Println(myparser.IdentString(schema, 6))
-            }
+    // create all responses
+    swagger.SwaggerResponsesWithSuffix(pkgs, "Response", 4)
 
+    // create all list responses
+    pre := strings.Repeat(" ", 4)
+    for url, _ := range endpoints {
+        for _, action := range endpoints[url] {
+            for _, r := range action.Details.Responses {
+                text := strings.TrimSpace(r.Text)
+                if strings.HasSuffix(text, "List") {
+                    fmt.Printf("%s%s:\n", pre, text)
+                    fmt.Printf("%s  description: done\n", pre)
+                    fmt.Printf("%s  content:\n", pre)
+                    fmt.Printf("%s    application/json:\n", pre)
+                    fmt.Printf("%s      schema:\n", pre)
+                    fmt.Printf("%s        type: array\n", pre)
+                    fmt.Printf("%s        items:\n", pre)
+                    fmt.Printf("%s          $ref: \"#/components/schemas/%s\"\n", pre, text[:len(text)-4])
+                }
+
+            }
         }
     }
 
@@ -84,26 +115,81 @@ func main() {
 
             fmt.Printf("    %s:\n", action.Details.Method)
             fmt.Printf("      summary: %s\n", action.Details.Summary)
-            fmt.Printf("      description: >\n      %s\n", action.Details.Description)
+            if action.Details.Description != "" {
+                fmt.Printf("      description: >\n      %s\n", action.Details.Description)
+            }
+            if len(action.Details.Tags) > 0 {
+                fmt.Printf("      tags: \n\n")
+                for _, tag := range action.Details.Tags {
+
+                    fmt.Printf("        - %s\n", tag)
+                }
+            }
+            if len(action.Details.URLParams)+len(action.Details.QueryParams) > 0 {
+                fmt.Printf("      parameters:\n")
+                for _, el := range action.Details.URLParams {
+                    fmt.Printf("        - in: path\n")
+                    fmt.Printf("          name: %s\n", el.Name)
+                    fmt.Printf("          schema: \n")
+                    fmt.Printf("             type: %s\n", el.Type)
+                    fmt.Printf("          required: true \n")
+                }
+
+                for _, el := range action.Details.QueryParams {
+                    fmt.Printf("        - in: query\n")
+                    fmt.Printf("          name: %s\n", el.Name)
+                    fmt.Printf("          schema: \n")
+                    fmt.Printf("             type: %s\n", el.Type)
+                    fmt.Printf("          required: false \n")
+                }
+            }
+
             if action.Details.Request != "" {
                 fmt.Printf("      requestBody:\n")
                 fmt.Printf("        required: true\n")
-                fmt.Printf("        content:\n")
-                fmt.Printf("          application/json:\n")
-                fmt.Printf("            schema:\n")
-                fmt.Printf("              $ref: \"#/components/schemas/%s\"\n", action.Details.Request)
+
+                switch action.Details.Request {
+                case "zipfile":
+                    fmt.Printf("        content:\n")
+                    fmt.Printf("          multipart/form-data:\n")
+                    fmt.Printf("            schema:\n")
+                    fmt.Printf("              type: object\n")
+                    fmt.Printf("              properties:\n")
+                    fmt.Printf("                file_data:\n")
+                    fmt.Printf("                  type: string\n")
+                    fmt.Printf("                  format: binary\n")
+                    fmt.Printf("            encoding:\n")
+                    fmt.Printf("              file_data:\n")
+                    fmt.Printf("                contentType: application/zip\n")
+                case "imagefile":
+                    fmt.Printf("        content:\n")
+                    fmt.Printf("          multipart/form-data:\n")
+                    fmt.Printf("            schema:\n")
+                    fmt.Printf("              type: object\n")
+                    fmt.Printf("              properties:\n")
+                    fmt.Printf("                file_data:\n")
+                    fmt.Printf("                  type: string\n")
+                    fmt.Printf("                  format: binary\n")
+                    fmt.Printf("            encoding:\n")
+                    fmt.Printf("              file_data:\n")
+                    fmt.Printf("                contentType: image/jpeg\n")
+                default:
+                    fmt.Printf("        content:\n")
+                    fmt.Printf("          application/json:\n")
+                    fmt.Printf("            schema:\n")
+                    fmt.Printf("              $ref: \"#/components/schemas/%s\"\n", action.Details.Request)
+                }
+
             }
             fmt.Printf("      responses:\n")
             for _, r := range action.Details.Responses {
+
                 fmt.Printf("        \"%v\":\n", r.Code)
                 fmt.Printf("          $ref: \"#/components/responses/%s\"\n", r.Text)
+
             }
         }
 
-        // fmt.Println("  Method      ", endpoint.Details.Method)
-        // fmt.Println("  Section     ", endpoint.Details.Section)
-        // fmt.Println("  Request     ", endpoint.Details.Request)
-        // fmt.Println("  Description ", endpoint.Details.Description)
     }
 
 }

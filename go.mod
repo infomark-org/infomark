@@ -5,6 +5,7 @@ require (
 	github.com/DATA-DOG/go-txdb v0.1.2
 	github.com/alexedwards/scs v1.4.0
 	github.com/asaskevich/govalidator v0.0.0-20180720115003-f9ffefc3facf // indirect
+	github.com/davecgh/go-spew v1.1.1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/franela/goblin v0.0.0-20181003173013-ead4ad1d2727
 	github.com/go-chi/chi v4.0.0+incompatible

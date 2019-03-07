@@ -46,15 +46,12 @@ func NewAccountResource(stores *Stores) *AccountResource {
   }
 }
 
-// .............................................................................
-
-// Post is the enpoint for creating a new user account.
 // CreateHandler is public endpoint for
 // URL: /account
 // METHOD: post
-// SECTION: account
+// TAG: account
 // REQUEST: createUserAccountRequest
-// RESPONSE: 201,userAccountCreatedResponse
+// RESPONSE: 201,userResponse
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
 // RESPONSE: 403,Unauthorized
@@ -71,11 +68,21 @@ func (rs *AccountResource) CreateHandler(w http.ResponseWriter, r *http.Request)
     return
   }
 
-  // we will ask the user to confirm their email address
-  data.User.ConfirmEmailToken = null.StringFrom(auth.GenerateToken(32))
+  user := &model.User{
+    FirstName:         data.User.FirstName,
+    LastName:          data.User.LastName,
+    Email:             data.User.Email,
+    StudentNumber:     data.User.StudentNumber,
+    Semester:          data.User.Semester,
+    Subject:           data.User.Subject,
+    Language:          data.User.Language,
+    ConfirmEmailToken: null.StringFrom(auth.GenerateToken(32)), // we will ask the user to confirm their email address
+    EncryptedPassword: data.Account.EncryptedPassword,
+    Root:              false,
+  }
 
   // create user entry in database
-  newUser, err := rs.Stores.User.Create(data.User)
+  newUser, err := rs.Stores.User.Create(user)
   if err != nil {
     render.Render(w, r, ErrRender(err))
     return
@@ -84,7 +91,7 @@ func (rs *AccountResource) CreateHandler(w http.ResponseWriter, r *http.Request)
   render.Status(r, http.StatusCreated)
 
   // return user information of created entry
-  if err := render.Render(w, r, newUserAccountCreatedResponse(newUser)); err != nil {
+  if err := render.Render(w, r, newUserResponse(newUser)); err != nil {
     render.Render(w, r, ErrRender(err))
     return
   }
@@ -126,22 +133,21 @@ func sendConfirmEmailForUser(user *model.User) error {
 // EditHandler is public endpoint for
 // URL: /account
 // METHOD: patch
-// SECTION: account
-// REQUEST: UserAccountChangeRequest
+// TAG: account
+// REQUEST: accountRequest
 // RESPONSE: 204,NoContent
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
-// RESPONSE: 403,Unauthorized
-// SUMMARY:  Change the account information (email or password)
+// SUMMARY:  Updates email or password
 // DESCRIPTION:
-// This is the only PATCH endpoint which detects whether the email or plain_password
-// is empty.
+// This is the only endpoint having PATCH as the backend automatically will only
+// update fields which are non-empty.
 func (rs *AccountResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
 
   // make a backup of old data
-  oldUser, err := rs.Stores.User.Get(accessClaims.LoginID)
+  user, err := rs.Stores.User.Get(accessClaims.LoginID)
   if err != nil {
     render.Render(w, r, ErrNotFound)
     return
@@ -163,50 +169,37 @@ func (rs *AccountResource) EditHandler(w http.ResponseWriter, r *http.Request) {
   }
 
   // does the submitted old password match with the current active password?
-  if !auth.CheckPasswordHash(data.OldPlainPassword, oldUser.EncryptedPassword) {
+  if !auth.CheckPasswordHash(data.OldPlainPassword, user.EncryptedPassword) {
     render.Render(w, r, ErrBadRequestWithDetails(errors.New("credentials are wrong")))
-    return
-  }
-
-  // we require the user-part with at least one value
-  if data.Account == nil {
-    render.Render(w, r, ErrBadRequestWithDetails(errors.New("account data in request is missing")))
     return
   }
 
   emailHasChanged := false
   if data.Account.Email != "" {
-    emailHasChanged = data.Account.Email != oldUser.Email
+    emailHasChanged = data.Account.Email != user.Email
   }
   // emailHasChanged := data.Account.Email != oldUser.Email
   passwordHasChanged := data.Account.PlainPassword != ""
 
-  // we gonna alter this struct
-  newUser, err := rs.Stores.User.Get(accessClaims.LoginID)
-  if err != nil {
-    render.Render(w, r, ErrNotFound)
-    return
-  }
-
   // make sure email is valid
   if emailHasChanged {
     // we will ask the user to confirm their email address
-    newUser.ConfirmEmailToken = null.StringFrom(auth.GenerateToken(32))
-    newUser.Email = data.Account.Email
+    user.ConfirmEmailToken = null.StringFrom(auth.GenerateToken(32))
+    user.Email = data.Account.Email
   }
 
   if passwordHasChanged {
-    newUser.EncryptedPassword = data.Account.EncryptedPassword
+    user.EncryptedPassword = data.Account.EncryptedPassword
   }
 
-  if err := rs.Stores.User.Update(newUser); err != nil {
+  if err := rs.Stores.User.Update(user); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return
   }
 
   // make sure email is valid
   if emailHasChanged {
-    err = sendConfirmEmailForUser(newUser)
+    err = sendConfirmEmailForUser(user)
     if err != nil {
       render.Render(w, r, ErrInternalServerErrorWithDetails(err))
       return
@@ -215,15 +208,22 @@ func (rs *AccountResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 
   render.Status(r, http.StatusNoContent)
 
-  if err := render.Render(w, r, newUserAccountCreatedResponse(newUser)); err != nil {
+  if err := render.Render(w, r, newUserAccountCreatedResponse(user)); err != nil {
     render.Render(w, r, ErrRender(err))
     return
   }
 
 }
 
-// Get is the endpoint for retrieving the specific user account from the requesting
-// identity.
+// GetHandler is public endpoint for
+// URL: /account
+// METHOD: get
+// TAG: account
+// REQUEST: accountRequest
+// RESPONSE: 204,NoContent
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// SUMMARY:  Retrieve the specific user account from the requesting identity.
 func (rs *AccountResource) GetHandler(w http.ResponseWriter, r *http.Request) {
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
   user, err := rs.Stores.User.Get(accessClaims.LoginID)

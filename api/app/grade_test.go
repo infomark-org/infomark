@@ -159,8 +159,8 @@ func TestGrade(t *testing.T) {
       g.Assert(len(result)).Equal(901)
 
       for _, el := range result {
-        g.Assert(el.TutorID).Equal(int64(3))
-        g.Assert(el.Feedback).Equal("")
+        g.Assert(el.Grade.TutorID).Equal(int64(3))
+        g.Assert(el.Grade.Feedback).Equal("")
       }
     })
 

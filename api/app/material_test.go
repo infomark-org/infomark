@@ -27,7 +27,6 @@ import (
 
   "github.com/cgtuebingen/infomark-backend/api/helper"
   "github.com/cgtuebingen/infomark-backend/email"
-  "github.com/cgtuebingen/infomark-backend/model"
   "github.com/franela/goblin"
   "github.com/spf13/viper"
 )
@@ -61,7 +60,7 @@ func TestMaterial(t *testing.T) {
       w := tape.GetWithClaims("/api/v1/courses/1/materials", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      materials_actual := []model.Material{}
+      materials_actual := []MaterialResponse{}
       err := json.NewDecoder(w.Body).Decode(&materials_actual)
       g.Assert(err).Equal(nil)
       g.Assert(len(materials_actual)).Equal(10)
@@ -74,7 +73,7 @@ func TestMaterial(t *testing.T) {
       w := tape.GetWithClaims("/api/v1/materials/1", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      material_actual := &model.Material{}
+      material_actual := &MaterialResponse{}
       err = json.NewDecoder(w.Body).Decode(material_actual)
       g.Assert(err).Equal(nil)
 
@@ -84,18 +83,19 @@ func TestMaterial(t *testing.T) {
       // g.Assert(material_actual.DueAt.Equal(material_expected.DueAt)).Equal(true)
     })
 
-    g.It("Should create valid sheet", func() {
+    g.It("Should create valid material", func() {
 
       materials_before, err := stores.Material.MaterialsOfCourse(1, false)
       g.Assert(err).Equal(nil)
 
-      material_sent := model.Material{
+      material_sent := MaterialRequest{
         Name:      "Material_new",
         Filename:  "Filename",
         Kind:      0,
         PublishAt: helper.Time(time.Now()),
         LectureAt: helper.Time(time.Now()),
       }
+
       g.Assert(material_sent.Validate()).Equal(nil)
 
       w := tape.Post("/api/v1/courses/1/materials", helper.ToH(material_sent))
@@ -110,7 +110,7 @@ func TestMaterial(t *testing.T) {
       w = tape.PostWithClaims("/api/v1/courses/1/materials", helper.ToH(material_sent), 1, false)
       g.Assert(w.Code).Equal(http.StatusCreated)
 
-      material_return := &model.Material{}
+      material_return := &MaterialResponse{}
       err = json.NewDecoder(w.Body).Decode(&material_return)
       g.Assert(err).Equal(nil)
       g.Assert(material_return.Name).Equal(material_sent.Name)
@@ -184,7 +184,7 @@ func TestMaterial(t *testing.T) {
 
     g.It("Should perform updates", func() {
 
-      material_sent := model.Material{
+      material_sent := MaterialRequest{
         Name:      "Material_new",
         Filename:  "Filename",
         Kind:      0,

@@ -1,4 +1,4 @@
-.PHONY: build build-v1
+.PHONY: build
 
 V1_YAML = api.yaml
 
@@ -11,5 +11,3 @@ build:
 	@cat generated.yaml >> $(V1_YAML)
 	@echo Complete
 
-run:
-	python3 run.py

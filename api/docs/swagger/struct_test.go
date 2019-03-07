@@ -16,29 +16,46 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package model
+package swagger
 
 import (
-	"time"
+  "fmt"
+  "go/ast"
+  "go/parser"
+  "go/token"
+  "testing"
 )
 
-type Sheet struct {
-	ID        int64     `json:"id" db:"id"`
-	CreatedAt time.Time `json:"-" db:"created_at,omitempty"`
-	UpdatedAt time.Time `json:"-" db:"updated_at,omitempty"`
+func TestStruct(t *testing.T) {
 
-	Name      string    `json:"name" db:"name"`
-	PublishAt time.Time `json:"publish_at" db:"publish_at"`
-	DueAt     time.Time `json:"due_at" db:"due_at"`
-}
+  fset := token.NewFileSet() // positions are relative to fset
 
-type SheetPoints struct {
-	AquiredPoints int `json:"acquired_points" db:"acquired_points"`
-	MaxPoints     int `json:"max_points" db:"max_points"`
-	SheetID       int `json:"sheet_id" db:"sheet_id"`
-}
+  d, err := parser.ParseDir(fset, "./fixture", nil, parser.ParseComments)
+  if err != nil {
+    fmt.Println(err)
+    return
+  }
 
-func (d *SheetPoints) Validate() error {
-	// just a join and read only
-	return nil
+  // gather structs
+  for _, pkg := range d {
+    ast.Inspect(pkg, func(n ast.Node) bool {
+      switch x := n.(type) {
+      case *ast.TypeSpec:
+
+        result, _ := ParseStruct(x)
+        fmt.Println(result.Name)
+
+        for k, f := range result.Fields {
+          // fmt.Println("type:  ", f.Type, " tag ", f.Tag)
+          fmt.Println("  ", k, f)
+        }
+        // fmt.Println(result.Comments)
+        fmt.Println(parseRequestComments(result.Comments))
+
+      }
+
+      return true
+    })
+  }
+
 }

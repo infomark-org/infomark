@@ -21,26 +21,46 @@ package app
 import (
 	"errors"
 	"net/http"
+	"time"
 
-	"github.com/cgtuebingen/infomark-backend/model"
+	validation "github.com/go-ozzo/ozzo-validation"
 )
 
 // SheetRequest is the request payload for Sheet management.
 type SheetRequest struct {
-	*model.Sheet
-	ProtectedID int64 `json:"id"`
+	Name      string    `json:"name" example:"Blatt 42"`
+	PublishAt time.Time `json:"publish_at"`
+	DueAt     time.Time `json:"due_at"`
 }
 
 // Bind preprocesses a SheetRequest.
 func (body *SheetRequest) Bind(r *http.Request) error {
 
-	if body.Sheet == nil {
+	if body == nil {
 		return errors.New("missing \"sheet\" data")
 	}
 
-	// Sending the id via request-body is invalid.
-	// The id should be submitted in the url.
-	body.ProtectedID = 0
+	return body.Validate()
+}
 
-	return body.Sheet.Validate()
+func (m *SheetRequest) Validate() error {
+
+	err := validation.ValidateStruct(m,
+		validation.Field(
+			&m.PublishAt,
+			validation.Required,
+		),
+		validation.Field(
+			&m.DueAt,
+			validation.Required,
+		),
+	)
+
+	if err == nil {
+		if m.DueAt.Sub(m.PublishAt).Seconds() < 0 {
+			return errors.New("due_at should be later than publish_at")
+		}
+	}
+
+	return err
 }

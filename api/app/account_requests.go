@@ -24,76 +24,74 @@ import (
 	"strings"
 
 	"github.com/cgtuebingen/infomark-backend/auth"
-	"github.com/cgtuebingen/infomark-backend/model"
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/go-ozzo/ozzo-validation/is"
 	"github.com/spf13/viper"
-	null "gopkg.in/guregu/null.v3"
 )
-
-// accountInfo is the request payload when sending a request to /account endpoint.
-type accountInfo struct {
-	Email             string `json:"email"`
-	PlainPassword     string `json:"plain_password"`
-	EncryptedPassword string `json:"-"`
-}
 
 // -----------------------------------------------------------------------------
 
-type (
-	// createUserAccountRequest is the request payload when registering a new user.
-	// type: object
-	// properties:
-	//   user:
-	//     type: object
-	//     required:
-	//       - id
-	//       - first_name
-	//       - last_name
-	//       - email
-	//       - student_number
-	//       - semester
-	//       - subject
-	//       - language
-	//     properties:
-	//       id:
-	//         type: integer
-	//         format: int64
-	//       first_name:
-	//         type: string
-	//       last_name:
-	//         type: string
-	//       email:
-	//         type: string
-	//         format: email
-	//       student_number:
-	//         type: string
-	//       semester:
-	//         type: integer
-	//         minimum: 1
-	//       subject:
-	//         type: string
-	//       language:
-	//         type: string
-	//         length: 2
-	//         properties:
-	//   account:
-	//     type: object
-	//     properties:
-	//       email:
-	//         type: string
-	//         format: email
-	//       plain_password:
-	//         type: string
-	//         format: password
-	//       required:
-	//         - email
-	//         - plain_password
-	createUserAccountRequest struct {
-		User    *model.User  `json:"user"`
-		Account *accountInfo `json:"account"`
-	}
-)
+type createUserAccountRequest struct {
+	User *struct {
+		FirstName     string `json:"first_name"  example:"Max"`
+		LastName      string `json:"last_name"  example:"Mustermensch"`
+		Email         string `json:"email"  example:"test@uni-tuebingen.de"`
+		StudentNumber string `json:"student_number"  example:"0815"`
+		Semester      int    `json:"semester"  example:"15"`
+		Subject       string `json:"subject"  example:"computer science"`
+		Language      string `json:"language"  example:"en"`
+	} `json:"user" required:"true"`
+	Account *struct {
+		Email             string `json:"email" example:"test@uni-tuebingen.de"`
+		PlainPassword     string `json:"plain_password" example:"test"`
+		EncryptedPassword string `json:"-"`
+	} `json:"account" required:"true"`
+}
+
+func (m *createUserAccountRequest) Validate() error {
+
+	m.User.FirstName = strings.TrimSpace(m.User.FirstName)
+	m.User.LastName = strings.TrimSpace(m.User.LastName)
+
+	m.User.Email = strings.TrimSpace(m.User.Email)
+	m.User.Email = strings.ToLower(m.User.Email)
+
+	return validation.ValidateStruct(m.User,
+		validation.Field(
+			&m.User.FirstName,
+			validation.Required,
+		),
+		validation.Field(
+			&m.User.LastName,
+			validation.Required,
+		),
+		validation.Field(
+			&m.User.Email,
+			validation.Required,
+			is.Email,
+		),
+		validation.Field(
+			&m.User.StudentNumber,
+			validation.Required,
+		),
+		validation.Field(
+			&m.User.Semester,
+			validation.Required,
+			validation.Min(1),
+		),
+		validation.Field(
+			&m.User.Subject,
+			validation.Required,
+		),
+
+		validation.Field(
+			&m.User.Language,
+			validation.Required,
+			validation.Length(2, 2),
+		),
+	)
+
+}
 
 // Bind preprocesses a createUserAccountRequest.
 func (body *createUserAccountRequest) Bind(r *http.Request) (err error) {
@@ -106,20 +104,16 @@ func (body *createUserAccountRequest) Bind(r *http.Request) (err error) {
 		return errors.New("missing \"account\" data")
 	}
 
-	// override ID, IDs should be within the URL
-	body.User.ID = 0
-
 	// check password length
 	if len(body.Account.PlainPassword) < viper.GetInt("min_password_length") {
 		return errors.New("password too short")
 	}
 
 	// encrypt password
-	body.User.EncryptedPassword, err = auth.HashPassword(body.Account.PlainPassword)
+	body.Account.EncryptedPassword, err = auth.HashPassword(body.Account.PlainPassword)
 	if err != nil {
 		return err
 	}
-	body.User.AvatarURL = null.String{}
 
 	body.User.Email = strings.TrimSpace(body.User.Email)
 	body.User.Email = strings.ToLower(body.User.Email)
@@ -131,15 +125,16 @@ func (body *createUserAccountRequest) Bind(r *http.Request) (err error) {
 		return errors.New("email from user does not match email from account")
 	}
 
-	return body.User.Validate()
+	return body.Validate()
 }
 
-// -----------------------------------------------------------------------------
-
-// accountRequest is the request payload for account management (email, password)
 type accountRequest struct {
-	Account          *accountInfo `json:"account"`
-	OldPlainPassword string       `json:"old_plain_password"`
+	Account *struct {
+		Email             string `json:"email" required:"false"`
+		PlainPassword     string `json:"plain_password" required:"false"`
+		EncryptedPassword string `json:"-"`
+	} `json:"account"`
+	OldPlainPassword string `json:"old_plain_password"`
 }
 
 // Bind preprocesses a accountRequest.

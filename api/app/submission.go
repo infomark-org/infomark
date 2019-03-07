@@ -49,7 +49,7 @@ func NewSubmissionResource(stores *Stores) *SubmissionResource {
 // SubmissionResponse is the response payload for Submission management.
 type SubmissionResponse struct {
   *model.Submission
-  FileURL string `json="file_url`
+  FileURL string `json:"file_url"`
 }
 
 // newSubmissionResponse creates a response from a Submission model.

@@ -75,13 +75,12 @@ func TestUser(t *testing.T) {
       w := tape.GetWithClaims("/api/v1/users/1", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      user_actual := &model.User{}
+      user_actual := &userResponse{}
       err = json.NewDecoder(w.Body).Decode(user_actual)
       g.Assert(err).Equal(nil)
 
       g.Assert(user_actual.ID).Equal(user_expected.ID)
 
-      g.Assert(user_actual.FirstName).Equal(user_expected.FirstName)
       g.Assert(user_actual.FirstName).Equal(user_expected.FirstName)
       g.Assert(user_actual.LastName).Equal(user_expected.LastName)
       g.Assert(user_actual.Email).Equal(user_expected.Email)
@@ -102,12 +101,19 @@ func TestUser(t *testing.T) {
     g.It("Should perform updates (incl email)", func() {
       // this is NOT the /me enpoint, we can update the user here
 
-      user_sent, err := stores.User.Get(1)
+      user_db, err := stores.User.Get(1)
       g.Assert(err).Equal(nil)
-      user_sent.FirstName = "Info2_update"
-      user_sent.LastName = "Lorem Ipsum_update"
-      user_sent.Email = "new@mail.com"
-      user_sent.Semester = 1
+
+      user_sent := &userRequest{
+        FirstName: "Info2_update",
+        LastName:  "Lorem Ipsum_update",
+        Email:     "new@mail.com",
+        Semester:  1,
+
+        StudentNumber: user_db.StudentNumber,
+        Subject:       user_db.Subject,
+        Language:      user_db.Language,
+      }
 
       err = user_sent.Validate()
       g.Assert(err).Equal(nil)
@@ -154,7 +160,7 @@ func TestUser(t *testing.T) {
       w := tape.GetWithClaims("/api/v1/me", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      user_actual := model.User{}
+      user_actual := &userResponse{}
       err = json.NewDecoder(w.Body).Decode(&user_actual)
       g.Assert(err).Equal(nil)
 
@@ -184,14 +190,24 @@ func TestUser(t *testing.T) {
       user_before, err := stores.User.Get(1)
       g.Assert(err).Equal(nil)
 
-      user_sent, err := stores.User.Get(1)
+      user_db, err := stores.User.Get(1)
       g.Assert(err).Equal(nil)
 
       // this is NOT the /me enpoint, we can update the user here
-      user_sent.FirstName = "Info2_update"
-      user_sent.LastName = "Lorem Ipsum_update"
-      user_sent.Email = "new@mail.com" // should be ignored
-      user_sent.Semester = 1
+
+      user_sent := &userRequest{
+        FirstName: "Info2_update",
+        LastName:  "Lorem Ipsum_update",
+        Email:     "new@mail.com",
+        Semester:  1,
+
+        StudentNumber: user_db.StudentNumber,
+        Subject:       user_db.Subject,
+        Language:      user_db.Language,
+      }
+
+      err = user_sent.Validate()
+      g.Assert(err).Equal(nil)
 
       err = user_sent.Validate()
       g.Assert(err).Equal(nil)

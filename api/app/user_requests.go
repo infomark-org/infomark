@@ -21,70 +21,137 @@ package app
 import (
 	"errors"
 	"net/http"
+	"strings"
 
-	"github.com/cgtuebingen/infomark-backend/auth"
-	"github.com/cgtuebingen/infomark-backend/model"
+	validation "github.com/go-ozzo/ozzo-validation"
+	"github.com/go-ozzo/ozzo-validation/is"
 )
 
 // userRequest is the request payload for user management.
 type userRequest struct {
-	*model.User
-	ProtectedID     int64  `json:"id"`
-	ProtectedAvatar string `json:"avatar_url"`
-	PlainPassword   string `json:"plain_password"`
+	FirstName     string `json:"first_name" example:"Max"`
+	LastName      string `json:"last_name" example:"Mustermensch"`
+	Email         string `json:"email" example:"test@unit-tuebingen.de"`
+	StudentNumber string `json:"student_number" example:"0815"`
+	Semester      int    `json:"semester" example:"2"`
+	Subject       string `json:"subject" example:"bio informatics"`
+	Language      string `json:"language" example:"en"`
+	PlainPassword string `json:"plain_password" example:"new_password" required:"false"`
 }
 
 // Bind preprocesses a userRequest.
 func (body *userRequest) Bind(r *http.Request) error {
 
-	if body.User == nil {
+	if body == nil {
 		return errors.New("missing \"user\" data")
 	}
 
-	// Sending the id via request-body is invalid.
-	// The id should be submitted in the url.
-	body.ProtectedID = 0
-
-	// Encrypt plain password
-	hash, err := auth.HashPassword(body.PlainPassword)
-	if err != nil {
-		return err
-	}
-	body.User.EncryptedPassword = hash
-
-	return body.User.Validate()
+	return body.Validate()
 
 }
 
-// -----------------------------------------------------------------------------
+func (body *userRequest) Validate() error {
 
-// userRequest is the request payload for user management.
+	body.FirstName = strings.TrimSpace(body.FirstName)
+	body.LastName = strings.TrimSpace(body.LastName)
+
+	body.Email = strings.TrimSpace(body.Email)
+	body.Email = strings.ToLower(body.Email)
+
+	return validation.ValidateStruct(body,
+		validation.Field(
+			&body.FirstName,
+			validation.Required,
+		),
+		validation.Field(
+			&body.LastName,
+			validation.Required,
+		),
+		validation.Field(
+			&body.Email,
+			validation.Required,
+			is.Email,
+		),
+		validation.Field(
+			&body.StudentNumber,
+			validation.Required,
+		),
+		validation.Field(
+			&body.Semester,
+			validation.Required,
+			validation.Min(1),
+		),
+		validation.Field(
+			&body.Subject,
+			validation.Required,
+		),
+
+		validation.Field(
+			&body.Language,
+			validation.Required,
+			validation.Length(2, 2),
+		),
+	)
+
+}
+
+// userMeRequest is the request payload for user management.
 type userMeRequest struct {
-	*model.User
-	ProtectedID     int64  `json:"id"`
-	PlainPassword   string `json:"plain_password"`
-	ProtectedEmail  string `json:"email"`
-	ProtectedAvatar string `json:"avatar_url"`
+	FirstName string `json:"first_name" example:"Max"`
+	LastName  string `json:"last_name" example:"Mustermensch"`
+	// Email         string `json:"email" example:"test@unit-tuebingen.de"`
+	StudentNumber string `json:"student_number" example:"0815"`
+	Semester      int    `json:"semester" example:"2"`
+	Subject       string `json:"subject" example:"bio informatics"`
+	Language      string `json:"language" example:"en"`
+	// PlainPassword string `json:"plain_password" example:"new_password"`
 }
 
-// Bind preprocesses a userMeRequest.
+// Bind preprocesses a userRequest.
 func (body *userMeRequest) Bind(r *http.Request) error {
 
-	if body.User == nil {
+	if body == nil {
 		return errors.New("missing \"user\" data")
 	}
 
-	// Sending the id via request-body is invalid.
-	// The id should be submitted in the url.
-	body.ProtectedID = 0
+	return body.Validate()
 
-	// Encrypt plain password
-	hash, err := auth.HashPassword(body.PlainPassword)
-	if err != nil {
-		return err
-	}
-	body.EncryptedPassword = hash
+}
 
-	return body.User.Validate()
+func (body *userMeRequest) Validate() error {
+
+	body.FirstName = strings.TrimSpace(body.FirstName)
+	body.LastName = strings.TrimSpace(body.LastName)
+
+	return validation.ValidateStruct(body,
+		validation.Field(
+			&body.FirstName,
+			validation.Required,
+		),
+		validation.Field(
+			&body.LastName,
+			validation.Required,
+		),
+
+		validation.Field(
+			&body.StudentNumber,
+			validation.Required,
+		),
+		validation.Field(
+			&body.Semester,
+			validation.Required,
+			validation.Min(1),
+		),
+		validation.Field(
+			&body.Subject,
+			validation.Required,
+		),
+
+		validation.Field(
+			&body.Language,
+			validation.Required,
+			validation.Length(2, 2),
+		),
+	)
 
 }
