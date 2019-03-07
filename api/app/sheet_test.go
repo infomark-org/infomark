@@ -27,7 +27,6 @@ import (
 
   "github.com/cgtuebingen/infomark-backend/api/helper"
   "github.com/cgtuebingen/infomark-backend/email"
-  "github.com/cgtuebingen/infomark-backend/model"
   "github.com/franela/goblin"
   "github.com/spf13/viper"
 )
@@ -62,7 +61,7 @@ func TestSheet(t *testing.T) {
       w := tape.GetWithClaims("/api/v1/courses/1/sheets", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      sheets_actual := []model.Sheet{}
+      sheets_actual := []SheetResponse{}
       err := json.NewDecoder(w.Body).Decode(&sheets_actual)
       g.Assert(err).Equal(nil)
       g.Assert(len(sheets_actual)).Equal(10)
@@ -75,7 +74,7 @@ func TestSheet(t *testing.T) {
       w := tape.GetWithClaims("/api/v1/sheets/1", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      sheet_actual := &model.Sheet{}
+      sheet_actual := &SheetResponse{}
       err = json.NewDecoder(w.Body).Decode(sheet_actual)
       g.Assert(err).Equal(nil)
 
@@ -121,7 +120,7 @@ func TestSheet(t *testing.T) {
       sheets_before, err := stores.Sheet.SheetsOfCourse(1, false)
       g.Assert(err).Equal(nil)
 
-      sheet_sent := model.Sheet{
+      sheet_sent := SheetRequest{
         Name:      "Sheet_new",
         PublishAt: helper.Time(time.Now()),
         DueAt:     helper.Time(time.Now()),
@@ -140,7 +139,7 @@ func TestSheet(t *testing.T) {
       w = tape.PlayDataWithClaims("POST", "/api/v1/courses/1/sheets", tape.ToH(sheet_sent), 1, false)
       g.Assert(w.Code).Equal(http.StatusCreated)
 
-      sheet_return := &model.Sheet{}
+      sheet_return := &SheetResponse{}
       err = json.NewDecoder(w.Body).Decode(&sheet_return)
       g.Assert(err).Equal(nil)
       g.Assert(sheet_return.Name).Equal("Sheet_new")

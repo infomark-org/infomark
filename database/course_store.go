@@ -106,6 +106,25 @@ func (s *CourseStore) Disenroll(courseID int64, userID int64) error {
   return err
 }
 
+func (s *CourseStore) GetUserEnrollment(courseID int64, userID int64) (*model.UserCourse, error) {
+  p := model.UserCourse{}
+
+  // , u.avatar_path
+  err := s.db.Get(&p, `
+    SELECT
+      uc.role, u.id, u.first_name, u.last_name, u.email,
+      u.student_number, u.semester, u.subject, u.language FROM user_course uc
+    INNER JOIN
+      users u ON uc.user_id = u.id
+    WHERE
+      uc.course_id = $1
+    AND
+      u.id = $2
+    `, courseID, userID,
+  )
+  return &p, err
+}
+
 func (s *CourseStore) EnrolledUsers(
   course *model.Course,
   roleFilter []string,
@@ -120,7 +139,7 @@ func (s *CourseStore) EnrolledUsers(
   err := s.db.Select(&p, `
     SELECT
       uc.role, u.id, u.first_name, u.last_name, u.email,
-      u.student_number, u.semester, u.subject, u.language FROM user_course uc
+      u.student_number, u.semester, u.subject, u.language, u.avatar_url FROM user_course uc
     INNER JOIN
       users u ON uc.user_id = u.id
     WHERE

@@ -22,28 +22,38 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/cgtuebingen/infomark-backend/model"
+	validation "github.com/go-ozzo/ozzo-validation"
 )
 
 // groupRequest is the request payload for course management.
 type groupRequest struct {
-	*model.Group
-	ProtectedID int64 `json:"id"`
+	TutorID int64 `json:"tutor_id"`
+	// CourseID    int64  `json:"course_id"`
+	Description string `json:"description"`
 }
 
 // Bind preprocesses a groupRequest.
 func (body *groupRequest) Bind(r *http.Request) error {
 
-	if body.Group == nil {
+	if body == nil {
 		return errors.New("missing \"group\" data")
 	}
 
-	// Sending the id via request-body is invalid.
-	// The id should be submitted in the url.
-	body.ProtectedID = 0
+	return body.Validate()
 
-	return body.Group.Validate()
+}
 
+func (m *groupRequest) Validate() error {
+	return validation.ValidateStruct(m,
+		validation.Field(
+			&m.TutorID,
+			validation.Required,
+		),
+		validation.Field(
+			&m.Description,
+			validation.Required,
+		),
+	)
 }
 
 type groupBidRequest struct {
@@ -52,5 +62,16 @@ type groupBidRequest struct {
 
 // Bind preprocesses a groupRequest.
 func (body *groupBidRequest) Bind(r *http.Request) error {
-	return nil
+	return body.Validate()
+}
+
+func (m *groupBidRequest) Validate() error {
+	return validation.ValidateStruct(m,
+		validation.Field(
+			&m.Bid,
+			validation.Required,
+			validation.Min(0),
+			validation.Max(10),
+		),
+	)
 }

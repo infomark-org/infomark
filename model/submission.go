@@ -20,28 +20,13 @@ package model
 
 import (
 	"time"
-
-	validation "github.com/go-ozzo/ozzo-validation"
 )
 
 type Submission struct {
-	ID        int64     `json:"id" db:"id"`
-	CreatedAt time.Time `json:"-" db:"created_at,omitempty"`
-	UpdatedAt time.Time `json:"-" db:"updated_at,omitempty"`
+	ID        int64     `db:"id"`
+	CreatedAt time.Time `db:"created_at,omitempty"`
+	UpdatedAt time.Time `db:"updated_at,omitempty"`
 
-	UserID int64 `json:"user_id" db:"user_id"`
-	TaskID int64 `json:"task_id" db:"task_id"`
-}
-
-func (m *Submission) Validate() error {
-	return validation.ValidateStruct(m,
-		validation.Field(
-			&m.UserID,
-			validation.Required,
-		),
-		validation.Field(
-			&m.TaskID,
-			validation.Required,
-		),
-	)
+	UserID int64 `db:"user_id"`
+	TaskID int64 `db:"task_id"`
 }

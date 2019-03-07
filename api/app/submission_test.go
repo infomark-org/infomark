@@ -26,7 +26,6 @@ import (
 
   "github.com/cgtuebingen/infomark-backend/api/helper"
   "github.com/cgtuebingen/infomark-backend/email"
-  "github.com/cgtuebingen/infomark-backend/model"
   "github.com/franela/goblin"
   "github.com/spf13/viper"
 )
@@ -143,21 +142,21 @@ func TestSubmission(t *testing.T) {
       w = tape.GetWithClaims("/api/v1/courses/1/submissions", 2, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      submissions_all_actual := []model.Submission{}
+      submissions_all_actual := []SubmissionResponse{}
       err := json.NewDecoder(w.Body).Decode(&submissions_all_actual)
       g.Assert(err).Equal(nil)
 
       w = tape.GetWithClaims("/api/v1/courses/1/submissions?group_id=4", 2, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      submissions_g4_actual := []model.Submission{}
+      submissions_g4_actual := []SubmissionResponse{}
       err = json.NewDecoder(w.Body).Decode(&submissions_g4_actual)
       g.Assert(err).Equal(nil)
 
       w = tape.GetWithClaims("/api/v1/courses/1/submissions?task_id=2", 2, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      submissions_t4_actual := []model.Submission{}
+      submissions_t4_actual := []SubmissionResponse{}
       err = json.NewDecoder(w.Body).Decode(&submissions_t4_actual)
       g.Assert(err).Equal(nil)
 
@@ -168,7 +167,7 @@ func TestSubmission(t *testing.T) {
       w = tape.GetWithClaims("/api/v1/courses/1/submissions?user_id=112", 2, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      submissions_u112_actual := []model.Submission{}
+      submissions_u112_actual := []SubmissionResponse{}
       err = json.NewDecoder(w.Body).Decode(&submissions_u112_actual)
       g.Assert(err).Equal(nil)
 

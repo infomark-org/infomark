@@ -41,7 +41,18 @@ func NewMaterialResource(stores *Stores) *MaterialResource {
   }
 }
 
-// IndexHandler is the enpoint for retrieving all Materials if claim.root is true.
+// IndexHandler is public endpoint for
+// URL: /courses/{course_id}/materials
+// URLPARAM: course_id,integer
+// METHOD: get
+// TAG: materials
+// RESPONSE: 200,MaterialResponseList
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  get all materials in course
+// DESCRIPTION:
+// The materials are ordered by the lecture date
 func (rs *MaterialResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 
   var materials []model.Material
@@ -63,7 +74,17 @@ func (rs *MaterialResource) IndexHandler(w http.ResponseWriter, r *http.Request)
   }
 }
 
-// CreateHandler is the enpoint for retrieving all Materials if claim.root is true.
+// CreateHandler is public endpoint for
+// URL: /courses/{course_id}/materials
+// URLPARAM: course_id,integer
+// METHOD: post
+// TAG: sheets
+// REQUEST: MaterialRequest
+// RESPONSE: 204,MaterialResponse
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  create a new material
 func (rs *MaterialResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
 
   course := r.Context().Value("course").(*model.Course)
@@ -102,7 +123,16 @@ func (rs *MaterialResource) CreateHandler(w http.ResponseWriter, r *http.Request
 
 }
 
-// GetHandler is the enpoint for retrieving a specific Material.
+// IndexHandler is public endpoint for
+// URL: /materials/{material_id}
+// URLPARAM: material_id,integer
+// METHOD: get
+// TAG: materials
+// RESPONSE: 200,MaterialResponse
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  get a specific material
 func (rs *MaterialResource) GetHandler(w http.ResponseWriter, r *http.Request) {
   // `Material` is retrieved via middle-ware
   material := r.Context().Value("material").(*model.Material)
@@ -116,7 +146,17 @@ func (rs *MaterialResource) GetHandler(w http.ResponseWriter, r *http.Request) {
   render.Status(r, http.StatusOK)
 }
 
-// PatchHandler is the endpoint fro updating a specific Material with given id.
+// EditHandler is public endpoint for
+// URL: /materials/{material_id}
+// URLPARAM: material_id,integer
+// METHOD: put
+// TAG: materials
+// REQUEST: MaterialRequest
+// RESPONSE: 204,NotContent
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  update a specific material
 func (rs *MaterialResource) EditHandler(w http.ResponseWriter, r *http.Request) {
   // start from empty Request
   data := &MaterialRequest{}
@@ -144,6 +184,16 @@ func (rs *MaterialResource) EditHandler(w http.ResponseWriter, r *http.Request) 
   render.Status(r, http.StatusNoContent)
 }
 
+// DeleteHandler is public endpoint for
+// URL: /materials/{material_id}
+// URLPARAM: material_id,integer
+// METHOD: delete
+// TAG: materials
+// RESPONSE: 204,NoContent
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  delete a specific material
 func (rs *MaterialResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
   material := r.Context().Value("material").(*model.Material)
 
@@ -156,6 +206,16 @@ func (rs *MaterialResource) DeleteHandler(w http.ResponseWriter, r *http.Request
   render.Status(r, http.StatusNoContent)
 }
 
+// GetFileHandler is public endpoint for
+// URL: /materials/{material_id}/file
+// URLPARAM: material_id,integer
+// METHOD: get
+// TAG: materials
+// RESPONSE: 200,ZipFile
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  get the zip file of a material
 func (rs *MaterialResource) GetFileHandler(w http.ResponseWriter, r *http.Request) {
 
   material := r.Context().Value("material").(*model.Material)
@@ -171,6 +231,17 @@ func (rs *MaterialResource) GetFileHandler(w http.ResponseWriter, r *http.Reques
   }
 }
 
+// ChangeFileHandler is public endpoint for
+// URL: /materials/{material_id}/file
+// URLPARAM: material_id,integer
+// METHOD: post
+// TAG: sheets
+// REQUEST: zipfile
+// RESPONSE: 204,NoContent
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  change the zip file of a sheet
 func (rs *MaterialResource) ChangeFileHandler(w http.ResponseWriter, r *http.Request) {
   // will always be a POST
   material := r.Context().Value("material").(*model.Material)

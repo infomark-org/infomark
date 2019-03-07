@@ -74,7 +74,7 @@ func TestTask(t *testing.T) {
       w := tape.GetWithClaims("/api/v1/tasks/1", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      task_actual := &model.Task{}
+      task_actual := &TaskResponse{}
       err = json.NewDecoder(w.Body).Decode(task_actual)
       g.Assert(err).Equal(nil)
 
@@ -98,7 +98,7 @@ func TestTask(t *testing.T) {
       tasks_before, err := stores.Task.TasksOfSheet(1, false)
       g.Assert(err).Equal(nil)
 
-      task_sent := model.Task{
+      task_sent := TaskRequest{
         MaxPoints:          88,
         PublicDockerImage:  "TestImage-Public",
         PrivateDockerImage: "TestImage-Private",
@@ -110,7 +110,7 @@ func TestTask(t *testing.T) {
       w := tape.PostWithClaims("/api/v1/sheets/1/tasks", helper.ToH(task_sent), 1, true)
       g.Assert(w.Code).Equal(http.StatusCreated)
 
-      task_return := &model.Task{}
+      task_return := &TaskResponse{}
       err = json.NewDecoder(w.Body).Decode(&task_return)
       g.Assert(task_return.MaxPoints).Equal(88)
       g.Assert(task_return.PrivateDockerImage).Equal(task_sent.PrivateDockerImage)

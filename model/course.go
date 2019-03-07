@@ -19,50 +19,18 @@
 package model
 
 import (
-	"errors"
 	"time"
-
-	validation "github.com/go-ozzo/ozzo-validation"
 )
 
 // User holds specific application settings linked to an entity, who can login.
 type Course struct {
-	ID        int64     `json:"id" db:"id"`
-	CreatedAt time.Time `json:"-" db:"created_at,omitempty"`
-	UpdatedAt time.Time `json:"-" db:"updated_at,omitempty"`
+	ID        int64     `db:"id"`
+	CreatedAt time.Time `db:"created_at,omitempty"`
+	UpdatedAt time.Time `db:"updated_at,omitempty"`
 
-	Name               string    `json:"name" db:"name"`
-	Description        string    `json:"description" db:"description"`
-	BeginsAt           time.Time `json:"begins_at" db:"begins_at"`
-	EndsAt             time.Time `json:"ends_at" db:"ends_at"`
-	RequiredPercentage int       `json:"required_percentage" db:"required_percentage"`
-}
-
-func (m *Course) Validate() error {
-	if m.EndsAt.Sub(m.BeginsAt).Seconds() < 0 {
-		return errors.New("ends_at should be later than begins_at")
-	}
-
-	return validation.ValidateStruct(m,
-		validation.Field(
-			&m.Name,
-			validation.Required,
-		),
-		validation.Field(
-			&m.Description,
-			validation.Required,
-		),
-		validation.Field(
-			&m.BeginsAt,
-			validation.Required,
-		),
-		validation.Field(
-			&m.EndsAt,
-			validation.Required,
-		),
-		validation.Field(
-			&m.RequiredPercentage,
-			validation.Min(0),
-		),
-	)
+	Name               string    `db:"name"`
+	Description        string    `db:"description"`
+	BeginsAt           time.Time `db:"begins_at"`
+	EndsAt             time.Time `db:"ends_at"`
+	RequiredPercentage int       `db:"required_percentage"`
 }

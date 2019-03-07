@@ -129,16 +129,16 @@ func newMissingGradeResponse(p *model.MissingGrade) *MissingGradeResponse {
     TaskID:   p.TaskID,
   }
 
-  r.Grade.ID = p.Grade.ID
-  r.Grade.ExecutionState = p.Grade.ExecutionState
-  r.Grade.PublicTestLog = p.Grade.PublicTestLog
-  r.Grade.PrivateTestLog = p.Grade.PrivateTestLog
-  r.Grade.PublicTestStatus = p.Grade.PublicTestStatus
-  r.Grade.PrivateTestStatus = p.Grade.PrivateTestStatus
-  r.Grade.AcquiredPoints = p.Grade.AcquiredPoints
-  r.Grade.Feedback = p.Grade.Feedback
-  r.Grade.TutorID = p.Grade.TutorID
-  r.Grade.SubmissionID = p.Grade.SubmissionID
+  r.Grade.ID = p.ID
+  r.Grade.ExecutionState = p.ExecutionState
+  r.Grade.PublicTestLog = p.PublicTestLog
+  r.Grade.PrivateTestLog = p.PrivateTestLog
+  r.Grade.PublicTestStatus = p.PublicTestStatus
+  r.Grade.PrivateTestStatus = p.PrivateTestStatus
+  r.Grade.AcquiredPoints = p.AcquiredPoints
+  r.Grade.Feedback = p.Feedback
+  r.Grade.TutorID = p.TutorID
+  r.Grade.SubmissionID = p.SubmissionID
   return r
 
 }

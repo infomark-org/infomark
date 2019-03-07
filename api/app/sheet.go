@@ -146,11 +146,11 @@ func (rs *SheetResource) GetHandler(w http.ResponseWriter, r *http.Request) {
 // METHOD: put
 // TAG: sheets
 // REQUEST: SheetRequest
-// RESPONSE: 200,SheetResponse
+// RESPONSE: 204,NotContent
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
 // RESPONSE: 403,Unauthorized
-// SUMMARY:  get a specific sheet
+// SUMMARY:  update a specific sheet
 func (rs *SheetResource) EditHandler(w http.ResponseWriter, r *http.Request) {
   sheet := r.Context().Value("sheet").(*model.Sheet)
 
@@ -176,7 +176,7 @@ func (rs *SheetResource) EditHandler(w http.ResponseWriter, r *http.Request) {
   render.Status(r, http.StatusNoContent)
 }
 
-// EditHandler is public endpoint for
+// DeleteHandler is public endpoint for
 // URL: /sheets/{sheet_id}
 // URLPARAM: sheet_id,integer
 // METHOD: delete
@@ -223,10 +223,10 @@ func (rs *SheetResource) GetFileHandler(w http.ResponseWriter, r *http.Request) 
   }
 }
 
-// GetFileHandler is public endpoint for
+// ChangeFileHandler is public endpoint for
 // URL: /sheets/{sheet_id}/file
 // URLPARAM: sheet_id,integer
-// METHOD: put
+// METHOD: post
 // TAG: sheets
 // REQUEST: zipfile
 // RESPONSE: 204,NoContent

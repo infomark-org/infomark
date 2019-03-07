@@ -21,29 +21,58 @@ package app
 import (
 	"errors"
 	"net/http"
+	"time"
 
-	"github.com/cgtuebingen/infomark-backend/model"
+	validation "github.com/go-ozzo/ozzo-validation"
 )
 
 // courseRequest is the request payload for course management.
 type courseRequest struct {
-	*model.Course
-	ProtectedID int64 `json:"id" required:"false"`
+	Name               string    `json:"name"`
+	Description        string    `json:"description"`
+	BeginsAt           time.Time `json:"begins_at"`
+	EndsAt             time.Time `json:"ends_at"`
+	RequiredPercentage int       `json:"required_percentage"`
 }
 
 // Bind preprocesses a courseRequest.
 func (body *courseRequest) Bind(r *http.Request) error {
 
-	if body.Course == nil {
+	if body == nil {
 		return errors.New("missing \"course\" data")
 	}
 
-	// Sending the id via request-body is invalid.
-	// The id should be submitted in the url.
-	body.ProtectedID = 0
+	return body.Validate()
 
-	return body.Course.Validate()
+}
 
+func (m *courseRequest) Validate() error {
+	if m.EndsAt.Sub(m.BeginsAt).Seconds() < 0 {
+		return errors.New("ends_at should be later than begins_at")
+	}
+
+	return validation.ValidateStruct(m,
+		validation.Field(
+			&m.Name,
+			validation.Required,
+		),
+		validation.Field(
+			&m.Description,
+			validation.Required,
+		),
+		validation.Field(
+			&m.BeginsAt,
+			validation.Required,
+		),
+		validation.Field(
+			&m.EndsAt,
+			validation.Required,
+		),
+		validation.Field(
+			&m.RequiredPercentage,
+			validation.Min(0),
+		),
+	)
 }
 
 type changeRoleInCourseRequest struct {

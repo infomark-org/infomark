@@ -20,33 +20,14 @@ package model
 
 import (
 	"time"
-
-	validation "github.com/go-ozzo/ozzo-validation"
 )
 
 type Group struct {
-	ID        int64     `json:"id" db:"id"`
-	CreatedAt time.Time `json:"-" db:"created_at,omitempty"`
-	UpdatedAt time.Time `json:"-" db:"updated_at,omitempty"`
+	ID        int64     `db:"id"`
+	CreatedAt time.Time `db:"created_at,omitempty"`
+	UpdatedAt time.Time `db:"updated_at,omitempty"`
 
-	TutorID     int64  `json:"tutor_id" db:"tutor_id"`
-	CourseID    int64  `json:"course_id" db:"course_id"`
-	Description string `json:"description" db:"description"`
-}
-
-func (m *Group) Validate() error {
-	return validation.ValidateStruct(m,
-		validation.Field(
-			&m.TutorID,
-			validation.Required,
-		),
-		validation.Field(
-			&m.CourseID,
-			validation.Required,
-		),
-		validation.Field(
-			&m.Description,
-			validation.Required,
-		),
-	)
+	TutorID     int64  `db:"tutor_id"`
+	CourseID    int64  `db:"course_id"`
+	Description string `db:"description"`
 }

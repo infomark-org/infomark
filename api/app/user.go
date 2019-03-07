@@ -48,7 +48,7 @@ func NewUserResource(stores *Stores) *UserResource {
 // IndexHandler is public endpoint for
 // URL: /users
 // METHOD: get
-// TAG: user
+// TAG: users
 // RESPONSE: 200,userResponseList
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
@@ -75,7 +75,7 @@ func (rs *UserResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 // GetHandler is public endpoint for
 // URL: /me
 // METHOD: get
-// TAG: user
+// TAG: users
 // RESPONSE: 200,userResponse
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
@@ -101,7 +101,7 @@ func (rs *UserResource) GetMeHandler(w http.ResponseWriter, r *http.Request) {
 // URL: /users/{user_id}
 // URLPARAM: user_id,integer
 // METHOD: get
-// TAG: user
+// TAG: users
 // RESPONSE: 200,userResponse
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
@@ -129,7 +129,7 @@ func (rs *UserResource) GetHandler(w http.ResponseWriter, r *http.Request) {
 // EditMeHandler is public endpoint for
 // URL: /me
 // METHOD: put
-// TAG: user
+// TAG: users
 // REQUEST: userMeRequest
 // RESPONSE: 204,NoContent
 // RESPONSE: 400,BadRequest
@@ -175,7 +175,7 @@ func (rs *UserResource) EditMeHandler(w http.ResponseWriter, r *http.Request) {
 // URL: /users/{user_id}
 // URLPARAM: user_id,integer
 // METHOD: put
-// TAG: user
+// TAG: users
 // REQUEST: userRequest
 // RESPONSE: 204,NoContent
 // RESPONSE: 400,BadRequest
@@ -231,7 +231,7 @@ func (rs *UserResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 // URL: /users/{user_id}/emails
 // URLPARAM: user_id,integer
 // METHOD: post
-// TAG: user
+// TAG: users
 // REQUEST: EmailRequest
 // RESPONSE: 200,OK
 // RESPONSE: 400,BadRequest

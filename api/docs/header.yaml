@@ -26,9 +26,9 @@ tags:
     description: account related requests
   - name: email
     description: Email related requests
-  - name: user
+  - name: users
     description: User related requests
-  - name: course
+  - name: courses
     description: Course related requests
   - name: sheets
     description: Exercise sheets related requests
@@ -42,7 +42,7 @@ tags:
     description: Exercise groups related requests
   - name: enrollments
     description: Enrollments related requests
-  - name: material
+  - name: materials
     description: Exercise material related requests
   - name: role_tutor
     description: Endpoints for tutors
@@ -52,5 +52,3 @@ tags:
     description: Endpoint for student
   - name: role_admin
     description: Endpoint for admin
-  - name: implemented
-    description: All endpoints that are implemented

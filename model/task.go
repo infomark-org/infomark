@@ -25,22 +25,12 @@ import (
 )
 
 type Task struct {
-	ID        int64     `json:"id" db:"id"`
-	CreatedAt time.Time `json:"-" db:"created_at,omitempty"`
-	UpdatedAt time.Time `json:"-" db:"updated_at,omitempty"`
-
-	MaxPoints          int    `json:"max_points" db:"max_points"`
-	PublicDockerImage  string `json:"public_docker_image" db:"public_docker_image"`
-	PrivateDockerImage string `json:"private_docker_image" db:"private_docker_image"`
-}
-
-func (m *Task) Validate() error {
-	return validation.ValidateStruct(m,
-		validation.Field(
-			&m.MaxPoints,
-			validation.Min(0),
-		),
-	)
+	ID                 int64     `db:"id"`
+	CreatedAt          time.Time `db:"created_at,omitempty"`
+	UpdatedAt          time.Time `db:"updated_at,omitempty"`
+	MaxPoints          int       `db:"max_points"`
+	PublicDockerImage  string    `db:"public_docker_image"`
+	PrivateDockerImage string    `db:"private_docker_image"`
 }
 
 type TaskRating struct {

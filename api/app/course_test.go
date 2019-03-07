@@ -77,7 +77,7 @@ func TestCourse(t *testing.T) {
       w := tape.GetWithClaims("/api/v1/courses/1", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      course_actual := &model.Course{}
+      course_actual := &courseResponse{}
       err := json.NewDecoder(w.Body).Decode(course_actual)
       g.Assert(err).Equal(nil)
 
@@ -104,7 +104,7 @@ func TestCourse(t *testing.T) {
       g.Assert(err).Equal(nil)
 
       w := tape.GetWithClaims("/api/v1/courses/1/enrollments", 1, true)
-      enrollments_actual := []model.UserCourse{}
+      enrollments_actual := []enrollmentResponse{}
       err = json.NewDecoder(w.Body).Decode(&enrollments_actual)
       g.Assert(err).Equal(nil)
       g.Assert(len(enrollments_actual)).Equal(number_enrollments_expected)
@@ -211,13 +211,15 @@ func TestCourse(t *testing.T) {
       courses_before, err := stores.Course.GetAll()
       g.Assert(err).Equal(nil)
 
-      entry_sent := model.Course{
+      entry_sent := courseRequest{
         Name:               "Info2_new",
         Description:        "Lorem Ipsum_new",
         BeginsAt:           helper.Time(time.Now()),
         EndsAt:             helper.Time(time.Now().Add(time.Hour * 1)),
         RequiredPercentage: 43,
       }
+
+      g.Assert(entry_sent.Validate()).Equal(nil)
 
       // students
       w := tape.PlayDataWithClaims("POST", "/api/v1/courses", tape.ToH(entry_sent), 112, false)
@@ -236,7 +238,7 @@ func TestCourse(t *testing.T) {
       g.Assert(w.Code).Equal(http.StatusCreated)
 
       // verify body
-      course_return := &model.Course{}
+      course_return := &courseResponse{}
       err = json.NewDecoder(w.Body).Decode(&course_return)
       g.Assert(course_return.Name).Equal(entry_sent.Name)
       g.Assert(course_return.Description).Equal(entry_sent.Description)
@@ -267,13 +269,15 @@ func TestCourse(t *testing.T) {
 
     g.It("Should perform updates", func() {
 
-      entry_sent := model.Course{
+      entry_sent := courseRequest{
         Name:               "Info2_update",
         Description:        "Lorem Ipsum_update",
         BeginsAt:           helper.Time(time.Now()),
         EndsAt:             helper.Time(time.Now()),
         RequiredPercentage: 99,
       }
+
+      g.Assert(entry_sent.Validate()).Equal(nil)
 
       // students
       w := tape.PlayDataWithClaims("PUT", "/api/v1/courses/1", tape.ToH(entry_sent), 112, false)

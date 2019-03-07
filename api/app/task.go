@@ -43,69 +43,15 @@ func NewTaskResource(stores *Stores) *TaskResource {
   }
 }
 
-// .............................................................................
-
-// TaskResponse is the response payload for Task management.
-type TaskResponse struct {
-  *model.Task
-}
-
-// newTaskResponse creates a response from a Task model.
-func newTaskResponse(p *model.Task) *TaskResponse {
-  return &TaskResponse{
-    Task: p,
-  }
-}
-
-// Render post-processes a TaskResponse.
-func (body *TaskResponse) Render(w http.ResponseWriter, r *http.Request) error {
-  return nil
-}
-
-// newTaskListResponse creates a response from a list of Task models.
-func newTaskListResponse(Tasks []model.Task) []render.Renderer {
-  // https://stackoverflow.com/a/36463641/7443104
-  list := []render.Renderer{}
-  for k := range Tasks {
-    list = append(list, newTaskResponse(&Tasks[k]))
-  }
-  return list
-}
-
-// TaskResponse is the response payload for Task management.
-type MissingTaskResponse struct {
-  Task     *model.Task `json:"task"`
-  CourseID int64       `json:"course_id"`
-  SheetID  int64       `json:"sheet_id"`
-}
-
-// newTaskResponse creates a response from a Task model.
-func newMissingTaskResponse(p *model.MissingTask) *MissingTaskResponse {
-  return &MissingTaskResponse{
-    Task:     p.Task,
-    CourseID: p.CourseID,
-    SheetID:  p.SheetID,
-  }
-}
-
-// Render post-processes a TaskResponse.
-func (body *MissingTaskResponse) Render(w http.ResponseWriter, r *http.Request) error {
-  return nil
-}
-
-// newTaskListResponse creates a response from a list of Task models.
-func newMissingTaskListResponse(Tasks []model.MissingTask) []render.Renderer {
-  // https://stackoverflow.com/a/36463641/7443104
-  list := []render.Renderer{}
-  for k := range Tasks {
-    list = append(list, newMissingTaskResponse(&Tasks[k]))
-  }
-  return list
-}
-
-// .............................................................................
-//
-// IndexHandler is the enpoint for retrieving all Tasks if claim.root is true.
+// IndexHandler is public endpoint for
+// URL: /sheet/{sheet_id}/tasks
+// URLPARAM: sheet_id,integer
+// METHOD: get
+// TAG: tasks
+// RESPONSE: 200,TaskResponseList
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// SUMMARY:  Get all tasks of a given sheet
 func (rs *TaskResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 
   var tasks []model.Task
@@ -121,9 +67,14 @@ func (rs *TaskResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
   }
 }
 
-// MissingIndexHandler is the enpoint for retrieving all task without a submission form the request identity
-// URL : /tasks/missing
-// METHOD: GET
+// IndexHandler is public endpoint for
+// URL: /tasks/missing
+// METHOD: get
+// TAG: tasks
+// RESPONSE: 200,MissingTaskResponseList
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// SUMMARY:  Get all tasks which are not solved by the request identity
 func (rs *TaskResource) MissingIndexHandler(w http.ResponseWriter, r *http.Request) {
 
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
@@ -143,7 +94,17 @@ func (rs *TaskResource) MissingIndexHandler(w http.ResponseWriter, r *http.Reque
   }
 }
 
-// CreateHandler is the enpoint for retrieving all Tasks if claim.root is true.
+// CreateHandler is public endpoint for
+// URL: /sheets/{sheet_id}/tasks
+// URLPARAM: sheet_id,integer
+// METHOD: post
+// TAG: tasks
+// REQUEST: TaskRequest
+// RESPONSE: 204,TaskResponse
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  create a new task
 func (rs *TaskResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
 
   sheet := r.Context().Value("sheet").(*model.Sheet)
@@ -157,8 +118,14 @@ func (rs *TaskResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
     return
   }
 
+  task := &model.Task{
+    MaxPoints:          data.MaxPoints,
+    PublicDockerImage:  data.PublicDockerImage,
+    PrivateDockerImage: data.PrivateDockerImage,
+  }
+
   // create Task entry in database
-  newTask, err := rs.Stores.Task.Create(data.Task, sheet.ID)
+  newTask, err := rs.Stores.Task.Create(task, sheet.ID)
   if err != nil {
     render.Render(w, r, ErrRender(err))
     return
@@ -174,7 +141,16 @@ func (rs *TaskResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// GetHandler is the enpoint for retrieving a specific Task.
+// GetHandler is public endpoint for
+// URL: /tasks/{task_id}
+// URLPARAM: task_id,integer
+// METHOD: get
+// TAG: tasks
+// RESPONSE: 200,TaskResponse
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  get a specific task
 func (rs *TaskResource) GetHandler(w http.ResponseWriter, r *http.Request) {
   // `Task` is retrieved via middle-ware
   task := r.Context().Value("task").(*model.Task)
@@ -188,12 +164,20 @@ func (rs *TaskResource) GetHandler(w http.ResponseWriter, r *http.Request) {
   render.Status(r, http.StatusOK)
 }
 
-// EditHandler is the endpoint fro updating a specific Task with given id.
+// EditHandler is public endpoint for
+// URL: /tasks/{task_id}
+// URLPARAM: task_id,integer
+// METHOD: put
+// TAG: tasks
+// REQUEST: TaskRequest
+// RESPONSE: 204,NotContent
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  edit a specific task
 func (rs *TaskResource) EditHandler(w http.ResponseWriter, r *http.Request) {
   // start from empty Request
-  data := &TaskRequest{
-    Task: r.Context().Value("task").(*model.Task),
-  }
+  data := &TaskRequest{}
 
   // parse JSON request into struct
   if err := render.Bind(r, data); err != nil {
@@ -201,8 +185,13 @@ func (rs *TaskResource) EditHandler(w http.ResponseWriter, r *http.Request) {
     return
   }
 
+  task := r.Context().Value("task").(*model.Task)
+  task.MaxPoints = data.MaxPoints
+  task.PublicDockerImage = data.PublicDockerImage
+  task.PrivateDockerImage = data.PrivateDockerImage
+
   // update database entry
-  if err := rs.Stores.Task.Update(data.Task); err != nil {
+  if err := rs.Stores.Task.Update(task); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return
   }
@@ -210,6 +199,16 @@ func (rs *TaskResource) EditHandler(w http.ResponseWriter, r *http.Request) {
   render.Status(r, http.StatusNoContent)
 }
 
+// DeleteHandler is public endpoint for
+// URL: /tasks/{task_id}
+// URLPARAM: task_id,integer
+// METHOD: delete
+// TAG: tasks
+// RESPONSE: 204,NoContent
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  delete a specific task
 func (rs *TaskResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
   Task := r.Context().Value("task").(*model.Task)
 
@@ -222,6 +221,16 @@ func (rs *TaskResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
   render.Status(r, http.StatusNoContent)
 }
 
+// GetPublicTestFileHandler is public endpoint for
+// URL: /tasks/{task_id}/public_file
+// URLPARAM: task_id,integer
+// METHOD: get
+// TAG: tasks
+// RESPONSE: 200,ZipFile
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  get the zip with the testing framework for the public tests
 func (rs *TaskResource) GetPublicTestFileHandler(w http.ResponseWriter, r *http.Request) {
 
   task := r.Context().Value("task").(*model.Task)
@@ -237,6 +246,16 @@ func (rs *TaskResource) GetPublicTestFileHandler(w http.ResponseWriter, r *http.
   }
 }
 
+// GetPrivateTestFileHandler is public endpoint for
+// URL: /tasks/{task_id}/private_file
+// URLPARAM: task_id,integer
+// METHOD: get
+// TAG: tasks
+// RESPONSE: 200,ZipFile
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  get the zip with the testing framework for the private tests
 func (rs *TaskResource) GetPrivateTestFileHandler(w http.ResponseWriter, r *http.Request) {
 
   task := r.Context().Value("task").(*model.Task)
@@ -252,6 +271,17 @@ func (rs *TaskResource) GetPrivateTestFileHandler(w http.ResponseWriter, r *http
   }
 }
 
+// ChangePublicTestFileHandler is public endpoint for
+// URL: /tasks/{task_id}/public_file
+// URLPARAM: task_id,integer
+// METHOD: post
+// TAG: tasks
+// REQUEST: zipfile
+// RESPONSE: 204,NoContent
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  change the zip with the testing framework for the public tests
 func (rs *TaskResource) ChangePublicTestFileHandler(w http.ResponseWriter, r *http.Request) {
   // will always be a POST
   task := r.Context().Value("task").(*model.Task)
@@ -264,6 +294,17 @@ func (rs *TaskResource) ChangePublicTestFileHandler(w http.ResponseWriter, r *ht
   render.Status(r, http.StatusOK)
 }
 
+// ChangePrivateTestFileHandler is public endpoint for
+// URL: /tasks/{task_id}/private_file
+// URLPARAM: task_id,integer
+// METHOD: post
+// TAG: tasks
+// REQUEST: zipfile
+// RESPONSE: 204,NoContent
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  change the zip with the testing framework for the private tests
 func (rs *TaskResource) ChangePrivateTestFileHandler(w http.ResponseWriter, r *http.Request) {
   // will always be a POST
   task := r.Context().Value("task").(*model.Task)
@@ -276,9 +317,16 @@ func (rs *TaskResource) ChangePrivateTestFileHandler(w http.ResponseWriter, r *h
   render.Status(r, http.StatusOK)
 }
 
-// GetSubmissionResultHandler returns the public submission result information
+// GetSubmissionResultHandler is public endpoint for
 // URL: /task/{task_id}/result
-// METHOD: GET
+// URLPARAM: task_id,integer
+// METHOD: get
+// TAG: tasks
+// RESPONSE: 200,GradeResponse
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  the the public results (grades) for a test and the request identity
 func (rs *TaskResource) GetSubmissionResultHandler(w http.ResponseWriter, r *http.Request) {
   givenRole := r.Context().Value("course_role").(authorize.CourseRole)
 
@@ -304,7 +352,6 @@ func (rs *TaskResource) GetSubmissionResultHandler(w http.ResponseWriter, r *htt
   }
 
   // TODO (patwie): does not make sense for TUTOR, ADMIN anyway
-
   grade.PrivateTestStatus = -1
   grade.PrivateTestLog = ""
 

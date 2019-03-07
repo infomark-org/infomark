@@ -20,42 +20,39 @@ package model
 
 import (
 	"time"
-
-	validation "github.com/go-ozzo/ozzo-validation"
 )
 
 type Grade struct {
-	ID        int64     `json:"id" db:"id"`
-	CreatedAt time.Time `json:"-" db:"created_at,omitempty"`
-	UpdatedAt time.Time `json:"-" db:"updated_at,omitempty"`
+	ID        int64     `db:"id"`
+	CreatedAt time.Time `db:"created_at,omitempty"`
+	UpdatedAt time.Time `db:"updated_at,omitempty"`
 
-	ExecutionState    int    `json:"execution_state" db:"execution_state"`
-	PublicTestLog     string `json:"public_test_log" db:"public_test_log"`
-	PrivateTestLog    string `json:"private_test_log" db:"private_test_log"`
-	PublicTestStatus  int    `json:"public_test_status" db:"public_test_status"`
-	PrivateTestStatus int    `json:"private_test_status" db:"private_test_status"`
-	AcquiredPoints    int    `json:"acquired_points" db:"acquired_points"`
-	Feedback          string `json:"feedback" db:"feedback"`
-	TutorID           int64  `json:"tutor_id" db:"tutor_id"`
-	SubmissionID      int64  `json:"submission_id" db:"submission_id"`
-}
-
-func (m *Grade) Validate() error {
-	return validation.ValidateStruct(m,
-		validation.Field(
-			&m.TutorID,
-			validation.Required,
-		),
-		validation.Field(
-			&m.SubmissionID,
-			validation.Required,
-		),
-	)
+	ExecutionState    int    `db:"execution_state"`
+	PublicTestLog     string `db:"public_test_log"`
+	PrivateTestLog    string `db:"private_test_log"`
+	PublicTestStatus  int    `db:"public_test_status"`
+	PrivateTestStatus int    `db:"private_test_status"`
+	AcquiredPoints    int    `db:"acquired_points"`
+	Feedback          string `db:"feedback"`
+	TutorID           int64  `db:"tutor_id"`
+	SubmissionID      int64  `db:"submission_id"`
 }
 
 type MissingGrade struct {
-	*Grade
-	CourseID int64 `json:"course_id" db:"course_id"`
-	SheetID  int64 `json:"sheet_id" db:"sheet_id"`
-	TaskID   int64 `json:"task_id" db:"task_id"`
+	ID                int64     `db:"id"`
+	CreatedAt         time.Time `db:"created_at,omitempty"`
+	UpdatedAt         time.Time `db:"updated_at,omitempty"`
+	ExecutionState    int       `db:"execution_state"`
+	PublicTestLog     string    `db:"public_test_log"`
+	PrivateTestLog    string    `db:"private_test_log"`
+	PublicTestStatus  int       `db:"public_test_status"`
+	PrivateTestStatus int       `db:"private_test_status"`
+	AcquiredPoints    int       `db:"acquired_points"`
+	Feedback          string    `db:"feedback"`
+	TutorID           int64     `db:"tutor_id"`
+	SubmissionID      int64     `db:"submission_id"`
+
+	CourseID int64 `db:"course_id"`
+	SheetID  int64 `db:"sheet_id"`
+	TaskID   int64 `db:"task_id"`
 }

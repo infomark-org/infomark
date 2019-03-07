@@ -45,129 +45,15 @@ func NewCourseResource(stores *Stores) *CourseResource {
   }
 }
 
-// .............................................................................
-
-// courseResponse is the response payload for course management.
-type courseResponse struct {
-  *model.Course
-}
-
-// Render post-processes a courseResponse.
-func (body *courseResponse) Render(w http.ResponseWriter, r *http.Request) error {
-  return nil
-}
-
-// newCourseResponse creates a response from a course model.
-func (rs *CourseResource) newCourseResponse(p *model.Course) *courseResponse {
-  return &courseResponse{
-    Course: p,
-  }
-}
-
-// newCourseListResponse creates a response from a list of course models.
-func (rs *CourseResource) newCourseListResponse(courses []model.Course) []render.Renderer {
-  // https://stackoverflow.com/a/36463641/7443104
-  list := []render.Renderer{}
-  for k := range courses {
-    list = append(list, rs.newCourseResponse(&courses[k]))
-  }
-  return list
-}
-
-type SheetPointsResponse struct {
-  SheetPoints *model.SheetPoints `json:"sheet_points"`
-}
-
-func (body *SheetPointsResponse) Render(w http.ResponseWriter, r *http.Request) error {
-  return nil
-}
-
-func newSheetPointsResponse(p *model.SheetPoints) *SheetPointsResponse {
-  return &SheetPointsResponse{
-    SheetPoints: p,
-  }
-}
-
-// newCourseListResponse creates a response from a list of course models.
-func newSheetPointsListResponse(collection []model.SheetPoints) []render.Renderer {
-  list := []render.Renderer{}
-  for k := range collection {
-    list = append(list, newSheetPointsResponse(&collection[k]))
-  }
-
-  return list
-}
-
-// .............................................................................
-type groupBidsResponse struct {
-  *model.GroupBid
-}
-
-// Render post-processes a groupBidsResponse.
-func (body *groupBidsResponse) Render(w http.ResponseWriter, r *http.Request) error {
-  return nil
-}
-
-// newCourseResponse creates a response from a course model.
-func newGroupBidsResponse(p *model.GroupBid) *groupBidsResponse {
-  return &groupBidsResponse{
-    GroupBid: p,
-  }
-}
-
-func newGroupBidsListResponse(collection []model.GroupBid) []render.Renderer {
-  list := []render.Renderer{}
-  for k := range collection {
-    list = append(list, newGroupBidsResponse(&collection[k]))
-  }
-
-  return list
-}
-
-// .............................................................................
-
-// courseResponse is the response payload for course management.
-type enrollmentResponse struct {
-  Role int64       `json:"role"`
-  User *model.User `json:"user"`
-}
-
-// Render post-processes a courseResponse.
-func (body *enrollmentResponse) Render(w http.ResponseWriter, r *http.Request) error {
-  return nil
-}
-
-// newCourseResponse creates a response from a course model.
-func (rs *CourseResource) newEnrollmentResponse(p *model.UserCourse) *enrollmentResponse {
-
-  return &enrollmentResponse{
-    Role: p.Role,
-    User: &model.User{
-      ID:        p.UserID,
-      FirstName: p.FirstName,
-      LastName:  p.LastName,
-      // AvatarPath:    p.AvatarPath,
-      Email:         p.Email,
-      StudentNumber: p.StudentNumber,
-      Semester:      p.Semester,
-      Subject:       p.Subject,
-      Language:      p.Language,
-    },
-  }
-}
-
-func (rs *CourseResource) newEnrollmentListResponse(enrollments []model.UserCourse) []render.Renderer {
-  list := []render.Renderer{}
-  for k := range enrollments {
-    list = append(list, rs.newEnrollmentResponse(&enrollments[k]))
-  }
-
-  return list
-}
-
-// .............................................................................
-
-// IndexHandler is the enpoint for retrieving all courses if claim.root is true.
+// IndexHandler is public endpoint for
+// URL: /courses
+// METHOD: get
+// TAG: courses
+// RESPONSE: 200,courseResponseList
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  list all courses
 func (rs *CourseResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
   // fetch collection of courses from database
   courses, err := rs.Stores.Course.GetAll()
@@ -179,6 +65,16 @@ func (rs *CourseResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
   }
 }
 
+// CreateHandler is public endpoint for
+// URL: /courses
+// METHOD: post
+// TAG: courses
+// REQUEST: courseRequest
+// RESPONSE: 204,courseResponse
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  create a new course
 func (rs *CourseResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
   // start from empty Request
   data := &courseRequest{}
@@ -189,8 +85,15 @@ func (rs *CourseResource) CreateHandler(w http.ResponseWriter, r *http.Request) 
     return
   }
 
+  course := &model.Course{}
+  course.Name = data.Name
+  course.Description = data.Description
+  course.BeginsAt = data.BeginsAt
+  course.EndsAt = data.EndsAt
+  course.RequiredPercentage = data.RequiredPercentage
+
   // create course entry in database
-  newCourse, err := rs.Stores.Course.Create(data.Course)
+  newCourse, err := rs.Stores.Course.Create(course)
   if err != nil {
     render.Render(w, r, ErrRender(err))
     return
@@ -206,7 +109,16 @@ func (rs *CourseResource) CreateHandler(w http.ResponseWriter, r *http.Request) 
 
 }
 
-// GetHandler is the enpoint for retrieving a specific course.
+// GetHandler is public endpoint for
+// URL: /courses/{course_id}
+// URLPARAM: course_id,integer
+// METHOD: get
+// TAG: courses
+// RESPONSE: 200,courseResponse
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  get a specific course
 func (rs *CourseResource) GetHandler(w http.ResponseWriter, r *http.Request) {
   // `course` is retrieved via middle-ware
   course, ok := r.Context().Value("course").(*model.Course)
@@ -224,12 +136,20 @@ func (rs *CourseResource) GetHandler(w http.ResponseWriter, r *http.Request) {
   render.Status(r, http.StatusOK)
 }
 
-// PatchHandler is the endpoint fro updating a specific course with given id.
+// EditHandler is public endpoint for
+// URL: /courses/{course_id}
+// URLPARAM: course_id,integer
+// METHOD: put
+// TAG: courses
+// REQUEST: courseRequest
+// RESPONSE: 204,NotContent
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  update a specific course
 func (rs *CourseResource) EditHandler(w http.ResponseWriter, r *http.Request) {
   // start from empty Request
-  data := &courseRequest{
-    Course: r.Context().Value("course").(*model.Course),
-  }
+  data := &courseRequest{}
 
   // parse JSON request into struct
   if err := render.Bind(r, data); err != nil {
@@ -237,8 +157,15 @@ func (rs *CourseResource) EditHandler(w http.ResponseWriter, r *http.Request) {
     return
   }
 
+  course := r.Context().Value("course").(*model.Course)
+  course.Name = data.Name
+  course.Description = data.Description
+  course.BeginsAt = data.BeginsAt
+  course.EndsAt = data.EndsAt
+  course.RequiredPercentage = data.RequiredPercentage
+
   // update database entry
-  if err := rs.Stores.Course.Update(data.Course); err != nil {
+  if err := rs.Stores.Course.Update(course); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return
   }
@@ -247,6 +174,16 @@ func (rs *CourseResource) EditHandler(w http.ResponseWriter, r *http.Request) {
   render.Status(r, http.StatusNoContent)
 }
 
+// DeleteHandler is public endpoint for
+// URL: /courses/{course_id}
+// URLPARAM: course_id,integer
+// METHOD: delete
+// TAG: courses
+// RESPONSE: 204,NoContent
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  delete a specific course
 func (rs *CourseResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
   course := r.Context().Value("course").(*model.Course)
 
@@ -263,8 +200,22 @@ func (rs *CourseResource) DeleteHandler(w http.ResponseWriter, r *http.Request) 
   render.Status(r, http.StatusNoContent)
 }
 
-// IndexEnrollmentsHandler lists all enrolled users. The query can be refined by several
-// URLparameters.
+// IndexEnrollmentsHandler is public endpoint for
+// URL: /courses/{course_id}/enrollments
+// URLPARAM: course_id,integer
+// QUERYPARAM: roles,string
+// QUERYPARAM: first_name,string
+// QUERYPARAM: last_name,string
+// QUERYPARAM: email,string
+// QUERYPARAM: subject,string
+// QUERYPARAM: language,string
+// METHOD: get
+// TAG: enrollments
+// RESPONSE: 200,enrollmentResponseList
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  list all courses
 func (rs *CourseResource) IndexEnrollmentsHandler(w http.ResponseWriter, r *http.Request) {
   // /courses/1/enrollments?roles=0,1
   course := r.Context().Value("course").(*model.Course)
@@ -307,25 +258,31 @@ func (rs *CourseResource) IndexEnrollmentsHandler(w http.ResponseWriter, r *http
   render.Status(r, http.StatusOK)
 }
 
-// GetEnrollmentsHandler
-// URL /api/v1/course/{course_id}/enrollments/{user_id}
-// METHOD: GET
+// GetEnrollmentsHandler is public endpoint for
+// URL: /course/{course_id}/enrollments/{user_id}
+// URLPARAM: course_id,integer
+// URLPARAM: user_id,integer
+// METHOD: get
+// TAG: enrollments
+// RESPONSE: 200,enrollmentResponse
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  give enrollment of a specific user in a specific course
 func (rs *CourseResource) GetEnrollmentsHandler(w http.ResponseWriter, r *http.Request) {
   // /courses/1/enrollments?roles=0,1
   course := r.Context().Value("course").(*model.Course)
   user := r.Context().Value("user").(*model.User)
 
   // find role in the course
-  courseRole, err := rs.Stores.Course.RoleInCourse(user.ID, course.ID)
+
+  userEnrollment, err := rs.Stores.Course.GetUserEnrollment(course.ID, user.ID)
   if err != nil {
     render.Render(w, r, ErrBadRequestWithDetails(err))
     return
   }
 
-  resp := &enrollmentResponse{
-    Role: int64(courseRole),
-    User: user,
-  }
+  resp := rs.newEnrollmentResponse(userEnrollment)
 
   // render JSON reponse
   if err = render.Render(w, r, resp); err != nil {
@@ -336,9 +293,18 @@ func (rs *CourseResource) GetEnrollmentsHandler(w http.ResponseWriter, r *http.R
   render.Status(r, http.StatusOK)
 }
 
-// ChangeRole
-// URL /api/v1/course/{course_id}/enrollments/{user_id}
-// METHOD: PUT
+// ChangeRole is public endpoint for
+// URL: /course/{course_id}/enrollments/{user_id}
+// URLPARAM: course_id,integer
+// URLPARAM: user_id,integer
+// METHOD: put
+// TAG: enrollments
+// REQUEST: changeRoleInCourseRequest
+// RESPONSE: 204,NoContent
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  change role of specific user
 func (rs *CourseResource) ChangeRole(w http.ResponseWriter, r *http.Request) {
   // /courses/1/enrollments?roles=0,1
 
@@ -361,7 +327,16 @@ func (rs *CourseResource) ChangeRole(w http.ResponseWriter, r *http.Request) {
   render.Status(r, http.StatusOK)
 }
 
-// EnrollHandler will enroll the current identity into the given course
+// EnrollHandler is public endpoint for
+// URL: /course/{course_id}/enrollments
+// URLPARAM: course_id,integer
+// METHOD: post
+// TAG: enrollments
+// RESPONSE: 204,NoContent
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  enroll a user into a course
 func (rs *CourseResource) EnrollHandler(w http.ResponseWriter, r *http.Request) {
   course := r.Context().Value("course").(*model.Course)
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
@@ -372,27 +347,31 @@ func (rs *CourseResource) EnrollHandler(w http.ResponseWriter, r *http.Request) 
     return
   }
 
-  user, err := rs.Stores.User.Get(accessClaims.LoginID)
+  userEnrollment, err := rs.Stores.Course.GetUserEnrollment(course.ID, accessClaims.LoginID)
   if err != nil {
-    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    render.Render(w, r, ErrBadRequestWithDetails(err))
     return
-  }
-
-  resp := &enrollmentResponse{
-    Role: 0,
-    User: user,
   }
 
   render.Status(r, http.StatusCreated)
 
-  if err := render.Render(w, r, resp); err != nil {
+  if err := render.Render(w, r, rs.newEnrollmentResponse(userEnrollment)); err != nil {
     render.Render(w, r, ErrRender(err))
     return
   }
 
 }
 
-// DisenrollHandler will disenroll the current identity into the given course
+// DisenrollHandler is public endpoint for
+// URL: /course/{course_id}/enrollments
+// URLPARAM: course_id,integer
+// METHOD: delete
+// TAG: enrollments
+// RESPONSE: 204,NoContent
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  disenroll a user from a course
 func (rs *CourseResource) DisenrollHandler(w http.ResponseWriter, r *http.Request) {
   course := r.Context().Value("course").(*model.Course)
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
@@ -413,7 +392,24 @@ func (rs *CourseResource) DisenrollHandler(w http.ResponseWriter, r *http.Reques
   render.Status(r, http.StatusNoContent)
 }
 
-// SendEmailHandler will send email to the entire course filtered by role.
+// SendEmailHandler is public endpoint for
+// URL: /courses/{course_id}/email
+// URLPARAM: course_id,integer
+// QUERYPARAM: roles,string
+// QUERYPARAM: first_name,string
+// QUERYPARAM: last_name,string
+// QUERYPARAM: email,string
+// QUERYPARAM: subject,string
+// QUERYPARAM: language,string
+// METHOD: post
+// TAG: courses
+// TAG: email
+// REQUEST: EmailRequest
+// RESPONSE: 204,NoContent
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  send email to entire course filtered
 func (rs *CourseResource) SendEmailHandler(w http.ResponseWriter, r *http.Request) {
 
   course := r.Context().Value("course").(*model.Course)
@@ -464,8 +460,15 @@ func (rs *CourseResource) SendEmailHandler(w http.ResponseWriter, r *http.Reques
 
 }
 
-// PointsHandler returns the point for the identity in a given course. This is
-// intented to serve data for a plot.
+// PointsHandler is public endpoint for
+// URL: /courses/{course_id}/points
+// URLPARAM: course_id,integer
+// METHOD: get
+// TAG: courses
+// RESPONSE: 200,SheetPointsResponseList
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  get all points for the request identity
 func (rs *CourseResource) PointsHandler(w http.ResponseWriter, r *http.Request) {
   course := r.Context().Value("course").(*model.Course)
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
@@ -486,9 +489,15 @@ func (rs *CourseResource) PointsHandler(w http.ResponseWriter, r *http.Request) 
   render.Status(r, http.StatusOK)
 }
 
-// BidsHandler  Show your group bids or if allowed show all bids.
-// url: /course/{course_id}/bids
-// mwethod: GET
+// BidsHandler is public endpoint for
+// URL: /courses/{course_id}/bids
+// URLPARAM: course_id,integer
+// METHOD: get
+// TAG: courses
+// RESPONSE: 200,groupBidsResponseList
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  get all bids for the request identity in a course
 func (rs *CourseResource) BidsHandler(w http.ResponseWriter, r *http.Request) {
   course := r.Context().Value("course").(*model.Course)
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)

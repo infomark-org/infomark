@@ -23,27 +23,31 @@ import (
 	"net/http"
 
 	"github.com/cgtuebingen/infomark-backend/model"
+	validation "github.com/go-ozzo/ozzo-validation"
 )
 
 // TaskRequest is the request payload for Task management.
 type TaskRequest struct {
-	*model.Task
-	ProtectedID int64 `json:"id"`
+	MaxPoints          int    `json:"max_points"`
+	PublicDockerImage  string `json:"public_docker_image"`
+	PrivateDockerImage string `json:"private_docker_image"`
 }
 
 // Bind preprocesses a TaskRequest.
 func (body *TaskRequest) Bind(r *http.Request) error {
-
-	if body.Task == nil {
+	if body == nil {
 		return errors.New("missing \"task\" data")
 	}
+	return body.Validate()
+}
 
-	// Sending the id via request-body is invalid.
-	// The id should be submitted in the url.
-	body.ProtectedID = 0
-
-	return body.Task.Validate()
-
+func (m *TaskRequest) Validate() error {
+	return validation.ValidateStruct(m,
+		validation.Field(
+			&m.MaxPoints,
+			validation.Min(0),
+		),
+	)
 }
 
 // TaskRequest is the request payload for Task management.

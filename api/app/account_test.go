@@ -27,7 +27,6 @@ import (
   "github.com/cgtuebingen/infomark-backend/api/helper"
   "github.com/cgtuebingen/infomark-backend/auth"
   "github.com/cgtuebingen/infomark-backend/email"
-  "github.com/cgtuebingen/infomark-backend/model"
   "github.com/franela/goblin"
   "github.com/spf13/viper"
 )
@@ -69,7 +68,7 @@ func TestAccount(t *testing.T) {
       w := tape.GetWithClaims("/api/v1/account/enrollments", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      enrollments_actual := []model.Enrollment{}
+      enrollments_actual := []userEnrollmentResponse{}
       err = json.NewDecoder(w.Body).Decode(&enrollments_actual)
       g.Assert(err).Equal(nil)
       g.Assert(len(enrollments_actual)).Equal(len(enrollments_expected))

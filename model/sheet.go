@@ -23,22 +23,17 @@ import (
 )
 
 type Sheet struct {
-	ID        int64     `json:"id" db:"id"`
-	CreatedAt time.Time `json:"-" db:"created_at,omitempty"`
-	UpdatedAt time.Time `json:"-" db:"updated_at,omitempty"`
+	ID        int64     `db:"id"`
+	CreatedAt time.Time `db:"created_at,omitempty"`
+	UpdatedAt time.Time `db:"updated_at,omitempty"`
 
-	Name      string    `json:"name" db:"name"`
-	PublishAt time.Time `json:"publish_at" db:"publish_at"`
-	DueAt     time.Time `json:"due_at" db:"due_at"`
+	Name      string    `db:"name"`
+	PublishAt time.Time `db:"publish_at"`
+	DueAt     time.Time `db:"due_at"`
 }
 
 type SheetPoints struct {
-	AquiredPoints int `json:"acquired_points" db:"acquired_points"`
-	MaxPoints     int `json:"max_points" db:"max_points"`
-	SheetID       int `json:"sheet_id" db:"sheet_id"`
-}
-
-func (d *SheetPoints) Validate() error {
-	// just a join and read only
-	return nil
+	AquiredPoints int `db:"acquired_points"`
+	MaxPoints     int `db:"max_points"`
+	SheetID       int `db:"sheet_id"`
 }

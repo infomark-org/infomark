@@ -20,7 +20,6 @@ package app
 
 import (
   "context"
-  "fmt"
   "net/http"
   "strconv"
 
@@ -44,42 +43,16 @@ func NewSubmissionResource(stores *Stores) *SubmissionResource {
   }
 }
 
-// .............................................................................
-
-// SubmissionResponse is the response payload for Submission management.
-type SubmissionResponse struct {
-  *model.Submission
-  FileURL string `json:"file_url"`
-}
-
-// newSubmissionResponse creates a response from a Submission model.
-func newSubmissionResponse(p *model.Submission) *SubmissionResponse {
-  sr := &SubmissionResponse{
-    Submission: p,
-    FileURL:    fmt.Sprintf("/api/v1/submissions/%s/file", strconv.FormatInt(p.ID, 10)),
-  }
-
-  return sr
-}
-
-// newSubmissionListResponse creates a response from a list of Submission models.
-func newSubmissionListResponse(Submissions []model.Submission) []render.Renderer {
-  // https://stackoverflow.com/a/36463641/7443104
-  list := []render.Renderer{}
-  for k := range Submissions {
-    list = append(list, newSubmissionResponse(&Submissions[k]))
-  }
-  return list
-}
-
-// Render post-processes a SubmissionResponse.
-func (body *SubmissionResponse) Render(w http.ResponseWriter, r *http.Request) error {
-  return nil
-}
-
-// GetFileHandler returns the submission file from a given task
-// URL: /api/v1/tasks/1/submission
-// METHOD: GET
+// GetFileHandler is public endpoint for
+// URL: /tasks/{task_id}/submission
+// URLPARAM: task_id,integer
+// METHOD: get
+// TAG: submissions
+// RESPONSE: 200,ZipFile
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  get the zip file containing the submission of the request identity for a given task
 func (rs *SubmissionResource) GetFileHandler(w http.ResponseWriter, r *http.Request) {
   task := r.Context().Value("task").(*model.Task)
   // submission := r.Context().Value("submission").(*model.Submission)
@@ -113,9 +86,16 @@ func (rs *SubmissionResource) GetFileHandler(w http.ResponseWriter, r *http.Requ
   }
 }
 
-// GetFileByIdHandler returns the submission file from a given id
-// URL: /api/v1/submissions/{submissionID}
-// METHOD: GET
+// GetFileByIdHandler is public endpoint for
+// URL: /submissions/{submission_id}
+// URLPARAM: submission_id,integer
+// METHOD: get
+// TAG: submissions
+// RESPONSE: 200,ZipFile
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  get the zip file of a specific submission
 func (rs *SubmissionResource) GetFileByIdHandler(w http.ResponseWriter, r *http.Request) {
 
   submission := r.Context().Value("submission").(*model.Submission)
@@ -149,9 +129,18 @@ func (rs *SubmissionResource) GetFileByIdHandler(w http.ResponseWriter, r *http.
   }
 }
 
-// GetFileHandler returns the submission file from a given task
-// URL: /api/v1/tasks/1/submission
-// METHOD: POST
+// UploadFileHandler is public endpoint for
+// URL: /tasks/{task_id}/submission
+// URLPARAM: task_id,integer
+// URLPARAM: sheet_id,integer
+// METHOD: post
+// TAG: submissions
+// REQUEST: zipfile
+// RESPONSE: 204,NoContent
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  changes the zip file of a submission
 func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.Request) {
   task := r.Context().Value("task").(*model.Task)
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
@@ -176,9 +165,20 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
   render.Status(r, http.StatusOK)
 }
 
-// GetFileHandler returns the submission file from a given task
-// URL: /submissions?sheet_id=?&task_id=?&group_id=?&user_id=?
-// METHOD: GET
+// IndexHandler is public endpoint for
+// URL: /courses/{course_id}/submissions
+// URLPARAM: course_id,integer
+// QUERYPARAM: sheet_id,integer
+// QUERYPARAM: task_id,integer
+// QUERYPARAM: group_id,integer
+// QUERYPARAM: user_id,integer
+// METHOD: get
+// TAG: submissions
+// RESPONSE: 200,SubmissionResponseList
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  Query submissions in a course
 func (rs *SubmissionResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
   course := r.Context().Value("course").(*model.Course)
 

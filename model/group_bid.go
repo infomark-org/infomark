@@ -18,33 +18,10 @@
 
 package model
 
-import (
-	validation "github.com/go-ozzo/ozzo-validation"
-)
-
 type GroupBid struct {
-	ID int64 `json:"id" db:"id"`
+	ID int64 `db:"id"`
 
-	UserID  int64 `json:"user_id" db:"user_id"`
-	GroupID int64 `json:"group_id" db:"group_id"`
-	Bid     int   `json:"bid" db:"bid"`
-}
-
-func (m *GroupBid) Validate() error {
-	return validation.ValidateStruct(m,
-		validation.Field(
-			&m.UserID,
-			validation.Required,
-		),
-		validation.Field(
-			&m.GroupID,
-			validation.Required,
-		),
-		validation.Field(
-			&m.Bid,
-			validation.Required,
-			validation.Min(0),
-			validation.Max(10),
-		),
-	)
+	UserID  int64 `db:"user_id"`
+	GroupID int64 `db:"group_id"`
+	Bid     int   `db:"bid"`
 }

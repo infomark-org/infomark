@@ -24,7 +24,6 @@ import (
   "testing"
 
   "github.com/cgtuebingen/infomark-backend/email"
-  "github.com/cgtuebingen/infomark-backend/model"
   "github.com/franela/goblin"
 )
 
@@ -59,7 +58,7 @@ func TestGrade(t *testing.T) {
       w := tape.GetWithClaims(url, 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      grades_actual := []model.Grade{}
+      grades_actual := []GradeResponse{}
       err := json.NewDecoder(w.Body).Decode(&grades_actual)
       g.Assert(err).Equal(nil)
       g.Assert(len(grades_actual)).Equal(186)
@@ -69,7 +68,7 @@ func TestGrade(t *testing.T) {
 
       w := tape.GetWithClaims("/api/v1/courses/1/grades?group_id=1&public_test_status=0", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
-      grades_actual := []model.Grade{}
+      grades_actual := []GradeResponse{}
       err := json.NewDecoder(w.Body).Decode(&grades_actual)
       g.Assert(err).Equal(nil)
       for _, el := range grades_actual {

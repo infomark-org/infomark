@@ -45,45 +45,20 @@ func NewGroupResource(stores *Stores) *GroupResource {
   }
 }
 
-// GroupResponse is the response payload for Group management.
-type GroupResponse struct {
-  *model.Group
-}
-
-// newGroupResponse creates a response from a Group model.
-func (rs *GroupResource) newGroupResponse(p *model.Group) *GroupResponse {
-  return &GroupResponse{
-    Group: p,
-  }
-}
-
-// newGroupListResponse creates a response from a list of Group models.
-func (rs *GroupResource) newGroupListResponse(Groups []model.Group) []render.Renderer {
-  // https://stackoverflow.com/a/36463641/7443104
-  list := []render.Renderer{}
-  for k := range Groups {
-    list = append(list, rs.newGroupResponse(&Groups[k]))
-  }
-  return list
-}
-
-// Render post-processes a GroupResponse.
-func (body *GroupResponse) Render(w http.ResponseWriter, r *http.Request) error {
-  return nil
-}
-
-type GroupBidResponse struct {
-  Bid int `json:"bid"`
-}
-
-// Render post-processes a GroupResponse.
-func (body *GroupBidResponse) Render(w http.ResponseWriter, r *http.Request) error {
-  return nil
-}
-
 // .............................................................................
 
-// IndexHandler is the enpoint for retrieving all Groups if claim.root is true.
+// IndexHandler is public endpoint for
+// URL: /courses/{course_id}/groups
+// URLPARAM: course_id,integer
+// METHOD: get
+// TAG: groups
+// RESPONSE: 200,GroupResponseList
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  get all groups in course
+// DESCRIPTION:
+// The ordering is abitary
 func (rs *GroupResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 
   var groups []model.Group
@@ -99,24 +74,36 @@ func (rs *GroupResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
   }
 }
 
-// CreateHandler is the enpoint for retrieving all Tasks if claim.root is true.
+// CreateHandler is public endpoint for
+// URL: /courses/{course_id}/groups
+// URLPARAM: course_id,integer
+// METHOD: post
+// TAG: groups
+// REQUEST: groupRequest
+// RESPONSE: 204,SheetResponse
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  create a new group
 func (rs *GroupResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
-
-  course := r.Context().Value("course").(*model.Course)
 
   // start from empty Request
   data := &groupRequest{}
-
   // parse JSON request into struct
   if err := render.Bind(r, data); err != nil {
     render.Render(w, r, ErrBadRequestWithDetails(err))
     return
   }
 
-  data.Group.CourseID = course.ID
+  course := r.Context().Value("course").(*model.Course)
+
+  group := &model.Group{}
+  group.TutorID = data.TutorID
+  group.CourseID = course.ID
+  group.Description = data.Description
 
   // create Group entry in database
-  newGroup, err := rs.Stores.Group.Create(data.Group)
+  newGroup, err := rs.Stores.Group.Create(group)
   if err != nil {
     render.Render(w, r, ErrRender(err))
     return
@@ -132,7 +119,16 @@ func (rs *GroupResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// GetHandler is the enpoint for retrieving a specific Task.
+// GetHandler is public endpoint for
+// URL: /groups/{group_id}
+// URLPARAM: group_id,integer
+// METHOD: get
+// TAG: groups
+// RESPONSE: 200,GroupResponse
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  get a specific group
 func (rs *GroupResource) GetHandler(w http.ResponseWriter, r *http.Request) {
   // `Task` is retrieved via middle-ware
   group := r.Context().Value("group").(*model.Group)
@@ -146,8 +142,16 @@ func (rs *GroupResource) GetHandler(w http.ResponseWriter, r *http.Request) {
   render.Status(r, http.StatusOK)
 }
 
-// GetMineHandler is the enpoint for retrieving a specific Group in a given course
-// containing the request entity.
+// GetMineHandler is public endpoint for
+// URL: /courses/{course_id}/group
+// URLPARAM: course_id,integer
+// METHOD: get
+// TAG: groups
+// RESPONSE: 200,GroupResponse
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  get the group the request identity is enrolled in
 func (rs *GroupResource) GetMineHandler(w http.ResponseWriter, r *http.Request) {
 
   // TODO(patwie): handle case when user is tutor in group
@@ -189,12 +193,20 @@ func (rs *GroupResource) GetMineHandler(w http.ResponseWriter, r *http.Request) 
 
 }
 
-// EditHandler is the endpoint fro updating a specific Task with given id.
+// EditHandler is public endpoint for
+// URL: /groups/{group_id}
+// URLPARAM: group_id,integer
+// METHOD: put
+// TAG: groups
+// REQUEST: groupRequest
+// RESPONSE: 204,NotContent
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  update a specific group
 func (rs *GroupResource) EditHandler(w http.ResponseWriter, r *http.Request) {
   // start from empty Request
-  data := &groupRequest{
-    Group: r.Context().Value("group").(*model.Group),
-  }
+  data := &groupRequest{}
 
   // parse JSON request into struct
   if err := render.Bind(r, data); err != nil {
@@ -202,8 +214,12 @@ func (rs *GroupResource) EditHandler(w http.ResponseWriter, r *http.Request) {
     return
   }
 
+  group := r.Context().Value("group").(*model.Group)
+  group.TutorID = data.TutorID
+  group.Description = data.Description
+
   // update database entry
-  if err := rs.Stores.Group.Update(data.Group); err != nil {
+  if err := rs.Stores.Group.Update(group); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return
   }
@@ -211,6 +227,16 @@ func (rs *GroupResource) EditHandler(w http.ResponseWriter, r *http.Request) {
   render.Status(r, http.StatusNoContent)
 }
 
+// DeleteHandler is public endpoint for
+// URL: /groups/{group_id}
+// URLPARAM: group_id,integer
+// METHOD: delete
+// TAG: groups
+// RESPONSE: 204,NoContent
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  delete a specific group
 func (rs *GroupResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
   group := r.Context().Value("group").(*model.Group)
 
@@ -223,9 +249,17 @@ func (rs *GroupResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
   render.Status(r, http.StatusNoContent)
 }
 
-// ChangeBidHandler is the endpoint fro updating a specific Task with given id.
-// url: /groups/{course_id}/bid
-// method: POST
+// ChangeBidHandler is public endpoint for
+// URL: /groups/{course_id}/bid
+// URLPARAM: course_id,integer
+// METHOD: post
+// TAG: groups
+// REQUEST: groupBidRequest
+// RESPONSE: 204,NoContent
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  chnage the bid for enrolling in a group
 func (rs *GroupResource) ChangeBidHandler(w http.ResponseWriter, r *http.Request) {
 
   courseRole := r.Context().Value("course_role").(authorize.CourseRole)
@@ -277,9 +311,17 @@ func (rs *GroupResource) ChangeBidHandler(w http.ResponseWriter, r *http.Request
   render.Status(r, http.StatusNoContent)
 }
 
-// SendEmailHandler will send email to entiure group
-// url: /api/v1/groups/{groupID}/email
-// method: POST
+// SendEmailHandler is public endpoint for
+// URL: /groups/{group_id}/email
+// URLPARAM: group_id,integer
+// METHOD: post
+// TAG: groups
+// REQUEST: EmailRequest
+// RESPONSE: 204,NoContent
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  send email to entire group
 func (rs *GroupResource) SendEmailHandler(w http.ResponseWriter, r *http.Request) {
 
   group := r.Context().Value("group").(*model.Group)

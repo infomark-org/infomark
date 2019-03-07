@@ -48,13 +48,13 @@ func NewGradeResource(stores *Stores) *GradeResource {
 // URL: /grades/{grade_id}
 // URLPARAM: grade_id,integer
 // METHOD: put
-// SECTION: grade
+// TAG: grades
 // REQUEST: GradeRequest
 // RESPONSE: 204,NoContent
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
 // RESPONSE: 403,Unauthorized
-// SUMMARY:  Refresh or Generate Access token
+// SUMMARY:  edit a grade
 func (rs *GradeResource) EditHandler(w http.ResponseWriter, r *http.Request) {
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
 
@@ -78,9 +78,6 @@ func (rs *GradeResource) EditHandler(w http.ResponseWriter, r *http.Request) {
   render.Status(r, http.StatusNoContent)
 }
 
-// GetFileHandler returns the submission file from a given task
-// URL: /submissions?sheet_id=?&task_id=?&group_id=?&user_id=?
-// METHOD: GET
 // IndexHandler is public endpoint for
 // URL: /courses/{course_id}/grades
 // URLPARAM: course_id,integer
@@ -149,9 +146,15 @@ func (rs *GradeResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// IndexMissingHandler the missing grades for the request identity
+// IndexMissingHandler is public endpoint for
 // URL: /grades/missing
-// METHOD: GET
+// METHOD: get
+// TAG: grades
+// RESPONSE: 200,MissingGradeResponseList
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  the missing grades for the request identity
 func (rs *GradeResource) IndexMissingHandler(w http.ResponseWriter, r *http.Request) {
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
 

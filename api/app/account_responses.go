@@ -63,6 +63,7 @@ func newUserAccountCreatedResponse(p *model.User) *userAccountCreatedResponse {
 
 // userAccountCreatedResponse is the response payload for account management.
 type userEnrollmentResponse struct {
+	ID       int64 `json:"id"`
 	CourseID int64 `json:"course_id"`
 	Role     int64 `json:"role"`
 }
@@ -76,6 +77,7 @@ func (u *userEnrollmentResponse) Render(w http.ResponseWriter, r *http.Request) 
 // newCourseResponse creates a response from a course model.
 func (rs *AccountResource) newUserEnrollmentResponse(p *model.Enrollment) *userEnrollmentResponse {
 	return &userEnrollmentResponse{
+		ID:       p.ID,
 		CourseID: p.CourseID,
 		Role:     p.Role,
 	}

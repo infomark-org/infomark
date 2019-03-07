@@ -25,7 +25,6 @@ import (
 
   "github.com/cgtuebingen/infomark-backend/api/helper"
   "github.com/cgtuebingen/infomark-backend/email"
-  "github.com/cgtuebingen/infomark-backend/model"
   "github.com/franela/goblin"
 )
 
@@ -58,7 +57,7 @@ func TestGroup(t *testing.T) {
       w := tape.GetWithClaims("/api/v1/courses/1/groups", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      groups_actual := []model.Group{}
+      groups_actual := []GroupResponse{}
       err := json.NewDecoder(w.Body).Decode(&groups_actual)
       g.Assert(err).Equal(nil)
       g.Assert(len(groups_actual)).Equal(10)
@@ -71,7 +70,7 @@ func TestGroup(t *testing.T) {
       w := tape.GetWithClaims("/api/v1/groups/1", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      entry_actual := &model.Group{}
+      entry_actual := &GroupResponse{}
       err = json.NewDecoder(w.Body).Decode(entry_actual)
       g.Assert(err).Equal(nil)
 
@@ -94,9 +93,8 @@ func TestGroup(t *testing.T) {
       entries_before, err := stores.Group.GroupsOfCourse(1)
       g.Assert(err).Equal(nil)
 
-      entry_sent := model.Group{
+      entry_sent := &groupRequest{
         TutorID:     1,
-        CourseID:    1,
         Description: "blah blahe",
       }
 
@@ -106,10 +104,10 @@ func TestGroup(t *testing.T) {
       w := tape.PostWithClaims("/api/v1/courses/1/groups", helper.ToH(entry_sent), 1, true)
       g.Assert(w.Code).Equal(http.StatusCreated)
 
-      entry_return := &model.Group{}
+      entry_return := &GroupResponse{}
       err = json.NewDecoder(w.Body).Decode(&entry_return)
       g.Assert(entry_return.TutorID).Equal(entry_sent.TutorID)
-      g.Assert(entry_return.CourseID).Equal(entry_sent.CourseID)
+      g.Assert(entry_return.CourseID).Equal(int64(1))
       g.Assert(entry_return.Description).Equal(entry_sent.Description)
 
       entries_after, err := stores.Group.GroupsOfCourse(1)
@@ -119,9 +117,8 @@ func TestGroup(t *testing.T) {
 
     g.It("Should update a group", func() {
       // group (id=1) belongs to course(id=1)
-      entry_sent := model.Group{
+      entry_sent := &groupRequest{
         TutorID:     9,
-        CourseID:    1,
         Description: "new descr",
       }
 
@@ -141,8 +138,7 @@ func TestGroup(t *testing.T) {
       g.Assert(err).Equal(nil)
 
       g.Assert(entry_after.TutorID).Equal(entry_sent.TutorID)
-      g.Assert(entry_after.CourseID).Equal(entry_sent.CourseID)
-      g.Assert(entry_after.CourseID).Equal(entry_sent.CourseID)
+      g.Assert(entry_after.CourseID).Equal(int64(1))
     })
 
     g.It("Should delete when valid access claims", func() {
@@ -213,7 +209,7 @@ func TestGroup(t *testing.T) {
       w = tape.GetWithClaims("/api/v1/courses/1/group", loginID, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      entry_return := &model.Group{}
+      entry_return := &GroupResponse{}
       err := json.NewDecoder(w.Body).Decode(&entry_return)
       g.Assert(err).Equal(nil)
 
@@ -231,7 +227,7 @@ func TestGroup(t *testing.T) {
       w = tape.GetWithClaims("/api/v1/courses/1/group", loginID, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      entry_return := &model.Group{}
+      entry_return := &GroupResponse{}
       err := json.NewDecoder(w.Body).Decode(&entry_return)
       g.Assert(err).Equal(nil)
 
