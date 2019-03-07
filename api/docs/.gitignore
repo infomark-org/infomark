@@ -1,4 +1,6 @@
+swagger/*_test.go
+swagger/fixture/
 .local/
-generated.yaml
 build
-api.yaml
+generated.yaml
+run.go
