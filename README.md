@@ -8,29 +8,76 @@ using [Swagger](https://swagger.io/).
 
 The frontend is implemented in [Elm]((https://elm-lang.org/)) and is available [here](https://github.com/cgtuebingen/infomark-frontend).
 
-# Building
 
-Please have a look at the [`.drone.yml`](./.drone.yml) config for more details.
+# Quick Setup
+
+No manual settings, just use the defaults (just for development).
 
 ```bash
-git clone <this repo>
+git clone https://github.com/cgtuebingen/infomark-backend.git
+go build infomark-backend.go
+cp .informark-backend.yml.example ~/.informark-backend.yml
+
+sudo docker-compose up -d
+
+cd database
+python3 mock.py
+PGPASSWORD=pass psql -h 127.0.0.1 -U user -p 5433 -d db -f schema.sql
+PGPASSWORD=pass psql -h 127.0.0.1 -U user -p 5433 -d db -f mock.sql
+cd ..
+
+./infomark-backend server
+```
+
+
+# Production Setup
+
+We will edit this time the configfile
+
+```bash
+git clonehttps://github.com/cgtuebingen/infomark-backend.git
 go build infomark-backend.go
 cp .informark-backend.yml.example ~/.informark-backend.yml
 edit ~/.informark-backend.yml
 ```
 
-# Testing
+Note, you should use
+
+```bash
+openssl rand -hex 32
+```
+
+to generate random passwords or secrets.
+
+# Development Setup
+## Mocking
+
+To run the tests or having actual data to display, we use some mocking generate in python:
+
+```bash
+# do it once to create schema and mock
+cd database
+python3 mock.py
+PGPASSWORD=pass psql -h 127.0.0.1 -U user -p 5433 -d db -f schema.sql
+PGPASSWORD=pass psql -h 127.0.0.1 -U user -p 5433 -d db -f mock.sql
+cd ..
+```
+
+Reminder, to reset the docker-compose files (chaning password) just do
+
+```bash
+sudo docker-compose down -v
+sudo docker-compose rm
+sudo docker-compose up --force-recreate
+```
+
+## Testing
 
 We ship unit tests and a database mock which is generated in Python. Read the docs [docs](./docs/) for more details of how to use a database mock. Running the tests is mandatory to ensure stability and correctness and we suggest to at least these tests once locally.
 
 
-# Running
 
-```bash
-./infomark-backend server
-```
-
-# Generating the Docs
+## Generating the Docs
 
 The command
 
