@@ -44,6 +44,7 @@ pipeline:
     commands:
       - cp .infomark-backend.yml.ci ~/.infomark-backend.yml
       - go generate
+      - cat api.yaml
 
 services:
   database:

@@ -29,3 +29,15 @@ We ship unit tests and a database mock which is generated in Python. Read the do
 ```bash
 ./infomark-backend server
 ```
+
+# Generating the Docs
+
+The command
+
+```bash
+go generate
+```
+
+will generate a valid `api.yaml` for Swagger 3.0.
+Hereby, it verifies all implemented routes are documented and have the correct method (get, post, patch, put).
+Further, it uses the request and response go-structs to generate request and response body information in swagger.
