@@ -20,8 +20,8 @@ pipeline:
     image: postgres
     commands:
       - cd database
-      - PGPASSWORD=postgres psql -h 'database' -U 'postgres' -d 'infomark' -f schema.sql
-      - PGPASSWORD=postgres psql -h 'database' -U 'postgres' -d 'infomark' -f mock.sql
+      - PGPASSWORD=postgres psql -h 'database' -U 'postgres' -d 'infomark' -f schema.sql >/dev/null
+      - PGPASSWORD=postgres psql -h 'database' -U 'postgres' -d 'infomark' -f mock.sql >/dev/null
   build:
     image: golang
     environment:

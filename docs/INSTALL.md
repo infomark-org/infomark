@@ -141,7 +141,7 @@ and open `http://localhost:8081/` in your browser, whenever you want to debug th
 We need to upload the schema from `database/schema.sql` which contains the structure.
 
 ```bash
-PGPASSWORD=infouser_password psql -h 'localhost' -U 'infouser' -d 'InfoMark' -f schema.sql
+PGPASSWORD=infouser_password psql -h 'localhost' -U 'infouser' -d 'InfoMark' -f schema.sql >/dev/null
 ```
 
 #### Create Mockup
@@ -150,7 +150,7 @@ For debugging you might want to use a mockup. Generate a mockup by
 
 ```bash
 python3 mock.py
-PGPASSWORD=infouser_password psql -h 'localhost' -U 'infouser' -d 'InfoMark' -f mock.sql
+PGPASSWORD=infouser_password psql -h 'localhost' -U 'infouser' -d 'InfoMark' -f mock.sql >/dev/null
 ```
 
 
