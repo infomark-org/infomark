@@ -133,7 +133,7 @@ type enrollmentResponse struct {
 		ID            int64       `json:"id" example:"13"`
 		FirstName     string      `json:"first_name" example:"Max"`
 		LastName      string      `json:"last_name" example:"Mustermensch"`
-		AvatarURL     null.String `json:"avatar_url" example:"http://example.com/file"`
+		AvatarURL     null.String `json:"avatar_url" example:"/example.com/file"`
 		Email         string      `json:"email" example:"test@uni-tuebingen.de"`
 		StudentNumber string      `json:"student_number" example:"0816"`
 		Semester      int         `json:"semester" example:"8" minval:"1"`
@@ -154,7 +154,7 @@ func (rs *CourseResource) newEnrollmentResponse(p *model.UserCourse) *enrollment
 		ID            int64       `json:"id" example:"13"`
 		FirstName     string      `json:"first_name" example:"Max"`
 		LastName      string      `json:"last_name" example:"Mustermensch"`
-		AvatarURL     null.String `json:"avatar_url" example:"http://example.com/file"`
+		AvatarURL     null.String `json:"avatar_url" example:"/example.com/file"`
 		Email         string      `json:"email" example:"test@uni-tuebingen.de"`
 		StudentNumber string      `json:"student_number" example:"0816"`
 		Semester      int         `json:"semester" example:"8" minval:"1"`
