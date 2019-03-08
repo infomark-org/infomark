@@ -29,10 +29,10 @@ import (
 
 // TaskResponse is the response payload for Task management.
 type TaskResponse struct {
-	ID                 int64  `json:"id"`
-	MaxPoints          int    `json:"max_points"`
-	PublicDockerImage  string `json:"public_docker_image"`
-	PrivateDockerImage string `json:"private_docker_image"`
+	ID                 int64  `json:"id" example:"684"`
+	MaxPoints          int    `json:"max_points" example:"23"`
+	PublicDockerImage  string `json:"public_docker_image" example:"DefaultJavaTestingImage"`
+	PrivateDockerImage string `json:"private_docker_image" example:"DefaultJavaTestingImage"`
 }
 
 // newTaskResponse creates a response from a Task model.
@@ -63,23 +63,23 @@ func newTaskListResponse(Tasks []model.Task) []render.Renderer {
 // TaskResponse is the response payload for Task management.
 type MissingTaskResponse struct {
 	Task *struct {
-		ID                 int64  `json:"id"`
-		MaxPoints          int    `json:"max_points"`
-		PublicDockerImage  string `json:"public_docker_image"`
-		PrivateDockerImage string `json:"private_docker_image"`
+		ID                 int64  `json:"id" example:"684"`
+		MaxPoints          int    `json:"max_points" example:"23"`
+		PublicDockerImage  string `json:"public_docker_image" example:"DefaultJavaTestingImage"`
+		PrivateDockerImage string `json:"private_docker_image" example:"DefaultJavaTestingImage"`
 	} `json:"task"`
-	CourseID int64 `json:"course_id"`
-	SheetID  int64 `json:"sheet_id"`
+	CourseID int64 `json:"course_id" example:"1"`
+	SheetID  int64 `json:"sheet_id" example:"8"`
 }
 
 // newTaskResponse creates a response from a Task model.
 func newMissingTaskResponse(p *model.MissingTask) *MissingTaskResponse {
 
 	task := struct {
-		ID                 int64  `json:"id"`
-		MaxPoints          int    `json:"max_points"`
-		PublicDockerImage  string `json:"public_docker_image"`
-		PrivateDockerImage string `json:"private_docker_image"`
+		ID                 int64  `json:"id" example:"684"`
+		MaxPoints          int    `json:"max_points" example:"23"`
+		PublicDockerImage  string `json:"public_docker_image" example:"DefaultJavaTestingImage"`
+		PrivateDockerImage string `json:"private_docker_image" example:"DefaultJavaTestingImage"`
 	}{
 		p.ID,
 		p.MaxPoints,

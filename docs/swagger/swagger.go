@@ -55,6 +55,9 @@ func SwaggerStructs(structDescr *Struct, depth int) string {
           if strings.Contains(fieldDescr.Tag.Name, "email") {
             source = source + fmt.Sprintf("%s    format: email\n", pre)
           }
+          if strings.Contains(fieldDescr.Tag.Name, "password") {
+            source = source + fmt.Sprintf("%s    format: password\n", pre)
+          }
         case "int":
           source = source + fmt.Sprintf("%s    type: integer\n", pre)
         case "bool":
@@ -69,7 +72,22 @@ func SwaggerStructs(structDescr *Struct, depth int) string {
 
         }
 
-        if fieldDescr.Tag.Example != "" {
+        if fieldDescr.Tag.Length != "" {
+          source = source + fmt.Sprintf("%s    length: %s\n", pre, fieldDescr.Tag.Length)
+        }
+        if fieldDescr.Tag.MinValue != "" {
+          source = source + fmt.Sprintf("%s    minimum: %s\n", pre, fieldDescr.Tag.MinValue)
+        }
+        if fieldDescr.Tag.MaxValue != "" {
+          source = source + fmt.Sprintf("%s    maximum: %s\n", pre, fieldDescr.Tag.MaxValue)
+        }
+
+        if fieldDescr.Tag.Example == "" {
+          if !strings.HasPrefix(structDescr.Name, "Err") {
+            panic(fmt.Sprintf("field '%s' has no example in struct '%v'", fieldDescr.Tag.Name, structDescr.Name))
+          }
+          //
+        } else {
           examples[fieldDescr.Tag.Name] = fieldDescr.Tag.Example
         }
 
@@ -83,7 +101,6 @@ func SwaggerStructs(structDescr *Struct, depth int) string {
           source = source + fmt.Sprintf("%s    type: string\n", pre)
           source = source + fmt.Sprintf("%s    format: date-time\n", pre)
           fieldDescr.Tag.Required = true
-
           examples[fieldDescr.Tag.Name] = "'2019-07-30T23:59:59Z'"
         }
       default:

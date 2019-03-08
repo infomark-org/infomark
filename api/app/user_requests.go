@@ -33,9 +33,9 @@ type userRequest struct {
 	LastName      string `json:"last_name" example:"Mustermensch"`
 	Email         string `json:"email" example:"test@unit-tuebingen.de"`
 	StudentNumber string `json:"student_number" example:"0815"`
-	Semester      int    `json:"semester" example:"2"`
+	Semester      int    `json:"semester" example:"2" minval:"1"`
 	Subject       string `json:"subject" example:"bio informatics"`
-	Language      string `json:"language" example:"en"`
+	Language      string `json:"language" example:"en" len:"2"`
 	PlainPassword string `json:"plain_password" example:"new_password" required:"false"`
 }
 
@@ -101,9 +101,9 @@ type userMeRequest struct {
 	LastName  string `json:"last_name" example:"Mustermensch"`
 	// Email         string `json:"email" example:"test@unit-tuebingen.de"`
 	StudentNumber string `json:"student_number" example:"0815"`
-	Semester      int    `json:"semester" example:"2"`
+	Semester      int    `json:"semester" example:"2" minval:"1"`
 	Subject       string `json:"subject" example:"bio informatics"`
-	Language      string `json:"language" example:"en"`
+	Language      string `json:"language" example:"en" len:"2"`
 	// PlainPassword string `json:"plain_password" example:"new_password"`
 }
 

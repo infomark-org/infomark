@@ -332,6 +332,7 @@ func (rs *CourseResource) ChangeRole(w http.ResponseWriter, r *http.Request) {
 // URLPARAM: course_id,integer
 // METHOD: post
 // TAG: enrollments
+// REQUEST: Empty
 // RESPONSE: 204,NoContent
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated

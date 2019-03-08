@@ -33,13 +33,13 @@ import (
 
 type createUserAccountRequest struct {
 	User *struct {
-		FirstName     string `json:"first_name"  example:"Max"`
-		LastName      string `json:"last_name"  example:"Mustermensch"`
-		Email         string `json:"email"  example:"test@uni-tuebingen.de"`
-		StudentNumber string `json:"student_number"  example:"0815"`
-		Semester      int    `json:"semester"  example:"15"`
-		Subject       string `json:"subject"  example:"computer science"`
-		Language      string `json:"language"  example:"en"`
+		FirstName     string `json:"first_name" example:"Max"`
+		LastName      string `json:"last_name" example:"Mustermensch"`
+		Email         string `json:"email" example:"test@uni-tuebingen.de"`
+		StudentNumber string `json:"student_number" example:"0815"`
+		Semester      int    `json:"semester" example:"15" minval:"1"`
+		Subject       string `json:"subject" example:"computer science"`
+		Language      string `json:"language" example:"en" len:"2"`
 	} `json:"user" required:"true"`
 	Account *struct {
 		Email             string `json:"email" example:"test@uni-tuebingen.de"`
@@ -130,11 +130,11 @@ func (body *createUserAccountRequest) Bind(r *http.Request) (err error) {
 
 type accountRequest struct {
 	Account *struct {
-		Email             string `json:"email" required:"false"`
-		PlainPassword     string `json:"plain_password" required:"false"`
+		Email             string `json:"email" required:"false" example:"other@example.com"`
+		PlainPassword     string `json:"plain_password" required:"false" example:"new_password"`
 		EncryptedPassword string `json:"-"`
-	} `json:"account"`
-	OldPlainPassword string `json:"old_plain_password"`
+	} `json:"account" required:"true"`
+	OldPlainPassword string `json:"old_plain_password" example:"old_password"`
 }
 
 // Bind preprocesses a accountRequest.

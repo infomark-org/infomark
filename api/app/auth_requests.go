@@ -26,7 +26,8 @@ import (
 	"github.com/go-ozzo/ozzo-validation/is"
 )
 
-// loginRequest is the request for the login process
+// loginRequest is the request for the login process containing the password
+// and email as identifiers.
 type loginRequest struct {
 	Email         string `json:"email" example:"test@uni-tuebingen.de"`
 	PlainPassword string `json:"plain_password" example:"test"`

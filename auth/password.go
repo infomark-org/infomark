@@ -25,18 +25,22 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-func HashPassword(password string) (string, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+// HashPassword uses bcrypt to securely hash a plain password
+func HashPassword(plain_password string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(plain_password), bcrypt.DefaultCost)
 	return string(bytes), err
 }
 
-func CheckPasswordHash(password, hash string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+// CheckPasswordHash tests whether a given plain_password matches the securely
+// hashed one.
+func CheckPasswordHash(plain_password, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(plain_password))
 	return err == nil
 }
 
-func GenerateToken(bytes int) string {
-	b := make([]byte, bytes)
+// GenerateToken generates a random string with a specific length
+func GenerateToken(length int) string {
+	b := make([]byte, length)
 	rand.Read(b)
 	return fmt.Sprintf("%x", b)
 }

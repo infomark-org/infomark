@@ -55,7 +55,6 @@ func IdentString(str string, ch int) string {
 }
 
 func ParseField(fset *token.FileSet, n ast.Node, field *ast.Field, depth int) (*Field, error) {
-
 	result := &Field{}
 	result.Type = field.Type
 	result.Depth = depth
@@ -66,25 +65,19 @@ func ParseField(fset *token.FileSet, n ast.Node, field *ast.Field, depth int) (*
 		if t.Name == "-" {
 			return nil, errors.New("Skip -")
 		}
-
 		result.Tag = t
 	} else {
 		return nil, err
 	}
 
-	// var node ast.Node
-
-	// node = (*field).(ast.Node)
-
 	if len(field.Names) > 0 {
-		// fmt.Println(depth, "   ", field.Names[0], result.Type)
 
 		switch x := field.Type.(type) {
 		case *ast.StructType:
 			child, err := ParseStruct(fset, n, x, field.Names[0].Name, depth+1)
 			if err == nil {
 				result.Childs = append(result.Childs, child)
-				// fmt.Println(child)
+
 			}
 		case *ast.StarExpr:
 			switch y := x.X.(type) {
@@ -92,22 +85,11 @@ func ParseField(fset *token.FileSet, n ast.Node, field *ast.Field, depth int) (*
 				child, err := ParseStruct(fset, n, y, field.Names[0].Name, depth+1)
 				if err == nil {
 					result.Childs = append(result.Childs, child)
-					// fmt.Println(child)
+
 				}
 			}
-			// spew.Dump(field.Type)
+
 		}
-
-		// structDecl, ok := field.Type.(*ast.StructType)
-		// if ok {
-		// 	// fmt.Println("go sub for", field.Names[0])
-
-		// }
-
-		// *ast.StarExpr
-		// else {
-		// 	spew.Dump(field.Type)
-		// }
 
 	}
 
@@ -115,17 +97,9 @@ func ParseField(fset *token.FileSet, n ast.Node, field *ast.Field, depth int) (*
 }
 
 func ParseStruct(fset *token.FileSet, n ast.Node, structDecl *ast.StructType, name string, depth int) (*Struct, error) {
-
-	result := &Struct{Name: name}
-
-	// if node != nil {
-	// 	result.Name = (*node).(*ast.TypeSpec).Name.Name
-	// 	result.Comments = (*node).(*ast.TypeSpec).Doc
-	// }
-
-	// structDecl := node.(*ast.TypeSpec).Type.(*ast.StructType)
 	fields := structDecl.Fields.List
 
+	result := &Struct{Name: name}
 	result.Position = fset.Position(n.Pos())
 
 	for _, field := range fields {
@@ -144,7 +118,6 @@ func ParseStruct(fset *token.FileSet, n ast.Node, structDecl *ast.StructType, na
 			if err == nil {
 				result.Fields = append(result.Fields, f)
 			}
-
 		}
 	}
 

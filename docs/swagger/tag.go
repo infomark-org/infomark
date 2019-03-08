@@ -38,9 +38,14 @@ type rawTag struct {
 }
 
 type Tag struct {
-    Name     string
-    Example  string
-    Required bool
+    Name      string
+    Example   string
+    Required  bool
+    Length    string
+    MinLength string
+    MaxLength string
+    MinValue  string
+    MaxValue  string
 }
 
 func parseTag(tag string) (*Tag, error) {
@@ -133,6 +138,26 @@ func parseTag(tag string) (*Tag, error) {
 
         if tag.Key == "example" {
             field.Example = tag.Name
+        }
+
+        if tag.Key == "minlen" {
+            field.MinLength = tag.Name
+        }
+
+        if tag.Key == "maxlen" {
+            field.MaxLength = tag.Name
+        }
+
+        if tag.Key == "len" {
+            field.Length = tag.Name
+        }
+
+        if tag.Key == "minval" {
+            field.MinValue = tag.Name
+        }
+
+        if tag.Key == "maxval" {
+            field.MaxValue = tag.Name
         }
 
         if tag.Key == "required" {

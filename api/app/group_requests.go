@@ -27,9 +27,9 @@ import (
 
 // groupRequest is the request payload for course management.
 type groupRequest struct {
-	TutorID int64 `json:"tutor_id"`
+	TutorID int64 `json:"tutor_id" example:"15"`
 	// CourseID    int64  `json:"course_id"`
-	Description string `json:"description"`
+	Description string `json:"description" example:"Gruppe fuer ersties am Montag im Raum C25435"`
 }
 
 // Bind preprocesses a groupRequest.
@@ -57,7 +57,7 @@ func (m *groupRequest) Validate() error {
 }
 
 type groupBidRequest struct {
-	Bid int `json:"bid"`
+	Bid int `json:"bid" example:"5" minval:"0" maxval:"10"`
 }
 
 // Bind preprocesses a groupRequest.

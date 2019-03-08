@@ -35,6 +35,7 @@ import (
 	"github.com/spf13/viper"
 )
 
+// StringArrayToIntArray converts a list of strings into a list of int or failes
 func StringArrayToIntArray(values []string) ([]int, error) {
 	out := make([]int, len(values))
 	for index, value := range values {
@@ -47,6 +48,7 @@ func StringArrayToIntArray(values []string) ([]int, error) {
 	return out, nil
 }
 
+// StringArrayFromUrl will read an URL parameter like /api/?some_strings=foo,bar
 func StringArrayFromUrl(r *http.Request, name string, standard []string) []string {
 	rolesFromURL, ok := r.URL.Query()[name]
 	if ok {
@@ -56,6 +58,7 @@ func StringArrayFromUrl(r *http.Request, name string, standard []string) []strin
 	}
 }
 
+// StringFromUrl will read an URL parameter like /api/?some_string=foo
 func StringFromUrl(r *http.Request, name string, standard string) string {
 	rolesFromURL, ok := r.URL.Query()[name]
 	if ok {
@@ -69,6 +72,7 @@ func StringFromUrl(r *http.Request, name string, standard string) string {
 	}
 }
 
+// IntFromUrl will read an URL parameter like /api/?some_int=3
 func IntFromUrl(r *http.Request, name string, standard int) int {
 	str := StringFromUrl(r, name, "uglyhardcoded")
 	if str == "uglyhardcoded" {
@@ -83,6 +87,7 @@ func IntFromUrl(r *http.Request, name string, standard int) int {
 	}
 }
 
+// Int64FromUrl will read an URL parameter like /api/?some_int=3
 func Int64FromUrl(r *http.Request, name string, standard int64) int64 {
 	str := StringFromUrl(r, name, "uglyhardcoded")
 	if str == "uglyhardcoded" {
@@ -97,10 +102,10 @@ func Int64FromUrl(r *http.Request, name string, standard int64) int64 {
 	}
 }
 
-// similar to gin.H as a neat wrapper
+// similar to gin.H as a neat alias
 type H map[string]interface{}
 
-// for testing convert any model to SimulateRequest
+// ToH converts any object into an typeless object (used by unit tests).
 func ToH(z interface{}) map[string]interface{} {
 	data, _ := json.Marshal(z)
 	var msgMapTemplate interface{}
@@ -108,15 +113,15 @@ func ToH(z interface{}) map[string]interface{} {
 	return msgMapTemplate.(map[string]interface{})
 }
 
-// Time return time.Now() but without nanseconds for passing unit-tests
+// Time returns time.Now() but without nanseconds for passing unit-tests.
+// There are some issues with storing and retriebing the nanoseconds.
 func Time(t time.Time) time.Time {
 	format := "2006-01-02 15:04:05 +0000 CET"
 	R, _ := time.Parse(format, t.Format(format))
 	return R
 }
 
-// var tokenManager *authenticate.TokenAuth
-
+// SetConfigFile will search the homedirectoy for a custom config file.
 func SetConfigFile() {
 
 	// Find home directory.
@@ -129,8 +134,10 @@ func SetConfigFile() {
 	viper.AddConfigPath(home)
 	viper.SetConfigName(".infomark-backend")
 }
-func InitConfig() {
 
+// InitConfig will search for the config file in the home directory and
+// read it.
+func InitConfig() {
 	SetConfigFile()
 	viper.AutomaticEnv()
 
@@ -140,21 +147,18 @@ func InitConfig() {
 	}
 }
 
-// func init() {
-// 	tokenManager, _ = authenticate.NewTokenAuth()
-// }
-
 func init() {
+	// read config to get the database information
 	InitConfig()
 	// we register an sql driver named "txdb"
 	// This allows to run all tests as transaction in isolated environemnts to make sure
 	// we do not accidentially alter the database in a persistent way. Hence,  all tests can run
 	// in an arbitrary order.
-
 	txdb.Register("psql_txdb", "postgres", viper.GetString("database_connection"))
 }
 
 // TransactionDB creates a sql-driver which seemlessly supports transactions.
+// This is used for running the unit tests.
 func TransactionDB() (*sqlx.DB, error) {
 	db, err := sqlx.Connect("psql_txdb", "identifier")
 

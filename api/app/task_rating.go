@@ -42,9 +42,9 @@ func NewTaskRatingResource(stores *Stores) *TaskRatingResource {
 
 // TaskRatingResponse is the response payload for TaskRating management.
 type TaskRatingResponse struct {
-  TaskID        int64   `json:"task_id"`
-  AverageRating float32 `json:"average_rating"`
-  OwnRating     int     `json:"own_rating"`
+  TaskID        int64   `json:"task_id" example:"14"`
+  AverageRating float32 `json:"average_rating" example:"3.15"`
+  OwnRating     int     `json:"own_rating" example:"4"`
 }
 
 // newTaskRatingResponse creates a response from a TaskRating model.
@@ -109,6 +109,7 @@ func (rs *TaskRatingResource) GetHandler(w http.ResponseWriter, r *http.Request)
 // URLPARAM: task_id,integer
 // METHOD: post
 // TAG: tasks
+// REQUEST: TaskRatingRequest
 // RESPONSE: 200,TaskRatingResponse
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated

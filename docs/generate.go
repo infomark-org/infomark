@@ -259,6 +259,28 @@ func main() {
         f.WriteString(fmt.Sprintf("  %s:\n", url))
         for _, action := range endpoints[url] {
 
+            if action.Details.Method == "post" || action.Details.Method == "put" || action.Details.Method == "patch" {
+                if action.Details.Request == "" {
+                    panic(fmt.Sprintf("endpoint '%s' is '%s' but has no request body in %v",
+                        url, action.Details.Method, action.Position))
+                }
+            }
+
+            if action.Details.Method == "get" {
+                // test wether we have a 200 response
+                found := false
+                for _, r := range action.Details.Responses {
+                    if r.Code == 200 {
+                        found = true
+                        break
+                    }
+                }
+                if !found {
+                    panic(fmt.Sprintf("endpoint '%s' is '%s' but has no 200 response in %v",
+                        url, action.Details.Method, action.Position))
+                }
+            }
+
             f.WriteString(fmt.Sprintf("    # implementation in  %v\n", action.Position))
             f.WriteString(fmt.Sprintf("    %s:\n", action.Details.Method))
             f.WriteString(fmt.Sprintf("      summary: %s\n", action.Details.Summary))
@@ -320,6 +342,8 @@ func main() {
                     f.WriteString(fmt.Sprintf("            encoding:\n"))
                     f.WriteString(fmt.Sprintf("              file_data:\n"))
                     f.WriteString(fmt.Sprintf("                contentType: image/jpeg\n"))
+                case "empty":
+
                 default:
                     f.WriteString(fmt.Sprintf("        content:\n"))
                     f.WriteString(fmt.Sprintf("          application/json:\n"))

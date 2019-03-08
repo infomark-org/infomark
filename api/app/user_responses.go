@@ -36,9 +36,10 @@ type userResponse struct {
 	AvatarURL     null.String `json:"avatar_url" example:"/url/to/file"`
 	Email         string      `json:"email" example:"test@unit-tuebingen.de"`
 	StudentNumber string      `json:"student_number" example:"0815"`
-	Semester      int         `json:"semester" example:"2"`
+	Semester      int         `json:"semester" example:"2" minval:"1"`
 	Subject       string      `json:"subject" example:"bio informatics"`
-	Language      string      `json:"language" example:"en"`
+	Language      string      `json:"language" example:"en" len:"2"`
+	Root          bool        `json:"root" example:"false"`
 }
 
 // newUserResponse creates a response from a user model.

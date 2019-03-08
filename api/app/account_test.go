@@ -147,6 +147,7 @@ func TestAccount(t *testing.T) {
       g.Assert(user_after.Semester).Equal(2)
       g.Assert(user_after.Subject).Equal("bio2")
       g.Assert(user_after.Language).Equal("de")
+      g.Assert(user_after.Root).Equal(false)
 
       g.Assert(user_after.ConfirmEmailToken.Valid).Equal(true)
       g.Assert(user_after.ResetPasswordToken.Valid).Equal(false)

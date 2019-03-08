@@ -23,49 +23,13 @@ import (
 
 	"github.com/cgtuebingen/infomark-backend/model"
 	"github.com/go-chi/render"
-	null "gopkg.in/guregu/null.v3"
 )
 
-type userAccountCreatedResponse struct {
-	ID            int64       `json:"id"`
-	FirstName     string      `json:"first_name"`
-	LastName      string      `json:"last_name"`
-	AvatarURL     null.String `json:"avatar_url"`
-	Email         string      `json:"email"`
-	StudentNumber string      `json:"student_number"`
-	Semester      int         `json:"semester"`
-	Subject       string      `json:"subject"`
-	Language      string      `json:"language"`
-	Root          bool        `json:"root"`
-}
-
-// Render post-processes a userAccountCreatedResponse.
-func (u *userAccountCreatedResponse) Render(w http.ResponseWriter, r *http.Request) error {
-	// nothing to hide
-	return nil
-}
-
-// newUserAccountCreatedResponse creates a response from a user model.
-func newUserAccountCreatedResponse(p *model.User) *userAccountCreatedResponse {
-	return &userAccountCreatedResponse{
-		ID:            p.ID,
-		FirstName:     p.FirstName,
-		LastName:      p.LastName,
-		AvatarURL:     p.AvatarURL,
-		Email:         p.Email,
-		StudentNumber: p.StudentNumber,
-		Semester:      p.Semester,
-		Subject:       p.Subject,
-		Language:      p.Language,
-		Root:          p.Root,
-	}
-}
-
-// userAccountCreatedResponse is the response payload for account management.
+// userEnrollmentResponse is the response payload for account management.
 type userEnrollmentResponse struct {
-	ID       int64 `json:"id"`
-	CourseID int64 `json:"course_id"`
-	Role     int64 `json:"role"`
+	ID       int64 `json:"id" example:"31"`
+	CourseID int64 `json:"course_id" example:"1"`
+	Role     int64 `json:"role" example:"1"`
 }
 
 // Render post-processes a userAccountCreatedResponse.

@@ -55,9 +55,10 @@ func NewAccountResource(stores *Stores) *AccountResource {
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
 // RESPONSE: 403,Unauthorized
-// SUMMARY:  Create a new user account
+// SUMMARY:  Create a new user account to register on the site.
 // DESCRIPTION:
 // The account will be created and a confirmation email will be sent.
+// There is no way to set an avatar here and root will be false by default.
 func (rs *AccountResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
   // start from empty Request
   data := &createUserAccountRequest{}
@@ -104,6 +105,7 @@ func (rs *AccountResource) CreateHandler(w http.ResponseWriter, r *http.Request)
 
 }
 
+// sendConfirmEmailForUser will send the confirmation email to activate the account.
 func sendConfirmEmailForUser(user *model.User) error {
   // send email
   // Send Email to User
@@ -140,8 +142,10 @@ func sendConfirmEmailForUser(user *model.User) error {
 // RESPONSE: 401,Unauthenticated
 // SUMMARY:  Updates email or password
 // DESCRIPTION:
-// This is the only endpoint having PATCH as the backend automatically will only
-// update fields which are non-empty.
+// This is the only endpoint having PATCH as the backend will automatically only
+// update fields which are non-empty. If both are given, it will update both fields.
+// If the email should be changed a new confirmation email will be sent and clicking
+// on the confirmation link is required to login again.
 func (rs *AccountResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
@@ -174,11 +178,12 @@ func (rs *AccountResource) EditHandler(w http.ResponseWriter, r *http.Request) {
     return
   }
 
+  // this is the ugly PATCH logic (instead of PUT)
   emailHasChanged := false
   if data.Account.Email != "" {
     emailHasChanged = data.Account.Email != user.Email
   }
-  // emailHasChanged := data.Account.Email != oldUser.Email
+
   passwordHasChanged := data.Account.PlainPassword != ""
 
   // make sure email is valid
@@ -208,7 +213,7 @@ func (rs *AccountResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 
   render.Status(r, http.StatusNoContent)
 
-  if err := render.Render(w, r, newUserAccountCreatedResponse(user)); err != nil {
+  if err := render.Render(w, r, newUserResponse(user)); err != nil {
     render.Render(w, r, ErrRender(err))
     return
   }
@@ -219,11 +224,12 @@ func (rs *AccountResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 // URL: /account
 // METHOD: get
 // TAG: account
-// REQUEST: accountRequest
-// RESPONSE: 204,NoContent
+// RESPONSE: 200,userResponse
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
 // SUMMARY:  Retrieve the specific user account from the requesting identity.
+// DESCRIPTION:
+// It will contain all information as this can only query the own account
 func (rs *AccountResource) GetHandler(w http.ResponseWriter, r *http.Request) {
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
   user, err := rs.Stores.User.Get(accessClaims.LoginID)
@@ -247,6 +253,9 @@ func (rs *AccountResource) GetHandler(w http.ResponseWriter, r *http.Request) {
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
 // SUMMARY:  Retrieve the specific account avatar from the request identity
+// DESCRIPTION:
+// If there is an avatar for this specific user, this will return the image
+// otherwise it will use a default image. We currently support only jpg images.
 func (rs *AccountResource) GetAvatarHandler(w http.ResponseWriter, r *http.Request) {
 
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
@@ -267,6 +276,8 @@ func (rs *AccountResource) GetAvatarHandler(w http.ResponseWriter, r *http.Reque
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
 // SUMMARY:  Change the specific account avatar of the request identity
+// DESCRIPTION:
+// We currently support only jpg images.
 func (rs *AccountResource) ChangeAvatarHandler(w http.ResponseWriter, r *http.Request) {
 
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
@@ -298,6 +309,8 @@ func (rs *AccountResource) ChangeAvatarHandler(w http.ResponseWriter, r *http.Re
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
 // SUMMARY:  Delete the specific account avatar of the request identity
+// DESCRIPTION:
+// This is necessary, when a user wants to switch back to a default avatar.
 func (rs *AccountResource) DeleteAvatarHandler(w http.ResponseWriter, r *http.Request) {
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
 
@@ -323,6 +336,7 @@ func (rs *AccountResource) DeleteAvatarHandler(w http.ResponseWriter, r *http.Re
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
 // SUMMARY:  Retrieve the specific account avatar from the request identity
+// This lists all course enrollments of the request identity including role.
 func (rs *AccountResource) GetEnrollmentsHandler(w http.ResponseWriter, r *http.Request) {
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
 

@@ -28,9 +28,9 @@ import (
 
 // TaskRequest is the request payload for Task management.
 type TaskRequest struct {
-	MaxPoints          int    `json:"max_points"`
-	PublicDockerImage  string `json:"public_docker_image"`
-	PrivateDockerImage string `json:"private_docker_image"`
+	MaxPoints          int    `json:"max_points" example:"25"`
+	PublicDockerImage  string `json:"public_docker_image" example:"DefaultJavaTestingImage"`
+	PrivateDockerImage string `json:"private_docker_image" example:"DefaultJavaTestingImage"`
 }
 
 // Bind preprocesses a TaskRequest.
@@ -53,7 +53,7 @@ func (m *TaskRequest) Validate() error {
 // TaskRequest is the request payload for Task management.
 type TaskRatingRequest struct {
 	*model.TaskRating
-	ProtectedID int64 `json:"id"`
+	ProtectedID int64 `json:"id" example:"14"`
 }
 
 // Bind preprocesses a TaskRequest.

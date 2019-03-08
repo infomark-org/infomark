@@ -32,6 +32,7 @@ const (
   ctxProfile
 )
 
+// UserStore defines user related database queries
 type UserStore interface {
   Get(userID int64) (*model.User, error)
   Update(p *model.User) error
@@ -42,7 +43,7 @@ type UserStore interface {
   GetEnrollments(userID int64) ([]model.Enrollment, error)
 }
 
-// CourseStore specifies required database queries for course management.
+// CourseStore defines course related database queries
 type CourseStore interface {
   Get(courseID int64) (*model.Course, error)
   Update(p *model.Course) error
@@ -116,6 +117,7 @@ type GroupStore interface {
   GetBidsForCourse(courseID int64) ([]model.GroupBid, error)
 }
 
+// MaterialStore defines material related database queries
 type MaterialStore interface {
   Get(sheetID int64) (*model.Material, error)
   Create(p *model.Material, courseID int64) (*model.Material, error)
@@ -126,12 +128,15 @@ type MaterialStore interface {
   GetAll() ([]model.Material, error)
 }
 
+// SubmissionStore defines submission related database queries
 type SubmissionStore interface {
   Get(submissionID int64) (*model.Submission, error)
   GetByUserAndTask(userID int64, taskID int64) (*model.Submission, error)
   Create(p *model.Submission) (*model.Submission, error)
   GetFiltered(filterCourseID, filterGroupID, filterUserID, filterSheetID, filterTaskID int64) ([]model.Submission, error)
 }
+
+// GradeStore defines grades related database queries
 type GradeStore interface {
   GetFiltered(
     courseID int64,
@@ -169,6 +174,8 @@ type API struct {
   Common     *CommonResource
 }
 
+// Stores is the collection of stores. We use this struct to express a kind of
+// hierarchy of database queries, e.g. stores.User.Get(1)
 type Stores struct {
   Course     CourseStore
   User       UserStore
@@ -180,8 +187,8 @@ type Stores struct {
   Grade      GradeStore
 }
 
+// NewStores build all stores and connect them to a database.
 func NewStores(db *sqlx.DB) *Stores {
-
   return &Stores{
     Course:     database.NewCourseStore(db),
     User:       database.NewUserStore(db),
@@ -196,7 +203,6 @@ func NewStores(db *sqlx.DB) *Stores {
 
 // NewAPI configures and returns application API.
 func NewAPI(db *sqlx.DB) (*API, error) {
-
   stores := NewStores(db)
 
   api := &API{
@@ -215,7 +221,3 @@ func NewAPI(db *sqlx.DB) (*API, error) {
   }
   return api, nil
 }
-
-// func log(r *http.Request) logrus.FieldLogger {
-//   return logging.GetLogEntry(r)
-// }

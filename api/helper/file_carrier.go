@@ -30,6 +30,9 @@ import (
   "github.com/spf13/viper"
 )
 
+// FaileCarrier is a unified way to handle uploads and downloads of different
+// files.
+
 type FileCategory int32
 
 const (
@@ -50,11 +53,13 @@ type FileManager interface {
   Exists() bool
 }
 
+// FileHandle represents all information for file being uploaded or downloaded.
 type FileHandle struct {
   Category FileCategory
   ID       int64 // an unique identifier (e.g. from database)
 }
 
+// NewAvatarFileHandle will handle user avatars. We support jpg only.
 func NewAvatarFileHandle(userID int64) *FileHandle {
   return &FileHandle{
     Category: AvatarCategory,
@@ -62,6 +67,7 @@ func NewAvatarFileHandle(userID int64) *FileHandle {
   }
 }
 
+// NewSheetFileHandle will handle exercise sheets (zip files).
 func NewSheetFileHandle(ID int64) *FileHandle {
   return &FileHandle{
     Category: SheetCategory,
@@ -69,6 +75,8 @@ func NewSheetFileHandle(ID int64) *FileHandle {
   }
 }
 
+// NewPublicTestFileHandle will handle the testing framework for
+// public unit tests (zip files).
 func NewPublicTestFileHandle(ID int64) *FileHandle {
   return &FileHandle{
     Category: PublicTestCategory,
@@ -76,6 +84,8 @@ func NewPublicTestFileHandle(ID int64) *FileHandle {
   }
 }
 
+// NewPrivateTestFileHandle will handle the testing framework for
+// private unit tests (zip files).
 func NewPrivateTestFileHandle(ID int64) *FileHandle {
   return &FileHandle{
     Category: PrivateTestCategory,
@@ -83,6 +93,7 @@ func NewPrivateTestFileHandle(ID int64) *FileHandle {
   }
 }
 
+// NewMaterialFileHandle will handle course slides or extra material (zip files).
 func NewMaterialFileHandle(ID int64) *FileHandle {
   return &FileHandle{
     Category: MaterialCategory,
@@ -90,6 +101,7 @@ func NewMaterialFileHandle(ID int64) *FileHandle {
   }
 }
 
+// NewSubmissionFileHandle will handle homework/exercise submissiosn (zip files).
 func NewSubmissionFileHandle(ID int64) *FileHandle {
   return &FileHandle{
     Category: SubmissionCategory,
@@ -97,9 +109,8 @@ func NewSubmissionFileHandle(ID int64) *FileHandle {
   }
 }
 
-// Path returns a path without checking if it exists. If fallback is true,
-// the method tries to use the default value.
-func (f *FileHandle) Path(fallback bool) string {
+// Path returns a path without checking if it exists.
+func (f *FileHandle) Path() string {
   switch f.Category {
   case AvatarCategory:
     return fmt.Sprintf("%s/avatars/%s.jpg", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
@@ -122,24 +133,30 @@ func (f *FileHandle) Path(fallback bool) string {
   return ""
 }
 
+// Exists checks if a file really exists.
 func (f *FileHandle) Exists() bool {
 
-  if _, err := os.Stat(f.Path(false)); os.IsNotExist(err) {
+  if _, err := os.Stat(f.Path()); os.IsNotExist(err) {
     return false
   }
 
   return true
 }
+
+// Delete deletes a file from disk.
 func (f *FileHandle) Delete() error {
-  return os.Remove(f.Path(false))
+  return os.Remove(f.Path())
 }
 
+// GetContentType tries to predict the content type without reading the entire
+// file. There are some issues with this function as it cannot distinguish
+// between zip and octstream.
 func (f *FileHandle) GetContentType() (string, error) {
 
   // Only the first 512 bytes are used to sniff the content type.
   buffer := make([]byte, 512)
 
-  file, err := os.Open(f.Path(true))
+  file, err := os.Open(f.Path())
   if err != nil {
     return "", err
   }
@@ -157,10 +174,11 @@ func (f *FileHandle) GetContentType() (string, error) {
   return contentType, nil
 }
 
+// WriteToBody will write a file from disk to the http reponse (download process)
 func (f *FileHandle) WriteToBody(w http.ResponseWriter) error {
 
   // check if file exists
-  file, err := os.Open(f.Path(true))
+  file, err := os.Open(f.Path())
   if err != nil {
     return err
   }
@@ -182,6 +200,8 @@ func (f *FileHandle) WriteToBody(w http.ResponseWriter) error {
   return nil
 }
 
+// WriteToDisk will save uploads from a http request to the directory specified
+// in the config.
 func (f *FileHandle) WriteToDisk(r *http.Request, fieldName string) error {
 
   // receive data from post request
@@ -208,16 +228,11 @@ func (f *FileHandle) WriteToDisk(r *http.Request, fieldName string) error {
       return errors.New(fmt.Sprintf("We support JPG/JPEG files only. But %s was given", givenContentType))
 
     }
-  case SheetCategory, PublicTestCategory, PrivateTestCategory:
-    switch givenContentType {
-    case "application/zip", "application/octet-stream":
-
-    default:
-      return errors.New(fmt.Sprintf("We support ZIP files only. But %s was given", givenContentType))
-
-    }
-
-  case MaterialCategory, SubmissionCategory:
+  case SheetCategory,
+    PublicTestCategory,
+    PrivateTestCategory,
+    MaterialCategory,
+    SubmissionCategory:
     switch givenContentType {
     case "application/zip", "application/octet-stream":
 
@@ -228,7 +243,7 @@ func (f *FileHandle) WriteToDisk(r *http.Request, fieldName string) error {
   }
 
   // try to open new file
-  hnd, err := os.OpenFile(f.Path(false), os.O_WRONLY|os.O_CREATE, 0666)
+  hnd, err := os.OpenFile(f.Path(), os.O_WRONLY|os.O_CREATE, 0666)
   if err != nil {
     return err
   }

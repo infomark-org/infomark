@@ -27,10 +27,10 @@ import (
 
 // GroupResponse is the response payload for Group management.
 type GroupResponse struct {
-	ID          int64  `json:"id"`
-	TutorID     int64  `json:"tutor_id"`
-	CourseID    int64  `json:"course_id"`
-	Description string `json:"description"`
+	ID          int64  `json:"id" example:"9841"`
+	TutorID     int64  `json:"tutor_id" example:"12"`
+	CourseID    int64  `json:"course_id" example:"1"`
+	Description string `json:"description" example:"Group every tuesday in room e43"`
 }
 
 // newGroupResponse creates a response from a Group model.
@@ -59,7 +59,7 @@ func (body *GroupResponse) Render(w http.ResponseWriter, r *http.Request) error 
 }
 
 type GroupBidResponse struct {
-	Bid int `json:"bid"`
+	Bid int `json:"bid" example:"4" minval:"0" maxval:"10"`
 }
 
 // Render post-processes a GroupResponse.

@@ -28,11 +28,11 @@ import (
 
 // MaterialRequest is the request payload for Material management.
 type MaterialRequest struct {
-	Name      string    `json:"name"`
-	Kind      int       `json:"kind"`
-	Filename  string    `json:"filename"`
-	PublishAt time.Time `json:"publish_at"`
-	LectureAt time.Time `json:"lecture_at"`
+	Name      string    `json:"name" example:"Einfuehrung"`
+	Kind      int       `json:"kind" example:"1"`
+	Filename  string    `json:"filename" example:"chapter01.zip"`
+	PublishAt time.Time `json:"publish_at" example:"auto"`
+	LectureAt time.Time `json:"lecture_at" example:"auto"`
 }
 
 // Bind preprocesses a MaterialRequest.

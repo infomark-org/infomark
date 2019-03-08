@@ -19,7 +19,9 @@
 package app
 
 import (
+	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/cgtuebingen/infomark-backend/model"
@@ -30,8 +32,9 @@ import (
 type SheetResponse struct {
 	ID        int64     `json:"id" example:"13"`
 	Name      string    `json:"name" example:"Blatt 0"`
-	PublishAt time.Time `json:"publish_at"`
-	DueAt     time.Time `json:"due_at"`
+	FileURL   string    `json:"file_url" example:"/api/v1/sheets/13/file"`
+	PublishAt time.Time `json:"publish_at" example:"auto"`
+	DueAt     time.Time `json:"due_at" example:"auto"`
 }
 
 // Render post-processes a SheetResponse.
@@ -46,6 +49,7 @@ func (rs *SheetResource) newSheetResponse(p *model.Sheet) *SheetResponse {
 		Name:      p.Name,
 		PublishAt: p.PublishAt,
 		DueAt:     p.DueAt,
+		FileURL:   fmt.Sprintf("/api/v1/sheets/%s/file", strconv.FormatInt(p.ID, 10)),
 	}
 }
 
@@ -60,7 +64,7 @@ func (rs *SheetResource) newSheetListResponse(Sheets []model.Sheet) []render.Ren
 }
 
 type TaskPointsResponse struct {
-	TaskPoints *model.TaskPoints `json:"task_points"`
+	TaskPoints *model.TaskPoints `json:"task_points" example:"12"`
 }
 
 func (body *TaskPointsResponse) Render(w http.ResponseWriter, r *http.Request) error {

@@ -28,11 +28,11 @@ import (
 
 // courseRequest is the request payload for course management.
 type courseRequest struct {
-	Name               string    `json:"name"`
-	Description        string    `json:"description"`
-	BeginsAt           time.Time `json:"begins_at"`
-	EndsAt             time.Time `json:"ends_at"`
-	RequiredPercentage int       `json:"required_percentage"`
+	Name               string    `json:"name" example:"Info 2"`
+	Description        string    `json:"description" example:"An example course."`
+	BeginsAt           time.Time `json:"begins_at" example:"auto"`
+	EndsAt             time.Time `json:"ends_at" example:"auto"`
+	RequiredPercentage int       `json:"required_percentage" example:"80"`
 }
 
 // Bind preprocesses a courseRequest.
@@ -76,7 +76,7 @@ func (m *courseRequest) Validate() error {
 }
 
 type changeRoleInCourseRequest struct {
-	Role int `json:"role"`
+	Role int `json:"role" example:"0"`
 }
 
 func (body *changeRoleInCourseRequest) Bind(r *http.Request) error {

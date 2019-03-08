@@ -29,6 +29,8 @@ import (
 
 var SessionManager = createSessionManager()
 
+// createSessionManager starts a web session and stores the information into a
+// http-only cookie. This is the prefered way when using a SPA.
 func createSessionManager() *scs.Manager {
 	sessionManager := scs.NewCookieManager(viper.GetString("auth_session_secret"))
 	sessionManager.Lifetime(time.Hour) // Set the maximum session lifetime to 1 hour.
@@ -37,22 +39,26 @@ func createSessionManager() *scs.Manager {
 	return sessionManager
 }
 
+// HasHeaderToken tests if the request header has a token without verifying the
+// correctness.
 func HasHeaderToken(r *http.Request) bool {
 	jwt := jwtauth.TokenFromHeader(r)
 	return jwt != ""
 }
 
+// HasSessionToken tests if the request header has the http-only cookies
+// containing session informations.
 func HasSessionToken(r *http.Request) bool {
 	session := SessionManager.Load(r)
 
+	// try to extract the login_id which is the identifier of the request identity.
 	loginID, err := session.GetInt64("login_id")
 	if err != nil {
-		// fmt.Println(err)
 		return false
 	}
 
-	// fmt.Println("loginID", loginID)
-
+	// ids will start from 1
+	// this has been used for testing. In JWT we will allow id 0 for background workers.
 	if loginID == 0 {
 		return false
 	}

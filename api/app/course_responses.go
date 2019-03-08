@@ -29,12 +29,12 @@ import (
 
 // courseResponse is the response payload for course management.
 type courseResponse struct {
-	ID                 int64     `json:"id"`
-	Name               string    `json:"name"`
-	Description        string    `json:"description"`
-	BeginsAt           time.Time `json:"begins_at"`
-	EndsAt             time.Time `json:"ends_at"`
-	RequiredPercentage int       `json:"required_percentage"`
+	ID                 int64     `json:"id" example:"1"`
+	Name               string    `json:"name" example:"Info2"`
+	Description        string    `json:"description" example:"Some course description here"`
+	BeginsAt           time.Time `json:"begins_at" example:"auto"`
+	EndsAt             time.Time `json:"ends_at" example:"auto"`
+	RequiredPercentage int       `json:"required_percentage" example:"80"`
 }
 
 // Render post-processes a courseResponse.
@@ -65,9 +65,9 @@ func (rs *CourseResource) newCourseListResponse(courses []model.Course) []render
 }
 
 type SheetPointsResponse struct {
-	AquiredPoints int `json:"acquired_points"`
-	MaxPoints     int `json:"max_points"`
-	SheetID       int `json:"sheet_id"`
+	AquiredPoints int `json:"acquired_points" example:"58"`
+	MaxPoints     int `json:"max_points" example:"90"`
+	SheetID       int `json:"sheet_id" example:"2"`
 }
 
 func (body *SheetPointsResponse) Render(w http.ResponseWriter, r *http.Request) error {
@@ -94,10 +94,10 @@ func newSheetPointsListResponse(collection []model.SheetPoints) []render.Rendere
 
 // .............................................................................
 type groupBidsResponse struct {
-	ID      int64 `json:"id"`
-	UserID  int64 `json:"user_id"`
-	GroupID int64 `json:"group_id"`
-	Bid     int   `json:"bid"`
+	ID      int64 `json:"id" example:"512"`
+	UserID  int64 `json:"user_id" example:"112"`
+	GroupID int64 `json:"group_id" example:"2"`
+	Bid     int   `json:"bid" example:"6" minval:"0" maxval:"10"`
 }
 
 // Render post-processes a groupBidsResponse.
@@ -128,17 +128,17 @@ func newGroupBidsListResponse(collection []model.GroupBid) []render.Renderer {
 
 // courseResponse is the response payload for course management.
 type enrollmentResponse struct {
-	Role int64 `json:"role"`
+	Role int64 `json:"role" example:"1"`
 	User *struct {
-		ID            int64       `json:"id"`
-		FirstName     string      `json:"first_name"`
-		LastName      string      `json:"last_name"`
-		AvatarURL     null.String `json:"avatar_url"`
-		Email         string      `json:"email"`
-		StudentNumber string      `json:"student_number"`
-		Semester      int         `json:"semester"`
-		Subject       string      `json:"subject"`
-		Language      string      `json:"language"`
+		ID            int64       `json:"id" example:"13"`
+		FirstName     string      `json:"first_name" example:"Max"`
+		LastName      string      `json:"last_name" example:"Mustermensch"`
+		AvatarURL     null.String `json:"avatar_url" example:"http://example.com/file"`
+		Email         string      `json:"email" example:"test@uni-tuebingen.de"`
+		StudentNumber string      `json:"student_number" example:"0816"`
+		Semester      int         `json:"semester" example:"8" minval:"1"`
+		Subject       string      `json:"subject" example:"informatik"`
+		Language      string      `json:"language" example:"de" len:"2"`
 	} `json:"user"`
 }
 
@@ -151,15 +151,15 @@ func (body *enrollmentResponse) Render(w http.ResponseWriter, r *http.Request) e
 func (rs *CourseResource) newEnrollmentResponse(p *model.UserCourse) *enrollmentResponse {
 
 	user := struct {
-		ID            int64       `json:"id"`
-		FirstName     string      `json:"first_name"`
-		LastName      string      `json:"last_name"`
-		AvatarURL     null.String `json:"avatar_url"`
-		Email         string      `json:"email"`
-		StudentNumber string      `json:"student_number"`
-		Semester      int         `json:"semester"`
-		Subject       string      `json:"subject"`
-		Language      string      `json:"language"`
+		ID            int64       `json:"id" example:"13"`
+		FirstName     string      `json:"first_name" example:"Max"`
+		LastName      string      `json:"last_name" example:"Mustermensch"`
+		AvatarURL     null.String `json:"avatar_url" example:"http://example.com/file"`
+		Email         string      `json:"email" example:"test@uni-tuebingen.de"`
+		StudentNumber string      `json:"student_number" example:"0816"`
+		Semester      int         `json:"semester" example:"8" minval:"1"`
+		Subject       string      `json:"subject" example:"informatik"`
+		Language      string      `json:"language" example:"de" len:"2"`
 	}{
 		ID:            p.ID,
 		FirstName:     p.FirstName,

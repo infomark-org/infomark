@@ -53,7 +53,6 @@ func (a *TokenAuth) Verifier() func(http.Handler) http.Handler {
 
 // CreateAccessJWT returns an access token for provided account claims.
 func (a *TokenAuth) CreateAccessJWT(claims AccessClaims) (string, error) {
-
   claims.StandardClaims.IssuedAt = time.Now().UTC().Unix()
   claims.StandardClaims.ExpiresAt = time.Now().UTC().Unix() + int64(a.JwtAccessExpiry)
 

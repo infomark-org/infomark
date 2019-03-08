@@ -29,8 +29,8 @@ import (
 // execution state will be handle internally and is not user-facing.
 type GradeRequest struct {
 	// SubmissionID   int64  `json:"submission_id"`
-	AcquiredPoints int    `json:"acquired_points"`
-	Feedback       string `json:"feedback"`
+	AcquiredPoints int    `json:"acquired_points" example:"13"`
+	Feedback       string `json:"feedback" example:"Das war gut"`
 }
 
 // Bind preprocesses a GradeRequest.

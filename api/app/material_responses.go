@@ -19,7 +19,9 @@
 package app
 
 import (
+	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/cgtuebingen/infomark-backend/model"
@@ -28,12 +30,13 @@ import (
 
 // MaterialResponse is the response payload for Material management.
 type MaterialResponse struct {
-	ID        int64     `json:"id"`
-	Name      string    `json:"name"`
-	Filename  string    `json:"filename"` // we keep the original name, since it is meaningful
-	Kind      int       `json:"kind"`
-	PublishAt time.Time `json:"publish_at"`
-	LectureAt time.Time `json:"lecture_at"`
+	ID        int64     `json:"id" example:"55"`
+	Name      string    `json:"name" example:"Schleifen und Bedingungen"`
+	Filename  string    `json:"filename" example:"chapter03-loops.zip"` // we keep the original name, since it is meaningful
+	FileURL   string    `json:"file_url" example:"/api/v1/materials/55/file"`
+	Kind      int       `json:"kind" example:"0"`
+	PublishAt time.Time `json:"publish_at" example:"auto"`
+	LectureAt time.Time `json:"lecture_at" example:"auto"`
 }
 
 // newMaterialResponse creates a response from a Material model.
@@ -45,6 +48,7 @@ func (rs *MaterialResource) newMaterialResponse(p *model.Material) *MaterialResp
 		Kind:      p.Kind,
 		PublishAt: p.PublishAt,
 		LectureAt: p.LectureAt,
+		FileURL:   fmt.Sprintf("/api/v1/materials/%s/file", strconv.FormatInt(p.ID, 10)),
 	}
 }
 

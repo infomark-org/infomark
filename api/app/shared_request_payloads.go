@@ -26,8 +26,8 @@ import (
 
 // userRequest is the request payload for user management.
 type EmailRequest struct {
-	Subject string `json:"subject"`
-	Body    string `json:"body"`
+	Subject string `json:"subject" example:"Switch to another day"`
+	Body    string `json:"body" example:"Xmax will be from now on on 26th of Nov."`
 }
 
 // Bind preprocesses a userRequest.

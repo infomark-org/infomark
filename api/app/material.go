@@ -52,7 +52,8 @@ func NewMaterialResource(stores *Stores) *MaterialResource {
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  get all materials in course
 // DESCRIPTION:
-// The materials are ordered by the lecture date
+// The materials are ordered by the lecture date.
+// Kind means 0: slide, 1: supplementary
 func (rs *MaterialResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 
   var materials []model.Material
@@ -85,6 +86,8 @@ func (rs *MaterialResource) IndexHandler(w http.ResponseWriter, r *http.Request)
 // RESPONSE: 401,Unauthenticated
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  create a new material
+// DESCRIPTION:
+// Kind means 0: slide, 1: supplementary
 func (rs *MaterialResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
 
   course := r.Context().Value("course").(*model.Course)
@@ -133,6 +136,8 @@ func (rs *MaterialResource) CreateHandler(w http.ResponseWriter, r *http.Request
 // RESPONSE: 401,Unauthenticated
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  get a specific material
+// DESCRIPTION:
+// Kind means 0: slide, 1: supplementary
 func (rs *MaterialResource) GetHandler(w http.ResponseWriter, r *http.Request) {
   // `Material` is retrieved via middle-ware
   material := r.Context().Value("material").(*model.Material)
@@ -157,6 +162,8 @@ func (rs *MaterialResource) GetHandler(w http.ResponseWriter, r *http.Request) {
 // RESPONSE: 401,Unauthenticated
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  update a specific material
+// DESCRIPTION:
+// Kind means 0: slide, 1: supplementary
 func (rs *MaterialResource) EditHandler(w http.ResponseWriter, r *http.Request) {
   // start from empty Request
   data := &MaterialRequest{}
