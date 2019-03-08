@@ -62,9 +62,16 @@ func (body *TaskRatingResponse) Render(w http.ResponseWriter, r *http.Request) e
   return nil
 }
 
-// GetHandler is the enpoint for the accumulated results.
-// url:    /tasks/{task_id}/ratings
-// method: GET
+// GetHandler is public endpoint for
+// URL: /tasks/{task_id}/ratings
+// URLPARAM: task_id,integer
+// METHOD: get
+// TAG: tasks
+// RESPONSE: 200,TaskRatingResponse
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  get all stats (average rating, own rating, ..) for a task
 func (rs *TaskRatingResource) GetHandler(w http.ResponseWriter, r *http.Request) {
   // `TaskRating` is retrieved via middle-ware
   task := r.Context().Value("task").(*model.Task)
@@ -97,9 +104,16 @@ func (rs *TaskRatingResource) GetHandler(w http.ResponseWriter, r *http.Request)
   render.Status(r, http.StatusOK)
 }
 
-// ChangeHandler is the enpoint for identities to rate a given task
-// url:    /tasks/{task_id}/ratings
-// method: POST
+// ChangeHandler is public endpoint for
+// URL: /tasks/{task_id}/ratings
+// URLPARAM: task_id,integer
+// METHOD: post
+// TAG: tasks
+// RESPONSE: 200,TaskRatingResponse
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  updates and gets all stats (average rating, own rating, ..) for a task
 func (rs *TaskRatingResource) ChangeHandler(w http.ResponseWriter, r *http.Request) {
   // `TaskRating` is retrieved via middle-ware
   task := r.Context().Value("task").(*model.Task)

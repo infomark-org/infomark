@@ -123,7 +123,7 @@ func (rs *MaterialResource) CreateHandler(w http.ResponseWriter, r *http.Request
 
 }
 
-// IndexHandler is public endpoint for
+// GetHandler is public endpoint for
 // URL: /materials/{material_id}
 // URLPARAM: material_id,integer
 // METHOD: get
@@ -266,7 +266,7 @@ func (rs *MaterialResource) Context(next http.Handler) http.Handler {
     var err error
 
     // try to get id from URL
-    if materialID, err = strconv.ParseInt(chi.URLParam(r, "materialID"), 10, 64); err != nil {
+    if materialID, err = strconv.ParseInt(chi.URLParam(r, "material_id"), 10, 64); err != nil {
       render.Render(w, r, ErrNotFound)
       return
     }

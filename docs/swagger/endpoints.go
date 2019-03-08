@@ -22,6 +22,7 @@ import (
     "errors"
     "fmt"
     "go/ast"
+    "go/token"
     "strconv"
     "strings"
 )
@@ -60,6 +61,7 @@ type Endpoint struct {
     Info     *ast.FuncDecl
     Comments *ast.CommentGroup
     Details  EndpointDetails
+    Position token.Position
 }
 
 type Parameter struct {
@@ -156,27 +158,27 @@ func parseComments(group *ast.CommentGroup) EndpointDetails {
     return descrp
 }
 
-func isPublicEndpoint(group *ast.CommentGroup) bool {
+func isPublicEndpoint(group *ast.CommentGroup) (string, bool) {
     if group != nil {
         if group.List != nil {
             for _, el := range group.List {
                 if el != nil {
                     // fmt.Println(el.Text)
                     if strings.Contains(el.Text, "is public endpoint for") {
-                        return true
+                        return el.Text, true
                     }
                 }
             }
         }
     }
-    return false
+    return "", false
 }
 
 // Main docs
-func GetEndpoints(pkg map[string]*ast.Package) map[string][]*Endpoint {
+func GetEndpoints(pkg map[string]*ast.Package, fset *token.FileSet) map[string][]*Endpoint {
 
     result := make(map[string][]*Endpoint)
-
+    // fmt.Println(fset)
     // var endpoints []*Endpoint
 
     // gather endpoints
@@ -184,8 +186,21 @@ func GetEndpoints(pkg map[string]*ast.Package) map[string][]*Endpoint {
         ast.Inspect(pkg, func(n ast.Node) bool {
             switch x := n.(type) {
             case *ast.FuncDecl:
-                if isPublicEndpoint(x.Doc) {
+                if str, is := isPublicEndpoint(x.Doc); is {
+                    // commentNames := strings.Split(str[2:], " ")
+                    // commentName := strings.TrimSpace(commentNames[0])
+                    functionName := strings.TrimSpace(n.(*ast.FuncDecl).Name.Name)
+                    // fmt.Println("---------------", str)
+                    // fmt.Println("--", functionName, fset.Position(n.Pos()))
+                    // fmt.Println("--")
+
+                    if !strings.Contains(str, functionName) {
+                        msg := fmt.Sprintf("\"%s\" does not contains \"%s\" in %v", str, functionName, fset.Position(n.Pos()))
+                        panic(msg)
+                    }
+
                     ep := NewEndpoint(x)
+                    ep.Position = fset.Position(n.Pos())
                     result[ep.Details.URL] = append(result[ep.Details.URL], ep)
                 }
             }

@@ -245,8 +245,16 @@ func (rs *SheetResource) ChangeFileHandler(w http.ResponseWriter, r *http.Reques
   render.Status(r, http.StatusOK)
 }
 
-// PointsHandler returns the point for the identity in a given course. This is
-// intented to serve data for a plot.
+// PointsHandler is public endpoint for
+// URL: /sheets/{sheet_id}/points
+// URLPARAM: sheet_id,integer
+// METHOD: get
+// TAG: sheets
+// RESPONSE: 200,newTaskListResponseList
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  return all points from a sheet for the request identity
 func (rs *SheetResource) PointsHandler(w http.ResponseWriter, r *http.Request) {
   sheet := r.Context().Value("sheet").(*model.Sheet)
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
@@ -279,7 +287,7 @@ func (rs *SheetResource) Context(next http.Handler) http.Handler {
     var err error
 
     // try to get id from URL
-    if Sheet_id, err = strconv.ParseInt(chi.URLParam(r, "sheetID"), 10, 64); err != nil {
+    if Sheet_id, err = strconv.ParseInt(chi.URLParam(r, "sheet_id"), 10, 64); err != nil {
       render.Render(w, r, ErrNotFound)
       return
     }

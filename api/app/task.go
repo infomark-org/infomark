@@ -44,7 +44,7 @@ func NewTaskResource(stores *Stores) *TaskResource {
 }
 
 // IndexHandler is public endpoint for
-// URL: /sheet/{sheet_id}/tasks
+// URL: /sheets/{sheet_id}/tasks
 // URLPARAM: sheet_id,integer
 // METHOD: get
 // TAG: tasks
@@ -67,7 +67,7 @@ func (rs *TaskResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
   }
 }
 
-// IndexHandler is public endpoint for
+// MissingIndexHandler is public endpoint for
 // URL: /tasks/missing
 // METHOD: get
 // TAG: tasks
@@ -318,7 +318,7 @@ func (rs *TaskResource) ChangePrivateTestFileHandler(w http.ResponseWriter, r *h
 }
 
 // GetSubmissionResultHandler is public endpoint for
-// URL: /task/{task_id}/result
+// URL: /tasks/{task_id}/result
 // URLPARAM: task_id,integer
 // METHOD: get
 // TAG: tasks
@@ -377,7 +377,7 @@ func (rs *TaskResource) Context(next http.Handler) http.Handler {
     var err error
 
     // try to get id from URL
-    if taskID, err = strconv.ParseInt(chi.URLParam(r, "taskID"), 10, 64); err != nil {
+    if taskID, err = strconv.ParseInt(chi.URLParam(r, "task_id"), 10, 64); err != nil {
       render.Render(w, r, ErrNotFound)
       return
     }

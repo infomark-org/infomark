@@ -216,7 +216,7 @@ func (rs *SubmissionResource) Context(next http.Handler) http.Handler {
     var err error
 
     // try to get id from URL
-    if submissionID, err = strconv.ParseInt(chi.URLParam(r, "submissionID"), 10, 64); err != nil {
+    if submissionID, err = strconv.ParseInt(chi.URLParam(r, "submission_id"), 10, 64); err != nil {
       render.Render(w, r, ErrNotFound)
       return
     }

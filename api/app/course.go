@@ -259,7 +259,7 @@ func (rs *CourseResource) IndexEnrollmentsHandler(w http.ResponseWriter, r *http
 }
 
 // GetEnrollmentsHandler is public endpoint for
-// URL: /course/{course_id}/enrollments/{user_id}
+// URL: /courses/{course_id}/enrollments/{user_id}
 // URLPARAM: course_id,integer
 // URLPARAM: user_id,integer
 // METHOD: get
@@ -294,7 +294,7 @@ func (rs *CourseResource) GetEnrollmentsHandler(w http.ResponseWriter, r *http.R
 }
 
 // ChangeRole is public endpoint for
-// URL: /course/{course_id}/enrollments/{user_id}
+// URL: /courses/{course_id}/enrollments/{user_id}
 // URLPARAM: course_id,integer
 // URLPARAM: user_id,integer
 // METHOD: put
@@ -328,7 +328,7 @@ func (rs *CourseResource) ChangeRole(w http.ResponseWriter, r *http.Request) {
 }
 
 // EnrollHandler is public endpoint for
-// URL: /course/{course_id}/enrollments
+// URL: /courses/{course_id}/enrollments
 // URLPARAM: course_id,integer
 // METHOD: post
 // TAG: enrollments
@@ -363,7 +363,7 @@ func (rs *CourseResource) EnrollHandler(w http.ResponseWriter, r *http.Request) 
 }
 
 // DisenrollHandler is public endpoint for
-// URL: /course/{course_id}/enrollments
+// URL: /courses/{course_id}/enrollments
 // URLPARAM: course_id,integer
 // METHOD: delete
 // TAG: enrollments
@@ -393,7 +393,7 @@ func (rs *CourseResource) DisenrollHandler(w http.ResponseWriter, r *http.Reques
 }
 
 // SendEmailHandler is public endpoint for
-// URL: /courses/{course_id}/email
+// URL: /courses/{course_id}/emails
 // URLPARAM: course_id,integer
 // QUERYPARAM: roles,string
 // QUERYPARAM: first_name,string
@@ -548,7 +548,7 @@ func (rs *CourseResource) Context(next http.Handler) http.Handler {
     var err error
 
     // try to get id from URL
-    if courseID, err = strconv.ParseInt(chi.URLParam(r, "courseID"), 10, 64); err != nil {
+    if courseID, err = strconv.ParseInt(chi.URLParam(r, "course_id"), 10, 64); err != nil {
       render.Render(w, r, ErrNotFound)
       return
     }

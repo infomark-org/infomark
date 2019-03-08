@@ -239,6 +239,14 @@ func (rs *AccountResource) GetHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// GetAvatarHandler is public endpoint for
+// URL: /account/avatar
+// METHOD: get
+// TAG: account
+// RESPONSE: 200,ImageFile
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// SUMMARY:  Retrieve the specific account avatar from the request identity
 func (rs *AccountResource) GetAvatarHandler(w http.ResponseWriter, r *http.Request) {
 
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
@@ -250,6 +258,15 @@ func (rs *AccountResource) GetAvatarHandler(w http.ResponseWriter, r *http.Reque
 
 }
 
+// ChangeAvatarHandler is public endpoint for
+// URL: /account/avatar
+// METHOD: post
+// TAG: account
+// REQUEST: imagefile
+// RESPONSE: 204,NoContent
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// SUMMARY:  Change the specific account avatar of the request identity
 func (rs *AccountResource) ChangeAvatarHandler(w http.ResponseWriter, r *http.Request) {
 
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
@@ -273,6 +290,14 @@ func (rs *AccountResource) ChangeAvatarHandler(w http.ResponseWriter, r *http.Re
   render.Status(r, http.StatusOK)
 }
 
+// DeleteAvatarHandler is public endpoint for
+// URL: /account/avatar
+// METHOD: delete
+// TAG: account
+// RESPONSE: 204,NoContent
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// SUMMARY:  Delete the specific account avatar of the request identity
 func (rs *AccountResource) DeleteAvatarHandler(w http.ResponseWriter, r *http.Request) {
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
 
@@ -290,6 +315,14 @@ func (rs *AccountResource) DeleteAvatarHandler(w http.ResponseWriter, r *http.Re
   render.Status(r, http.StatusNoContent)
 }
 
+// GetEnrollmentsHandler is public endpoint for
+// URL: /account/enrollments
+// METHOD: get
+// TAG: account
+// RESPONSE: 200,userEnrollmentResponseList
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// SUMMARY:  Retrieve the specific account avatar from the request identity
 func (rs *AccountResource) GetEnrollmentsHandler(w http.ResponseWriter, r *http.Request) {
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
 

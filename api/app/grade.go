@@ -187,7 +187,7 @@ func (rs *GradeResource) Context(next http.Handler) http.Handler {
     var err error
 
     // try to get id from URL
-    if gradeID, err = strconv.ParseInt(chi.URLParam(r, "gradeID"), 10, 64); err != nil {
+    if gradeID, err = strconv.ParseInt(chi.URLParam(r, "grade_id"), 10, 64); err != nil {
       render.Render(w, r, ErrNotFound)
       return
     }

@@ -86,7 +86,7 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 
         r.Route("/users", func(r chi.Router) {
           r.Get("/", appAPI.User.IndexHandler)
-          r.Route("/{userID}", func(r chi.Router) {
+          r.Route("/{user_id}", func(r chi.Router) {
             r.Use(appAPI.User.Context)
             r.Get("/", appAPI.User.GetHandler)
             r.Put("/", appAPI.User.EditHandler)
@@ -99,7 +99,7 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
           r.Get("/", appAPI.Course.IndexHandler)
           r.Post("/", authorize.EndpointRequiresRole(appAPI.Course.CreateHandler, authorize.ADMIN))
 
-          r.Route("/{courseID}", func(r chi.Router) {
+          r.Route("/{course_id}", func(r chi.Router) {
             r.Use(appAPI.Course.Context)
             r.Use(appAPI.Course.RoleContext)
             r.Post("/enrollments", appAPI.Course.EnrollHandler)
@@ -137,7 +137,7 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
               r.Get("/submissions", authorize.EndpointRequiresRole(appAPI.Submission.IndexHandler, authorize.TUTOR))
               r.Get("/grades", authorize.EndpointRequiresRole(appAPI.Grade.IndexHandler, authorize.TUTOR))
 
-              r.Route("/enrollments/{userID}", func(r chi.Router) {
+              r.Route("/enrollments/{user_id}", func(r chi.Router) {
                 r.Use(authorize.RequiresAtLeastCourseRole(authorize.ADMIN))
 
                 r.Use(appAPI.User.Context)
@@ -152,7 +152,7 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
         })
 
         r.Route("/sheets", func(r chi.Router) {
-          r.Route("/{sheetID}", func(r chi.Router) {
+          r.Route("/{sheet_id}", func(r chi.Router) {
             r.Use(appAPI.Sheet.Context)
             r.Use(appAPI.Course.RoleContext)
 
@@ -179,7 +179,7 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 
           r.Get("/missing", appAPI.Task.MissingIndexHandler)
 
-          r.Route("/{taskID}", func(r chi.Router) {
+          r.Route("/{task_id}", func(r chi.Router) {
             r.Use(appAPI.Task.Context)
             r.Use(appAPI.Course.RoleContext)
 
@@ -212,7 +212,7 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
         })
 
         r.Route("/groups", func(r chi.Router) {
-          r.Route("/{groupID}", func(r chi.Router) {
+          r.Route("/{group_id}", func(r chi.Router) {
             r.Use(appAPI.Group.Context)
             r.Use(appAPI.Course.RoleContext)
 
@@ -235,7 +235,7 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
         r.Route("/grades", func(r chi.Router) {
           // does not require a role
           r.Get("/missing", appAPI.Grade.IndexMissingHandler)
-          r.Route("/{gradeID}", func(r chi.Router) {
+          r.Route("/{grade_id}", func(r chi.Router) {
             r.Use(appAPI.Grade.Context)
             r.Use(appAPI.Course.RoleContext)
 
@@ -248,7 +248,7 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
         })
 
         r.Route("/materials", func(r chi.Router) {
-          r.Route("/{materialID}", func(r chi.Router) {
+          r.Route("/{material_id}", func(r chi.Router) {
             r.Use(appAPI.Material.Context)
             r.Use(appAPI.Course.RoleContext)
 
@@ -269,7 +269,7 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
         })
 
         r.Route("/submissions", func(r chi.Router) {
-          r.Route("/{submissionID}", func(r chi.Router) {
+          r.Route("/{submission_id}", func(r chi.Router) {
             r.Use(appAPI.Submission.Context)
             r.Use(appAPI.Course.RoleContext)
 

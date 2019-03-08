@@ -21,41 +21,28 @@ package swagger
 import (
   "fmt"
   "go/ast"
+  "go/token"
   "strings"
 )
 
-// func SwaggerStructExample(structDescr *Struct, depth int) {
-//   pre := strings.Repeat(" ", depth)
-//   for _, fieldDescr := range structDescr.Fields {
-
-//     if len(fieldDescr.Childs) > 0 {
-//       for _, ch := range fieldDescr.Childs {
-//         SwaggerStructExample(ch, depth+4)
-//       }
-//     } else {
-//       fmt.Printf("%s  %s:\n", pre, fieldDescr.Tag.Name)
-
-//     }
-//   }
-// }
-
-func SwaggerStructs(structDescr *Struct, depth int) {
+func SwaggerStructs(structDescr *Struct, depth int) string {
+  source := ""
   pre := strings.Repeat(" ", depth)
 
   if len(structDescr.Fields) > 0 {
-    fmt.Printf("%stype: object\n", pre)
-    fmt.Printf("%sproperties:\n", pre)
+    source = source + fmt.Sprintf("%stype: object\n", pre)
+    source = source + fmt.Sprintf("%sproperties:\n", pre)
   }
 
   requiredFields := []string{}
   examples := make(map[string]string)
 
   for _, fieldDescr := range structDescr.Fields {
-    fmt.Printf("%s  %s:\n", pre, fieldDescr.Tag.Name)
+    source = source + fmt.Sprintf("%s  %s:\n", pre, fieldDescr.Tag.Name)
 
     if len(fieldDescr.Childs) > 0 {
       for _, ch := range fieldDescr.Childs {
-        SwaggerStructs(ch, depth+4)
+        source = source + SwaggerStructs(ch, depth+4)
       }
 
     } else {
@@ -64,20 +51,20 @@ func SwaggerStructs(structDescr *Struct, depth int) {
       case *ast.Ident:
         switch x.Name {
         case "string":
-          fmt.Printf("%s    type: %v\n", pre, fieldDescr.Type)
+          source = source + fmt.Sprintf("%s    type: %v\n", pre, fieldDescr.Type)
           if strings.Contains(fieldDescr.Tag.Name, "email") {
-            fmt.Printf("%s    format: email\n", pre)
+            source = source + fmt.Sprintf("%s    format: email\n", pre)
           }
         case "int":
-          fmt.Printf("%s    type: integer\n", pre)
+          source = source + fmt.Sprintf("%s    type: integer\n", pre)
         case "bool":
-          fmt.Printf("%s    type: boolean\n", pre)
+          source = source + fmt.Sprintf("%s    type: boolean\n", pre)
         case "int64":
-          fmt.Printf("%s    type: integer\n", pre)
-          fmt.Printf("%s    format: %v\n", pre, fieldDescr.Type)
+          source = source + fmt.Sprintf("%s    type: integer\n", pre)
+          source = source + fmt.Sprintf("%s    format: %v\n", pre, fieldDescr.Type)
         case "float32", "float64":
-          fmt.Printf("%s    type: number\n", pre)
-          fmt.Printf("%s    format: %v\n", pre, fieldDescr.Type)
+          source = source + fmt.Sprintf("%s    type: number\n", pre)
+          source = source + fmt.Sprintf("%s    format: %v\n", pre, fieldDescr.Type)
         default:
 
         }
@@ -88,13 +75,13 @@ func SwaggerStructs(structDescr *Struct, depth int) {
 
       case *ast.SelectorExpr:
         if x.X.(*ast.Ident).Name == "null" && x.Sel.Name == "String" {
-          fmt.Printf("%s    type: string\n", pre)
+          source = source + fmt.Sprintf("%s    type: string\n", pre)
           fieldDescr.Tag.Required = false
         }
 
         if x.X.(*ast.Ident).Name == "time" && x.Sel.Name == "Time" {
-          fmt.Printf("%s    type: string\n", pre)
-          fmt.Printf("%s    format: date-time\n", pre)
+          source = source + fmt.Sprintf("%s    type: string\n", pre)
+          source = source + fmt.Sprintf("%s    format: date-time\n", pre)
           fieldDescr.Tag.Required = true
 
           examples[fieldDescr.Tag.Name] = "'2019-07-30T23:59:59Z'"
@@ -113,22 +100,25 @@ func SwaggerStructs(structDescr *Struct, depth int) {
     }
   }
 
-  fmt.Printf("%srequired:\n", pre)
+  source = source + fmt.Sprintf("%srequired:\n", pre)
   for _, f := range requiredFields {
-    fmt.Printf("%s  - %s\n", pre, f)
+    source = source + fmt.Sprintf("%s  - %s\n", pre, f)
   }
 
   if len(examples) > 0 {
-    fmt.Printf("%sexample:\n", pre)
+    source = source + fmt.Sprintf("%sexample:\n", pre)
     for k, f := range examples {
-      fmt.Printf("%s  %s: %s\n", pre, k, f)
+      source = source + fmt.Sprintf("%s  %s: %s\n", pre, k, f)
     }
 
   }
 
+  return source
+
 }
 
-func SwaggerStructsWithSuffix(pkgs map[string]*ast.Package, suffix string, depth int) {
+func SwaggerStructsWithSuffix(fset *token.FileSet, pkgs map[string]*ast.Package, suffix string, depth int) string {
+  source := ""
   // gather structs
   for _, pkg := range pkgs {
     ast.Inspect(pkg, func(n ast.Node) bool {
@@ -138,12 +128,13 @@ func SwaggerStructsWithSuffix(pkgs map[string]*ast.Package, suffix string, depth
         if ok {
           name := n.(*ast.TypeSpec).Name.Name
           if strings.HasSuffix(name, suffix) {
-            structDescr, err := ParseStruct(result, name, 0)
+            structDescr, err := ParseStruct(fset, n, result, name, 0)
             if err == nil {
               pre := strings.Repeat(" ", depth)
-              fmt.Printf("%s%s:\n", pre, name)
+              source = source + fmt.Sprintf("%s# implementation in %v:\n", pre, structDescr.Position)
+              source = source + fmt.Sprintf("%s%s:\n", pre, name)
 
-              SwaggerStructs(structDescr, depth+2)
+              source = source + SwaggerStructs(structDescr, depth+2)
             }
           }
         }
@@ -151,9 +142,11 @@ func SwaggerStructsWithSuffix(pkgs map[string]*ast.Package, suffix string, depth
       return true
     })
   }
+  return source
 }
 
-func SwaggerResponsesWithSuffix(pkgs map[string]*ast.Package, suffix string, depth int) {
+func SwaggerResponsesWithSuffix(pkgs map[string]*ast.Package, suffix string, depth int) string {
+  source := ""
   pre := strings.Repeat(" ", depth)
   // gather structs
   for _, pkg := range pkgs {
@@ -164,16 +157,18 @@ func SwaggerResponsesWithSuffix(pkgs map[string]*ast.Package, suffix string, dep
         if ok {
           name := n.(*ast.TypeSpec).Name.Name
           if strings.HasSuffix(name, suffix) {
-            fmt.Printf("%s%s:\n", pre, name)
-            fmt.Printf("%s  description: done\n", pre)
-            fmt.Printf("%s  content:\n", pre)
-            fmt.Printf("%s    application/json:\n", pre)
-            fmt.Printf("%s      schema:\n", pre)
-            fmt.Printf("%s        $ref: \"#/components/schemas/%s\"\n", pre, name)
+            source = source + fmt.Sprintf("%s%s:\n", pre, name)
+            source = source + fmt.Sprintf("%s  description: done\n", pre)
+            source = source + fmt.Sprintf("%s  content:\n", pre)
+            source = source + fmt.Sprintf("%s    application/json:\n", pre)
+            source = source + fmt.Sprintf("%s      schema:\n", pre)
+            source = source + fmt.Sprintf("%s        $ref: \"#/components/schemas/%s\"\n", pre, name)
           }
         }
       }
       return true
     })
   }
+
+  return source
 }

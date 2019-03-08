@@ -37,6 +37,13 @@ pipeline:
       - cp .infomark-backend.yml.ci ~/.infomark-backend.yml
       - go test ./api/app -cover -v
       - go test ./api/helper -cover -v
+  docs:
+    image: golang
+    environment:
+      - GOPROXY=https://gomods.patwie.com/
+    commands:
+      - cp .infomark-backend.yml.ci ~/.infomark-backend.yml
+      - go generate
 
 services:
   database:

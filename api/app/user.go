@@ -72,7 +72,7 @@ func (rs *UserResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
   }
 }
 
-// GetHandler is public endpoint for
+// GetMeHandler is public endpoint for
 // URL: /me
 // METHOD: get
 // TAG: users
@@ -171,7 +171,7 @@ func (rs *UserResource) EditMeHandler(w http.ResponseWriter, r *http.Request) {
   render.Status(r, http.StatusNoContent)
 }
 
-// EditMeHandler is public endpoint for
+// EditHandler is public endpoint for
 // URL: /users/{user_id}
 // URLPARAM: user_id,integer
 // METHOD: put
@@ -266,6 +266,16 @@ func (rs *UserResource) SendEmailHandler(w http.ResponseWriter, r *http.Request)
 
 }
 
+// DeleteHandler is public endpoint for
+// URL: /users/{user_id}
+// URLPARAM: user_id,integer
+// METHOD: delete
+// TAG: users
+// REQUEST: userRequest
+// RESPONSE: 204,NoContent
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// SUMMARY:  updating a specific user with given id.
 func (rs *UserResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
   user := r.Context().Value("user").(*model.User)
 
@@ -291,7 +301,7 @@ func (d *UserResource) Context(next http.Handler) http.Handler {
     var err error
 
     // try to get id from URL
-    if user_id, err = strconv.ParseInt(chi.URLParam(r, "userID"), 10, 64); err != nil {
+    if user_id, err = strconv.ParseInt(chi.URLParam(r, "user_id"), 10, 64); err != nil {
       render.Render(w, r, ErrNotFound)
       return
     }

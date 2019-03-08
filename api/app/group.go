@@ -250,8 +250,8 @@ func (rs *GroupResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // ChangeBidHandler is public endpoint for
-// URL: /groups/{course_id}/bid
-// URLPARAM: course_id,integer
+// URL: /groups/{group_id}/bids
+// URLPARAM: group_id,integer
 // METHOD: post
 // TAG: groups
 // REQUEST: groupBidRequest
@@ -312,7 +312,7 @@ func (rs *GroupResource) ChangeBidHandler(w http.ResponseWriter, r *http.Request
 }
 
 // SendEmailHandler is public endpoint for
-// URL: /groups/{group_id}/email
+// URL: /groups/{group_id}/emails
 // URLPARAM: group_id,integer
 // METHOD: post
 // TAG: groups
@@ -373,7 +373,7 @@ func (rs *GroupResource) Context(next http.Handler) http.Handler {
     var err error
 
     // try to get id from URL
-    if groupID, err = strconv.ParseInt(chi.URLParam(r, "groupID"), 10, 64); err != nil {
+    if groupID, err = strconv.ParseInt(chi.URLParam(r, "group_id"), 10, 64); err != nil {
       render.Render(w, r, ErrNotFound)
       return
     }

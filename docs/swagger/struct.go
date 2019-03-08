@@ -22,6 +22,7 @@ import (
 	"errors"
 	"fmt"
 	"go/ast"
+	"go/token"
 	"strings"
 
 	"github.com/davecgh/go-spew/spew"
@@ -33,6 +34,7 @@ type Struct struct {
 	Fields      []*Field
 	Comments    *ast.CommentGroup
 	Tag         *Tag
+	Position    token.Position
 }
 
 type Field struct {
@@ -52,7 +54,7 @@ func IdentString(str string, ch int) string {
 	return strings.Join(lines, "\n")
 }
 
-func ParseField(field *ast.Field, depth int) (*Field, error) {
+func ParseField(fset *token.FileSet, n ast.Node, field *ast.Field, depth int) (*Field, error) {
 
 	result := &Field{}
 	result.Type = field.Type
@@ -79,7 +81,7 @@ func ParseField(field *ast.Field, depth int) (*Field, error) {
 
 		switch x := field.Type.(type) {
 		case *ast.StructType:
-			child, err := ParseStruct(x, field.Names[0].Name, depth+1)
+			child, err := ParseStruct(fset, n, x, field.Names[0].Name, depth+1)
 			if err == nil {
 				result.Childs = append(result.Childs, child)
 				// fmt.Println(child)
@@ -87,7 +89,7 @@ func ParseField(field *ast.Field, depth int) (*Field, error) {
 		case *ast.StarExpr:
 			switch y := x.X.(type) {
 			case *ast.StructType:
-				child, err := ParseStruct(y, field.Names[0].Name, depth+1)
+				child, err := ParseStruct(fset, n, y, field.Names[0].Name, depth+1)
 				if err == nil {
 					result.Childs = append(result.Childs, child)
 					// fmt.Println(child)
@@ -112,7 +114,7 @@ func ParseField(field *ast.Field, depth int) (*Field, error) {
 	return result, nil
 }
 
-func ParseStruct(structDecl *ast.StructType, name string, depth int) (*Struct, error) {
+func ParseStruct(fset *token.FileSet, n ast.Node, structDecl *ast.StructType, name string, depth int) (*Struct, error) {
 
 	result := &Struct{Name: name}
 
@@ -123,6 +125,8 @@ func ParseStruct(structDecl *ast.StructType, name string, depth int) (*Struct, e
 
 	// structDecl := node.(*ast.TypeSpec).Type.(*ast.StructType)
 	fields := structDecl.Fields.List
+
+	result.Position = fset.Position(n.Pos())
 
 	for _, field := range fields {
 		if field.Tag != nil {
@@ -136,7 +140,7 @@ func ParseStruct(structDecl *ast.StructType, name string, depth int) (*Struct, e
 				panic(err)
 			}
 
-			f, err := ParseField(field, depth)
+			f, err := ParseField(fset, n, field, depth)
 			if err == nil {
 				result.Fields = append(result.Fields, f)
 			}

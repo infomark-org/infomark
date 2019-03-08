@@ -19,27 +19,27 @@
 package app
 
 import (
-  "net/http"
+	"net/http"
 )
 
 // CommonResource specifies user management handler.
 type CommonResource struct {
-  Stores *Stores
+	Stores *Stores
 }
 
 // NewCommonResource create and returns a CommonResource.
 func NewCommonResource(stores *Stores) *CommonResource {
-  return &CommonResource{
-    Stores: stores,
-  }
+	return &CommonResource{
+		Stores: stores,
+	}
 }
 
 // PingHandler is public endpoint for
 // URL: /ping
-// METHOD: post
+// METHOD: get
 // TAG: common
 // RESPONSE: 200,pongResponse
 // SUMMARY:  heartbeat of backend
 func (rs *CommonResource) PingHandler(w http.ResponseWriter, r *http.Request) {
-  w.Write([]byte("pong"))
+	w.Write([]byte("pong"))
 }
