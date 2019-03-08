@@ -63,7 +63,7 @@ PGPASSWORD=pass psql -h 127.0.0.1 -U user -p 5433 -d db -f mock.sql
 cd ..
 ```
 
-Reminder, to reset the docker-compose files (chaning password) just do
+Reminder, to reset the docker-compose files (changing password) just do
 
 ```bash
 sudo docker-compose down -v
@@ -73,18 +73,22 @@ sudo docker-compose up --force-recreate
 
 ## Testing
 
-We ship unit tests and a database mock which is generated in Python. Read the docs [docs](./docs/) for more details of how to use a database mock. Running the tests is mandatory to ensure stability and correctness and we suggest to at least these tests once locally.
+We ship unit tests and a database mock which is generated in Python. Running the tests is mandatory to ensure stability and correctness and we suggest to at least these tests once locally.
 
-
+```bash
+cd api/app
+go test -cover
+```
 
 ## Generating the Docs
 
-The command
+This implementation features an automatic Swagger-v3 definition generation of all available endpoints.
+Further, generating this `api.yaml` file also checks if all routes are documented and have the correct method (get, post, patch, put) and if responses or request bodies are missing. Further, it uses the request and response go-structs to generate request and response body information for swagger automatically.
+
+Just run
 
 ```bash
 go generate
 ```
 
-will generate a valid `api.yaml` for Swagger 3.0.
-Hereby, it verifies all implemented routes are documented and have the correct method (get, post, patch, put).
-Further, it uses the request and response go-structs to generate request and response body information in swagger.
+

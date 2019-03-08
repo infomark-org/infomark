@@ -10,7 +10,7 @@ services:
   database:
     image: postgres:11.2-alpine
     environment:
-      # openssl rand -hex 24
+      # openssl rand -hex 32
       - POSTGRES_PASSWORD=pass
       - POSTGRES_DB=db
       - POSTGRES_USER=user
