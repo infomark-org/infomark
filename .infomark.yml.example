@@ -1,5 +1,15 @@
-url: http://info2.informatik.uni-tuebingen.de
+# shared configuration for both
+# ------------------------------------------------------------------------------
 
+rabbitmq_connection: amqp://user:password@localhost:5672/
+rabbitmq_exchange: test-exchange
+rabbitmq_exchangeType: direct
+rabbitmq_queue: test-queue
+rabbitmq_key: test-key
+
+# backend
+# ------------------------------------------------------------------------------
+url: http://localhost:3000
 min_password_length: 7
 uploads_dir: /home/patwie/git/github.com/cgtuebingen/infomark/infomark-backend/files/uploads
 fixtures_dir: /home/patwie/git/github.com/cgtuebingen/infomark/infomark-backend/files/fixtures
@@ -10,11 +20,8 @@ auth_jwt_access_expiry: 15m
 auth_jwt_refresh_expiry: 10h
 
 auth_session_secret: u46IpCV9y5Vlur8YvODJEhgOY8m9JVE4sdfdfsdf
-
 log_level: debug
 port: 0.0.0.0:3000
-
-
 
 database_connection: postgres://user:pass@localhost:5433/db?sslmode=disable&connect_timeout=1
 db_debug: false
@@ -24,8 +31,7 @@ email_from: no-reply@info2.informatik.uni-tuebingen.de
 email_templates_dir: /home/patwie/git/github.com/cgtuebingen/infomark/infomark-backend/email
 sendmail_binary: /usr/sbin/sendmail
 
-rabbitmq_connection: amqp://user:password@localhost:5672/
-rabbitmq_exchange: test-exchange
-rabbitmq_exchangeType: direct
-rabbitmq_queue: test-queue
-rabbitmq_key: test-key
+# worker
+# ------------------------------------------------------------------------------
+worker_workdir: /tmp
+worker_void: false  # true = ignore request (for unit tests which might violate the db transactions)
