@@ -13,7 +13,7 @@ pipeline:
   ping_amqp:
     image: rabbitmq:3.7.3-management-alpine
     commands:
-      -  until wget --spider http://127.0.0.1:15672 >/dev/null 2>&1; do sleep 1; done
+      -  until wget --spider http://rabbitAMQP:15672 >/dev/null 2>&1; do sleep 1; done
   mock:
     image: python:3
     commands:
