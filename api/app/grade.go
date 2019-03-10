@@ -21,7 +21,6 @@ package app
 import (
   "context"
   "errors"
-  "fmt"
   "net/http"
   "strconv"
 
@@ -161,9 +160,9 @@ func (rs *GradeResource) PrivateResultEditHandler(w http.ResponseWriter, r *http
   currentGrade.PrivateTestStatus = data.Status
   currentGrade.PrivateExecutionState = 2
 
-  fmt.Println(currentGrade.ID)
-  fmt.Println(currentGrade.PrivateTestLog)
-  fmt.Println(currentGrade.PrivateTestStatus)
+  // fmt.Println(currentGrade.ID)
+  // fmt.Println(currentGrade.PrivateTestLog)
+  // fmt.Println(currentGrade.PrivateTestStatus)
 
   render.Status(r, http.StatusNoContent)
 

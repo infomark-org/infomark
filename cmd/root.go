@@ -52,7 +52,7 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(InitConfig)
-	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is infomark.yaml)")
+	// RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is infomark.yaml)")
 }
 
 // SetConfigFile searchs for a config file named ".informark.yml"

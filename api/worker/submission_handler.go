@@ -43,8 +43,8 @@ type RealSubmissionHandler struct{}
 var DefaultSubmissionHandler SubmissionHandler
 
 func init() {
-  fmt.Println(viper.GetString("rabbitmq_connection"))
-  fmt.Println("worker_void", viper.GetBool("worker_void"))
+  // fmt.Println(viper.GetString("rabbitmq_connection"))
+  // fmt.Println("worker_void", viper.GetBool("worker_void"))
   if viper.GetBool("worker_void") {
     DefaultSubmissionHandler = &DummySubmissionHandler{}
   } else {
