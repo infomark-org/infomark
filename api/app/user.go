@@ -232,6 +232,7 @@ func (rs *UserResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 // URLPARAM: user_id,integer
 // METHOD: post
 // TAG: users
+// TAG: email
 // REQUEST: EmailRequest
 // RESPONSE: 200,OK
 // RESPONSE: 400,BadRequest

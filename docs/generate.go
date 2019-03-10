@@ -128,6 +128,8 @@ func main() {
     f.WriteString(fmt.Sprintf("tags:\n"))
     f.WriteString(fmt.Sprintf("  - name: common\n"))
     f.WriteString(fmt.Sprintf("    description: common request\n"))
+    f.WriteString(fmt.Sprintf("  - name: auth\n"))
+    f.WriteString(fmt.Sprintf("    description: authenticated related requests\n"))
     f.WriteString(fmt.Sprintf("  - name: account\n"))
     f.WriteString(fmt.Sprintf("    description: account related requests\n"))
     f.WriteString(fmt.Sprintf("  - name: email\n"))

@@ -107,6 +107,37 @@ func (s *GroupStore) GetInCourseWithUser(userID int64, courseID int64) (*model.G
   return p, err
 }
 
+func (s *GroupStore) GetGroupEnrollmentOfUserInCourse(userID int64, courseID int64) (*model.GroupEnrollment, error) {
+  p := &model.GroupEnrollment{}
+  err := s.db.Get(p, `
+    SELECT ug.*
+FROM user_group ug
+INNER JOIN groups g ON g.id = ug.group_id
+WHERE ug.user_id = $1
+AND g.course_id = $2`, userID, courseID)
+  return p, err
+}
+
+func (s *GroupStore) CreateGroupEnrollmentOfUserInCourse(p *model.GroupEnrollment) (*model.GroupEnrollment, error) {
+  newID, err := Insert(s.db, "user_group", p)
+  if err != nil {
+    return nil, err
+  }
+
+  res := &model.GroupEnrollment{}
+
+  err = s.db.Get(res, `SELECT * FROM user_group WHERE id= $1`, newID)
+  if err != nil {
+    return nil, err
+  }
+
+  return res, nil
+}
+
+func (s *GroupStore) ChangeGroupEnrollmentOfUserInCourse(p *model.GroupEnrollment) error {
+  return Update(s.db, "user_group", p.ID, p)
+}
+
 func (s *GroupStore) GetOfTutor(tutorID int64, courseID int64) (*model.Group, error) {
   p := &model.Group{}
 

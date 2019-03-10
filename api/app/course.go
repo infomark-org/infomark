@@ -258,7 +258,7 @@ func (rs *CourseResource) IndexEnrollmentsHandler(w http.ResponseWriter, r *http
   render.Status(r, http.StatusOK)
 }
 
-// GetEnrollmentsHandler is public endpoint for
+// GetUserEnrollmentHandler is public endpoint for
 // URL: /courses/{course_id}/enrollments/{user_id}
 // URLPARAM: course_id,integer
 // URLPARAM: user_id,integer
@@ -269,7 +269,7 @@ func (rs *CourseResource) IndexEnrollmentsHandler(w http.ResponseWriter, r *http
 // RESPONSE: 401,Unauthenticated
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  give enrollment of a specific user in a specific course
-func (rs *CourseResource) GetEnrollmentsHandler(w http.ResponseWriter, r *http.Request) {
+func (rs *CourseResource) GetUserEnrollmentHandler(w http.ResponseWriter, r *http.Request) {
   // /courses/1/enrollments?roles=0,1
   course := r.Context().Value("course").(*model.Course)
   user := r.Context().Value("user").(*model.User)
@@ -291,6 +291,43 @@ func (rs *CourseResource) GetEnrollmentsHandler(w http.ResponseWriter, r *http.R
   }
 
   render.Status(r, http.StatusOK)
+}
+
+// DeleteUserEnrollmentHandler is public endpoint for
+// URL: /courses/{course_id}/enrollments/{user_id}
+// URLPARAM: course_id,integer
+// URLPARAM: user_id,integer
+// METHOD: delete
+// TAG: enrollments
+// RESPONSE: 204,NoContent
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  give enrollment of a specific user in a specific course
+func (rs *CourseResource) DeleteUserEnrollmentHandler(w http.ResponseWriter, r *http.Request) {
+  // /courses/1/enrollments?roles=0,1
+  course := r.Context().Value("course").(*model.Course)
+  user := r.Context().Value("user").(*model.User)
+
+  // find role in the course
+
+  userEnrollment, err := rs.Stores.Course.GetUserEnrollment(course.ID, user.ID)
+  if err != nil {
+    render.Render(w, r, ErrBadRequestWithDetails(err))
+    return
+  }
+
+  if int64(userEnrollment.Role) > int64(authorize.STUDENT) {
+    render.Render(w, r, ErrBadRequestWithDetails(errors.New("Cannot disenroll tutors")))
+    return
+  }
+
+  if err := rs.Stores.Course.Disenroll(course.ID, user.ID); err != nil {
+    render.Render(w, r, ErrBadRequestWithDetails(err))
+    return
+  }
+
+  render.Status(r, http.StatusNoContent)
 }
 
 // ChangeRole is public endpoint for

@@ -87,7 +87,7 @@ func (rs *GradeResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
 // RESPONSE: 403,Unauthorized
-// SUMMARY:  edit a grade
+// SUMMARY:  get a grade
 func (rs *GradeResource) GetByIDHandler(w http.ResponseWriter, r *http.Request) {
 
   currentGrade := r.Context().Value("grade").(*model.Grade)
@@ -155,9 +155,6 @@ func (rs *GradeResource) PrivateResultEditHandler(w http.ResponseWriter, r *http
     render.Render(w, r, ErrBadRequestWithDetails(err))
     return
   }
-
-  fmt.Println(data.Log)
-  fmt.Println(data.Status)
 
   currentGrade := r.Context().Value("grade").(*model.Grade)
   currentGrade.PrivateTestLog = data.Log

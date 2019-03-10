@@ -141,7 +141,8 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
                 r.Use(authorize.RequiresAtLeastCourseRole(authorize.ADMIN))
 
                 r.Use(appAPI.User.Context)
-                r.Get("/", appAPI.Course.GetEnrollmentsHandler)
+                r.Get("/", appAPI.Course.GetUserEnrollmentHandler)
+                r.Delete("/", appAPI.Course.DeleteUserEnrollmentHandler)
                 r.Put("/", appAPI.Course.ChangeRole)
 
               })
@@ -221,6 +222,7 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 
             r.Post("/bids", appAPI.Group.ChangeBidHandler)
             r.Post("/emails", authorize.EndpointRequiresRole(appAPI.Group.SendEmailHandler, authorize.TUTOR))
+            r.Post("/enrollments", authorize.EndpointRequiresRole(appAPI.Group.EditGroupEnrollmentHandler, authorize.ADMIN))
 
             r.Get("/", appAPI.Group.GetHandler)
 

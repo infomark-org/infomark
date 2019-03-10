@@ -75,3 +75,25 @@ func (m *groupBidRequest) Validate() error {
 		),
 	)
 }
+
+// groupRequest is the request payload for course management.
+type groupEnrollmentRequest struct {
+	UserID int64 `json:"user_id" example:"15"`
+}
+
+// Bind preprocesses a groupRequest.
+func (body *groupEnrollmentRequest) Bind(r *http.Request) error {
+	if body == nil {
+		return errors.New("missing \"group\" data")
+	}
+	return body.Validate()
+}
+
+func (m *groupEnrollmentRequest) Validate() error {
+	return validation.ValidateStruct(m,
+		validation.Field(
+			&m.UserID,
+			validation.Required,
+		),
+	)
+}

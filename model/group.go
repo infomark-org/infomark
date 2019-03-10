@@ -19,15 +19,22 @@
 package model
 
 import (
-	"time"
+  "time"
 )
 
 type Group struct {
-	ID        int64     `db:"id"`
-	CreatedAt time.Time `db:"created_at,omitempty"`
-	UpdatedAt time.Time `db:"updated_at,omitempty"`
+  ID        int64     `db:"id"`
+  CreatedAt time.Time `db:"created_at,omitempty"`
+  UpdatedAt time.Time `db:"updated_at,omitempty"`
 
-	TutorID     int64  `db:"tutor_id"`
-	CourseID    int64  `db:"course_id"`
-	Description string `db:"description"`
+  TutorID     int64  `db:"tutor_id"`
+  CourseID    int64  `db:"course_id"`
+  Description string `db:"description"`
+}
+
+type GroupEnrollment struct {
+  ID int64 `db:"id"`
+
+  UserID  int64 `db:"user_id"`
+  GroupID int64 `db:"group_id"`
 }

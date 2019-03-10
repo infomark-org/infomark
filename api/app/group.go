@@ -249,6 +249,58 @@ func (rs *GroupResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
   render.Status(r, http.StatusNoContent)
 }
 
+// EditGroupEnrollmentHandler is public endpoint for
+// URL: /groups/{group_id}/enrollments
+// URLPARAM: group_id,integer
+// METHOD: post
+// TAG: groups
+// REQUEST: groupEnrollmentRequest
+// RESPONSE: 204,NotContent
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  will assign a given user to a group or change the group assignment
+func (rs *GroupResource) EditGroupEnrollmentHandler(w http.ResponseWriter, r *http.Request) {
+  // start from empty Request
+  data := &groupEnrollmentRequest{}
+
+  // parse JSON request into struct
+  if err := render.Bind(r, data); err != nil {
+    render.Render(w, r, ErrBadRequestWithDetails(err))
+    return
+  }
+
+  group := r.Context().Value("group").(*model.Group)
+  course := r.Context().Value("course").(*model.Course)
+
+  enrollment, err := rs.Stores.Group.GetGroupEnrollmentOfUserInCourse(data.UserID, course.ID)
+
+  if err != nil {
+    // does not exists yet
+
+    enrollment := &model.GroupEnrollment{
+      UserID:  data.UserID,
+      GroupID: group.ID,
+    }
+
+    _, err := rs.Stores.Group.CreateGroupEnrollmentOfUserInCourse(enrollment)
+    if err != nil {
+      render.Render(w, r, ErrRender(err))
+      return
+    }
+
+  } else {
+    // does exists --> simply change it
+    enrollment.GroupID = group.ID
+    if err := rs.Stores.Group.ChangeGroupEnrollmentOfUserInCourse(enrollment); err != nil {
+      render.Render(w, r, ErrRender(err))
+      return
+    }
+  }
+
+  render.Status(r, http.StatusNoContent)
+}
+
 // ChangeBidHandler is public endpoint for
 // URL: /groups/{group_id}/bids
 // URLPARAM: group_id,integer
@@ -259,7 +311,7 @@ func (rs *GroupResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
 // RESPONSE: 403,Unauthorized
-// SUMMARY:  chnage the bid for enrolling in a group
+// SUMMARY:  change or add the bid for enrolling in a group
 func (rs *GroupResource) ChangeBidHandler(w http.ResponseWriter, r *http.Request) {
 
   courseRole := r.Context().Value("course_role").(authorize.CourseRole)
@@ -316,6 +368,7 @@ func (rs *GroupResource) ChangeBidHandler(w http.ResponseWriter, r *http.Request
 // URLPARAM: group_id,integer
 // METHOD: post
 // TAG: groups
+// TAG: email
 // REQUEST: EmailRequest
 // RESPONSE: 204,NoContent
 // RESPONSE: 400,BadRequest

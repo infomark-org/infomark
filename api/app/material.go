@@ -79,7 +79,7 @@ func (rs *MaterialResource) IndexHandler(w http.ResponseWriter, r *http.Request)
 // URL: /courses/{course_id}/materials
 // URLPARAM: course_id,integer
 // METHOD: post
-// TAG: sheets
+// TAG: materials
 // REQUEST: MaterialRequest
 // RESPONSE: 204,MaterialResponse
 // RESPONSE: 400,BadRequest
@@ -242,7 +242,7 @@ func (rs *MaterialResource) GetFileHandler(w http.ResponseWriter, r *http.Reques
 // URL: /materials/{material_id}/file
 // URLPARAM: material_id,integer
 // METHOD: post
-// TAG: sheets
+// TAG: materials
 // REQUEST: zipfile
 // RESPONSE: 204,NoContent
 // RESPONSE: 400,BadRequest

@@ -31,11 +31,15 @@ static/
 .infomark.yml
 
 files/uploads/avatars/*
+files/uploads/materials/*
 files/uploads/sheets/*
+files/uploads/submissions/*
 files/uploads/tasks/*
 
 !files/uploads/avatars/.keep
+!files/uploads/materials/.keep
 !files/uploads/sheets/.keep
+!files/uploads/submissions/.keep
 !files/uploads/tasks/.keep
 
 .local/

@@ -20,6 +20,7 @@ package app
 
 import (
   "encoding/json"
+  "fmt"
   "net/http"
   "testing"
 
@@ -276,6 +277,78 @@ func TestGroup(t *testing.T) {
       // cannot access anymore
       w = tape.GetWithClaims(url, 112, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
+    })
+
+    g.It("should manually add user to group (update)", func() {
+      url := "/api/v1/groups/1/enrollments"
+
+      w := tape.Post(url, H{"user_id": 112})
+      g.Assert(w.Code).Equal(http.StatusUnauthorized)
+
+      // student
+      w = tape.PostWithClaims(url, H{"user_id": 112}, 112, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+
+      // tutor
+      w = tape.PostWithClaims(url, H{"user_id": 112}, 2, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+
+      // admin
+      w = tape.PostWithClaims(url, H{"user_id": 112}, 1, false)
+      fmt.Println(w.Body)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      enrollment, err := stores.Group.GetGroupEnrollmentOfUserInCourse(112, 1)
+      g.Assert(err).Equal(nil)
+      g.Assert(enrollment.UserID).Equal(int64(112))
+      g.Assert(enrollment.GroupID).Equal(int64(1))
+
+      // admin
+      w = tape.PostWithClaims("/api/v1/groups/2/enrollments", H{"user_id": 112}, 1, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      enrollment, err = stores.Group.GetGroupEnrollmentOfUserInCourse(112, 1)
+      g.Assert(err).Equal(nil)
+      g.Assert(enrollment.UserID).Equal(int64(112))
+      g.Assert(enrollment.GroupID).Equal(int64(2))
+
+    })
+
+    g.It("should manually add user to group (create)", func() {
+
+      // remove all user_group from student
+      _, err := tape.DB.Exec("DELETE FROM user_group WHERE user_id = 112;")
+      g.Assert(err).Equal(nil)
+
+      w := tape.Post("/api/v1/groups/1/enrollments", H{"user_id": 112})
+      g.Assert(w.Code).Equal(http.StatusUnauthorized)
+
+      // student
+      w = tape.PostWithClaims("/api/v1/groups/1/enrollments", H{"user_id": 112}, 112, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+
+      // tutor
+      w = tape.PostWithClaims("/api/v1/groups/1/enrollments", H{"user_id": 112}, 2, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+
+      // admin
+      w = tape.PostWithClaims("/api/v1/groups/1/enrollments", H{"user_id": 112}, 1, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      enrollment, err := stores.Group.GetGroupEnrollmentOfUserInCourse(112, 1)
+      g.Assert(err).Equal(nil)
+      g.Assert(enrollment.UserID).Equal(int64(112))
+      g.Assert(enrollment.GroupID).Equal(int64(1))
+
+      // admin
+      w = tape.PostWithClaims("/api/v1/groups/2/enrollments", H{"user_id": 112}, 1, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      enrollment, err = stores.Group.GetGroupEnrollmentOfUserInCourse(112, 1)
+      g.Assert(err).Equal(nil)
+      g.Assert(enrollment.UserID).Equal(int64(112))
+      g.Assert(enrollment.GroupID).Equal(int64(2))
+
     })
 
     g.AfterEach(func() {

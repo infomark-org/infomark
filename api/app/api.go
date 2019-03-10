@@ -115,6 +115,10 @@ type GroupStore interface {
 
   GetBidsForCourseForUser(courseID int64, userID int64) ([]model.GroupBid, error)
   GetBidsForCourse(courseID int64) ([]model.GroupBid, error)
+
+  GetGroupEnrollmentOfUserInCourse(userID int64, courseID int64) (*model.GroupEnrollment, error)
+  CreateGroupEnrollmentOfUserInCourse(p *model.GroupEnrollment) (*model.GroupEnrollment, error)
+  ChangeGroupEnrollmentOfUserInCourse(p *model.GroupEnrollment) error
 }
 
 // MaterialStore defines material related database queries

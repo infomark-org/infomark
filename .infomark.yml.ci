@@ -37,4 +37,5 @@ fixtures_dir: /drone/src/files/fixtures
 
 # worker
 # ------------------------------------------------------------------------------
-workdir: /tmp/
+worker_workdir: /tmp
+worker_void: true

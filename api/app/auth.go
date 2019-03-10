@@ -47,7 +47,7 @@ func NewAuthResource(stores *Stores) *AuthResource {
 // RefreshAccessTokenHandler is public endpoint for
 // URL: /auth/token
 // METHOD: post
-// TAG: account
+// TAG: auth
 // REQUEST: loginRequest
 // RESPONSE: 201,authResponse
 // RESPONSE: 400,BadRequest
@@ -170,7 +170,7 @@ func (rs *AuthResource) RefreshAccessTokenHandler(w http.ResponseWriter, r *http
 // LoginHandler is public endpoint for
 // URL: /auth/sessions
 // METHOD: post
-// TAG: account
+// TAG: auth
 // REQUEST: loginRequest
 // RESPONSE: 200,loginResponse
 // RESPONSE: 400,BadRequest
@@ -234,7 +234,7 @@ func (rs *AuthResource) LoginHandler(w http.ResponseWriter, r *http.Request) {
 // LogoutHandler is public endpoint for
 // URL: /auth/sessions
 // METHOD: delete
-// TAG: account
+// TAG: auth
 // RESPONSE: 200,OK
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
@@ -247,7 +247,7 @@ func (rs *AuthResource) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 // RequestPasswordResetHandler is public endpoint for
 // URL: /auth/request_password_reset
 // METHOD: post
-// TAG: account
+// TAG: auth
 // REQUEST: resetPasswordRequest
 // RESPONSE: 200,OK
 // RESPONSE: 400,BadRequest
@@ -297,7 +297,7 @@ func (rs *AuthResource) RequestPasswordResetHandler(w http.ResponseWriter, r *ht
 // UpdatePasswordHandler is public endpoint for
 // URL: /auth/update_password
 // METHOD: post
-// TAG: account
+// TAG: auth
 // REQUEST: updatePasswordRequest
 // RESPONSE: 200,OK
 // RESPONSE: 400,BadRequest
@@ -343,7 +343,7 @@ func (rs *AuthResource) UpdatePasswordHandler(w http.ResponseWriter, r *http.Req
 // ConfirmEmailHandler is public endpoint for
 // URL: /auth/confirm_email
 // METHOD: post
-// TAG: account
+// TAG: auth
 // REQUEST: confirmEmailRequest
 // RESPONSE: 200,OK
 // RESPONSE: 400,BadRequest

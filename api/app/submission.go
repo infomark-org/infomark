@@ -144,7 +144,7 @@ func (rs *SubmissionResource) GetFileByIdHandler(w http.ResponseWriter, r *http.
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
 // RESPONSE: 403,Unauthorized
-// SUMMARY:  changes the zip file of a submission
+// SUMMARY:  changes the zip file of a submission belonging to the request identity
 func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.Request) {
   task := r.Context().Value("task").(*model.Task)
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)

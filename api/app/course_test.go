@@ -354,6 +354,57 @@ func TestCourse(t *testing.T) {
       g.Assert(number_enrollments_after).Equal(number_enrollments_before - 1)
 
     })
+
+    g.It("Can disenroll a specific user from course", func() {
+
+      courseID := int64(1)
+
+      number_enrollments_before, err := countEnrollments(
+        tape,
+        "SELECT count(*) FROM user_course WHERE course_id = $1 and role = 0",
+        courseID,
+      )
+      g.Assert(err).Equal(nil)
+
+      // admin
+      w := tape.DeleteWithClaims("/api/v1/courses/1/enrollments/113", 1, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      number_enrollments_after, err := countEnrollments(
+        tape,
+        "SELECT count(*) FROM user_course WHERE course_id = $1 and role = 0",
+        courseID,
+      )
+      g.Assert(err).Equal(nil)
+      g.Assert(number_enrollments_after).Equal(number_enrollments_before - 1)
+
+    })
+
+    g.It("Cannot  disenroll a specific user from course if user is tutor", func() {
+
+      courseID := int64(1)
+
+      number_enrollments_before, err := countEnrollments(
+        tape,
+        "SELECT count(*) FROM user_course WHERE course_id = $1 and role = 0",
+        courseID,
+      )
+      g.Assert(err).Equal(nil)
+
+      // admin
+      w := tape.DeleteWithClaims("/api/v1/courses/1/enrollments/2", 1, false)
+      g.Assert(w.Code).Equal(http.StatusBadRequest)
+
+      number_enrollments_after, err := countEnrollments(
+        tape,
+        "SELECT count(*) FROM user_course WHERE course_id = $1 and role = 0",
+        courseID,
+      )
+      g.Assert(err).Equal(nil)
+      g.Assert(number_enrollments_after).Equal(number_enrollments_before)
+
+    })
+
     g.It("Cannot disenroll as a tutor from course", func() {
       courseID := int64(1)
       userID := int64(2)
