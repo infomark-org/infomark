@@ -78,6 +78,29 @@ func (rs *GradeResource) EditHandler(w http.ResponseWriter, r *http.Request) {
   render.Status(r, http.StatusNoContent)
 }
 
+// GetByIDHandler is public endpoint for
+// URL: /grades/{grade_id}
+// URLPARAM: grade_id,integer
+// METHOD: get
+// TAG: grades
+// RESPONSE: 200,GradeResponse
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  edit a grade
+func (rs *GradeResource) GetByIDHandler(w http.ResponseWriter, r *http.Request) {
+
+  currentGrade := r.Context().Value("grade").(*model.Grade)
+
+  // return Material information of created entry
+  if err := render.Render(w, r, newGradeResponse(currentGrade)); err != nil {
+    render.Render(w, r, ErrRender(err))
+    return
+  }
+
+  render.Status(r, http.StatusNoContent)
+}
+
 // PublicResultEditHandler is public endpoint for
 // URL: /grades/{grade_id}/public_result
 // URLPARAM: grade_id,integer

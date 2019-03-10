@@ -213,14 +213,17 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
   // enqueue public test
   request := &shared.SubmissionAMQPWorkerRequest{
     SubmissionID: submission.ID,
-    Token:        accessToken,
-    DockerImage:  task.PublicDockerImage,
-    FileURL: fmt.Sprintf("%s/api/v1/submissions/%s/file",
+    AccessToken:  accessToken,
+    FrameworkFileURL: fmt.Sprintf("%s/api/v1/tasks/%s/public_file",
+      viper.GetString("url"),
+      strconv.FormatInt(task.ID, 10)),
+    SubmissionFileURL: fmt.Sprintf("%s/api/v1/submissions/%s/file",
       viper.GetString("url"),
       strconv.FormatInt(submission.ID, 10)),
-    ResultURL: fmt.Sprintf("%s/api/v1/grades/%s/public_result",
+    ResultEndpointURL: fmt.Sprintf("%s/api/v1/grades/%s/public_result",
       viper.GetString("url"),
       strconv.FormatInt(grade.ID, 10)),
+    DockerImage: task.PublicDockerImage,
   }
 
   body, err := json.Marshal(request)
@@ -234,14 +237,17 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
   // enqueue private test
   request = &shared.SubmissionAMQPWorkerRequest{
     SubmissionID: submission.ID,
-    Token:        accessToken,
-    DockerImage:  task.PrivateDockerImage,
-    FileURL: fmt.Sprintf("%s/api/v1/submissions/%s/file",
+    AccessToken:  accessToken,
+    FrameworkFileURL: fmt.Sprintf("%s/api/v1/tasks/%s/private_file",
+      viper.GetString("url"),
+      strconv.FormatInt(task.ID, 10)),
+    SubmissionFileURL: fmt.Sprintf("%s/api/v1/submissions/%s/file",
       viper.GetString("url"),
       strconv.FormatInt(submission.ID, 10)),
-    ResultURL: fmt.Sprintf("%s/api/v1/grades/%s/private_result",
+    ResultEndpointURL: fmt.Sprintf("%s/api/v1/grades/%s/private_result",
       viper.GetString("url"),
       strconv.FormatInt(grade.ID, 10)),
+    DockerImage: task.PrivateDockerImage,
   }
 
   body, err = json.Marshal(request)

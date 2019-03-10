@@ -243,6 +243,7 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
             r.Use(authorize.RequiresAtLeastCourseRole(authorize.TUTOR))
 
             r.Put("/", appAPI.Grade.EditHandler)
+            r.Get("/", appAPI.Grade.GetByIDHandler)
             r.Post("/public_result", authorize.EndpointRequiresRole(appAPI.Grade.PublicResultEditHandler, authorize.ADMIN))
             r.Post("/private_result", authorize.EndpointRequiresRole(appAPI.Grade.PrivateResultEditHandler, authorize.ADMIN))
 

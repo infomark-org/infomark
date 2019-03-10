@@ -19,23 +19,90 @@
 package cmd
 
 import (
+	"encoding/json"
+	"fmt"
 	"log"
+	"strconv"
 
-	"github.com/cgtuebingen/infomark-backend/api"
+	"github.com/cgtuebingen/infomark-backend/api/shared"
+	"github.com/cgtuebingen/infomark-backend/auth/authenticate"
+	"github.com/cgtuebingen/infomark-backend/service"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
+
+// go build infomark.go && ./infomark produce 24 10 24 "test_java_submission:v1"
 
 var produceCmd = &cobra.Command{
 	Use:   "produce",
 	Short: "start a producer",
 	Long:  `produce some workload`,
+	Args:  cobra.ExactArgs(4), // taskID, submissionID, gradeID, dockerImage
 	Run: func(cmd *cobra.Command, args []string) {
 
-		producer, err := api.NewProducer()
+		arg0, err := strconv.Atoi(args[0])
 		if err != nil {
-			log.Fatal(err)
+			panic(err)
 		}
-		producer.Start()
+
+		arg1, err := strconv.Atoi(args[1])
+		if err != nil {
+			panic(err)
+		}
+
+		arg2, err := strconv.Atoi(args[2])
+		if err != nil {
+			panic(err)
+		}
+
+		taskID := int64(arg0)
+		submissionID := int64(arg1)
+		gradeID := int64(arg2)
+		dockerimage := args[3]
+
+		log.Println("starting producer...")
+
+		cfg := &service.Config{
+			Connection:   viper.GetString("rabbitmq_connection"),
+			Exchange:     viper.GetString("rabbitmq_exchange"),
+			ExchangeType: viper.GetString("rabbitmq_exchangeType"),
+			Queue:        viper.GetString("rabbitmq_queue"),
+			Key:          viper.GetString("rabbitmq_key"),
+			Tag:          "SimpleSubmission",
+		}
+
+		tokenManager, err := authenticate.NewTokenAuth()
+		if err != nil {
+			panic(err)
+		}
+		accessToken, err := tokenManager.CreateAccessJWT(
+			authenticate.NewAccessClaims(1, true))
+		if err != nil {
+			panic(err)
+		}
+
+		request := &shared.SubmissionAMQPWorkerRequest{
+			SubmissionID: submissionID,
+			AccessToken:  accessToken,
+			FrameworkFileURL: fmt.Sprintf("%s/api/v1/tasks/%s/private_file",
+				viper.GetString("url"),
+				strconv.FormatInt(taskID, 10)),
+			SubmissionFileURL: fmt.Sprintf("%s/api/v1/submissions/%s/file",
+				viper.GetString("url"),
+				strconv.FormatInt(submissionID, 10)),
+			ResultEndpointURL: fmt.Sprintf("%s/api/v1/grades/%s/private_result",
+				viper.GetString("url"),
+				strconv.FormatInt(gradeID, 10)),
+			DockerImage: dockerimage,
+		}
+
+		body, err := json.Marshal(request)
+		if err != nil {
+			fmt.Errorf("json.Marshal: %s", err)
+		}
+
+		producer, _ := service.NewProducer(cfg)
+		producer.Publish(body)
 
 	},
 }

@@ -19,6 +19,7 @@
 package app
 
 import (
+	"fmt"
 	"net/http"
 
 	validation "github.com/go-ozzo/ozzo-validation"
@@ -62,6 +63,9 @@ type GradeFromWorkerRequest struct {
 
 // Bind preprocesses a GradeRequest.
 func (body *GradeFromWorkerRequest) Bind(r *http.Request) error {
+	fmt.Println(body)
+	fmt.Println(body.Validate())
+
 	return body.Validate()
 }
 
@@ -71,9 +75,9 @@ func (m *GradeFromWorkerRequest) Validate() error {
 			&m.Log,
 			validation.Required,
 		),
-		validation.Field(
-			&m.Status,
-			validation.Required,
-		),
+		// validation.Field(
+		// 	&m.Status,
+		// 	validation.Required,
+		// ),
 	)
 }

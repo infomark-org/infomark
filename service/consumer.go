@@ -154,9 +154,9 @@ func (c *Consumer) HandleLoop(deliveries <-chan amqp.Delivery) {
     )
 
     if err := c.handleFunc(d.Body); err != nil {
+      fmt.Println(err)
       d.Ack(false)
     } else {
-
       d.Ack(true)
     }
 
