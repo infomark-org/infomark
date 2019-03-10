@@ -16,30 +16,21 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package cmd
+package service
 
-import (
-	"log"
+import "github.com/streadway/amqp"
 
-	"github.com/cgtuebingen/infomark-backend/api"
-	"github.com/spf13/cobra"
-)
-
-// serveCmd represents the serve command
-var serveCmd = &cobra.Command{
-	Use:   "serve",
-	Short: "start http server with configured api",
-	Long:  `Starts a http server and serves the configured api`,
-	Run: func(cmd *cobra.Command, args []string) {
-		server, err := api.NewServer()
-		if err != nil {
-			log.Fatal(err)
-		}
-		server.Start()
-	},
+type Worker interface {
+  Setup() error
+  Shutdown() error
+  HandleLoop(deliveries <-chan amqp.Delivery)
 }
 
-func init() {
-	RootCmd.AddCommand(serveCmd)
-
+type Config struct {
+  Tag          string
+  Connection   string
+  Exchange     string
+  ExchangeType string
+  Queue        string
+  Key          string
 }

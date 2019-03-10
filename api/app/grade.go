@@ -21,6 +21,7 @@ package app
 import (
   "context"
   "errors"
+  "fmt"
   "net/http"
   "strconv"
 
@@ -44,7 +45,6 @@ func NewGradeResource(stores *Stores) *GradeResource {
 }
 
 // EditHandler is public endpoint for
-// RefreshAccessTokenHandler is public endpoint for
 // URL: /grades/{grade_id}
 // URLPARAM: grade_id,integer
 // METHOD: put
@@ -78,6 +78,83 @@ func (rs *GradeResource) EditHandler(w http.ResponseWriter, r *http.Request) {
   render.Status(r, http.StatusNoContent)
 }
 
+// PublicResultEditHandler is public endpoint for
+// URL: /grades/{grade_id}/public_result
+// URLPARAM: grade_id,integer
+// METHOD: post
+// TAG: internal
+// REQUEST: GradeFromWorkerRequest
+// RESPONSE: 204,NoContent
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  update information for grade from background worker
+func (rs *GradeResource) PublicResultEditHandler(w http.ResponseWriter, r *http.Request) {
+
+  data := &GradeFromWorkerRequest{}
+  // parse JSON request into struct
+  if err := render.Bind(r, data); err != nil {
+    render.Render(w, r, ErrBadRequestWithDetails(err))
+    return
+  }
+
+  currentGrade := r.Context().Value("grade").(*model.Grade)
+  currentGrade.PublicTestLog = data.Log
+  currentGrade.PublicTestStatus = data.Status
+  currentGrade.PublicExecutionState = 2
+
+  render.Status(r, http.StatusNoContent)
+
+  // update database entry
+  if err := rs.Stores.Grade.Update(currentGrade); err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
+}
+
+// PrivateResultEditHandler is public endpoint for
+// URL: /grades/{grade_id}/private_result
+// URLPARAM: grade_id,integer
+// METHOD: post
+// TAG: internal
+// REQUEST: GradeFromWorkerRequest
+// RESPONSE: 204,NoContent
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  update information for grade from background worker
+func (rs *GradeResource) PrivateResultEditHandler(w http.ResponseWriter, r *http.Request) {
+
+  data := &GradeFromWorkerRequest{}
+  // parse JSON request into struct
+  if err := render.Bind(r, data); err != nil {
+    render.Render(w, r, ErrBadRequestWithDetails(err))
+    return
+  }
+
+  fmt.Println(data.Log)
+  fmt.Println(data.Status)
+
+  currentGrade := r.Context().Value("grade").(*model.Grade)
+  currentGrade.PrivateTestLog = data.Log
+  currentGrade.PrivateTestStatus = data.Status
+  currentGrade.PrivateExecutionState = 2
+
+  fmt.Println(currentGrade.ID)
+  fmt.Println(currentGrade.PrivateTestLog)
+  fmt.Println(currentGrade.PrivateTestStatus)
+
+  render.Status(r, http.StatusNoContent)
+
+  // update database entry
+  if err := rs.Stores.Grade.Update(currentGrade); err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
+}
+
 // IndexHandler is public endpoint for
 // URL: /courses/{course_id}/grades
 // URLPARAM: course_id,integer
@@ -90,7 +167,8 @@ func (rs *GradeResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 // QUERYPARAM: acquired_points,integer
 // QUERYPARAM: public_test_status,integer
 // QUERYPARAM: private_test_status,integer
-// QUERYPARAM: execution_state,integer
+// QUERYPARAM: public_execution_state,integer
+// QUERYPARAM: private_execution_state,integer
 // METHOD: get
 // TAG: grades
 // RESPONSE: 200,GradeResponseList
@@ -116,7 +194,8 @@ func (rs *GradeResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
   filterAcquiredPoints := helper.IntFromUrl(r, "acquired_points", -1)
   filterPublicTestStatus := helper.IntFromUrl(r, "public_test_status", 0)
   filterPrivateTestStatus := helper.IntFromUrl(r, "private_test_status", 0)
-  filterExecutationState := helper.IntFromUrl(r, "execution_state", -1)
+  filterPublicExecutationState := helper.IntFromUrl(r, "public_execution_state", -1)
+  filterPrivateExecutationState := helper.IntFromUrl(r, "private_execution_state", -1)
 
   submissions, err := rs.Stores.Grade.GetFiltered(
     course.ID,
@@ -129,7 +208,8 @@ func (rs *GradeResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
     filterAcquiredPoints,
     filterPublicTestStatus,
     filterPrivateTestStatus,
-    filterExecutationState,
+    filterPublicExecutationState,
+    filterPrivateExecutationState,
   )
   if err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))

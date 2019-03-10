@@ -33,6 +33,7 @@ import (
 func TestSubmission(t *testing.T) {
   g := goblin.Goblin(t)
   email.DefaultMail = email.VoidMail
+  DefaultSubmissionProducer = &TestProducer{}
 
   tape := &Tape{}
 
@@ -107,6 +108,48 @@ func TestSubmission(t *testing.T) {
 
     })
 
+    g.It("creating a submission will crate an empty grade entry as well", func() {
+
+      defer helper.NewSubmissionFileHandle(3001).Delete()
+
+      // no files so far
+      g.Assert(helper.NewSubmissionFileHandle(3001).Exists()).Equal(false)
+
+      // remove all submission from student
+      _, err := tape.DB.Exec("DELETE FROM submissions WHERE user_id = 112;")
+      g.Assert(err).Equal(nil)
+
+      // remove all grades from student
+      _, err = tape.DB.Exec("TRUNCATE TABLE grades;")
+      g.Assert(err).Equal(nil)
+
+      // no submission
+      w := tape.GetWithClaims("/api/v1/tasks/1/submission", 112, false)
+      g.Assert(w.Code).Equal(http.StatusNotFound)
+
+      // upload
+      filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
+      w, err = tape.UploadWithClaims("/api/v1/tasks/1/submission", filename, "application/zip", 112, false)
+      g.Assert(err).Equal(nil)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      createdSubmission, err := stores.Submission.GetByUserAndTask(112, 1)
+      g.Assert(err).Equal(nil)
+
+      g.Assert(helper.NewSubmissionFileHandle(createdSubmission.ID).Exists()).Equal(true)
+      defer helper.NewSubmissionFileHandle(createdSubmission.ID).Delete()
+
+      // files exists
+      w = tape.GetWithClaims("/api/v1/tasks/1/submission", 112, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      // verify there is also a grade
+      state := int64(88)
+      err = tape.DB.Get(&state, "SELECT public_execution_state from grades WHERE submission_id = $1;", createdSubmission.ID)
+      g.Assert(err).Equal(nil)
+      g.Assert(state).Equal(int64(0))
+    })
+
     g.It("Students can only access their own submissions", func() {
 
       defer helper.NewSubmissionFileHandle(3001).Delete()
@@ -122,11 +165,11 @@ func TestSubmission(t *testing.T) {
       g.Assert(helper.NewSubmissionFileHandle(3001).Exists()).Equal(true)
 
       // access own submission
-      w = tape.GetWithClaims("/api/v1/submissions/3001", 112, false)
+      w = tape.GetWithClaims("/api/v1/submissions/3001/file", 112, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       // access others submission
-      w = tape.GetWithClaims("/api/v1/submissions/3001", 113, false)
+      w = tape.GetWithClaims("/api/v1/submissions/3001/file", 113, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
     })

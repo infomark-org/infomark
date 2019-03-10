@@ -53,16 +53,17 @@ import (
 
 // GradeResponse is the response payload for Grade management.
 type GradeResponse struct {
-  ID                int64  `json:"id" example:"1"`
-  ExecutionState    int    `json:"execution_state" example:"1"`
-  PublicTestLog     string `json:"public_test_log" example:"Lorem Ipsum"`
-  PrivateTestLog    string `json:"private_test_log" example:"Lorem Ipsum"`
-  PublicTestStatus  int    `json:"public_test_status" example:"1"`
-  PrivateTestStatus int    `json:"private_test_status" example:"0"`
-  AcquiredPoints    int    `json:"acquired_points" example:"19"`
-  Feedback          string `json:"feedback" example:"Some feedback"`
-  TutorID           int64  `json:"tutor_id" example:"2"`
-  SubmissionID      int64  `json:"submission_id" example:"31"`
+  ID                    int64  `json:"id" example:"1"`
+  PublicExecutionState  int    `json:"public_execution_state" example:"1"`
+  PrivateExecutionState int    `json:"private_execution_state" example:"1"`
+  PublicTestLog         string `json:"public_test_log" example:"Lorem Ipsum"`
+  PrivateTestLog        string `json:"private_test_log" example:"Lorem Ipsum"`
+  PublicTestStatus      int    `json:"public_test_status" example:"1"`
+  PrivateTestStatus     int    `json:"private_test_status" example:"0"`
+  AcquiredPoints        int    `json:"acquired_points" example:"19"`
+  Feedback              string `json:"feedback" example:"Some feedback"`
+  TutorID               int64  `json:"tutor_id" example:"2"`
+  SubmissionID          int64  `json:"submission_id" example:"31"`
 }
 
 // Render post-processes a GradeResponse.
@@ -73,16 +74,17 @@ func (body *GradeResponse) Render(w http.ResponseWriter, r *http.Request) error 
 // newGradeResponse creates a response from a Grade model.
 func newGradeResponse(p *model.Grade) *GradeResponse {
   return &GradeResponse{
-    ID:                p.ID,
-    ExecutionState:    p.ExecutionState,
-    PublicTestLog:     p.PublicTestLog,
-    PrivateTestLog:    p.PrivateTestLog,
-    PublicTestStatus:  p.PublicTestStatus,
-    PrivateTestStatus: p.PrivateTestStatus,
-    AcquiredPoints:    p.AcquiredPoints,
-    Feedback:          p.Feedback,
-    TutorID:           p.TutorID,
-    SubmissionID:      p.SubmissionID,
+    ID:                    p.ID,
+    PublicExecutionState:  p.PublicExecutionState,
+    PrivateExecutionState: p.PrivateExecutionState,
+    PublicTestLog:         p.PublicTestLog,
+    PrivateTestLog:        p.PrivateTestLog,
+    PublicTestStatus:      p.PublicTestStatus,
+    PrivateTestStatus:     p.PrivateTestStatus,
+    AcquiredPoints:        p.AcquiredPoints,
+    Feedback:              p.Feedback,
+    TutorID:               p.TutorID,
+    SubmissionID:          p.SubmissionID,
   }
 }
 
@@ -99,16 +101,17 @@ func newGradeListResponse(Grades []model.Grade) []render.Renderer {
 // GradeResponse is the response payload for Grade management.
 type MissingGradeResponse struct {
   Grade struct {
-    ID                int64  `json:"id" example:"1"`
-    ExecutionState    int    `json:"execution_state" example:"1"`
-    PublicTestLog     string `json:"public_test_log" example:"Lorem Ipsum"`
-    PrivateTestLog    string `json:"private_test_log" example:"Lorem Ipsum"`
-    PublicTestStatus  int    `json:"public_test_status" example:"1"`
-    PrivateTestStatus int    `json:"private_test_status" example:"0"`
-    AcquiredPoints    int    `json:"acquired_points" example:"19"`
-    Feedback          string `json:"feedback" example:"Some feedback"`
-    TutorID           int64  `json:"tutor_id" example:"2"`
-    SubmissionID      int64  `json:"submission_id" example:"31"`
+    ID                    int64  `json:"id" example:"1"`
+    PublicExecutionState  int    `json:"public_execution_state" example:"1"`
+    PrivateExecutionState int    `json:"private_execution_state" example:"1"`
+    PublicTestLog         string `json:"public_test_log" example:"Lorem Ipsum"`
+    PrivateTestLog        string `json:"private_test_log" example:"Lorem Ipsum"`
+    PublicTestStatus      int    `json:"public_test_status" example:"1"`
+    PrivateTestStatus     int    `json:"private_test_status" example:"0"`
+    AcquiredPoints        int    `json:"acquired_points" example:"19"`
+    Feedback              string `json:"feedback" example:"Some feedback"`
+    TutorID               int64  `json:"tutor_id" example:"2"`
+    SubmissionID          int64  `json:"submission_id" example:"31"`
   } `json:"grade"`
   CourseID int64 `json:"course_id" example:"1"`
   SheetID  int64 `json:"sheet_id" example:"10"`
@@ -130,7 +133,8 @@ func newMissingGradeResponse(p *model.MissingGrade) *MissingGradeResponse {
   }
 
   r.Grade.ID = p.ID
-  r.Grade.ExecutionState = p.ExecutionState
+  r.Grade.PublicExecutionState = p.PublicExecutionState
+  r.Grade.PrivateExecutionState = p.PrivateExecutionState
   r.Grade.PublicTestLog = p.PublicTestLog
   r.Grade.PrivateTestLog = p.PrivateTestLog
   r.Grade.PublicTestStatus = p.PublicTestStatus

@@ -34,7 +34,7 @@ type SubmissionResponse struct {
 	ID      int64  `json:"id" example:"61"`
 	UserID  int64  `json:"user_id" example:"357"`
 	TaskID  int64  `json:"task_id" example:"12"`
-	FileURL string `json:"file_url" example:"/api/v1/submission/61/file"`
+	FileURL string `json:"file_url" example:"/api/v1/submissions/61/file"`
 }
 
 // newSubmissionResponse creates a response from a Submission model.

@@ -39,6 +39,14 @@ func (s *GradeStore) Get(id int64) (*model.Grade, error) {
   return &p, err
 }
 
+func (s *GradeStore) Create(p *model.Grade) (*model.Grade, error) {
+  newID, err := Insert(s.db, "grades", p)
+  if err != nil {
+    return nil, err
+  }
+  return s.Get(newID)
+}
+
 func (s *GradeStore) GetForSubmission(id int64) (*model.Grade, error) {
   p := model.Grade{}
   err := s.db.Get(&p, "SELECT * FROM grades WHERE submission_id = $1 LIMIT 1;", id)
@@ -74,7 +82,8 @@ func (s *GradeStore) GetFiltered(
   acquiredPoints int,
   publicTestStatus int,
   privateTestStatus int,
-  executationState int,
+  publicExecutationState int,
+  privateExecutationState int,
 ) ([]model.Grade, error) {
 
   p := []model.Grade{}
@@ -98,20 +107,22 @@ AND feedback LIKE $7
 AND ($8 = -1 OR g.acquired_points = $8)
 AND ($9 = -1 OR g.public_test_status = $9)
 AND ($10 = -1 OR g.private_test_status = $10)
-AND ($11 = -1 OR g.execution_state = $11)
+AND ($11 = -1 OR g.public_execution_state = $11)
+AND ($12 = -1 OR g.private_execution_state = $12)
   `,
     // AND ($4 = 0 OR ug.group_id = $4)
-    courseID,          // $1
-    sheetID,           // $2
-    taskID,            // $3
-    groupID,           // $4
-    userID,            // $5
-    tutorID,           // $6
-    feedback,          // $7
-    acquiredPoints,    // $8
-    publicTestStatus,  // $9
-    privateTestStatus, // $10
-    executationState,  // $11
+    courseID,                // $1
+    sheetID,                 // $2
+    taskID,                  // $3
+    groupID,                 // $4
+    userID,                  // $5
+    tutorID,                 // $6
+    feedback,                // $7
+    acquiredPoints,          // $8
+    publicTestStatus,        // $9
+    privateTestStatus,       // $10
+    publicExecutationState,  // $11
+    privateExecutationState, // $12
   )
   return p, err
 }
@@ -135,26 +146,3 @@ WHERE g.id = $1`,
 
   return course, err
 }
-
-// SELECT
-//   g.*
-// FROM
-//   grades g
-// INNER JOIN submissions s ON s.id = g.submission_id
-// INNER JOIN task_sheet ts ON ts.task_id = s.task_id
-// INNER JOIN sheet_course sc ON sc.sheet_id = ts.sheet_id
-// INNER JOIN user_group ug ON ug.user_id = s.user_id
-// WHERE
-//   g.id = 1
-// AND course_id = 1
-// AND (1 = 0 OR ts.sheet_id = 1)
-// AND (1 = 0 OR s.task_id = 1)
-// AND (3 = 0 OR ug.group_id = 3)
-// AND (12 = 0 OR ug.user_id = 12)
-// AND (1 = 0 OR tutor_id = 1)
-// AND feedback LIKE '%Lorem%'
-// AND (56 = -1 OR g.acquired_points = 56)
-// AND (1 = -1 OR g.execution_state = 1)
-// AND (0 = -1 OR g.public_test_status = 0)
-// AND (1 = -1 OR g.private_test_status = 1)
-// AND (1 = -1 OR g.execution_state = 1)

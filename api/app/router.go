@@ -243,6 +243,8 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
             r.Use(authorize.RequiresAtLeastCourseRole(authorize.TUTOR))
 
             r.Put("/", appAPI.Grade.EditHandler)
+            r.Post("/public_result", authorize.EndpointRequiresRole(appAPI.Grade.PublicResultEditHandler, authorize.ADMIN))
+            r.Post("/private_result", authorize.EndpointRequiresRole(appAPI.Grade.PrivateResultEditHandler, authorize.ADMIN))
 
           })
         })
@@ -276,7 +278,7 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
             // ensures user is enrolled in the associated course
             r.Use(authorize.RequiresAtLeastCourseRole(authorize.STUDENT))
 
-            r.Get("/", appAPI.Submission.GetFileByIdHandler)
+            r.Get("/file", appAPI.Submission.GetFileByIdHandler)
 
           })
         })

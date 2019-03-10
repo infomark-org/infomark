@@ -19,6 +19,7 @@
 package app
 
 import (
+  "encoding/json"
   olog "log"
   "net/http"
   "net/http/httptest"
@@ -26,6 +27,7 @@ import (
   "github.com/cgtuebingen/infomark-backend/api/helper"
   "github.com/cgtuebingen/infomark-backend/auth/authenticate"
   otape "github.com/cgtuebingen/infomark-backend/tape"
+  "github.com/jmoiron/sqlx"
   homedir "github.com/mitchellh/go-homedir"
   "github.com/spf13/viper"
 )
@@ -52,7 +54,7 @@ func SetConfigFile() {
   }
 
   viper.AddConfigPath(home)
-  viper.SetConfigName(".infomark-backend")
+  viper.SetConfigName(".infomark")
 }
 
 func InitConfig() {
@@ -74,6 +76,8 @@ func init() {
 
 type Tape struct {
   otape.Tape
+
+  DB *sqlx.DB
 }
 
 func NewTape() *Tape {
@@ -154,7 +158,7 @@ func (t *Tape) DeleteWithClaims(url string, loginID int64, root bool) *httptest.
 
 func (t *Tape) UploadWithClaims(url string, filename string, contentType string, loginID int64, root bool) (*httptest.ResponseRecorder, error) {
 
-  body, ct, err := t.CreateFileRequestBody(filename, contentType)
+  body, ct, err := otape.CreateFileRequestBody(filename, contentType)
   if err != nil {
     return nil, err
   }
@@ -167,4 +171,11 @@ func (t *Tape) UploadWithClaims(url string, filename string, contentType string,
 
   addJWTClaims(r, loginID, root)
   return t.PlayRequest(r), nil
+}
+
+func (t *Tape) ToH(z interface{}) map[string]interface{} {
+  data, _ := json.Marshal(z)
+  var msgMapTemplate interface{}
+  _ = json.Unmarshal(data, &msgMapTemplate)
+  return msgMapTemplate.(map[string]interface{})
 }

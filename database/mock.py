@@ -175,7 +175,8 @@ def create_grade(submission_id, tutor_id, max_points):
       ('created_at', VAL.TIMESTAMP),
       ('updated_at', VAL.TIMESTAMP),
 
-      ('execution_state', fake.random_int(0, 2)),
+      ('public_execution_state', fake.random_int(0, 2)),
+      ('private_execution_state', fake.random_int(0, 2)),
 
       ('acquired_points', fake.random_int(0, max_points)),
       ('public_test_log', 'Lorem Ipsum Public Test Log Stdout'),

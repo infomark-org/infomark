@@ -149,13 +149,15 @@ type GradeStore interface {
     acquiredPoints int,
     publicTestStatus int,
     privateTestStatus int,
-    executationState int,
+    publicExecutationState int,
+    privateExecutationState int,
   ) ([]model.Grade, error)
   Get(id int64) (*model.Grade, error)
   GetForSubmission(id int64) (*model.Grade, error)
   Update(p *model.Grade) error
   IdentifyCourseOfGrade(gradeID int64) (*model.Course, error)
   GetAllMissingGrades(tutorID int64) ([]model.MissingGrade, error)
+  Create(p *model.Grade) (*model.Grade, error)
 }
 
 // API provides application resources and handlers.

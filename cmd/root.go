@@ -30,7 +30,7 @@ import (
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
-	Use:   "infomark-backend",
+	Use:   "infomark",
 	Short: "A CI based course framework",
 	Long: `InfoMark distributes exercise sheets in an course management system and
 tests students homework submission for these exercises sheet automatically.
@@ -52,10 +52,10 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(InitConfig)
-	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is infomark-backend.yaml)")
+	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is infomark.yaml)")
 }
 
-// SetConfigFile searchs for a config file named ".informark-backend.yml"
+// SetConfigFile searchs for a config file named ".informark.yml"
 // which is located in the home-directory if the flag "--config" is not present.
 func SetConfigFile() {
 	if cfgFile != "" {
@@ -70,7 +70,7 @@ func SetConfigFile() {
 
 		// Search config in home directory with name ".go-base" (without extension).
 		viper.AddConfigPath(home)
-		viper.SetConfigName(".infomark-backend")
+		viper.SetConfigName(".infomark")
 	}
 
 }
@@ -91,7 +91,7 @@ func InitConfig() {
 	root_dir := viper.GetString("email_templates_dir")
 	filename := fmt.Sprintf("%s/%s", root_dir, "request_password_token.en.txt")
 	if _, err := os.Stat(filename); os.IsNotExist(err) {
-		fmt.Println("Path from config file .infomark-backend.yml to email templates is wrong!")
+		fmt.Println("Path from config file .infomark.yml to email templates is wrong!")
 		panic(err)
 	}
 }

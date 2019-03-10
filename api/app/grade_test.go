@@ -61,7 +61,7 @@ func TestGrade(t *testing.T) {
       grades_actual := []GradeResponse{}
       err := json.NewDecoder(w.Body).Decode(&grades_actual)
       g.Assert(err).Equal(nil)
-      g.Assert(len(grades_actual)).Equal(186)
+      g.Assert(len(grades_actual)).Equal(229)
     })
 
     g.It("Should list all grades of a group with some filters", func() {
@@ -155,12 +155,76 @@ func TestGrade(t *testing.T) {
       err = json.NewDecoder(w.Body).Decode(&result)
       g.Assert(err).Equal(nil)
       // see mock.py
-      g.Assert(len(result)).Equal(901)
+      g.Assert(len(result)).Equal(945)
 
       for _, el := range result {
         g.Assert(el.Grade.TutorID).Equal(int64(3))
         g.Assert(el.Grade.Feedback).Equal("")
       }
+    })
+
+    g.It("Should handle feedback from public tests", func() {
+
+      url := "/api/v1/grades/1/public_result"
+
+      data := H{
+        "log":    "some new logs",
+        "status": 2,
+      }
+
+      w := tape.Post(url, data)
+      g.Assert(w.Code).Equal(http.StatusUnauthorized)
+
+      // students
+      w = tape.PostWithClaims(url, data, 112, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+
+      // tutors
+      w = tape.PostWithClaims(url, data, 3, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+
+      // admin
+      w = tape.PostWithClaims(url, data, 1, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      entry_after, err := stores.Grade.Get(1)
+      g.Assert(err).Equal(nil)
+
+      g.Assert(entry_after.PublicTestLog).Equal("some new logs")
+      g.Assert(entry_after.PublicTestStatus).Equal(2)
+
+    })
+
+    g.It("Should handle feedback from private tests", func() {
+
+      url := "/api/v1/grades/1/private_result"
+
+      data := H{
+        "log":    "some new logs",
+        "status": 2,
+      }
+
+      w := tape.Post(url, data)
+      g.Assert(w.Code).Equal(http.StatusUnauthorized)
+
+      // students
+      w = tape.PostWithClaims(url, data, 112, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+
+      // tutors
+      w = tape.PostWithClaims(url, data, 3, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+
+      // admin
+      w = tape.PostWithClaims(url, data, 1, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      entry_after, err := stores.Grade.Get(1)
+      g.Assert(err).Equal(nil)
+
+      g.Assert(entry_after.PrivateTestLog).Equal("some new logs")
+      g.Assert(entry_after.PrivateTestStatus).Equal(2)
+
     })
 
     g.AfterEach(func() {

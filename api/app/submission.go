@@ -20,15 +20,19 @@ package app
 
 import (
   "context"
+  "encoding/json"
+  "fmt"
   "net/http"
   "strconv"
 
   "github.com/cgtuebingen/infomark-backend/api/helper"
+  "github.com/cgtuebingen/infomark-backend/api/shared"
   "github.com/cgtuebingen/infomark-backend/auth/authenticate"
   "github.com/cgtuebingen/infomark-backend/auth/authorize"
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/go-chi/chi"
   "github.com/go-chi/render"
+  "github.com/spf13/viper"
 )
 
 // SubmissionResource specifies Submission management handler.
@@ -87,7 +91,7 @@ func (rs *SubmissionResource) GetFileHandler(w http.ResponseWriter, r *http.Requ
 }
 
 // GetFileByIdHandler is public endpoint for
-// URL: /submissions/{submission_id}
+// URL: /submissions/{submission_id}/file
 // URLPARAM: submission_id,integer
 // METHOD: get
 // TAG: submissions
@@ -146,11 +150,40 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
   // todo create submission if not exists
 
+  var grade *model.Grade
+
   // create ssubmisison if not exists
   submission, err := rs.Stores.Submission.GetByUserAndTask(accessClaims.LoginID, task.ID)
   if err != nil {
     // no such submission
     submission, err = rs.Stores.Submission.Create(&model.Submission{UserID: accessClaims.LoginID, TaskID: task.ID})
+    if err != nil {
+      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+      return
+    }
+
+    // create also empty grade, which will be filled in later
+    grade = &model.Grade{
+      PublicExecutionState:  0,
+      PrivateExecutionState: 0,
+      PublicTestLog:         "...",
+      PrivateTestLog:        "...",
+      PublicTestStatus:      0,
+      PrivateTestStatus:     0,
+      AcquiredPoints:        0,
+      Feedback:              "...",
+      TutorID:               1,
+      SubmissionID:          submission.ID,
+    }
+
+    _, err = rs.Stores.Grade.Create(grade)
+    if err != nil {
+      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+      return
+    }
+  } else {
+    // submission exists, we only need to get the grade
+    grade, err = rs.Stores.Grade.GetForSubmission(submission.ID)
     if err != nil {
       render.Render(w, r, ErrInternalServerErrorWithDetails(err))
       return
@@ -162,6 +195,63 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return
   }
+
+  // enqueue file into testing queue
+  // By definition user with id 1 is the system itself with root access
+  tokenManager, err := authenticate.NewTokenAuth()
+  if err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+  accessToken, err := tokenManager.CreateAccessJWT(
+    authenticate.NewAccessClaims(1, true))
+  if err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
+  // enqueue public test
+  request := &shared.SubmissionAMQPWorkerRequest{
+    SubmissionID: submission.ID,
+    Token:        accessToken,
+    DockerImage:  task.PublicDockerImage,
+    FileURL: fmt.Sprintf("%s/api/v1/submissions/%s/file",
+      viper.GetString("url"),
+      strconv.FormatInt(submission.ID, 10)),
+    ResultURL: fmt.Sprintf("%s/api/v1/grades/%s/public_result",
+      viper.GetString("url"),
+      strconv.FormatInt(grade.ID, 10)),
+  }
+
+  body, err := json.Marshal(request)
+  if err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
+  DefaultSubmissionProducer.Publish(body)
+
+  // enqueue private test
+  request = &shared.SubmissionAMQPWorkerRequest{
+    SubmissionID: submission.ID,
+    Token:        accessToken,
+    DockerImage:  task.PrivateDockerImage,
+    FileURL: fmt.Sprintf("%s/api/v1/submissions/%s/file",
+      viper.GetString("url"),
+      strconv.FormatInt(submission.ID, 10)),
+    ResultURL: fmt.Sprintf("%s/api/v1/grades/%s/private_result",
+      viper.GetString("url"),
+      strconv.FormatInt(grade.ID, 10)),
+  }
+
+  body, err = json.Marshal(request)
+  if err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
+  DefaultSubmissionProducer.Publish(body)
+
   render.Status(r, http.StatusOK)
 }
 

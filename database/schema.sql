@@ -138,7 +138,8 @@ CREATE TABLE grades(
   updated_at TIMESTAMP not null DEFAULT current_timestamp,
 
   -- 0: pending, 1: running, 2: finished
-  execution_state INT DEFAULT 0,
+  public_execution_state INT DEFAULT 0,
+  private_execution_state INT DEFAULT 0,
 
   public_test_log TEXT,
   private_test_log TEXT,

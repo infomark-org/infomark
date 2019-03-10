@@ -1,5 +1,9 @@
 url: http://info2.informatik.uni-tuebingen.de
 
+min_password_length: 7
+uploads_dir: /home/patwie/git/github.com/cgtuebingen/infomark/infomark-backend/files/uploads
+fixtures_dir: /home/patwie/git/github.com/cgtuebingen/infomark/infomark-backend/files/fixtures
+
 # openssl rand -hex 32
 auth_jwt_secret: fffff
 auth_jwt_access_expiry: 15m
@@ -10,15 +14,18 @@ auth_session_secret: u46IpCV9y5Vlur8YvODJEhgOY8m9JVE4sdfdfsdf
 log_level: debug
 port: 0.0.0.0:3000
 
-# database_connection: user=postgres dbname=infomark password=postgres sslmode=disable
+
+
 database_connection: postgres://user:pass@localhost:5433/db?sslmode=disable&connect_timeout=1
 db_debug: false
 
-min_password_length: 7
 
 email_from: no-reply@info2.informatik.uni-tuebingen.de
 email_templates_dir: /home/patwie/git/github.com/cgtuebingen/infomark/infomark-backend/email
 sendmail_binary: /usr/sbin/sendmail
 
-uploads_dir: /home/patwie/git/github.com/cgtuebingen/infomark/infomark-backend/files/uploads
-fixtures_dir: /home/patwie/git/github.com/cgtuebingen/infomark/infomark-backend/files/fixtures
+rabbitmq_connection: amqp://user:password@localhost:5672/
+rabbitmq_exchange: test-exchange
+rabbitmq_exchangeType: direct
+rabbitmq_queue: test-queue
+rabbitmq_key: test-key

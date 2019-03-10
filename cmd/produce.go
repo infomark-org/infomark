@@ -25,21 +25,21 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// serveCmd represents the serve command
-var serveCmd = &cobra.Command{
-	Use:   "serve",
-	Short: "start http server with configured api",
-	Long:  `Starts a http server and serves the configured api`,
+var produceCmd = &cobra.Command{
+	Use:   "produce",
+	Short: "start a producer",
+	Long:  `produce some workload`,
 	Run: func(cmd *cobra.Command, args []string) {
-		server, err := api.NewServer()
+
+		producer, err := api.NewProducer()
 		if err != nil {
 			log.Fatal(err)
 		}
-		server.Start()
+		producer.Start()
+
 	},
 }
 
 func init() {
-	RootCmd.AddCommand(serveCmd)
-
+	RootCmd.AddCommand(produceCmd)
 }

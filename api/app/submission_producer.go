@@ -16,30 +16,38 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package cmd
+package app
 
 import (
-	"log"
-
-	"github.com/cgtuebingen/infomark-backend/api"
-	"github.com/spf13/cobra"
+  "github.com/cgtuebingen/infomark-backend/service"
+  "github.com/spf13/viper"
 )
 
-// serveCmd represents the serve command
-var serveCmd = &cobra.Command{
-	Use:   "serve",
-	Short: "start http server with configured api",
-	Long:  `Starts a http server and serves the configured api`,
-	Run: func(cmd *cobra.Command, args []string) {
-		server, err := api.NewServer()
-		if err != nil {
-			log.Fatal(err)
-		}
-		server.Start()
-	},
+type Producer interface {
+  Publish(body []byte) error
 }
 
+var DefaultSubmissionProducer Producer
+
+type TestProducer struct{}
+
+func (t *TestProducer) Publish(body []byte) error { return nil }
+
 func init() {
-	RootCmd.AddCommand(serveCmd)
+  var err error
+
+  cfg := &service.Config{
+    Connection:   viper.GetString("rabbitmq_connection"),
+    Exchange:     viper.GetString("rabbitmq_exchange"),
+    ExchangeType: viper.GetString("rabbitmq_exchangeType"),
+    Queue:        viper.GetString("rabbitmq_queue"),
+    Key:          viper.GetString("rabbitmq_key"),
+    Tag:          "SimpleSubmission",
+  }
+
+  DefaultSubmissionProducer, err = service.NewProducer(cfg)
+  if err != nil {
+    panic(err)
+  }
 
 }

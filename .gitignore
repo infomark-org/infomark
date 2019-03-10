@@ -19,6 +19,7 @@
 test.db
 infomark-backend
 infomark-worker
+infomark
 local/
 database/mock.sql
 database/query.sql
@@ -27,6 +28,7 @@ static/
 
 
 .infomark-backend.yml
+.infomark.yml
 
 files/uploads/avatars/*
 files/uploads/sheets/*
@@ -36,6 +38,7 @@ files/uploads/tasks/*
 !files/uploads/sheets/.keep
 !files/uploads/tasks/.keep
 
+.local/
 local
 local.go
 api.yaml

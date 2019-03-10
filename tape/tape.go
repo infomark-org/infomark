@@ -34,20 +34,14 @@ import (
   "strings"
 
   "github.com/go-chi/chi"
-  "github.com/jmoiron/sqlx"
 )
 
 type Tape struct {
-  DB     *sqlx.DB
   Router *chi.Mux
 }
 
 func NewTape() *Tape {
   return &Tape{}
-}
-
-func (t *Tape) AfterEach() {
-  t.DB.Close()
 }
 
 var quoteEscaper = strings.NewReplacer("\\", "\\\\", `"`, "\\\"")
@@ -68,7 +62,7 @@ func createFormFile(w *multipart.Writer, fieldname, filename string, contentType
 
 // CreateFileRequestBody create a multi-part form data. We assume all endpoints
 // handling files are receicing a single file with form name "file_data"
-func (t *Tape) CreateFileRequestBody(path, contentType string) (*bytes.Buffer, string, error) {
+func CreateFileRequestBody(path, contentType string) (*bytes.Buffer, string, error) {
   // open file on disk
   file, err := os.Open(path)
   if err != nil {
@@ -140,7 +134,7 @@ func (t *Tape) PlayRequest(r *http.Request) *httptest.ResponseRecorder {
   return w
 }
 
-func (t *Tape) ToH(z interface{}) map[string]interface{} {
+func ToH(z interface{}) map[string]interface{} {
   data, _ := json.Marshal(z)
   var msgMapTemplate interface{}
   _ = json.Unmarshal(data, &msgMapTemplate)

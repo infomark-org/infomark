@@ -54,3 +54,26 @@ func (m *GradeRequest) Validate() error {
 		),
 	)
 }
+
+type GradeFromWorkerRequest struct {
+	Log    string `json:"log" example:"failed in line ..."`
+	Status int    `json:"status" example:"1"`
+}
+
+// Bind preprocesses a GradeRequest.
+func (body *GradeFromWorkerRequest) Bind(r *http.Request) error {
+	return body.Validate()
+}
+
+func (m *GradeFromWorkerRequest) Validate() error {
+	return validation.ValidateStruct(m,
+		validation.Field(
+			&m.Log,
+			validation.Required,
+		),
+		validation.Field(
+			&m.Status,
+			validation.Required,
+		),
+	)
+}

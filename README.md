@@ -15,8 +15,8 @@ No manual settings, just use the defaults (just for development).
 
 ```bash
 git clone https://github.com/cgtuebingen/infomark-backend.git
-go build infomark-backend.go
-cp .informark-backend.yml.example ~/.informark-backend.yml
+go build infomark.go
+cp .informark.yml.example ~/.informark.yml
 
 sudo docker-compose up -d
 
@@ -27,6 +27,9 @@ PGPASSWORD=pass psql -h 127.0.0.1 -U user -p 5433 -d db -f mock.sql
 cd ..
 
 ./infomark-backend server
+
+# debug database
+pgweb --host=127.0.0.1 --port 5433 --user=user --pass=pass --db=db
 ```
 
 
@@ -36,9 +39,9 @@ We will edit this time the configfile
 
 ```bash
 git clonehttps://github.com/cgtuebingen/infomark-backend.git
-go build infomark-backend.go
-cp .informark-backend.yml.example ~/.informark-backend.yml
-edit ~/.informark-backend.yml
+go build infomark.go
+cp .informark.yml.example ~/.informark.yml
+edit ~/.informark.yml
 ```
 
 Note, you should use
@@ -69,6 +72,12 @@ Reminder, to reset the docker-compose files (changing password) just do
 sudo docker-compose down -v
 sudo docker-compose rm
 sudo docker-compose up --force-recreate
+```
+
+and to debug the database use
+
+```bash
+pgweb --host=127.0.0.1 --port 5433 --user=user --pass=pass --db=db
 ```
 
 ## Testing

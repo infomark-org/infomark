@@ -132,7 +132,7 @@ func SetConfigFile() {
 
 	// Search config in home directory with name ".go-base" (without extension).
 	viper.AddConfigPath(home)
-	viper.SetConfigName(".infomark-backend")
+	viper.SetConfigName(".infomark")
 }
 
 // InitConfig will search for the config file in the home directory and

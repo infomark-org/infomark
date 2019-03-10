@@ -1,6 +1,6 @@
 pipeline:
-  ping:
-    image: postgres
+  ping_db:
+    image: postgres:11.2-alpine
     commands:
       # wait for postgres service to become available
       - |
@@ -10,6 +10,10 @@ pipeline:
       - |
         PGPASSWORD=postgres psql -U postgres -d infomark -h database \
           -c "SELECT * FROM pg_catalog.pg_tables;"
+  ping_amqp:
+    image: rabbitmq:3.7.3-management-alpine
+    commands:
+      -  until wget --spider http://127.0.0.1:15672 >/dev/null 2>&1; do sleep 1; done
   mock:
     image: python:3
     commands:
@@ -17,7 +21,7 @@ pipeline:
       - pip3 install -r requirements.txt
       - python3 mock.py
   seed:
-    image: postgres
+    image: postgres:11.2-alpine
     commands:
       - cd database
       - PGPASSWORD=postgres psql -h 'database' -U 'postgres' -d 'infomark' -f schema.sql >/dev/null
@@ -34,7 +38,7 @@ pipeline:
     environment:
       - GOPROXY=https://gomods.patwie.com/
     commands:
-      - cp .infomark-backend.yml.ci ~/.infomark-backend.yml
+      - cp .infomark.yml.ci ~/.infomark.yml
       - go test ./api/app -cover -v
       - go test ./api/helper -cover -v
   docs:
@@ -42,7 +46,7 @@ pipeline:
     environment:
       - GOPROXY=https://gomods.patwie.com/
     commands:
-      - cp .infomark-backend.yml.ci ~/.infomark-backend.yml
+      - cp .infomark.yml.ci ~/.infomark.yml
       - go generate
       # - cat api.yaml
 
@@ -53,3 +57,8 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=infomark
+  rabbitAMQP:
+    image: rabbitmq:3.7.3-management-alpine
+    environment:
+      - RABBITMQ_DEFAULT_USER=user
+      - RABBITMQ_DEFAULT_PASS=password
