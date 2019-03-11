@@ -19,32 +19,29 @@
 package app
 
 import (
-	"errors"
 	"net/http"
 
-	validation "github.com/go-ozzo/ozzo-validation"
+	"github.com/cgtuebingen/infomark-backend/model"
 )
 
-// TaskRequest is the request payload for Task management.
-type TaskRequest struct {
-	MaxPoints          int    `json:"max_points" example:"25"`
-	PublicDockerImage  string `json:"public_docker_image" example:"DefaultJavaTestingImage"`
-	PrivateDockerImage string `json:"private_docker_image" example:"DefaultJavaTestingImage"`
+// TaskRatingResponse is the response payload for TaskRating management.
+type TaskRatingResponse struct {
+	TaskID        int64   `json:"task_id" example:"143"`
+	AverageRating float32 `json:"average_rating" example:"3.15"`
+	OwnRating     int     `json:"own_rating" example:"4"`
 }
 
-// Bind preprocesses a TaskRequest.
-func (body *TaskRequest) Bind(r *http.Request) error {
-	if body == nil {
-		return errors.New("missing \"task\" data")
+// newTaskRatingResponse creates a response from a TaskRating model.
+func (rs *TaskRatingResource) newTaskRatingResponse(p *model.TaskRating, averageRating float32) *TaskRatingResponse {
+
+	return &TaskRatingResponse{
+		TaskID:        p.TaskID,
+		OwnRating:     p.Rating,
+		AverageRating: averageRating,
 	}
-	return body.Validate()
 }
 
-func (m *TaskRequest) Validate() error {
-	return validation.ValidateStruct(m,
-		validation.Field(
-			&m.MaxPoints,
-			validation.Min(0),
-		),
-	)
+// Render post-processes a TaskRatingResponse.
+func (body *TaskRatingResponse) Render(w http.ResponseWriter, r *http.Request) error {
+	return nil
 }

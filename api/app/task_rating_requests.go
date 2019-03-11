@@ -21,30 +21,24 @@ package app
 import (
 	"errors"
 	"net/http"
-
-	validation "github.com/go-ozzo/ozzo-validation"
 )
 
 // TaskRequest is the request payload for Task management.
-type TaskRequest struct {
-	MaxPoints          int    `json:"max_points" example:"25"`
-	PublicDockerImage  string `json:"public_docker_image" example:"DefaultJavaTestingImage"`
-	PrivateDockerImage string `json:"private_docker_image" example:"DefaultJavaTestingImage"`
+type TaskRatingRequest struct {
+	Rating int `json:"rating" example:"2"`
 }
 
 // Bind preprocesses a TaskRequest.
-func (body *TaskRequest) Bind(r *http.Request) error {
+func (body *TaskRatingRequest) Bind(r *http.Request) error {
+
 	if body == nil {
-		return errors.New("missing \"task\" data")
+		return errors.New("missing \"task_rating\" data")
 	}
+
 	return body.Validate()
+
 }
 
-func (m *TaskRequest) Validate() error {
-	return validation.ValidateStruct(m,
-		validation.Field(
-			&m.MaxPoints,
-			validation.Min(0),
-		),
-	)
+func (m *TaskRatingRequest) Validate() error {
+	return nil
 }

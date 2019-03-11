@@ -38,30 +38,6 @@ func NewTaskRatingResource(stores *Stores) *TaskRatingResource {
   }
 }
 
-// .............................................................................
-
-// TaskRatingResponse is the response payload for TaskRating management.
-type TaskRatingResponse struct {
-  TaskID        int64   `json:"task_id" example:"14"`
-  AverageRating float32 `json:"average_rating" example:"3.15"`
-  OwnRating     int     `json:"own_rating" example:"4"`
-}
-
-// newTaskRatingResponse creates a response from a TaskRating model.
-func (rs *TaskRatingResource) newTaskRatingResponse(p *model.TaskRating, averageRating float32) *TaskRatingResponse {
-
-  return &TaskRatingResponse{
-    TaskID:        p.TaskID,
-    OwnRating:     p.Rating,
-    AverageRating: averageRating,
-  }
-}
-
-// Render post-processes a TaskRatingResponse.
-func (body *TaskRatingResponse) Render(w http.ResponseWriter, r *http.Request) error {
-  return nil
-}
-
 // GetHandler is public endpoint for
 // URL: /tasks/{task_id}/ratings
 // URLPARAM: task_id,integer
@@ -120,22 +96,19 @@ func (rs *TaskRatingResource) ChangeHandler(w http.ResponseWriter, r *http.Reque
   task := r.Context().Value("task").(*model.Task)
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
 
-  data := &TaskRatingRequest{TaskRating: &model.TaskRating{}}
-  data.TaskRating.UserID = accessClaims.LoginID
-  data.TaskRating.TaskID = task.ID
+  data := &TaskRatingRequest{}
   // parse JSON request into struct
   if err := render.Bind(r, data); err != nil {
     render.Render(w, r, ErrBadRequestWithDetails(err))
     return
   }
-  // fmt.Println(data.TaskRating)
-  // fmt.Println(data.TaskRating.Rating)
+
   givenRating, err := rs.Stores.Task.GetRatingOfTaskByUser(task.ID, accessClaims.LoginID)
 
   if err == nil {
     // there is a rating
-    data.TaskRating.ID = givenRating.ID
-    if err := rs.Stores.Task.UpdateRating(data.TaskRating); err != nil {
+    givenRating.Rating = data.Rating
+    if err := rs.Stores.Task.UpdateRating(givenRating); err != nil {
       render.Render(w, r, ErrInternalServerErrorWithDetails(err))
       return
     }
@@ -144,7 +117,13 @@ func (rs *TaskRatingResource) ChangeHandler(w http.ResponseWriter, r *http.Reque
   } else {
     // there is no rating so far from the user
 
-    newTaskRating, err := rs.Stores.Task.CreateRating(data.TaskRating)
+    rating := &model.TaskRating{
+      UserID: accessClaims.LoginID,
+      TaskID: task.ID,
+      Rating: data.Rating,
+    }
+
+    newTaskRating, err := rs.Stores.Task.CreateRating(rating)
     if err != nil {
       render.Render(w, r, ErrRender(err))
       return

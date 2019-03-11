@@ -136,7 +136,6 @@ func (rs *SubmissionResource) GetFileByIdHandler(w http.ResponseWriter, r *http.
 // UploadFileHandler is public endpoint for
 // URL: /tasks/{task_id}/submission
 // URLPARAM: task_id,integer
-// URLPARAM: sheet_id,integer
 // METHOD: post
 // TAG: submissions
 // REQUEST: zipfile

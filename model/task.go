@@ -34,11 +34,11 @@ type Task struct {
 }
 
 type TaskRating struct {
-	ID int64 `json:"id" db:"id"`
+	ID int64 `db:"id"`
 
-	UserID int64 `json:"user_id" db:"user_id"`
-	TaskID int64 `json:"task_id" db:"task_id"`
-	Rating int   `json:"rating" db:"rating"`
+	UserID int64 `db:"user_id"`
+	TaskID int64 `db:"task_id"`
+	Rating int   `db:"rating"`
 }
 
 func (m *TaskRating) Validate() error {
@@ -61,9 +61,9 @@ func (m *TaskRating) Validate() error {
 }
 
 type TaskPoints struct {
-	AquiredPoints int `json:"acquired_points" db:"acquired_points"`
-	MaxPoints     int `json:"max_points" db:"max_points"`
-	TaskID        int `json:"task_id" db:"task_id"`
+	AquiredPoints int `db:"acquired_points"`
+	MaxPoints     int `db:"max_points"`
+	TaskID        int `db:"task_id"`
 }
 
 func (d *TaskPoints) Validate() error {
@@ -74,6 +74,6 @@ func (d *TaskPoints) Validate() error {
 type MissingTask struct {
 	*Task
 
-	SheetID  int64 `json:"sheet_id" db:"sheet_id"`
-	CourseID int64 `json:"course_id" db:"course_id"`
+	SheetID  int64 `db:"sheet_id"`
+	CourseID int64 `db:"course_id"`
 }

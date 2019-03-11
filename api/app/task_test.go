@@ -25,7 +25,6 @@ import (
   "testing"
 
   "github.com/cgtuebingen/infomark-backend/api/helper"
-  "github.com/cgtuebingen/infomark-backend/database"
   "github.com/cgtuebingen/infomark-backend/email"
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/franela/goblin"
@@ -266,74 +265,6 @@ func TestTask(t *testing.T) {
       // cannot access anymore
       w = tape.GetWithClaims(url, 112, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
-    })
-
-    g.It("Should get own rating", func() {
-      userID := int64(112)
-      taskID := int64(1)
-
-      givenRating, err := stores.Task.GetRatingOfTaskByUser(taskID, userID)
-      g.Assert(err).Equal(nil)
-
-      w := tape.GetWithClaims("/api/v1/tasks/1/ratings", userID, false)
-      g.Assert(w.Code).Equal(http.StatusOK)
-
-      task_rating_actual := &TaskRatingResponse{}
-      err = json.NewDecoder(w.Body).Decode(task_rating_actual)
-      g.Assert(err).Equal(nil)
-
-      g.Assert(task_rating_actual.OwnRating).Equal(givenRating.Rating)
-      g.Assert(task_rating_actual.TaskID).Equal(taskID)
-
-      // update rating (mock had rating 2)
-      w = tape.PostWithClaims("/api/v1/tasks/1/ratings", H{"rating": 4}, userID, false)
-      g.Assert(w.Code).Equal(http.StatusOK)
-
-      // new query
-      w = tape.GetWithClaims("/api/v1/tasks/1/ratings", userID, false)
-      g.Assert(w.Code).Equal(http.StatusOK)
-
-      task_rating_actual2 := &TaskRatingResponse{}
-      err = json.NewDecoder(w.Body).Decode(task_rating_actual2)
-      g.Assert(err).Equal(nil)
-
-      g.Assert(task_rating_actual2.OwnRating).Equal(4)
-      g.Assert(task_rating_actual2.TaskID).Equal(taskID)
-    })
-
-    g.It("Should create own rating", func() {
-      userID := int64(112)
-      taskID := int64(1)
-
-      // delete and create (see mock.py)
-      prevRatingModel, err := stores.Task.GetRatingOfTaskByUser(taskID, userID)
-      g.Assert(err).Equal(nil)
-      database.Delete(tape.DB, "task_ratings", prevRatingModel.ID)
-
-      w := tape.GetWithClaims("/api/v1/tasks/1/ratings", userID, false)
-      g.Assert(w.Code).Equal(http.StatusOK)
-
-      task_rating_actual3 := &TaskRatingResponse{}
-      err = json.NewDecoder(w.Body).Decode(task_rating_actual3)
-      g.Assert(err).Equal(nil)
-
-      g.Assert(task_rating_actual3.OwnRating).Equal(0)
-      g.Assert(task_rating_actual3.TaskID).Equal(taskID)
-
-      // update rating (mock had rating 2)
-      w = tape.PostWithClaims("/api/v1/tasks/1/ratings", H{"rating": 4}, userID, false)
-      g.Assert(w.Code).Equal(http.StatusCreated)
-
-      // new query
-      w = tape.GetWithClaims("/api/v1/tasks/1/ratings", userID, false)
-      g.Assert(w.Code).Equal(http.StatusOK)
-
-      task_rating_actual2 := &TaskRatingResponse{}
-      err = json.NewDecoder(w.Body).Decode(task_rating_actual2)
-      g.Assert(err).Equal(nil)
-
-      g.Assert(task_rating_actual2.OwnRating).Equal(4)
-      g.Assert(task_rating_actual2.TaskID).Equal(taskID)
     })
 
     g.It("Should get all missing tasks", func() {
