@@ -232,7 +232,11 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
     return
   }
 
-  DefaultSubmissionProducer.Publish(body)
+  err = DefaultSubmissionProducer.Publish(body)
+  if err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
 
   // enqueue private test
   request = &shared.SubmissionAMQPWorkerRequest{
@@ -256,7 +260,11 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
     return
   }
 
-  DefaultSubmissionProducer.Publish(body)
+  err = DefaultSubmissionProducer.Publish(body)
+  if err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
 
   render.Status(r, http.StatusOK)
 }

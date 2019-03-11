@@ -29,9 +29,11 @@ type Producer interface {
 
 var DefaultSubmissionProducer Producer
 
-type TestProducer struct{}
+// VoidProducer acts like a real producer, but will not trigger any background worker
+// if you do not need these or within tests
+type VoidProducer struct{}
 
-func (t *TestProducer) Publish(body []byte) error { return nil }
+func (t *VoidProducer) Publish(body []byte) error { return nil }
 
 func init() {
   var err error
@@ -45,9 +47,14 @@ func init() {
     Tag:          "SimpleSubmission",
   }
 
-  DefaultSubmissionProducer, err = service.NewProducer(cfg)
-  if err != nil {
-    panic(err)
+  if viper.GetBool("use_backend_worker") {
+    DefaultSubmissionProducer, err = service.NewProducer(cfg)
+    if err != nil {
+      panic(err)
+    }
+  } else {
+    DefaultSubmissionProducer = &VoidProducer{}
+
   }
 
 }

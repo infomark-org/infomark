@@ -34,6 +34,7 @@ sendmail_binary: /usr/sbin/sendmail
 uploads_dir: /drone/src/files/uploads
 fixtures_dir: /drone/src/files/fixtures
 
+use_backend_worker: false
 
 # worker
 # ------------------------------------------------------------------------------

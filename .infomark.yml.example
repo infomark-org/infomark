@@ -31,6 +31,8 @@ email_from: no-reply@info2.informatik.uni-tuebingen.de
 email_templates_dir: /home/patwie/git/github.com/cgtuebingen/infomark/infomark-backend/email
 sendmail_binary: /usr/sbin/sendmail
 
+use_backend_worker: true
+
 # worker
 # ------------------------------------------------------------------------------
 worker_workdir: /tmp

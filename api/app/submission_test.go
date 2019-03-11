@@ -33,7 +33,7 @@ import (
 func TestSubmission(t *testing.T) {
   g := goblin.Goblin(t)
   email.DefaultMail = email.VoidMail
-  DefaultSubmissionProducer = &TestProducer{}
+  // DefaultSubmissionProducer = &VoidProducer{}
 
   tape := &Tape{}
 
