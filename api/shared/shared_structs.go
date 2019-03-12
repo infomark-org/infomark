@@ -19,15 +19,16 @@
 package shared
 
 type SubmissionAMQPWorkerRequest struct {
-  SubmissionID      int64  `json:"submission_id"`
-  AccessToken       string `json:"access_token"`
-  FrameworkFileURL  string `json:"framework_file_url"`
-  SubmissionFileURL string `json:"submission_file_url"`
-  ResultEndpointURL string `json:"result_endpoint_url"`
-  DockerImage       string `json:"docker_image"`
+	SubmissionID      int64  `json:"submission_id"`
+	AccessToken       string `json:"access_token"`
+	FrameworkFileURL  string `json:"framework_file_url"`
+	SubmissionFileURL string `json:"submission_file_url"`
+	ResultEndpointURL string `json:"result_endpoint_url"`
+	DockerImage       string `json:"docker_image"`
+	Sha256            string `json:"sha_256"`
 }
 
 type SubmissionWorkerResponse struct {
-  Log    string `json:"log"`
-  Status int    `json:"status"`
+	Log    string `json:"log"`
+	Status int    `json:"status"`
 }

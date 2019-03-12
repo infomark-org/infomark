@@ -48,7 +48,8 @@ func NewSubmissionResource(stores *Stores) *SubmissionResource {
 }
 
 // GetFileHandler is public endpoint for
-// URL: /tasks/{task_id}/submission
+// URL: /courses/{course_id}/tasks/{task_id}/submission
+// URLPARAM: course_id,integer
 // URLPARAM: task_id,integer
 // METHOD: get
 // TAG: submissions
@@ -91,7 +92,8 @@ func (rs *SubmissionResource) GetFileHandler(w http.ResponseWriter, r *http.Requ
 }
 
 // GetFileByIdHandler is public endpoint for
-// URL: /submissions/{submission_id}/file
+// URL: /courses/{course_id}/submissions/{submission_id}/file
+// URLPARAM: course_id,integer
 // URLPARAM: submission_id,integer
 // METHOD: get
 // TAG: submissions
@@ -134,7 +136,8 @@ func (rs *SubmissionResource) GetFileByIdHandler(w http.ResponseWriter, r *http.
 }
 
 // UploadFileHandler is public endpoint for
-// URL: /tasks/{task_id}/submission
+// URL: /courses/{course_id}/tasks/{task_id}/submission
+// URLPARAM: course_id,integer
 // URLPARAM: task_id,integer
 // METHOD: post
 // TAG: submissions
@@ -145,6 +148,7 @@ func (rs *SubmissionResource) GetFileByIdHandler(w http.ResponseWriter, r *http.
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  changes the zip file of a submission belonging to the request identity
 func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.Request) {
+  course := r.Context().Value("course").(*model.Course)
   task := r.Context().Value("task").(*model.Task)
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
   // todo create submission if not exists
@@ -195,6 +199,12 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
     return
   }
 
+  sha256, err := helper.NewSubmissionFileHandle(submission.ID).Sha256()
+  if err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
   // enqueue file into testing queue
   // By definition user with id 1 is the system itself with root access
   tokenManager, err := authenticate.NewTokenAuth()
@@ -213,16 +223,20 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
   request := &shared.SubmissionAMQPWorkerRequest{
     SubmissionID: submission.ID,
     AccessToken:  accessToken,
-    FrameworkFileURL: fmt.Sprintf("%s/api/v1/tasks/%s/public_file",
+    FrameworkFileURL: fmt.Sprintf("%s/api/v1/courses/%stasks/%s/public_file",
       viper.GetString("url"),
+      strconv.FormatInt(course.ID, 10),
       strconv.FormatInt(task.ID, 10)),
-    SubmissionFileURL: fmt.Sprintf("%s/api/v1/submissions/%s/file",
+    SubmissionFileURL: fmt.Sprintf("%s/api/v1/courses/%ssubmissions/%s/file",
       viper.GetString("url"),
+      strconv.FormatInt(course.ID, 10),
       strconv.FormatInt(submission.ID, 10)),
-    ResultEndpointURL: fmt.Sprintf("%s/api/v1/grades/%s/public_result",
+    ResultEndpointURL: fmt.Sprintf("%s/api/v1/courses/%sgrades/%s/public_result",
       viper.GetString("url"),
+      strconv.FormatInt(course.ID, 10),
       strconv.FormatInt(grade.ID, 10)),
     DockerImage: task.PublicDockerImage,
+    Sha256:      sha256,
   }
 
   body, err := json.Marshal(request)
@@ -241,16 +255,20 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
   request = &shared.SubmissionAMQPWorkerRequest{
     SubmissionID: submission.ID,
     AccessToken:  accessToken,
-    FrameworkFileURL: fmt.Sprintf("%s/api/v1/tasks/%s/private_file",
+    FrameworkFileURL: fmt.Sprintf("%s/api/v1/courses/%stasks/%s/private_file",
       viper.GetString("url"),
+      strconv.FormatInt(course.ID, 10),
       strconv.FormatInt(task.ID, 10)),
-    SubmissionFileURL: fmt.Sprintf("%s/api/v1/submissions/%s/file",
+    SubmissionFileURL: fmt.Sprintf("%s/api/v1/courses/%ssubmissions/%s/file",
       viper.GetString("url"),
+      strconv.FormatInt(course.ID, 10),
       strconv.FormatInt(submission.ID, 10)),
-    ResultEndpointURL: fmt.Sprintf("%s/api/v1/grades/%s/private_result",
+    ResultEndpointURL: fmt.Sprintf("%s/api/v1/courses/%sgrades/%s/private_result",
       viper.GetString("url"),
+      strconv.FormatInt(course.ID, 10),
       strconv.FormatInt(grade.ID, 10)),
     DockerImage: task.PrivateDockerImage,
+    Sha256:      sha256,
   }
 
   body, err = json.Marshal(request)
@@ -313,8 +331,8 @@ func (rs *SubmissionResource) IndexHandler(w http.ResponseWriter, r *http.Reques
 // We do NOT check whether the identity is authorized to get this Submission.
 func (rs *SubmissionResource) Context(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-    // TODO: check permission if inquirer of request is allowed to access this Submission
-    // Should be done via another middleware
+    course_from_url := r.Context().Value("course").(*model.Course)
+
     var submissionID int64
     var err error
 
@@ -352,6 +370,11 @@ func (rs *SubmissionResource) Context(next http.Handler) http.Handler {
     course, err := rs.Stores.Task.IdentifyCourseOfTask(task.ID)
     if err != nil {
       render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+      return
+    }
+
+    if course_from_url.ID != course.ID {
+      render.Render(w, r, ErrNotFound)
       return
     }
 

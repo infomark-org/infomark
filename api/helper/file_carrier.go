@@ -19,6 +19,7 @@
 package helper
 
 import (
+  "crypto/sha256"
   "errors"
   "fmt"
   "io"
@@ -110,6 +111,23 @@ func NewSubmissionFileHandle(ID int64) *FileHandle {
 }
 
 // Path returns a path without checking if it exists.
+func (f *FileHandle) Sha256() (string, error) {
+
+  hnd, err := os.Open(f.Path())
+  if err != nil {
+    return "", err
+  }
+  defer hnd.Close()
+
+  h := sha256.New()
+  if _, err := io.Copy(h, hnd); err != nil {
+    return "", err
+  }
+
+  return fmt.Sprintf("%x", h.Sum(nil)), nil
+
+}
+
 func (f *FileHandle) Path() string {
   switch f.Category {
   case AvatarCategory:

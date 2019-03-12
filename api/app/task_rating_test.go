@@ -50,7 +50,7 @@ func TestTaskRating(t *testing.T) {
       givenRating, err := stores.Task.GetRatingOfTaskByUser(taskID, userID)
       g.Assert(err).Equal(nil)
 
-      w := tape.GetWithClaims("/api/v1/tasks/1/ratings", userID, false)
+      w := tape.GetWithClaims("/api/v1/courses/1/tasks/1/ratings", userID, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       task_rating_actual := &TaskRatingResponse{}
@@ -61,11 +61,11 @@ func TestTaskRating(t *testing.T) {
       g.Assert(task_rating_actual.TaskID).Equal(taskID)
 
       // update rating (mock had rating 2)
-      w = tape.PostWithClaims("/api/v1/tasks/1/ratings", H{"rating": 4}, userID, false)
+      w = tape.PostWithClaims("/api/v1/courses/1/tasks/1/ratings", H{"rating": 4}, userID, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       // new query
-      w = tape.GetWithClaims("/api/v1/tasks/1/ratings", userID, false)
+      w = tape.GetWithClaims("/api/v1/courses/1/tasks/1/ratings", userID, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       task_rating_actual2 := &TaskRatingResponse{}
@@ -85,7 +85,7 @@ func TestTaskRating(t *testing.T) {
       g.Assert(err).Equal(nil)
       database.Delete(tape.DB, "task_ratings", prevRatingModel.ID)
 
-      w := tape.GetWithClaims("/api/v1/tasks/1/ratings", userID, false)
+      w := tape.GetWithClaims("/api/v1/courses/1/tasks/1/ratings", userID, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       task_rating_actual3 := &TaskRatingResponse{}
@@ -96,11 +96,11 @@ func TestTaskRating(t *testing.T) {
       g.Assert(task_rating_actual3.TaskID).Equal(taskID)
 
       // update rating (mock had rating 2)
-      w = tape.PostWithClaims("/api/v1/tasks/1/ratings", H{"rating": 4}, userID, false)
+      w = tape.PostWithClaims("/api/v1/courses/1/tasks/1/ratings", H{"rating": 4}, userID, false)
       g.Assert(w.Code).Equal(http.StatusCreated)
 
       // new query
-      w = tape.GetWithClaims("/api/v1/tasks/1/ratings", userID, false)
+      w = tape.GetWithClaims("/api/v1/courses/1/tasks/1/ratings", userID, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       task_rating_actual2 := &TaskRatingResponse{}

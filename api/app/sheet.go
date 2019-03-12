@@ -118,7 +118,8 @@ func (rs *SheetResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetHandler is public endpoint for
-// URL: /sheets/{sheet_id}
+// URL: /courses/{course_id}/sheets/{sheet_id}
+// URLPARAM: course_id,integer
 // URLPARAM: sheet_id,integer
 // METHOD: get
 // TAG: sheets
@@ -141,7 +142,8 @@ func (rs *SheetResource) GetHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // EditHandler is public endpoint for
-// URL: /sheets/{sheet_id}
+// URL: /courses/{course_id}/sheets/{sheet_id}
+// URLPARAM: course_id,integer
 // URLPARAM: sheet_id,integer
 // METHOD: put
 // TAG: sheets
@@ -177,7 +179,8 @@ func (rs *SheetResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // DeleteHandler is public endpoint for
-// URL: /sheets/{sheet_id}
+// URL: /courses/{course_id}/sheets/{sheet_id}
+// URLPARAM: course_id,integer
 // URLPARAM: sheet_id,integer
 // METHOD: delete
 // TAG: sheets
@@ -199,7 +202,8 @@ func (rs *SheetResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetFileHandler is public endpoint for
-// URL: /sheets/{sheet_id}/file
+// URL: /courses/{course_id}/sheets/{sheet_id}/file
+// URLPARAM: course_id,integer
 // URLPARAM: sheet_id,integer
 // METHOD: get
 // TAG: sheets
@@ -224,7 +228,8 @@ func (rs *SheetResource) GetFileHandler(w http.ResponseWriter, r *http.Request) 
 }
 
 // ChangeFileHandler is public endpoint for
-// URL: /sheets/{sheet_id}/file
+// URL: /courses/{course_id}/sheets/{sheet_id}/file
+// URLPARAM: course_id,integer
 // URLPARAM: sheet_id,integer
 // METHOD: post
 // TAG: sheets
@@ -246,7 +251,8 @@ func (rs *SheetResource) ChangeFileHandler(w http.ResponseWriter, r *http.Reques
 }
 
 // PointsHandler is public endpoint for
-// URL: /sheets/{sheet_id}/points
+// URL: /courses/{course_id}/sheets/{sheet_id}/points
+// URLPARAM: course_id,integer
 // URLPARAM: sheet_id,integer
 // METHOD: get
 // TAG: sheets
@@ -281,8 +287,8 @@ func (rs *SheetResource) PointsHandler(w http.ResponseWriter, r *http.Request) {
 // We do NOT check whether the Sheet is authorized to get this Sheet.
 func (rs *SheetResource) Context(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-    // TODO: check permission if inquirer of request is allowed to access this Sheet
-    // Should be done via another middleware
+    course_from_url := r.Context().Value("course").(*model.Course)
+
     var Sheet_id int64
     var err error
 
@@ -307,6 +313,11 @@ func (rs *SheetResource) Context(next http.Handler) http.Handler {
     course, err := rs.Stores.Sheet.IdentifyCourseOfSheet(sheet.ID)
     if err != nil {
       render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+      return
+    }
+
+    if course_from_url.ID != course.ID {
+      render.Render(w, r, ErrNotFound)
       return
     }
 

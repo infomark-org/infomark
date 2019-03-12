@@ -39,7 +39,8 @@ func NewTaskRatingResource(stores *Stores) *TaskRatingResource {
 }
 
 // GetHandler is public endpoint for
-// URL: /tasks/{task_id}/ratings
+// URL: /courses/{course_id}/tasks/{task_id}/ratings
+// URLPARAM: course_id,integer
 // URLPARAM: task_id,integer
 // METHOD: get
 // TAG: tasks
@@ -81,7 +82,8 @@ func (rs *TaskRatingResource) GetHandler(w http.ResponseWriter, r *http.Request)
 }
 
 // ChangeHandler is public endpoint for
-// URL: /tasks/{task_id}/ratings
+// URL: /courses/{course_id}/tasks/{task_id}/ratings
+// URLPARAM: course_id,integer
 // URLPARAM: task_id,integer
 // METHOD: post
 // TAG: tasks

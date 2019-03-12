@@ -44,7 +44,8 @@ func NewTaskResource(stores *Stores) *TaskResource {
 }
 
 // IndexHandler is public endpoint for
-// URL: /sheets/{sheet_id}/tasks
+// URL: /courses/{course_id}/sheets/{sheet_id}/tasks
+// URLPARAM: course_id,integer
 // URLPARAM: sheet_id,integer
 // METHOD: get
 // TAG: tasks
@@ -68,7 +69,8 @@ func (rs *TaskResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // MissingIndexHandler is public endpoint for
-// URL: /tasks/missing
+// URL: /courses/{course_id}/tasks/missing
+// URLPARAM: course_id,integer
 // METHOD: get
 // TAG: tasks
 // RESPONSE: 200,MissingTaskResponseList
@@ -95,7 +97,8 @@ func (rs *TaskResource) MissingIndexHandler(w http.ResponseWriter, r *http.Reque
 }
 
 // CreateHandler is public endpoint for
-// URL: /sheets/{sheet_id}/tasks
+// URL: /courses/{course_id}/sheets/{sheet_id}/tasks
+// URLPARAM: course_id,integer
 // URLPARAM: sheet_id,integer
 // METHOD: post
 // TAG: tasks
@@ -142,7 +145,8 @@ func (rs *TaskResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetHandler is public endpoint for
-// URL: /tasks/{task_id}
+// URL: /courses/{course_id}/tasks/{task_id}
+// URLPARAM: course_id,integer
 // URLPARAM: task_id,integer
 // METHOD: get
 // TAG: tasks
@@ -165,7 +169,8 @@ func (rs *TaskResource) GetHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // EditHandler is public endpoint for
-// URL: /tasks/{task_id}
+// URL: /courses/{course_id}/tasks/{task_id}
+// URLPARAM: course_id,integer
 // URLPARAM: task_id,integer
 // METHOD: put
 // TAG: tasks
@@ -200,7 +205,8 @@ func (rs *TaskResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // DeleteHandler is public endpoint for
-// URL: /tasks/{task_id}
+// URL: /courses/{course_id}/tasks/{task_id}
+// URLPARAM: course_id,integer
 // URLPARAM: task_id,integer
 // METHOD: delete
 // TAG: tasks
@@ -222,7 +228,8 @@ func (rs *TaskResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetPublicTestFileHandler is public endpoint for
-// URL: /tasks/{task_id}/public_file
+// URL: /courses/{course_id}/tasks/{task_id}/public_file
+// URLPARAM: course_id,integer
 // URLPARAM: task_id,integer
 // METHOD: get
 // TAG: tasks
@@ -247,7 +254,8 @@ func (rs *TaskResource) GetPublicTestFileHandler(w http.ResponseWriter, r *http.
 }
 
 // GetPrivateTestFileHandler is public endpoint for
-// URL: /tasks/{task_id}/private_file
+// URL: /courses/{course_id}/tasks/{task_id}/private_file
+// URLPARAM: course_id,integer
 // URLPARAM: task_id,integer
 // METHOD: get
 // TAG: tasks
@@ -272,7 +280,8 @@ func (rs *TaskResource) GetPrivateTestFileHandler(w http.ResponseWriter, r *http
 }
 
 // ChangePublicTestFileHandler is public endpoint for
-// URL: /tasks/{task_id}/public_file
+// URL: /courses/{course_id}/tasks/{task_id}/public_file
+// URLPARAM: course_id,integer
 // URLPARAM: task_id,integer
 // METHOD: post
 // TAG: tasks
@@ -295,7 +304,8 @@ func (rs *TaskResource) ChangePublicTestFileHandler(w http.ResponseWriter, r *ht
 }
 
 // ChangePrivateTestFileHandler is public endpoint for
-// URL: /tasks/{task_id}/private_file
+// URL: /courses/{course_id}/tasks/{task_id}/private_file
+// URLPARAM: course_id,integer
 // URLPARAM: task_id,integer
 // METHOD: post
 // TAG: tasks
@@ -318,7 +328,8 @@ func (rs *TaskResource) ChangePrivateTestFileHandler(w http.ResponseWriter, r *h
 }
 
 // GetSubmissionResultHandler is public endpoint for
-// URL: /tasks/{task_id}/result
+// URL: /courses/{course_id}/tasks/{task_id}/result
+// URLPARAM: course_id,integer
 // URLPARAM: task_id,integer
 // METHOD: get
 // TAG: tasks
@@ -371,8 +382,8 @@ func (rs *TaskResource) GetSubmissionResultHandler(w http.ResponseWriter, r *htt
 // We do NOT check whether the identity is authorized to get this Task.
 func (rs *TaskResource) Context(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-    // TODO: check permission if inquirer of request is allowed to access this Task
-    // Should be done via another middleware
+    course_from_url := r.Context().Value("course").(*model.Course)
+
     var taskID int64
     var err error
 
@@ -397,6 +408,11 @@ func (rs *TaskResource) Context(next http.Handler) http.Handler {
     course, err := rs.Stores.Task.IdentifyCourseOfTask(task.ID)
     if err != nil {
       render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+      return
+    }
+
+    if course_from_url.ID != course.ID {
+      render.Render(w, r, ErrNotFound)
       return
     }
 

@@ -71,7 +71,7 @@ func TestSheet(t *testing.T) {
       sheet_expected, err := stores.Sheet.Get(1)
       g.Assert(err).Equal(nil)
 
-      w := tape.GetWithClaims("/api/v1/sheets/1", 1, true)
+      w := tape.GetWithClaims("/api/v1/courses/1/sheets/1", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       sheet_actual := &SheetResponse{}
@@ -152,7 +152,7 @@ func TestSheet(t *testing.T) {
     })
 
     g.It("Should skip non-existent sheet file", func() {
-      w := tape.GetWithClaims("/api/v1/sheets/1/file", 1, true)
+      w := tape.GetWithClaims("/api/v1/courses/1/sheets/1/file", 1, true)
       g.Assert(w.Code).Equal(http.StatusNotFound)
     })
 
@@ -164,16 +164,16 @@ func TestSheet(t *testing.T) {
       filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
 
       // students
-      w, err := tape.UploadWithClaims("/api/v1/sheets/1/file", filename, "application/zip", 112, false)
+      w, err := tape.UploadWithClaims("/api/v1/courses/1/sheets/1/file", filename, "application/zip", 112, false)
       g.Assert(err).Equal(nil)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // tutors
-      w, err = tape.UploadWithClaims("/api/v1/sheets/1/file", filename, "application/zip", 2, false)
+      w, err = tape.UploadWithClaims("/api/v1/courses/1/sheets/1/file", filename, "application/zip", 2, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // admin
-      w, err = tape.UploadWithClaims("/api/v1/sheets/1/file", filename, "application/zip", 1, false)
+      w, err = tape.UploadWithClaims("/api/v1/courses/1/sheets/1/file", filename, "application/zip", 1, false)
       g.Assert(err).Equal(nil)
       g.Assert(w.Code).Equal(http.StatusOK)
 
@@ -181,7 +181,7 @@ func TestSheet(t *testing.T) {
       g.Assert(helper.NewSheetFileHandle(1).Exists()).Equal(true)
 
       // a file should be now served
-      w = tape.GetWithClaims("/api/v1/sheets/1/file", 1, true)
+      w = tape.GetWithClaims("/api/v1/courses/1/sheets/1/file", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
     })
 
@@ -199,15 +199,15 @@ func TestSheet(t *testing.T) {
       }
 
       // students
-      w := tape.PutWithClaims("/api/v1/sheets/1", tape.ToH(sheet_sent), 122, false)
+      w := tape.PutWithClaims("/api/v1/courses/1/sheets/1", tape.ToH(sheet_sent), 122, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // tutors
-      w = tape.PutWithClaims("/api/v1/sheets/1", tape.ToH(sheet_sent), 2, false)
+      w = tape.PutWithClaims("/api/v1/courses/1/sheets/1", tape.ToH(sheet_sent), 2, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // admin
-      w = tape.PutWithClaims("/api/v1/sheets/1", tape.ToH(sheet_sent), 1, true)
+      w = tape.PutWithClaims("/api/v1/courses/1/sheets/1", tape.ToH(sheet_sent), 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       sheet_after, err := stores.Sheet.Get(1)
@@ -221,15 +221,15 @@ func TestSheet(t *testing.T) {
       entries_before, err := stores.Sheet.GetAll()
       g.Assert(err).Equal(nil)
 
-      w := tape.Delete("/api/v1/sheets/1")
+      w := tape.Delete("/api/v1/courses/1/sheets/1")
       g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
       // students
-      w = tape.DeleteWithClaims("/api/v1/sheets/1", 112, false)
+      w = tape.DeleteWithClaims("/api/v1/courses/1/sheets/1", 112, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // tutors
-      w = tape.DeleteWithClaims("/api/v1/sheets/1", 2, false)
+      w = tape.DeleteWithClaims("/api/v1/courses/1/sheets/1", 2, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // verify nothing has changes
@@ -238,7 +238,7 @@ func TestSheet(t *testing.T) {
       g.Assert(len(entries_after)).Equal(len(entries_before))
 
       // admin
-      w = tape.DeleteWithClaims("/api/v1/sheets/1", 1, false)
+      w = tape.DeleteWithClaims("/api/v1/courses/1/sheets/1", 1, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       // verify a sheet less exists
@@ -250,10 +250,10 @@ func TestSheet(t *testing.T) {
     g.It("Should see points for a sheet", func() {
       userID := int64(112)
 
-      w := tape.Get("/api/v1/sheets/1/points")
+      w := tape.Get("/api/v1/courses/1/sheets/1/points")
       g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
-      w = tape.GetWithClaims("/api/v1/sheets/1/points", userID, false)
+      w = tape.GetWithClaims("/api/v1/courses/1/sheets/1/points", userID, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
     })

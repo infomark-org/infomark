@@ -99,19 +99,19 @@ func TestGrade(t *testing.T) {
         "feedback":        "Lorem Ipsum_update",
       }
 
-      w := tape.Put("/api/v1/grades/1", data)
+      w := tape.Put("/api/v1/courses/1/grades/1", data)
       g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
       // students
-      w = tape.PutWithClaims("/api/v1/grades/1", data, 112, false)
+      w = tape.PutWithClaims("/api/v1/courses/1/grades/1", data, 112, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // admin
-      w = tape.PutWithClaims("/api/v1/grades/1", data, 1, false)
+      w = tape.PutWithClaims("/api/v1/courses/1/grades/1", data, 1, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       // tutors
-      w = tape.PutWithClaims("/api/v1/grades/1", data, 3, false)
+      w = tape.PutWithClaims("/api/v1/courses/1/grades/1", data, 3, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       entry_after, err := stores.Grade.Get(1)
@@ -126,21 +126,21 @@ func TestGrade(t *testing.T) {
       result := []MissingGradeResponse{}
       // students have no missing data
       // but we do not know if a user is student in a course
-      w := tape.GetWithClaims("/api/v1/grades/missing", 112, false)
+      w := tape.GetWithClaims("/api/v1/courses/1/grades/missing", 112, false)
       g.Assert(w.Code).Equal(http.StatusOK)
       err := json.NewDecoder(w.Body).Decode(&result)
       g.Assert(err).Equal(nil)
       g.Assert(len(result)).Equal(0)
 
       // admin (mock creates feed back for all submissions)
-      w = tape.GetWithClaims("/api/v1/grades/missing", 1, false)
+      w = tape.GetWithClaims("/api/v1/courses/1/grades/missing", 1, false)
       g.Assert(w.Code).Equal(http.StatusOK)
       err = json.NewDecoder(w.Body).Decode(&result)
       g.Assert(err).Equal(nil)
       g.Assert(len(result)).Equal(0)
 
       // tutors (mock creates feed back for all submissions)
-      w = tape.GetWithClaims("/api/v1/grades/missing", 3, false)
+      w = tape.GetWithClaims("/api/v1/courses/1/grades/missing", 3, false)
       g.Assert(w.Code).Equal(http.StatusOK)
       err = json.NewDecoder(w.Body).Decode(&result)
       g.Assert(err).Equal(nil)
@@ -150,7 +150,7 @@ func TestGrade(t *testing.T) {
       g.Assert(err).Equal(nil)
 
       // tutors (mock creates feed back for all submissions)
-      w = tape.GetWithClaims("/api/v1/grades/missing", 3, false)
+      w = tape.GetWithClaims("/api/v1/courses/1/grades/missing", 3, false)
       g.Assert(w.Code).Equal(http.StatusOK)
       err = json.NewDecoder(w.Body).Decode(&result)
       g.Assert(err).Equal(nil)
@@ -165,7 +165,7 @@ func TestGrade(t *testing.T) {
 
     g.It("Should handle feedback from public tests", func() {
 
-      url := "/api/v1/grades/1/public_result"
+      url := "/api/v1/courses/1/grades/1/public_result"
 
       data := H{
         "log":    "some new logs",
@@ -197,7 +197,7 @@ func TestGrade(t *testing.T) {
 
     g.It("Should handle feedback from private tests", func() {
 
-      url := "/api/v1/grades/1/private_result"
+      url := "/api/v1/courses/1/grades/1/private_result"
 
       data := H{
         "log":    "some new logs",

@@ -68,7 +68,7 @@ func TestGroup(t *testing.T) {
       entry_expected, err := stores.Group.Get(1)
       g.Assert(err).Equal(nil)
 
-      w := tape.GetWithClaims("/api/v1/groups/1", 1, true)
+      w := tape.GetWithClaims("/api/v1/courses/1/groups/1", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       entry_actual := &GroupResponse{}
@@ -124,15 +124,15 @@ func TestGroup(t *testing.T) {
       }
 
       // students
-      w := tape.PlayDataWithClaims("PUT", "/api/v1/groups/1", tape.ToH(entry_sent), 112, false)
+      w := tape.PlayDataWithClaims("PUT", "/api/v1/courses/1/groups/1", tape.ToH(entry_sent), 112, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // tutors
-      w = tape.PlayDataWithClaims("PUT", "/api/v1/groups/1", tape.ToH(entry_sent), 2, false)
+      w = tape.PlayDataWithClaims("PUT", "/api/v1/courses/1/groups/1", tape.ToH(entry_sent), 2, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // admin
-      w = tape.PlayDataWithClaims("PUT", "/api/v1/groups/1", tape.ToH(entry_sent), 1, false)
+      w = tape.PlayDataWithClaims("PUT", "/api/v1/courses/1/groups/1", tape.ToH(entry_sent), 1, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       entry_after, err := stores.Group.Get(1)
@@ -146,7 +146,7 @@ func TestGroup(t *testing.T) {
       entries_before, err := stores.Group.GetAll()
       g.Assert(err).Equal(nil)
 
-      w := tape.Delete("/api/v1/groups/1")
+      w := tape.Delete("/api/v1/courses/1/groups/1")
       g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
       // verify nothing has changes
@@ -155,15 +155,15 @@ func TestGroup(t *testing.T) {
       g.Assert(len(entries_after)).Equal(len(entries_before))
 
       // students
-      w = tape.DeleteWithClaims("/api/v1/groups/1", 112, false)
+      w = tape.DeleteWithClaims("/api/v1/courses/1/groups/1", 112, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // tutors
-      w = tape.DeleteWithClaims("/api/v1/groups/1", 2, false)
+      w = tape.DeleteWithClaims("/api/v1/courses/1/groups/1", 2, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // admin
-      w = tape.DeleteWithClaims("/api/v1/groups/1", 1, false)
+      w = tape.DeleteWithClaims("/api/v1/courses/1/groups/1", 1, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       // verify a sheet less exists
@@ -176,22 +176,22 @@ func TestGroup(t *testing.T) {
       userID := int64(112)
 
       // admins are not allowed
-      w := tape.PostWithClaims("/api/v1/groups/1/bids", H{"bid": 4}, 1, false)
+      w := tape.PostWithClaims("/api/v1/courses/1/groups/1/bids", H{"bid": 4}, 1, false)
       g.Assert(w.Code).Equal(http.StatusBadRequest)
 
       // tutors are not allowed
-      w = tape.PostWithClaims("/api/v1/groups/1/bids", H{"bid": 4}, 2, false)
+      w = tape.PostWithClaims("/api/v1/courses/1/groups/1/bids", H{"bid": 4}, 2, false)
       g.Assert(w.Code).Equal(http.StatusBadRequest)
 
       // students
-      w = tape.PostWithClaims("/api/v1/groups/1/bids", H{"bid": 4}, userID, false)
+      w = tape.PostWithClaims("/api/v1/courses/1/groups/1/bids", H{"bid": 4}, userID, false)
       g.Assert(w.Code).Equal(http.StatusOK)
       // no content
 
       // delete to test insert
       tape.DB.Exec(`DELETE FROM group_bids where user_id = $1`, userID)
 
-      w = tape.PostWithClaims("/api/v1/groups/1/bids", H{"bid": 4}, userID, false)
+      w = tape.PostWithClaims("/api/v1/courses/1/groups/1/bids", H{"bid": 4}, userID, false)
       g.Assert(w.Code).Equal(http.StatusCreated)
       entry_return := &GroupBidResponse{}
       err := json.NewDecoder(w.Body).Decode(&entry_return)
@@ -238,19 +238,19 @@ func TestGroup(t *testing.T) {
     })
 
     g.It("Only tutors and admins can send emails to a group", func() {
-      w := tape.Post("/api/v1/groups/1/emails", H{"subject": "subj", "body": "body"})
+      w := tape.Post("/api/v1/courses/1/groups/1/emails", H{"subject": "subj", "body": "body"})
       g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
       // student
-      w = tape.PostWithClaims("/api/v1/groups/1/emails", H{"subject": "subj", "body": "body"}, 112, false)
+      w = tape.PostWithClaims("/api/v1/courses/1/groups/1/emails", H{"subject": "subj", "body": "body"}, 112, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // tutor
-      w = tape.PostWithClaims("/api/v1/groups/1/emails", H{"subject": "subj", "body": "body"}, 2, false)
+      w = tape.PostWithClaims("/api/v1/courses/1/groups/1/emails", H{"subject": "subj", "body": "body"}, 2, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       // admin
-      w = tape.PostWithClaims("/api/v1/groups/1/emails", H{"subject": "subj", "body": "body"}, 1, false)
+      w = tape.PostWithClaims("/api/v1/courses/1/groups/1/emails", H{"subject": "subj", "body": "body"}, 1, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
     })
@@ -280,7 +280,7 @@ func TestGroup(t *testing.T) {
     })
 
     g.It("should manually add user to group (update)", func() {
-      url := "/api/v1/groups/1/enrollments"
+      url := "/api/v1/courses/1/groups/1/enrollments"
 
       w := tape.Post(url, H{"user_id": 112})
       g.Assert(w.Code).Equal(http.StatusUnauthorized)
@@ -304,7 +304,7 @@ func TestGroup(t *testing.T) {
       g.Assert(enrollment.GroupID).Equal(int64(1))
 
       // admin
-      w = tape.PostWithClaims("/api/v1/groups/2/enrollments", H{"user_id": 112}, 1, false)
+      w = tape.PostWithClaims("/api/v1/courses/1/groups/2/enrollments", H{"user_id": 112}, 1, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       enrollment, err = stores.Group.GetGroupEnrollmentOfUserInCourse(112, 1)
@@ -320,19 +320,19 @@ func TestGroup(t *testing.T) {
       _, err := tape.DB.Exec("DELETE FROM user_group WHERE user_id = 112;")
       g.Assert(err).Equal(nil)
 
-      w := tape.Post("/api/v1/groups/1/enrollments", H{"user_id": 112})
+      w := tape.Post("/api/v1/courses/1/groups/1/enrollments", H{"user_id": 112})
       g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
       // student
-      w = tape.PostWithClaims("/api/v1/groups/1/enrollments", H{"user_id": 112}, 112, false)
+      w = tape.PostWithClaims("/api/v1/courses/1/groups/1/enrollments", H{"user_id": 112}, 112, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // tutor
-      w = tape.PostWithClaims("/api/v1/groups/1/enrollments", H{"user_id": 112}, 2, false)
+      w = tape.PostWithClaims("/api/v1/courses/1/groups/1/enrollments", H{"user_id": 112}, 2, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // admin
-      w = tape.PostWithClaims("/api/v1/groups/1/enrollments", H{"user_id": 112}, 1, false)
+      w = tape.PostWithClaims("/api/v1/courses/1/groups/1/enrollments", H{"user_id": 112}, 1, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       enrollment, err := stores.Group.GetGroupEnrollmentOfUserInCourse(112, 1)
@@ -341,7 +341,7 @@ func TestGroup(t *testing.T) {
       g.Assert(enrollment.GroupID).Equal(int64(1))
 
       // admin
-      w = tape.PostWithClaims("/api/v1/groups/2/enrollments", H{"user_id": 112}, 1, false)
+      w = tape.PostWithClaims("/api/v1/courses/1/groups/2/enrollments", H{"user_id": 112}, 1, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       enrollment, err = stores.Group.GetGroupEnrollmentOfUserInCourse(112, 1)

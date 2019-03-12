@@ -111,10 +111,7 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
               r.Route("/", func(r chi.Router) {
                 r.Use(authorize.RequiresAtLeastCourseRole(authorize.ADMIN))
 
-                r.Post("/sheets", appAPI.Sheet.CreateHandler)
-                r.Post("/groups", appAPI.Group.CreateHandler)
                 r.Post("/emails", appAPI.Course.SendEmailHandler)
-                r.Post("/materials", appAPI.Material.CreateHandler)
 
                 r.Put("/", appAPI.Course.EditHandler)
                 r.Delete("/", appAPI.Course.DeleteHandler)
@@ -126,16 +123,9 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
               r.Get("/enrollments", appAPI.Course.IndexEnrollmentsHandler)
               r.Delete("/enrollments", appAPI.Course.DisenrollHandler)
 
-              r.Get("/sheets", appAPI.Sheet.IndexHandler)
-              r.Get("/groups", appAPI.Group.IndexHandler)
-
               r.Get("/group", appAPI.Group.GetMineHandler)
               r.Get("/points", appAPI.Course.PointsHandler)
               r.Get("/bids", appAPI.Course.BidsHandler)
-              r.Get("/materials", appAPI.Material.IndexHandler)
-
-              r.Get("/submissions", authorize.EndpointRequiresRole(appAPI.Submission.IndexHandler, authorize.TUTOR))
-              r.Get("/grades", authorize.EndpointRequiresRole(appAPI.Grade.IndexHandler, authorize.TUTOR))
 
               r.Route("/enrollments/{user_id}", func(r chi.Router) {
                 r.Use(authorize.RequiresAtLeastCourseRole(authorize.ADMIN))
@@ -147,144 +137,151 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 
               })
 
+              r.Route("/sheets", func(r chi.Router) {
+
+                r.Get("/", appAPI.Sheet.IndexHandler)
+                r.Post("/", authorize.EndpointRequiresRole(appAPI.Sheet.CreateHandler, authorize.ADMIN))
+
+                r.Route("/{sheet_id}", func(r chi.Router) {
+                  r.Use(appAPI.Sheet.Context)
+                  // r.Use(appAPI.Course.RoleContext)
+
+                  // ensures user is enrolled in the associated course
+
+                  r.Get("/", appAPI.Sheet.GetHandler)
+
+                  r.Get("/tasks", appAPI.Task.IndexHandler)
+                  r.Get("/file", appAPI.Sheet.GetFileHandler)
+                  r.Get("/points", appAPI.Sheet.PointsHandler)
+
+                  r.Route("/", func(r chi.Router) {
+                    r.Use(authorize.RequiresAtLeastCourseRole(authorize.ADMIN))
+
+                    r.Put("/", appAPI.Sheet.EditHandler)
+                    r.Delete("/", appAPI.Sheet.DeleteHandler)
+                    r.Post("/tasks", appAPI.Task.CreateHandler)
+                    r.Post("/file", appAPI.Sheet.ChangeFileHandler)
+                  })
+
+                }) // sheet_id
+              })
+
+              r.Route("/groups", func(r chi.Router) {
+
+                r.Get("/", appAPI.Group.IndexHandler)
+                r.Post("/", authorize.EndpointRequiresRole(appAPI.Group.CreateHandler, authorize.ADMIN))
+                r.Route("/{group_id}", func(r chi.Router) {
+                  r.Use(appAPI.Group.Context)
+                  r.Use(appAPI.Course.RoleContext)
+
+                  // ensures user is enrolled in the associated course
+
+                  r.Post("/bids", appAPI.Group.ChangeBidHandler)
+                  r.Post("/emails", authorize.EndpointRequiresRole(appAPI.Group.SendEmailHandler, authorize.TUTOR))
+                  r.Post("/enrollments", authorize.EndpointRequiresRole(appAPI.Group.EditGroupEnrollmentHandler, authorize.ADMIN))
+
+                  r.Get("/", appAPI.Group.GetHandler)
+
+                  r.Route("/", func(r chi.Router) {
+                    r.Use(authorize.RequiresAtLeastCourseRole(authorize.ADMIN))
+                    r.Put("/", appAPI.Group.EditHandler)
+                    r.Delete("/", appAPI.Group.DeleteHandler)
+                  })
+                })
+              })
+
+              r.Route("/grades", func(r chi.Router) {
+
+                r.Get("/", authorize.EndpointRequiresRole(appAPI.Grade.IndexHandler, authorize.TUTOR))
+                // does not require a role
+                r.Get("/missing", appAPI.Grade.IndexMissingHandler)
+                r.Route("/{grade_id}", func(r chi.Router) {
+                  r.Use(appAPI.Grade.Context)
+                  r.Use(appAPI.Course.RoleContext)
+
+                  // ensures user is enrolled in the associated course
+                  r.Use(authorize.RequiresAtLeastCourseRole(authorize.TUTOR))
+
+                  r.Put("/", appAPI.Grade.EditHandler)
+                  r.Get("/", appAPI.Grade.GetByIDHandler)
+                  r.Post("/public_result", authorize.EndpointRequiresRole(appAPI.Grade.PublicResultEditHandler, authorize.ADMIN))
+                  r.Post("/private_result", authorize.EndpointRequiresRole(appAPI.Grade.PrivateResultEditHandler, authorize.ADMIN))
+
+                })
+              })
+
+              r.Route("/materials", func(r chi.Router) {
+
+                r.Get("/", appAPI.Material.IndexHandler)
+                r.Post("/", authorize.EndpointRequiresRole(appAPI.Material.CreateHandler, authorize.ADMIN))
+
+                r.Route("/{material_id}", func(r chi.Router) {
+                  r.Use(appAPI.Material.Context)
+                  r.Use(appAPI.Course.RoleContext)
+
+                  // ensures user is enrolled in the associated course
+
+                  r.Get("/", appAPI.Material.GetHandler)
+                  r.Get("/file", appAPI.Material.GetFileHandler)
+
+                  r.Route("/", func(r chi.Router) {
+                    r.Use(authorize.RequiresAtLeastCourseRole(authorize.ADMIN))
+
+                    r.Put("/", appAPI.Material.EditHandler)
+                    r.Delete("/", appAPI.Material.DeleteHandler)
+                    r.Post("/file", appAPI.Material.ChangeFileHandler)
+                  })
+                })
+              })
+
+              r.Route("/submissions", func(r chi.Router) {
+                r.Get("/", authorize.EndpointRequiresRole(appAPI.Submission.IndexHandler, authorize.TUTOR))
+
+                r.Route("/{submission_id}", func(r chi.Router) {
+                  r.Use(appAPI.Submission.Context)
+                  r.Use(appAPI.Course.RoleContext)
+                  r.Get("/file", appAPI.Submission.GetFileByIdHandler)
+                })
+              })
+
+              r.Route("/tasks", func(r chi.Router) {
+
+                r.Get("/missing", appAPI.Task.MissingIndexHandler)
+                r.Route("/{task_id}", func(r chi.Router) {
+                  r.Use(appAPI.Task.Context)
+                  r.Use(appAPI.Course.RoleContext)
+
+                  // ensures user is enrolled in the associated course
+
+                  r.Get("/", appAPI.Task.GetHandler)
+                  r.Get("/public_file", appAPI.Task.GetPublicTestFileHandler)
+                  r.Get("/private_file", appAPI.Task.GetPrivateTestFileHandler)
+
+                  r.Get("/ratings", appAPI.TaskRating.GetHandler)
+                  r.Post("/ratings", appAPI.TaskRating.ChangeHandler)
+
+                  r.Get("/submission", appAPI.Submission.GetFileHandler)
+                  r.Post("/submission", appAPI.Submission.UploadFileHandler)
+
+                  r.Get("/result", appAPI.Task.GetSubmissionResultHandler)
+
+                  r.Route("/", func(r chi.Router) {
+                    r.Use(authorize.RequiresAtLeastCourseRole(authorize.ADMIN))
+
+                    r.Put("/", appAPI.Task.EditHandler)
+                    r.Delete("/", appAPI.Task.DeleteHandler)
+
+                    r.Post("/public_file", appAPI.Task.ChangePublicTestFileHandler)
+                    r.Post("/private_file", appAPI.Task.ChangePrivateTestFileHandler)
+                  })
+                })
+
+              }) // tasks
+
             })
 
-          })
-        })
-
-        r.Route("/sheets", func(r chi.Router) {
-          r.Route("/{sheet_id}", func(r chi.Router) {
-            r.Use(appAPI.Sheet.Context)
-            r.Use(appAPI.Course.RoleContext)
-
-            // ensures user is enrolled in the associated course
-            r.Use(authorize.RequiresAtLeastCourseRole(authorize.STUDENT))
-            r.Get("/", appAPI.Sheet.GetHandler)
-
-            r.Get("/tasks", appAPI.Task.IndexHandler)
-            r.Get("/file", appAPI.Sheet.GetFileHandler)
-            r.Get("/points", appAPI.Sheet.PointsHandler)
-
-            r.Route("/", func(r chi.Router) {
-              r.Use(authorize.RequiresAtLeastCourseRole(authorize.ADMIN))
-
-              r.Put("/", appAPI.Sheet.EditHandler)
-              r.Delete("/", appAPI.Sheet.DeleteHandler)
-              r.Post("/tasks", appAPI.Task.CreateHandler)
-              r.Post("/file", appAPI.Sheet.ChangeFileHandler)
-            })
-          })
-        })
-
-        r.Route("/tasks", func(r chi.Router) {
-
-          r.Get("/missing", appAPI.Task.MissingIndexHandler)
-
-          r.Route("/{task_id}", func(r chi.Router) {
-            r.Use(appAPI.Task.Context)
-            r.Use(appAPI.Course.RoleContext)
-
-            // ensures user is enrolled in the associated course
-            r.Use(authorize.RequiresAtLeastCourseRole(authorize.STUDENT))
-
-            r.Get("/", appAPI.Task.GetHandler)
-            r.Get("/public_file", appAPI.Task.GetPublicTestFileHandler)
-            r.Get("/private_file", appAPI.Task.GetPrivateTestFileHandler)
-
-            r.Get("/ratings", appAPI.TaskRating.GetHandler)
-            r.Post("/ratings", appAPI.TaskRating.ChangeHandler)
-
-            r.Get("/submission", appAPI.Submission.GetFileHandler)
-            r.Post("/submission", appAPI.Submission.UploadFileHandler)
-
-            r.Get("/result", appAPI.Task.GetSubmissionResultHandler)
-
-            r.Route("/", func(r chi.Router) {
-              r.Use(authorize.RequiresAtLeastCourseRole(authorize.ADMIN))
-
-              r.Put("/", appAPI.Task.EditHandler)
-              r.Delete("/", appAPI.Task.DeleteHandler)
-
-              r.Post("/public_file", appAPI.Task.ChangePublicTestFileHandler)
-              r.Post("/private_file", appAPI.Task.ChangePrivateTestFileHandler)
-            })
-          })
-
-        })
-
-        r.Route("/groups", func(r chi.Router) {
-          r.Route("/{group_id}", func(r chi.Router) {
-            r.Use(appAPI.Group.Context)
-            r.Use(appAPI.Course.RoleContext)
-
-            // ensures user is enrolled in the associated course
-            r.Use(authorize.RequiresAtLeastCourseRole(authorize.STUDENT))
-
-            r.Post("/bids", appAPI.Group.ChangeBidHandler)
-            r.Post("/emails", authorize.EndpointRequiresRole(appAPI.Group.SendEmailHandler, authorize.TUTOR))
-            r.Post("/enrollments", authorize.EndpointRequiresRole(appAPI.Group.EditGroupEnrollmentHandler, authorize.ADMIN))
-
-            r.Get("/", appAPI.Group.GetHandler)
-
-            r.Route("/", func(r chi.Router) {
-              r.Use(authorize.RequiresAtLeastCourseRole(authorize.ADMIN))
-              r.Put("/", appAPI.Group.EditHandler)
-              r.Delete("/", appAPI.Group.DeleteHandler)
-            })
-          })
-        })
-
-        r.Route("/grades", func(r chi.Router) {
-          // does not require a role
-          r.Get("/missing", appAPI.Grade.IndexMissingHandler)
-          r.Route("/{grade_id}", func(r chi.Router) {
-            r.Use(appAPI.Grade.Context)
-            r.Use(appAPI.Course.RoleContext)
-
-            // ensures user is enrolled in the associated course
-            r.Use(authorize.RequiresAtLeastCourseRole(authorize.TUTOR))
-
-            r.Put("/", appAPI.Grade.EditHandler)
-            r.Get("/", appAPI.Grade.GetByIDHandler)
-            r.Post("/public_result", authorize.EndpointRequiresRole(appAPI.Grade.PublicResultEditHandler, authorize.ADMIN))
-            r.Post("/private_result", authorize.EndpointRequiresRole(appAPI.Grade.PrivateResultEditHandler, authorize.ADMIN))
-
-          })
-        })
-
-        r.Route("/materials", func(r chi.Router) {
-          r.Route("/{material_id}", func(r chi.Router) {
-            r.Use(appAPI.Material.Context)
-            r.Use(appAPI.Course.RoleContext)
-
-            // ensures user is enrolled in the associated course
-            r.Use(authorize.RequiresAtLeastCourseRole(authorize.STUDENT))
-
-            r.Get("/", appAPI.Material.GetHandler)
-            r.Get("/file", appAPI.Material.GetFileHandler)
-
-            r.Route("/", func(r chi.Router) {
-              r.Use(authorize.RequiresAtLeastCourseRole(authorize.ADMIN))
-
-              r.Put("/", appAPI.Material.EditHandler)
-              r.Delete("/", appAPI.Material.DeleteHandler)
-              r.Post("/file", appAPI.Material.ChangeFileHandler)
-            })
-          })
-        })
-
-        r.Route("/submissions", func(r chi.Router) {
-          r.Route("/{submission_id}", func(r chi.Router) {
-            r.Use(appAPI.Submission.Context)
-            r.Use(appAPI.Course.RoleContext)
-
-            // ensures user is enrolled in the associated course
-            r.Use(authorize.RequiresAtLeastCourseRole(authorize.STUDENT))
-
-            r.Get("/file", appAPI.Submission.GetFileByIdHandler)
-
-          })
-        })
+          }) // course_id
+        }) // course
 
         r.Get("/account", appAPI.Account.GetHandler)
         r.Get("/account/enrollments", appAPI.Account.GetEnrollmentsHandler)

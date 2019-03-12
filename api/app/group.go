@@ -120,7 +120,8 @@ func (rs *GroupResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetHandler is public endpoint for
-// URL: /groups/{group_id}
+// URL: /courses/{course_id}/groups/{group_id}
+// URLPARAM: course_id,integer
 // URLPARAM: group_id,integer
 // METHOD: get
 // TAG: groups
@@ -194,7 +195,8 @@ func (rs *GroupResource) GetMineHandler(w http.ResponseWriter, r *http.Request) 
 }
 
 // EditHandler is public endpoint for
-// URL: /groups/{group_id}
+// URL: /courses/{course_id}/groups/{group_id}
+// URLPARAM: course_id,integer
 // URLPARAM: group_id,integer
 // METHOD: put
 // TAG: groups
@@ -228,7 +230,8 @@ func (rs *GroupResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // DeleteHandler is public endpoint for
-// URL: /groups/{group_id}
+// URL: /courses/{course_id}/groups/{group_id}
+// URLPARAM: course_id,integer
 // URLPARAM: group_id,integer
 // METHOD: delete
 // TAG: groups
@@ -250,7 +253,8 @@ func (rs *GroupResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // EditGroupEnrollmentHandler is public endpoint for
-// URL: /groups/{group_id}/enrollments
+// URL: /courses/{course_id}/groups/{group_id}/enrollments
+// URLPARAM: course_id,integer
 // URLPARAM: group_id,integer
 // METHOD: post
 // TAG: groups
@@ -302,7 +306,8 @@ func (rs *GroupResource) EditGroupEnrollmentHandler(w http.ResponseWriter, r *ht
 }
 
 // ChangeBidHandler is public endpoint for
-// URL: /groups/{group_id}/bids
+// URL: /courses/{course_id}/groups/{group_id}/bids
+// URLPARAM: course_id,integer
 // URLPARAM: group_id,integer
 // METHOD: post
 // TAG: groups
@@ -364,7 +369,8 @@ func (rs *GroupResource) ChangeBidHandler(w http.ResponseWriter, r *http.Request
 }
 
 // SendEmailHandler is public endpoint for
-// URL: /groups/{group_id}/emails
+// URL: /courses/{course_id}/groups/{group_id}/emails
+// URLPARAM: course_id,integer
 // URLPARAM: group_id,integer
 // METHOD: post
 // TAG: groups
@@ -420,8 +426,8 @@ func (rs *GroupResource) SendEmailHandler(w http.ResponseWriter, r *http.Request
 // We do NOT check whether the identity is authorized to get this group.
 func (rs *GroupResource) Context(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-    // TODO: check permission if inquirer of request is allowed to access this group
-    // Should be done via another middleware
+    course_from_url := r.Context().Value("course").(*model.Course)
+
     var groupID int64
     var err error
 
@@ -446,6 +452,11 @@ func (rs *GroupResource) Context(next http.Handler) http.Handler {
     course, err := rs.Stores.Group.IdentifyCourseOfGroup(group.ID)
     if err != nil {
       render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+      return
+    }
+
+    if course_from_url.ID != course.ID {
+      render.Render(w, r, ErrNotFound)
       return
     }
 

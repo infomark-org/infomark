@@ -44,7 +44,8 @@ func NewGradeResource(stores *Stores) *GradeResource {
 }
 
 // EditHandler is public endpoint for
-// URL: /grades/{grade_id}
+// URL: /courses/{course_id}/grades/{grade_id}
+// URLPARAM: course_id,integer
 // URLPARAM: grade_id,integer
 // METHOD: put
 // TAG: grades
@@ -78,7 +79,8 @@ func (rs *GradeResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetByIDHandler is public endpoint for
-// URL: /grades/{grade_id}
+// URL: /courses/{course_id}/grades/{grade_id}
+// URLPARAM: course_id,integer
 // URLPARAM: grade_id,integer
 // METHOD: get
 // TAG: grades
@@ -101,7 +103,8 @@ func (rs *GradeResource) GetByIDHandler(w http.ResponseWriter, r *http.Request) 
 }
 
 // PublicResultEditHandler is public endpoint for
-// URL: /grades/{grade_id}/public_result
+// URL: /courses/{course_id}/grades/{grade_id}/public_result
+// URLPARAM: course_id,integer
 // URLPARAM: grade_id,integer
 // METHOD: post
 // TAG: internal
@@ -121,14 +124,14 @@ func (rs *GradeResource) PublicResultEditHandler(w http.ResponseWriter, r *http.
   }
 
   currentGrade := r.Context().Value("grade").(*model.Grade)
-  currentGrade.PublicTestLog = data.Log
-  currentGrade.PublicTestStatus = data.Status
-  currentGrade.PublicExecutionState = 2
+  // currentGrade.PublicTestLog = data.Log
+  // currentGrade.PublicTestStatus = data.Status
+  // currentGrade.PublicExecutionState = 2
 
   render.Status(r, http.StatusNoContent)
 
   // update database entry
-  if err := rs.Stores.Grade.Update(currentGrade); err != nil {
+  if err := rs.Stores.Grade.UpdatePublicTestInfo(currentGrade.ID, data.Log, data.Status); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return
   }
@@ -136,7 +139,8 @@ func (rs *GradeResource) PublicResultEditHandler(w http.ResponseWriter, r *http.
 }
 
 // PrivateResultEditHandler is public endpoint for
-// URL: /grades/{grade_id}/private_result
+// URL: /courses/{course_id}/grades/{grade_id}/private_result
+// URLPARAM: course_id,integer
 // URLPARAM: grade_id,integer
 // METHOD: post
 // TAG: internal
@@ -156,9 +160,9 @@ func (rs *GradeResource) PrivateResultEditHandler(w http.ResponseWriter, r *http
   }
 
   currentGrade := r.Context().Value("grade").(*model.Grade)
-  currentGrade.PrivateTestLog = data.Log
-  currentGrade.PrivateTestStatus = data.Status
-  currentGrade.PrivateExecutionState = 2
+  // currentGrade.PrivateTestLog = data.Log
+  // currentGrade.PrivateTestStatus = data.Status
+  // currentGrade.PrivateExecutionState = 2
 
   // fmt.Println(currentGrade.ID)
   // fmt.Println(currentGrade.PrivateTestLog)
@@ -167,7 +171,7 @@ func (rs *GradeResource) PrivateResultEditHandler(w http.ResponseWriter, r *http
   render.Status(r, http.StatusNoContent)
 
   // update database entry
-  if err := rs.Stores.Grade.Update(currentGrade); err != nil {
+  if err := rs.Stores.Grade.UpdatePrivateTestInfo(currentGrade.ID, data.Log, data.Status); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return
   }
@@ -246,7 +250,8 @@ func (rs *GradeResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // IndexMissingHandler is public endpoint for
-// URL: /grades/missing
+// URL: /courses/{course_id}/grades/missing
+// URLPARAM: course_id,integer
 // METHOD: get
 // TAG: grades
 // RESPONSE: 200,MissingGradeResponseList
@@ -278,10 +283,12 @@ func (rs *GradeResource) IndexMissingHandler(w http.ResponseWriter, r *http.Requ
 // the URL parameter `TaskID` passed through as the request. In case
 // the Grade could not be found, we stop here and return a 404.
 // We do NOT check whether the identity is authorized to get this Grade.
+
 func (rs *GradeResource) Context(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-    // TODO: check permission if inquirer of request is allowed to access this course
-    // Should be done via another middleware
+
+    course_from_url := r.Context().Value("course").(*model.Course)
+
     var gradeID int64
     var err error
 
@@ -307,6 +314,11 @@ func (rs *GradeResource) Context(next http.Handler) http.Handler {
     course, err := rs.Stores.Grade.IdentifyCourseOfGrade(grade.ID)
     if err != nil {
       render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+      return
+    }
+
+    if course_from_url.ID != course.ID {
+      render.Render(w, r, ErrNotFound)
       return
     }
 

@@ -127,7 +127,8 @@ func (rs *MaterialResource) CreateHandler(w http.ResponseWriter, r *http.Request
 }
 
 // GetHandler is public endpoint for
-// URL: /materials/{material_id}
+// URL: /courses/{course_id}/materials/{material_id}
+// URLPARAM: course_id,integer
 // URLPARAM: material_id,integer
 // METHOD: get
 // TAG: materials
@@ -152,7 +153,8 @@ func (rs *MaterialResource) GetHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // EditHandler is public endpoint for
-// URL: /materials/{material_id}
+// URL: /courses/{course_id}/materials/{material_id}
+// URLPARAM: course_id,integer
 // URLPARAM: material_id,integer
 // METHOD: put
 // TAG: materials
@@ -192,7 +194,8 @@ func (rs *MaterialResource) EditHandler(w http.ResponseWriter, r *http.Request) 
 }
 
 // DeleteHandler is public endpoint for
-// URL: /materials/{material_id}
+// URL: /courses/{course_id}/materials/{material_id}
+// URLPARAM: course_id,integer
 // URLPARAM: material_id,integer
 // METHOD: delete
 // TAG: materials
@@ -214,7 +217,8 @@ func (rs *MaterialResource) DeleteHandler(w http.ResponseWriter, r *http.Request
 }
 
 // GetFileHandler is public endpoint for
-// URL: /materials/{material_id}/file
+// URL: /courses/{course_id}/materials/{material_id}/file
+// URLPARAM: course_id,integer
 // URLPARAM: material_id,integer
 // METHOD: get
 // TAG: materials
@@ -239,7 +243,8 @@ func (rs *MaterialResource) GetFileHandler(w http.ResponseWriter, r *http.Reques
 }
 
 // ChangeFileHandler is public endpoint for
-// URL: /materials/{material_id}/file
+// URL: /courses/{course_id}/materials/{material_id}/file
+// URLPARAM: course_id,integer
 // URLPARAM: material_id,integer
 // METHOD: post
 // TAG: materials
@@ -267,7 +272,7 @@ func (rs *MaterialResource) ChangeFileHandler(w http.ResponseWriter, r *http.Req
 // We do NOT check whether the Material is authorized to get this Material.
 func (rs *MaterialResource) Context(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-    // TODO: check permission if inquirer of request is allowed to access this Material
+    course_from_url := r.Context().Value("course").(*model.Course)
     // Should be done via another middleware
     var materialID int64
     var err error
@@ -293,6 +298,11 @@ func (rs *MaterialResource) Context(next http.Handler) http.Handler {
     course, err := rs.Stores.Material.IdentifyCourseOfMaterial(material.ID)
     if err != nil {
       render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+      return
+    }
+
+    if course_from_url.ID != course.ID {
+      render.Render(w, r, ErrNotFound)
       return
     }
 

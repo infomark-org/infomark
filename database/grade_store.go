@@ -47,6 +47,24 @@ func (s *GradeStore) Create(p *model.Grade) (*model.Grade, error) {
   return s.Get(newID)
 }
 
+func (s *GradeStore) UpdatePrivateTestInfo(gradeID int64, log string, status int) error {
+  _, err := s.db.Exec(`
+    UPDATE grades
+    SET private_execution_state=2, private_test_log=$2, private_test_status=$3
+    WHERE id = $1;
+    `, gradeID, log, status)
+  return err
+}
+
+func (s *GradeStore) UpdatePublicTestInfo(gradeID int64, log string, status int) error {
+  _, err := s.db.Exec(`
+    UPDATE grades
+    SET public_execution_state=2, public_test_log=$2, public_test_status=$3
+    WHERE id = $1;
+    `, gradeID, log, status)
+  return err
+}
+
 func (s *GradeStore) GetForSubmission(id int64) (*model.Grade, error) {
   p := model.Grade{}
   err := s.db.Get(&p, "SELECT * FROM grades WHERE submission_id = $1 LIMIT 1;", id)

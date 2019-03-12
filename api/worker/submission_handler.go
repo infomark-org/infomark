@@ -19,6 +19,7 @@
 package background
 
 import (
+  "crypto/sha256"
   "encoding/json"
   "fmt"
   "io"
@@ -65,10 +66,36 @@ func (h *DummySubmissionHandler) Handle(workerBody []byte) error {
   fmt.Println("msg.SubmissionFileURL", msg.SubmissionFileURL)
   fmt.Println("msg.FrameworkFileURL", msg.FrameworkFileURL)
   fmt.Println("msg.ResultEndpointURL", msg.ResultEndpointURL)
+  fmt.Println("msg.Sha256", msg.Sha256)
 
   fmt.Println("--> void")
 
   return nil
+}
+
+func verifySha256(filePath string, expectedChecksum string) err {
+  f, err := os.Open(filePath)
+  if err != nil {
+    return err
+  }
+  defer f.Close()
+
+  h := sha256.New()
+  if _, err := io.Copy(h, f); err != nil {
+    return err
+  }
+
+  actualChecksum := fmt.Sprintf("%x", h.Sum(nil))
+
+  if actualChecksum != expectedChecksum {
+
+    return fmt.Errorf("Sha256 missmatch, actual %s vs. expected %s for file %s",
+      actualChecksum,
+      expectedChecksum,
+      filePath,
+    )
+  }
+
 }
 
 func downloadFile(r *http.Request, dst string) error {
@@ -113,31 +140,33 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
   if err != nil {
     return err
   }
+  submission_path := fmt.Sprintf("%s/%s-submission.zip", viper.GetString("worker_workdir"), uuid)
+  framework_path := fmt.Sprintf("%s/%s-framework.zip", viper.GetString("worker_workdir"), uuid)
 
   // 2. fetch submission file from server
   r, err := http.NewRequest("GET", msg.SubmissionFileURL, nil)
   r.Header.Add("Authorization", "Bearer "+msg.AccessToken)
-  if err := downloadFile(r, fmt.Sprintf("%s/%s-submission.zip", viper.GetString("worker_workdir"), uuid)); err != nil {
+  if err := downloadFile(r, submission_path); err != nil {
     return err
   }
 
   // 3. fetch framework file from server
   r, err = http.NewRequest("GET", msg.FrameworkFileURL, nil)
   r.Header.Add("Authorization", "Bearer "+msg.AccessToken)
-  if err := downloadFile(r, fmt.Sprintf("%s/%s-framework.zip", viper.GetString("worker_workdir"), uuid)); err != nil {
+  if err := downloadFile(r, framework_path); err != nil {
     return err
   }
 
-  // 2. run docker test
+  // 4. verify checksums to avoid race conditions
+  if err := verifySha256(submission_path, msg.Sha256); err != nil {
+    return err
+  }
 
+  // 5. run docker test
   ds := service.NewDockerService()
   defer ds.Client.Close()
 
-  stdout, exit, err := ds.Run(
-    msg.DockerImage,
-    fmt.Sprintf("%s/%s-submission.zip", viper.GetString("worker_workdir"), uuid),
-    fmt.Sprintf("%s/%s-framework.zip", viper.GetString("worker_workdir"), uuid),
-  )
+  stdout, exit, err := ds.Run(msg.DockerImage, submission_path, framework_path)
   if err != nil {
     return err
   }

@@ -48,15 +48,15 @@ func TestTask(t *testing.T) {
 
     g.It("Query should require access claims", func() {
 
-      w := tape.Get("/api/v1/sheets/1/tasks")
+      w := tape.Get("/api/v1/courses/1/sheets/1/tasks")
       g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
-      w = tape.GetWithClaims("/api/v1/sheets/1/tasks", 1, true)
+      w = tape.GetWithClaims("/api/v1/courses/1/sheets/1/tasks", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
     })
 
     g.It("Should list all tasks from a sheet", func() {
-      w := tape.GetWithClaims("/api/v1/sheets/1/tasks", 1, true)
+      w := tape.GetWithClaims("/api/v1/courses/1/sheets/1/tasks", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       tasks_actual := []model.Task{}
@@ -70,7 +70,7 @@ func TestTask(t *testing.T) {
       task_expected, err := stores.Task.Get(1)
       g.Assert(err).Equal(nil)
 
-      w := tape.GetWithClaims("/api/v1/tasks/1", 1, true)
+      w := tape.GetWithClaims("/api/v1/courses/1/tasks/1", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       task_actual := &TaskResponse{}
@@ -85,7 +85,7 @@ func TestTask(t *testing.T) {
     })
 
     g.It("Creating should require claims", func() {
-      w := tape.Post("/api/v1/sheets/1/tasks", H{})
+      w := tape.Post("/api/v1/courses/1/sheets/1/tasks", H{})
       g.Assert(w.Code).Equal(http.StatusUnauthorized)
     })
 
@@ -106,7 +106,7 @@ func TestTask(t *testing.T) {
       err = task_sent.Validate()
       g.Assert(err).Equal(nil)
 
-      w := tape.PostWithClaims("/api/v1/sheets/1/tasks", helper.ToH(task_sent), 1, true)
+      w := tape.PostWithClaims("/api/v1/courses/1/sheets/1/tasks", helper.ToH(task_sent), 1, true)
       g.Assert(w.Code).Equal(http.StatusCreated)
 
       task_return := &TaskResponse{}
@@ -121,10 +121,10 @@ func TestTask(t *testing.T) {
     })
 
     g.It("Should skip non-existent test files", func() {
-      w := tape.GetWithClaims("/api/v1/tasks/1/public_file", 1, true)
+      w := tape.GetWithClaims("/api/v1/courses/1/tasks/1/public_file", 1, true)
       g.Assert(w.Code).Equal(http.StatusNotFound)
 
-      w = tape.GetWithClaims("/api/v1/tasks/1/private_file", 1, true)
+      w = tape.GetWithClaims("/api/v1/courses/1/tasks/1/private_file", 1, true)
       g.Assert(w.Code).Equal(http.StatusNotFound)
     })
 
@@ -138,7 +138,7 @@ func TestTask(t *testing.T) {
 
       // public test
       filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
-      w, err := tape.UploadWithClaims("/api/v1/tasks/1/public_file", filename, "application/zip", 1, true)
+      w, err := tape.UploadWithClaims("/api/v1/courses/1/tasks/1/public_file", filename, "application/zip", 1, true)
       g.Assert(err).Equal(nil)
       g.Assert(w.Code).Equal(http.StatusOK)
 
@@ -146,10 +146,10 @@ func TestTask(t *testing.T) {
       g.Assert(helper.NewPublicTestFileHandle(1).Exists()).Equal(true)
       g.Assert(helper.NewPrivateTestFileHandle(1).Exists()).Equal(false)
 
-      w = tape.GetWithClaims("/api/v1/tasks/1/public_file", 1, true)
+      w = tape.GetWithClaims("/api/v1/courses/1/tasks/1/public_file", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      w = tape.GetWithClaims("/api/v1/tasks/1/private_file", 1, true)
+      w = tape.GetWithClaims("/api/v1/courses/1/tasks/1/private_file", 1, true)
       g.Assert(w.Code).Equal(http.StatusNotFound)
     })
 
@@ -163,7 +163,7 @@ func TestTask(t *testing.T) {
 
       // public test
       filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
-      w, err := tape.UploadWithClaims("/api/v1/tasks/1/private_file", filename, "application/zip", 1, true)
+      w, err := tape.UploadWithClaims("/api/v1/courses/1/tasks/1/private_file", filename, "application/zip", 1, true)
       g.Assert(err).Equal(nil)
       g.Assert(w.Code).Equal(http.StatusOK)
 
@@ -171,15 +171,15 @@ func TestTask(t *testing.T) {
       g.Assert(helper.NewPublicTestFileHandle(1).Exists()).Equal(false)
       g.Assert(helper.NewPrivateTestFileHandle(1).Exists()).Equal(true)
 
-      w = tape.GetWithClaims("/api/v1/tasks/1/public_file", 1, true)
+      w = tape.GetWithClaims("/api/v1/courses/1/tasks/1/public_file", 1, true)
       g.Assert(w.Code).Equal(http.StatusNotFound)
 
-      w = tape.GetWithClaims("/api/v1/tasks/1/private_file", 1, true)
+      w = tape.GetWithClaims("/api/v1/courses/1/tasks/1/private_file", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
     })
 
     g.It("Changes should require claims", func() {
-      w := tape.Put("/api/v1/sheets/1/tasks", H{})
+      w := tape.Put("/api/v1/courses/1/sheets/1/tasks", H{})
       g.Assert(w.Code).Equal(http.StatusUnauthorized)
     })
 
@@ -190,7 +190,7 @@ func TestTask(t *testing.T) {
         "private_docker_image": "new_private",
       }
 
-      w := tape.PutWithClaims("/api/v1/tasks/1", data, 1, true)
+      w := tape.PutWithClaims("/api/v1/courses/1/tasks/1", data, 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       task_after, err := stores.Task.Get(1)
@@ -204,7 +204,7 @@ func TestTask(t *testing.T) {
       entries_before, err := stores.Task.GetAll()
       g.Assert(err).Equal(nil)
 
-      w := tape.Delete("/api/v1/tasks/1")
+      w := tape.Delete("/api/v1/courses/1/tasks/1")
       g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
       // verify nothing has changes
@@ -212,7 +212,7 @@ func TestTask(t *testing.T) {
       g.Assert(err).Equal(nil)
       g.Assert(len(entries_after)).Equal(len(entries_before))
 
-      w = tape.DeleteWithClaims("/api/v1/tasks/1", 1, true)
+      w = tape.DeleteWithClaims("/api/v1/courses/1/tasks/1", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       // verify a sheet less exists
@@ -222,16 +222,16 @@ func TestTask(t *testing.T) {
     })
 
     g.It("students should see public results", func() {
-      w := tape.Get("/api/v1/tasks/1/result")
+      w := tape.Get("/api/v1/courses/1/tasks/1/result")
       g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
-      w = tape.GetWithClaims("/api/v1/tasks/1/result", 1, false)
+      w = tape.GetWithClaims("/api/v1/courses/1/tasks/1/result", 1, false)
       g.Assert(w.Code).Equal(http.StatusBadRequest)
 
-      w = tape.GetWithClaims("/api/v1/tasks/1/result", 2, false)
+      w = tape.GetWithClaims("/api/v1/courses/1/tasks/1/result", 2, false)
       g.Assert(w.Code).Equal(http.StatusBadRequest)
 
-      w = tape.GetWithClaims("/api/v1/tasks/1/result", 112, false)
+      w = tape.GetWithClaims("/api/v1/courses/1/tasks/1/result", 112, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       actual := &GradeResponse{}
@@ -244,7 +244,7 @@ func TestTask(t *testing.T) {
 
     g.It("Permission test", func() {
       // sheet (id=1) belongs to group(id=1)
-      url := "/api/v1/sheets/1/tasks"
+      url := "/api/v1/courses/1/sheets/1/tasks"
 
       // global root can do whatever they want
       w := tape.GetWithClaims(url, 1, true)
@@ -273,7 +273,7 @@ func TestTask(t *testing.T) {
       _, err := tape.DB.Exec("DELETE FROM submissions WHERE task_id = 2")
       g.Assert(err).Equal(nil)
 
-      w := tape.GetWithClaims("/api/v1/tasks/missing", 112, false)
+      w := tape.GetWithClaims("/api/v1/courses/1/tasks/missing", 112, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       result := []MissingTaskResponse{}

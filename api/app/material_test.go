@@ -70,7 +70,7 @@ func TestMaterial(t *testing.T) {
       material_expected, err := stores.Material.Get(1)
       g.Assert(err).Equal(nil)
 
-      w := tape.GetWithClaims("/api/v1/materials/1", 1, true)
+      w := tape.GetWithClaims("/api/v1/courses/1/materials/1", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       material_actual := &MaterialResponse{}
@@ -143,7 +143,7 @@ func TestMaterial(t *testing.T) {
     })
 
     g.It("Should skip non-existent material file", func() {
-      w := tape.GetWithClaims("/api/v1/materials/1/file", 1, true)
+      w := tape.GetWithClaims("/api/v1/courses/1/materials/1/file", 1, true)
       g.Assert(w.Code).Equal(http.StatusNotFound)
     })
 
@@ -155,16 +155,16 @@ func TestMaterial(t *testing.T) {
       filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
 
       // students
-      w, err := tape.UploadWithClaims("/api/v1/materials/1/file", filename, "application/zip", 112, false)
+      w, err := tape.UploadWithClaims("/api/v1/courses/1/materials/1/file", filename, "application/zip", 112, false)
       g.Assert(err).Equal(nil)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // tutors
-      w, err = tape.UploadWithClaims("/api/v1/materials/1/file", filename, "application/zip", 2, false)
+      w, err = tape.UploadWithClaims("/api/v1/courses/1/materials/1/file", filename, "application/zip", 2, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // admin
-      w, err = tape.UploadWithClaims("/api/v1/materials/1/file", filename, "application/zip", 1, false)
+      w, err = tape.UploadWithClaims("/api/v1/courses/1/materials/1/file", filename, "application/zip", 1, false)
       g.Assert(err).Equal(nil)
       fmt.Println(w.Body)
       g.Assert(w.Code).Equal(http.StatusOK)
@@ -173,7 +173,7 @@ func TestMaterial(t *testing.T) {
       g.Assert(helper.NewMaterialFileHandle(1).Exists()).Equal(true)
 
       // a file should be now served
-      w = tape.GetWithClaims("/api/v1/materials/1/file", 1, true)
+      w = tape.GetWithClaims("/api/v1/courses/1/materials/1/file", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
     })
 
@@ -193,15 +193,15 @@ func TestMaterial(t *testing.T) {
       }
 
       // students
-      w := tape.PutWithClaims("/api/v1/materials/1", tape.ToH(material_sent), 122, false)
+      w := tape.PutWithClaims("/api/v1/courses/1/materials/1", tape.ToH(material_sent), 122, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // tutors
-      w = tape.PutWithClaims("/api/v1/materials/1", tape.ToH(material_sent), 2, false)
+      w = tape.PutWithClaims("/api/v1/courses/1/materials/1", tape.ToH(material_sent), 2, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // admin
-      w = tape.PutWithClaims("/api/v1/materials/1", tape.ToH(material_sent), 1, true)
+      w = tape.PutWithClaims("/api/v1/courses/1/materials/1", tape.ToH(material_sent), 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       material_after, err := stores.Material.Get(1)
@@ -217,15 +217,15 @@ func TestMaterial(t *testing.T) {
       entries_before, err := stores.Material.GetAll()
       g.Assert(err).Equal(nil)
 
-      w := tape.Delete("/api/v1/materials/1")
+      w := tape.Delete("/api/v1/courses/1/materials/1")
       g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
       // students
-      w = tape.DeleteWithClaims("/api/v1/materials/1", 112, false)
+      w = tape.DeleteWithClaims("/api/v1/courses/1/materials/1", 112, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // tutors
-      w = tape.DeleteWithClaims("/api/v1/materials/1", 2, false)
+      w = tape.DeleteWithClaims("/api/v1/courses/1/materials/1", 2, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // verify nothing has changes
@@ -234,7 +234,7 @@ func TestMaterial(t *testing.T) {
       g.Assert(len(entries_after)).Equal(len(entries_before))
 
       // admin
-      w = tape.DeleteWithClaims("/api/v1/materials/1", 1, false)
+      w = tape.DeleteWithClaims("/api/v1/courses/1/materials/1", 1, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       // verify a sheet less exists
