@@ -73,7 +73,7 @@ func (h *DummySubmissionHandler) Handle(workerBody []byte) error {
   return nil
 }
 
-func verifySha256(filePath string, expectedChecksum string) err {
+func verifySha256(filePath string, expectedChecksum string) error {
   f, err := os.Open(filePath)
   if err != nil {
     return err
@@ -96,6 +96,7 @@ func verifySha256(filePath string, expectedChecksum string) err {
     )
   }
 
+  return nil
 }
 
 func downloadFile(r *http.Request, dst string) error {
