@@ -226,7 +226,9 @@ func main() {
     f.WriteString(fmt.Sprintf("            $ref: \"#/components/schemas/Error\"\n"))
 
     // create all responses
-    f.WriteString(swagger.SwaggerResponsesWithSuffix(pkgs, "Response", 4))
+    f.WriteString(swagger.SwaggerResponsesWithSuffix(fset, pkgs, "Response", 4))
+
+    duplicateResponseLists := make(map[string]int)
 
     // create all list responses
     pre := strings.Repeat(" ", 4)
@@ -235,14 +237,21 @@ func main() {
             for _, r := range action.Details.Responses {
                 text := strings.TrimSpace(r.Text)
                 if strings.HasSuffix(text, "List") {
-                    f.WriteString(fmt.Sprintf("%s%s:\n", pre, text))
-                    f.WriteString(fmt.Sprintf("%s  description: done\n", pre))
-                    f.WriteString(fmt.Sprintf("%s  content:\n", pre))
-                    f.WriteString(fmt.Sprintf("%s    application/json:\n", pre))
-                    f.WriteString(fmt.Sprintf("%s      schema:\n", pre))
-                    f.WriteString(fmt.Sprintf("%s        type: array\n", pre))
-                    f.WriteString(fmt.Sprintf("%s        items:\n", pre))
-                    f.WriteString(fmt.Sprintf("%s          $ref: \"#/components/schemas/%s\"\n", pre, text[:len(text)-4]))
+
+                    _, exists := duplicateResponseLists[strings.TrimSpace(text)]
+
+                    if !exists {
+                        f.WriteString(fmt.Sprintf("%s%s:\n", pre, text))
+                        f.WriteString(fmt.Sprintf("%s  description: done\n", pre))
+                        f.WriteString(fmt.Sprintf("%s  content:\n", pre))
+                        f.WriteString(fmt.Sprintf("%s    application/json:\n", pre))
+                        f.WriteString(fmt.Sprintf("%s      schema:\n", pre))
+                        f.WriteString(fmt.Sprintf("%s        type: array\n", pre))
+                        f.WriteString(fmt.Sprintf("%s        items:\n", pre))
+                        f.WriteString(fmt.Sprintf("%s          $ref: \"#/components/schemas/%s\"\n", pre, text[:len(text)-4]))
+
+                        duplicateResponseLists[strings.TrimSpace(text)] = 0
+                    }
                 }
 
             }

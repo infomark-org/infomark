@@ -76,9 +76,17 @@ func TestGroup(t *testing.T) {
       g.Assert(err).Equal(nil)
 
       g.Assert(entry_actual.ID).Equal(entry_expected.ID)
-      g.Assert(entry_actual.TutorID).Equal(entry_expected.TutorID)
+      g.Assert(entry_actual.Tutor.ID).Equal(entry_expected.TutorID)
       g.Assert(entry_actual.CourseID).Equal(entry_expected.CourseID)
       g.Assert(entry_actual.Description).Equal(entry_expected.Description)
+
+      t, err := stores.User.Get(entry_expected.TutorID)
+      g.Assert(err).Equal(nil)
+      g.Assert(entry_actual.Tutor.FirstName).Equal(t.FirstName)
+      g.Assert(entry_actual.Tutor.LastName).Equal(t.LastName)
+      g.Assert(entry_actual.Tutor.AvatarURL).Equal(t.AvatarURL)
+      g.Assert(entry_actual.Tutor.Email).Equal(t.Email)
+      g.Assert(entry_actual.Tutor.Language).Equal(t.Language)
     })
 
     g.It("Creating should require claims", func() {
@@ -107,9 +115,17 @@ func TestGroup(t *testing.T) {
 
       entry_return := &GroupResponse{}
       err = json.NewDecoder(w.Body).Decode(&entry_return)
-      g.Assert(entry_return.TutorID).Equal(entry_sent.TutorID)
+      g.Assert(entry_return.Tutor.ID).Equal(entry_sent.TutorID)
       g.Assert(entry_return.CourseID).Equal(int64(1))
       g.Assert(entry_return.Description).Equal(entry_sent.Description)
+
+      t, err := stores.User.Get(entry_sent.TutorID)
+      g.Assert(err).Equal(nil)
+      g.Assert(entry_return.Tutor.FirstName).Equal(t.FirstName)
+      g.Assert(entry_return.Tutor.LastName).Equal(t.LastName)
+      g.Assert(entry_return.Tutor.AvatarURL).Equal(t.AvatarURL)
+      g.Assert(entry_return.Tutor.Email).Equal(t.Email)
+      g.Assert(entry_return.Tutor.Language).Equal(t.Language)
 
       entries_after, err := stores.Group.GroupsOfCourse(1)
       g.Assert(err).Equal(nil)
@@ -234,7 +250,16 @@ func TestGroup(t *testing.T) {
 
       // we cannot check the other entries
       g.Assert(entry_return.CourseID).Equal(int64(1))
-      g.Assert(entry_return.TutorID).Equal(loginID)
+      g.Assert(entry_return.Tutor.ID).Equal(loginID)
+
+      t, err := stores.User.Get(loginID)
+      g.Assert(err).Equal(nil)
+      g.Assert(entry_return.Tutor.FirstName).Equal(t.FirstName)
+      g.Assert(entry_return.Tutor.LastName).Equal(t.LastName)
+      g.Assert(entry_return.Tutor.AvatarURL).Equal(t.AvatarURL)
+      g.Assert(entry_return.Tutor.Email).Equal(t.Email)
+      g.Assert(entry_return.Tutor.Language).Equal(t.Language)
+
     })
 
     g.It("Only tutors and admins can send emails to a group", func() {

@@ -103,7 +103,8 @@ type GroupStore interface {
   Create(p *model.Group) (*model.Group, error)
   Update(p *model.Group) error
   Delete(taskID int64) error
-  GroupsOfCourse(courseID int64) ([]model.Group, error)
+  // GroupsOfCourse(courseID int64) ([]model.Group, error)
+  GroupsOfCourse(courseID int64) ([]model.GroupWithTutor, error)
   GetInCourseWithUser(userID int64, courseID int64) (*model.Group, error)
   GetMembers(groupID int64) ([]model.User, error)
   GetOfTutor(tutorID int64, courseID int64) (*model.Group, error)

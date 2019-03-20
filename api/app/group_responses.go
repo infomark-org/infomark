@@ -23,32 +23,73 @@ import (
 
 	"github.com/cgtuebingen/infomark-backend/model"
 	"github.com/go-chi/render"
+	null "gopkg.in/guregu/null.v3"
 )
 
 // GroupResponse is the response payload for Group management.
 type GroupResponse struct {
 	ID          int64  `json:"id" example:"9841"`
-	TutorID     int64  `json:"tutor_id" example:"12"`
 	CourseID    int64  `json:"course_id" example:"1"`
 	Description string `json:"description" example:"Group every tuesday in room e43"`
+	// TutorID     int64  `json:"tutor_id" example:"12"`
+	Tutor *struct {
+		ID        int64       `json:"id" example:"13"`
+		FirstName string      `json:"first_name" example:"Max"`
+		LastName  string      `json:"last_name" example:"Mustermensch"`
+		AvatarURL null.String `json:"avatar_url" example:"/example.com/file"`
+		Email     string      `json:"email" example:"test@uni-tuebingen.de"`
+		Language  string      `json:"language" example:"de" len:"2"`
+	} `json:"tutor"`
 }
 
 // newGroupResponse creates a response from a Group model.
-func (rs *GroupResource) newGroupResponse(p *model.Group) *GroupResponse {
+func (rs *GroupResource) newGroupResponse(p *model.Group, t *model.User) *GroupResponse {
+
+	tutor := &struct {
+		ID        int64       `json:"id" example:"13"`
+		FirstName string      `json:"first_name" example:"Max"`
+		LastName  string      `json:"last_name" example:"Mustermensch"`
+		AvatarURL null.String `json:"avatar_url" example:"/example.com/file"`
+		Email     string      `json:"email" example:"test@uni-tuebingen.de"`
+		Language  string      `json:"language" example:"de" len:"2"`
+	}{
+		ID:        t.ID,
+		FirstName: t.FirstName,
+		LastName:  t.LastName,
+		AvatarURL: t.AvatarURL,
+		Email:     t.Email,
+		Language:  t.Language,
+	}
+
 	return &GroupResponse{
-		ID:          p.ID,
-		TutorID:     p.TutorID,
+		ID: p.ID,
+		// TutorID:     p.TutorID,
+		Tutor:       tutor,
 		CourseID:    p.CourseID,
 		Description: p.Description,
 	}
 }
 
 // newGroupListResponse creates a response from a list of Group models.
-func (rs *GroupResource) newGroupListResponse(Groups []model.Group) []render.Renderer {
-	// https://stackoverflow.com/a/36463641/7443104
+func (rs *GroupResource) newGroupListResponse(Groups []model.GroupWithTutor) []render.Renderer {
 	list := []render.Renderer{}
 	for k := range Groups {
-		list = append(list, rs.newGroupResponse(&Groups[k]))
+		// TODO(patwie): refactor this
+		tutor := &model.User{
+			ID:        Groups[k].TutorID,
+			FirstName: Groups[k].TutorFirstName,
+			LastName:  Groups[k].TutorLastName,
+			AvatarURL: Groups[k].TutorAvatarURL,
+			Email:     Groups[k].TutorEmail,
+			Language:  Groups[k].TutorLanguage,
+		}
+
+		group := &model.Group{
+			ID:          Groups[k].ID,
+			CourseID:    Groups[k].CourseID,
+			Description: Groups[k].Description,
+		}
+		list = append(list, rs.newGroupResponse(group, tutor))
 	}
 	return list
 }

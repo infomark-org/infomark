@@ -20,6 +20,8 @@ package model
 
 import (
   "time"
+
+  null "gopkg.in/guregu/null.v3"
 )
 
 type Group struct {
@@ -37,4 +39,20 @@ type GroupEnrollment struct {
 
   UserID  int64 `db:"user_id"`
   GroupID int64 `db:"group_id"`
+}
+
+type GroupWithTutor struct {
+  ID        int64     `db:"id"`
+  CreatedAt time.Time `db:"created_at,omitempty"`
+  UpdatedAt time.Time `db:"updated_at,omitempty"`
+
+  TutorID     int64  `db:"tutor_id"`
+  CourseID    int64  `db:"course_id"`
+  Description string `db:"description"`
+
+  TutorFirstName string      `db:"tutor_first_name"`
+  TutorLastName  string      `db:"tutor_last_name"`
+  TutorAvatarURL null.String `db:"tutor_avatar_url"`
+  TutorEmail     string      `db:"tutor_email"`
+  TutorLanguage  string      `db:"tutor_language"`
 }

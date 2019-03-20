@@ -64,14 +64,20 @@ func (s *GroupStore) Delete(taskID int64) error {
   return Delete(s.db, "groups", taskID)
 }
 
-func (s *GroupStore) GroupsOfCourse(courseID int64) ([]model.Group, error) {
-  p := []model.Group{}
+func (s *GroupStore) GroupsOfCourse(courseID int64) ([]model.GroupWithTutor, error) {
+  p := []model.GroupWithTutor{}
 
   err := s.db.Select(&p, `
     SELECT
-      *
+      g.*,
+u.first_name as tutor_first_name,
+u.last_name as tutor_last_name,
+u.avatar_url as tutor_avatar_url,
+u.email as tutor_email,
+u.language as tutor_language
     FROM
-      groups
+      groups g
+    INNER JOIN users u ON g.tutor_id = u.id
     WHERE
       course_id = $1`, courseID)
   return p, err

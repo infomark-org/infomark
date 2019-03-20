@@ -25,30 +25,6 @@ import (
   "github.com/go-chi/render"
 )
 
-// func ExecutionStateToString(state int) string {
-//   switch state {
-//   case 0:
-//     return "pending"
-//   case 1:
-//     return "running"
-//   case 2:
-//     return "finished"
-//   default:
-//     return "pending"
-//   }
-// }
-
-// func TestStatusToString(state int) string {
-//   switch state {
-//   case 0:
-//     return "passed"
-//   case 1:
-//     return "failed"
-//   default:
-//     return "failed"
-//   }
-// }
-
 // .............................................................................
 
 // GradeResponse is the response payload for Grade management.

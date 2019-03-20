@@ -162,7 +162,7 @@ func SwaggerStructsWithSuffix(fset *token.FileSet, pkgs map[string]*ast.Package,
   return source
 }
 
-func SwaggerResponsesWithSuffix(pkgs map[string]*ast.Package, suffix string, depth int) string {
+func SwaggerResponsesWithSuffix(fset *token.FileSet, pkgs map[string]*ast.Package, suffix string, depth int) string {
   source := ""
   pre := strings.Repeat(" ", depth)
   // gather structs
@@ -174,6 +174,7 @@ func SwaggerResponsesWithSuffix(pkgs map[string]*ast.Package, suffix string, dep
         if ok {
           name := n.(*ast.TypeSpec).Name.Name
           if strings.HasSuffix(name, suffix) {
+            source = source + fmt.Sprintf("%s# implementation in %v:\n", pre, fset.Position(n.Pos()))
             source = source + fmt.Sprintf("%s%s:\n", pre, name)
             source = source + fmt.Sprintf("%s  description: done\n", pre)
             source = source + fmt.Sprintf("%s  content:\n", pre)

@@ -62,7 +62,7 @@ func NewGroupResource(stores *Stores) *GroupResource {
 // The ordering is abitary
 func (rs *GroupResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 
-  var groups []model.Group
+  var groups []model.GroupWithTutor
   var err error
 
   course := r.Context().Value("course").(*model.Course)
@@ -103,6 +103,12 @@ func (rs *GroupResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
   group.CourseID = course.ID
   group.Description = data.Description
 
+  tutor, err := rs.Stores.User.Get(group.TutorID)
+  if err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
   // create Group entry in database
   newGroup, err := rs.Stores.Group.Create(group)
   if err != nil {
@@ -113,7 +119,7 @@ func (rs *GroupResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
   render.Status(r, http.StatusCreated)
 
   // return Group information of created entry
-  if err := render.Render(w, r, rs.newGroupResponse(newGroup)); err != nil {
+  if err := render.Render(w, r, rs.newGroupResponse(newGroup, tutor)); err != nil {
     render.Render(w, r, ErrRender(err))
     return
   }
@@ -135,8 +141,14 @@ func (rs *GroupResource) GetHandler(w http.ResponseWriter, r *http.Request) {
   // `Task` is retrieved via middle-ware
   group := r.Context().Value("group").(*model.Group)
 
+  tutor, err := rs.Stores.User.Get(group.TutorID)
+  if err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
   // render JSON reponse
-  if err := render.Render(w, r, rs.newGroupResponse(group)); err != nil {
+  if err := render.Render(w, r, rs.newGroupResponse(group, tutor)); err != nil {
     render.Render(w, r, ErrRender(err))
     return
   }
@@ -185,8 +197,14 @@ func (rs *GroupResource) GetMineHandler(w http.ResponseWriter, r *http.Request) 
     return
   }
 
+  tutor, err := rs.Stores.User.Get(group.TutorID)
+  if err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
   // render JSON reponse
-  if err := render.Render(w, r, rs.newGroupResponse(group)); err != nil {
+  if err := render.Render(w, r, rs.newGroupResponse(group, tutor)); err != nil {
     render.Render(w, r, ErrRender(err))
     return
   }
