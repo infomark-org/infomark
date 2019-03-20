@@ -139,7 +139,7 @@ func TestCourse(t *testing.T) {
       )
       g.Assert(err).Equal(nil)
 
-      w := tape.GetWithClaims("/api/v1/courses/1/enrollments?roles=1", 1, true)
+      w := tape.GetWithClaims("/api/v1/courses/1/enrollments?roles=1", 1, false)
       enrollments_actual := []enrollmentResponse{}
       err = json.NewDecoder(w.Body).Decode(&enrollments_actual)
       g.Assert(err).Equal(nil)
@@ -157,7 +157,7 @@ func TestCourse(t *testing.T) {
       )
       g.Assert(err).Equal(nil)
 
-      w := tape.GetWithClaims("/api/v1/courses/1/enrollments?roles=0,1", 1, true)
+      w := tape.GetWithClaims("/api/v1/courses/1/enrollments?roles=0,1", 1, false)
       enrollments_actual := []enrollmentResponse{}
       err = json.NewDecoder(w.Body).Decode(&enrollments_actual)
       g.Assert(err).Equal(nil)
@@ -176,7 +176,7 @@ func TestCourse(t *testing.T) {
       g.Assert(err).Equal(nil)
 
       // 112 is a student
-      w := tape.GetWithClaims("/api/v1/courses/1/enrollments?roles=0", 112, true)
+      w := tape.GetWithClaims("/api/v1/courses/1/enrollments?roles=0", 112, false)
       enrollments_actual := []enrollmentResponse{}
       err = json.NewDecoder(w.Body).Decode(&enrollments_actual)
       g.Assert(err).Equal(nil)
@@ -186,7 +186,7 @@ func TestCourse(t *testing.T) {
     g.It("Should be able to filter enrollments (but not see field protected by privacy), when role=tutor,student", func() {
       // 112 is a student
       userID := int64(112)
-      w := tape.GetWithClaims("/api/v1/courses/1/enrollments?roles=0", userID, true)
+      w := tape.GetWithClaims("/api/v1/courses/1/enrollments?roles=0", userID, false)
       enrollments_actual := []enrollmentResponse{}
       err := json.NewDecoder(w.Body).Decode(&enrollments_actual)
       g.Assert(err).Equal(nil)

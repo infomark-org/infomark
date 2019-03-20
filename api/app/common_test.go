@@ -21,6 +21,7 @@ package app
 import (
   "net/http"
   "testing"
+  "time"
 
   "github.com/franela/goblin"
 )
@@ -41,6 +42,21 @@ func TestCommon(t *testing.T) {
       w := tape.PlayRequest(r)
       g.Assert(w.Code).Equal(http.StatusOK)
       g.Assert(w.Body.String()).Equal("pong")
+
+    })
+
+    g.It("Too late is too late", func() {
+
+      now := NowUTC()
+      before := now.Add(-time.Hour)
+      after := now.Add(time.Hour)
+
+      g.Assert(OverTime(before)).Equal(true) // is over time
+      g.Assert(OverTime(after)).Equal(false) // is ok
+
+      // is public
+      g.Assert(PublicYet(after)).Equal(false)
+      g.Assert(PublicYet(before)).Equal(true)
 
     })
 

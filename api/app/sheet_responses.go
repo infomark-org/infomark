@@ -24,6 +24,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/cgtuebingen/infomark-backend/auth/authorize"
 	"github.com/cgtuebingen/infomark-backend/model"
 	"github.com/go-chi/render"
 )
@@ -54,9 +55,12 @@ func (rs *SheetResource) newSheetResponse(p *model.Sheet) *SheetResponse {
 }
 
 // newSheetListResponse creates a response from a list of Sheet models.
-func (rs *SheetResource) newSheetListResponse(Sheets []model.Sheet) []render.Renderer {
+func (rs *SheetResource) newSheetListResponse(givenRole authorize.CourseRole, Sheets []model.Sheet) []render.Renderer {
 	list := []render.Renderer{}
 	for k := range Sheets {
+		if givenRole == authorize.STUDENT && !PublicYet(Sheets[k].PublishAt) {
+			continue
+		}
 		list = append(list, rs.newSheetResponse(&Sheets[k]))
 	}
 

@@ -23,6 +23,7 @@ import (
   "fmt"
   "net/http"
   "testing"
+  "time"
 
   "github.com/cgtuebingen/infomark-backend/api/helper"
   "github.com/cgtuebingen/infomark-backend/email"
@@ -58,13 +59,27 @@ func TestSubmission(t *testing.T) {
 
     g.It("Students can upload solution (create)", func() {
 
+      deadlineAt := NowUTC().Add(time.Hour)
+      publishedAt := NowUTC().Add(-time.Hour)
+
+      // make sure the upload date is good
+      task, err := stores.Task.Get(1)
+      g.Assert(err).Equal(nil)
+      sheet, err := stores.Task.IdentifySheetOfTask(task.ID)
+      g.Assert(err).Equal(nil)
+
+      sheet.PublishAt = publishedAt
+      sheet.DueAt = deadlineAt
+      err = stores.Sheet.Update(sheet)
+      g.Assert(err).Equal(nil)
+
       defer helper.NewSubmissionFileHandle(3001).Delete()
 
       // no files so far
       g.Assert(helper.NewSubmissionFileHandle(3001).Exists()).Equal(false)
 
       // remove all submission from student
-      _, err := tape.DB.Exec("DELETE FROM submissions WHERE user_id = 112;")
+      _, err = tape.DB.Exec("DELETE FROM submissions WHERE user_id = 112;")
       g.Assert(err).Equal(nil)
 
       w := tape.GetWithClaims("/api/v1/courses/1/tasks/1/submission", 112, false)
@@ -74,6 +89,7 @@ func TestSubmission(t *testing.T) {
       filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
       w, err = tape.UploadWithClaims("/api/v1/courses/1/tasks/1/submission", filename, "application/zip", 112, false)
       g.Assert(err).Equal(nil)
+
       g.Assert(w.Code).Equal(http.StatusOK)
 
       createdSubmission, err := stores.Submission.GetByUserAndTask(112, 1)
@@ -88,9 +104,63 @@ func TestSubmission(t *testing.T) {
 
     })
 
+    g.It("Students cannot upload solution (create) since too late", func() {
+
+      deadlineAt := NowUTC().Add(-2 * time.Hour)
+      publishedAt := NowUTC().Add(-10 * time.Hour)
+
+      // make sure the upload date is good
+      task, err := stores.Task.Get(1)
+      g.Assert(err).Equal(nil)
+      sheet, err := stores.Task.IdentifySheetOfTask(task.ID)
+      g.Assert(err).Equal(nil)
+
+      sheet.PublishAt = publishedAt
+      sheet.DueAt = deadlineAt
+      err = stores.Sheet.Update(sheet)
+      g.Assert(err).Equal(nil)
+
+      defer helper.NewSubmissionFileHandle(3001).Delete()
+
+      // no files so far
+      g.Assert(helper.NewSubmissionFileHandle(3001).Exists()).Equal(false)
+
+      // remove all submission from student
+      _, err = tape.DB.Exec("DELETE FROM submissions WHERE user_id = 112;")
+      g.Assert(err).Equal(nil)
+
+      w := tape.GetWithClaims("/api/v1/courses/1/tasks/1/submission", 112, false)
+      g.Assert(w.Code).Equal(http.StatusNotFound)
+
+      // upload
+      filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
+      w, err = tape.UploadWithClaims("/api/v1/courses/1/tasks/1/submission", filename, "application/zip", 112, false)
+      g.Assert(err).Equal(nil)
+
+      g.Assert(w.Code).Equal(http.StatusBadRequest)
+
+      g.Assert(helper.NewSubmissionFileHandle(3001).Exists()).Equal(false)
+      defer helper.NewSubmissionFileHandle(3001).Delete()
+
+    })
+
     g.It("Students can upload solution (update)", func() {
 
       defer helper.NewSubmissionFileHandle(3001).Delete()
+
+      deadlineAt := NowUTC().Add(time.Hour)
+      publishedAt := NowUTC().Add(-time.Hour)
+
+      // make sure the upload date is good
+      task, err := stores.Task.Get(1)
+      g.Assert(err).Equal(nil)
+      sheet, err := stores.Task.IdentifySheetOfTask(task.ID)
+      g.Assert(err).Equal(nil)
+
+      sheet.PublishAt = publishedAt
+      sheet.DueAt = deadlineAt
+      err = stores.Sheet.Update(sheet)
+      g.Assert(err).Equal(nil)
 
       // no files so far
       g.Assert(helper.NewSubmissionFileHandle(3001).Exists()).Equal(false)
@@ -105,6 +175,36 @@ func TestSubmission(t *testing.T) {
       // files exists
       w = tape.GetWithClaims("/api/v1/courses/1/tasks/1/submission", 112, false)
       g.Assert(w.Code).Equal(http.StatusOK)
+
+    })
+
+    g.It("Students cannot upload solution (update) too late", func() {
+
+      defer helper.NewSubmissionFileHandle(3001).Delete()
+
+      deadlineAt := NowUTC().Add(-time.Hour)
+      publishedAt := NowUTC().Add(-2 * time.Hour)
+
+      // make sure the upload date is good
+      task, err := stores.Task.Get(1)
+      g.Assert(err).Equal(nil)
+      sheet, err := stores.Task.IdentifySheetOfTask(task.ID)
+      g.Assert(err).Equal(nil)
+
+      sheet.PublishAt = publishedAt
+      sheet.DueAt = deadlineAt
+      err = stores.Sheet.Update(sheet)
+      g.Assert(err).Equal(nil)
+
+      // no files so far
+      g.Assert(helper.NewSubmissionFileHandle(3001).Exists()).Equal(false)
+
+      // upload
+      filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
+      w, err := tape.UploadWithClaims("/api/v1/courses/1/tasks/1/submission", filename, "application/zip", 112, false)
+      g.Assert(err).Equal(nil)
+      g.Assert(w.Code).Equal(http.StatusBadRequest)
+      g.Assert(helper.NewSubmissionFileHandle(3001).Exists()).Equal(false)
 
     })
 

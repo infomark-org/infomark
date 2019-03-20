@@ -150,8 +150,19 @@ func (rs *SubmissionResource) GetFileByIdHandler(w http.ResponseWriter, r *http.
 func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.Request) {
   course := r.Context().Value("course").(*model.Course)
   task := r.Context().Value("task").(*model.Task)
+  sheet := r.Context().Value("sheet").(*model.Sheet)
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
   // todo create submission if not exists
+
+  if r.Context().Value("course_role").(authorize.CourseRole) == authorize.STUDENT && !PublicYet(sheet.PublishAt) {
+    render.Render(w, r, ErrBadRequestWithDetails(fmt.Errorf("sheet not published yet")))
+    return
+  }
+
+  if r.Context().Value("course_role").(authorize.CourseRole) == authorize.STUDENT && OverTime(sheet.DueAt) {
+    render.Render(w, r, ErrBadRequestWithDetails(fmt.Errorf("too late deadline was %v but now it is %v", sheet.DueAt, NowUTC())))
+    return
+  }
 
   var grade *model.Grade
 
@@ -331,7 +342,7 @@ func (rs *SubmissionResource) IndexHandler(w http.ResponseWriter, r *http.Reques
 // We do NOT check whether the identity is authorized to get this Submission.
 func (rs *SubmissionResource) Context(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-    course_from_url := r.Context().Value("course").(*model.Course)
+    // course_from_url := r.Context().Value("course").(*model.Course)
 
     var submissionID int64
     var err error
@@ -365,16 +376,26 @@ func (rs *SubmissionResource) Context(next http.Handler) http.Handler {
 
     ctx = context.WithValue(ctx, "task", task)
 
-    // find course
-
-    course, err := rs.Stores.Task.IdentifyCourseOfTask(task.ID)
+    // find sheet
+    sheet, err := rs.Stores.Task.IdentifySheetOfTask(task.ID)
     if err != nil {
       render.Render(w, r, ErrInternalServerErrorWithDetails(err))
       return
     }
 
-    if course_from_url.ID != course.ID {
-      render.Render(w, r, ErrNotFound)
+    if sheetID, err := strconv.ParseInt(chi.URLParam(r, "sheet_id"), 10, 64); err == nil {
+      if sheetID != sheet.ID {
+        render.Render(w, r, ErrNotFound)
+        return
+      }
+    } else {
+      ctx = context.WithValue(ctx, "sheet", sheet)
+    }
+
+    // find course
+    course, err := rs.Stores.Task.IdentifyCourseOfTask(task.ID)
+    if err != nil {
+      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
       return
     }
 

@@ -24,6 +24,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/cgtuebingen/infomark-backend/auth/authorize"
 	"github.com/cgtuebingen/infomark-backend/model"
 	"github.com/go-chi/render"
 )
@@ -53,11 +54,14 @@ func (rs *MaterialResource) newMaterialResponse(p *model.Material) *MaterialResp
 }
 
 // newMaterialListResponse creates a response from a list of Material models.
-func (rs *MaterialResource) newMaterialListResponse(Materials []model.Material) []render.Renderer {
-	// https://stackoverflow.com/a/36463641/7443104
+func (rs *MaterialResource) newMaterialListResponse(givenRole authorize.CourseRole, Materials []model.Material) []render.Renderer {
 	list := []render.Renderer{}
 	for k := range Materials {
+		if givenRole == authorize.STUDENT && !PublicYet(Materials[k].PublishAt) {
+			continue
+		}
 		list = append(list, rs.newMaterialResponse(&Materials[k]))
+
 	}
 	return list
 }

@@ -131,6 +131,26 @@ WHERE ts.task_id = $1`,
   return course, err
 }
 
+func (s *TaskStore) IdentifySheetOfTask(taskID int64) (*model.Sheet, error) {
+
+  sheet := &model.Sheet{}
+  err := s.db.Get(sheet,
+    `
+SELECT
+  s.*
+FROM
+  task_sheet ts
+INNER JOIN
+  sheets s ON s.id = ts.sheet_id
+WHERE ts.task_id = $1`,
+    taskID)
+  if err != nil {
+    return nil, err
+  }
+
+  return sheet, err
+}
+
 func (s *TaskStore) GetAverageRating(taskID int64) (float32, error) {
   var averageRating float32
   err := s.db.Get(&averageRating, `

@@ -20,6 +20,7 @@ package app
 
 import (
   "context"
+  "fmt"
   "net/http"
   "strconv"
 
@@ -401,6 +402,28 @@ func (rs *TaskResource) Context(next http.Handler) http.Handler {
     }
 
     ctx := context.WithValue(r.Context(), "task", task)
+
+    // find sheet
+    sheet, err := rs.Stores.Task.IdentifySheetOfTask(task.ID)
+    if err != nil {
+      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+      return
+    }
+
+    if sheetID, err := strconv.ParseInt(chi.URLParam(r, "sheet_id"), 10, 64); err == nil {
+      if sheetID != sheet.ID {
+        render.Render(w, r, ErrNotFound)
+        return
+      }
+    } else {
+      ctx = context.WithValue(ctx, "sheet", sheet)
+    }
+
+    // public yet?
+    if r.Context().Value("course_role").(authorize.CourseRole) == authorize.STUDENT && !PublicYet(sheet.PublishAt) {
+      render.Render(w, r, ErrBadRequestWithDetails(fmt.Errorf("sheet not published yet")))
+      return
+    }
 
     // when there is a taskID in the url, there is NOT a courseID in the url,
     // BUT: when there is a task, there is a course

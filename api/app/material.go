@@ -20,10 +20,12 @@ package app
 
 import (
   "context"
+  "fmt"
   "net/http"
   "strconv"
 
   "github.com/cgtuebingen/infomark-backend/api/helper"
+  "github.com/cgtuebingen/infomark-backend/auth/authorize"
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/go-chi/chi"
   "github.com/go-chi/render"
@@ -59,7 +61,6 @@ func (rs *MaterialResource) IndexHandler(w http.ResponseWriter, r *http.Request)
   var materials []model.Material
   var err error
   // we use middle to detect whether there is a course given
-
   course := r.Context().Value("course").(*model.Course)
   materials, err = rs.Stores.Material.MaterialsOfCourse(course.ID, false)
 
@@ -68,8 +69,9 @@ func (rs *MaterialResource) IndexHandler(w http.ResponseWriter, r *http.Request)
     return
   }
 
+  givenRole := r.Context().Value("course_role").(authorize.CourseRole)
   // render JSON reponse
-  if err = render.RenderList(w, r, rs.newMaterialListResponse(materials)); err != nil {
+  if err = render.RenderList(w, r, rs.newMaterialListResponse(givenRole, materials)); err != nil {
     render.Render(w, r, ErrRender(err))
     return
   }
@@ -287,6 +289,12 @@ func (rs *MaterialResource) Context(next http.Handler) http.Handler {
     material, err := rs.Stores.Material.Get(materialID)
     if err != nil {
       render.Render(w, r, ErrNotFound)
+      return
+    }
+
+    // public yet?
+    if r.Context().Value("course_role").(authorize.CourseRole) == authorize.STUDENT && !PublicYet(material.PublishAt) {
+      render.Render(w, r, ErrBadRequestWithDetails(fmt.Errorf("material not published yet")))
       return
     }
 

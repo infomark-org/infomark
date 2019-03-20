@@ -244,19 +244,20 @@ func (rs *CourseResource) IndexEnrollmentsHandler(w http.ResponseWriter, r *http
     return
   }
 
-  if givenRole == authorize.STUDENT {
-    for k, _ := range enrolledUsers {
-      enrolledUsers[k].Email = ""
-    }
-  }
+  enrolledUsers = EnsurePrivacyInEnrollments(enrolledUsers, givenRole)
+  // if givenRole == authorize.STUDENT {
+  //   for k, _ := range enrolledUsers {
+  //     enrolledUsers[k].Email = ""
+  //   }
+  // }
 
-  if givenRole != authorize.ADMIN {
-    for k, _ := range enrolledUsers {
-      enrolledUsers[k].StudentNumber = ""
-      enrolledUsers[k].Semester = 0
-      enrolledUsers[k].Subject = ""
-    }
-  }
+  // if givenRole != authorize.ADMIN {
+  //   for k, _ := range enrolledUsers {
+  //     enrolledUsers[k].StudentNumber = ""
+  //     enrolledUsers[k].Semester = 0
+  //     enrolledUsers[k].Subject = ""
+  //   }
+  // }
 
   // render JSON reponse
   if err = render.RenderList(w, r, newEnrollmentListResponse(enrolledUsers)); err != nil {
@@ -623,6 +624,10 @@ func (rs *CourseResource) RoleContext(next http.Handler) http.Handler {
     if err != nil {
       render.Render(w, r, ErrBadRequestWithDetails(err))
       return
+    }
+
+    if accessClaims.Root {
+      courseRole = authorize.ADMIN
     }
 
     // serve next

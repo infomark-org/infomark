@@ -20,6 +20,7 @@ package app
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/cgtuebingen/infomark-backend/auth/authorize"
 	"github.com/cgtuebingen/infomark-backend/model"
@@ -62,4 +63,17 @@ func EnsurePrivacyInEnrollments(enrolledUsers []model.UserCourse, givenRole auth
 		}
 	}
 	return enrolledUsers
+}
+
+func PublicYet(t time.Time) bool {
+	return NowUTC().Sub(t) > 0
+}
+
+func OverTime(t time.Time) bool {
+	return NowUTC().Sub(t) > 0
+}
+
+func NowUTC() time.Time {
+	loc, _ := time.LoadLocation("UTC")
+	return time.Now().In(loc)
 }

@@ -87,6 +87,7 @@ type TaskStore interface {
   Delete(TaskID int64) error
   TasksOfSheet(sheetID int64, only_active bool) ([]model.Task, error)
   IdentifyCourseOfTask(taskID int64) (*model.Course, error)
+  IdentifySheetOfTask(taskID int64) (*model.Sheet, error)
 
   GetAverageRating(taskID int64) (float32, error)
   GetRatingOfTaskByUser(taskID int64, userID int64) (*model.TaskRating, error)

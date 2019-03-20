@@ -20,11 +20,13 @@ package app
 
 import (
   "context"
+  "fmt"
   "net/http"
   "strconv"
 
   "github.com/cgtuebingen/infomark-backend/api/helper"
   "github.com/cgtuebingen/infomark-backend/auth/authenticate"
+  "github.com/cgtuebingen/infomark-backend/auth/authorize"
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/go-chi/chi"
   "github.com/go-chi/render"
@@ -63,8 +65,10 @@ func (rs *SheetResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
   course := r.Context().Value("course").(*model.Course)
   sheets, err = rs.Stores.Sheet.SheetsOfCourse(course.ID, false)
 
+  givenRole := r.Context().Value("course_role").(authorize.CourseRole)
+
   // render JSON reponse
-  if err = render.RenderList(w, r, rs.newSheetListResponse(sheets)); err != nil {
+  if err = render.RenderList(w, r, rs.newSheetListResponse(givenRole, sheets)); err != nil {
     render.Render(w, r, ErrRender(err))
     return
   }
@@ -302,6 +306,12 @@ func (rs *SheetResource) Context(next http.Handler) http.Handler {
     sheet, err := rs.Stores.Sheet.Get(Sheet_id)
     if err != nil {
       render.Render(w, r, ErrNotFound)
+      return
+    }
+
+    // public yet?
+    if r.Context().Value("course_role").(authorize.CourseRole) == authorize.STUDENT && !PublicYet(sheet.PublishAt) {
+      render.Render(w, r, ErrBadRequestWithDetails(fmt.Errorf("sheet not published yet")))
       return
     }
 
