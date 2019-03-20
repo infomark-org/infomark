@@ -244,9 +244,18 @@ func (rs *CourseResource) IndexEnrollmentsHandler(w http.ResponseWriter, r *http
     return
   }
 
-  // users and tutors will not see student number
-  for k, _ := range enrolledUsers {
-    enrolledUsers[k].StudentNumber = ""
+  if givenRole == authorize.STUDENT {
+    for k, _ := range enrolledUsers {
+      enrolledUsers[k].Email = ""
+    }
+  }
+
+  if givenRole != authorize.ADMIN {
+    for k, _ := range enrolledUsers {
+      enrolledUsers[k].StudentNumber = ""
+      enrolledUsers[k].Semester = 0
+      enrolledUsers[k].Subject = ""
+    }
   }
 
   // render JSON reponse

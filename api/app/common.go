@@ -20,6 +20,9 @@ package app
 
 import (
 	"net/http"
+
+	"github.com/cgtuebingen/infomark-backend/auth/authorize"
+	"github.com/cgtuebingen/infomark-backend/model"
 )
 
 // CommonResource specifies user management handler.
@@ -42,4 +45,21 @@ func NewCommonResource(stores *Stores) *CommonResource {
 // SUMMARY:  heartbeat of backend
 func (rs *CommonResource) PingHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("pong"))
+}
+
+func EnsurePrivacyInEnrollments(enrolledUsers []model.UserCourse, givenRole authorize.CourseRole) []model.UserCourse {
+	if givenRole == authorize.STUDENT {
+		for k, _ := range enrolledUsers {
+			enrolledUsers[k].Email = ""
+		}
+	}
+
+	if givenRole != authorize.ADMIN {
+		for k, _ := range enrolledUsers {
+			enrolledUsers[k].StudentNumber = ""
+			enrolledUsers[k].Semester = 0
+			enrolledUsers[k].Subject = ""
+		}
+	}
+	return enrolledUsers
 }

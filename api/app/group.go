@@ -317,10 +317,7 @@ func (rs *GroupResource) IndexEnrollmentsHandler(w http.ResponseWriter, r *http.
     return
   }
 
-  // users and tutors will not see student number
-  for k, _ := range enrolledUsers {
-    enrolledUsers[k].StudentNumber = ""
-  }
+  enrolledUsers = EnsurePrivacyInEnrollments(enrolledUsers, givenRole)
 
   // render JSON reponse
   if err = render.RenderList(w, r, newEnrollmentListResponse(enrolledUsers)); err != nil {

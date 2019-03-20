@@ -32,13 +32,20 @@ type GroupResponse struct {
 	CourseID    int64  `json:"course_id" example:"1"`
 	Description string `json:"description" example:"Group every tuesday in room e43"`
 	// TutorID     int64  `json:"tutor_id" example:"12"`
+
+	// userResponse
 	Tutor *struct {
-		ID        int64       `json:"id" example:"13"`
+		ID        int64       `json:"id" example:"1"`
 		FirstName string      `json:"first_name" example:"Max"`
 		LastName  string      `json:"last_name" example:"Mustermensch"`
-		AvatarURL null.String `json:"avatar_url" example:"/example.com/file"`
-		Email     string      `json:"email" example:"test@uni-tuebingen.de"`
-		Language  string      `json:"language" example:"de" len:"2"`
+		AvatarURL null.String `json:"avatar_url" example:"/url/to/file"`
+		Email     string      `json:"email" example:"test@unit-tuebingen.de"`
+		Language  string      `json:"language" example:"en" len:"2"`
+
+		StudentNumber string `json:"student_number" example:"0815"`
+		Semester      int    `json:"semester" example:"2" minval:"1"`
+		Subject       string `json:"subject" example:"bio informatics"`
+		Root          bool   `json:"root" example:"false"`
 	} `json:"tutor"`
 }
 
@@ -46,12 +53,19 @@ type GroupResponse struct {
 func (rs *GroupResource) newGroupResponse(p *model.Group, t *model.User) *GroupResponse {
 
 	tutor := &struct {
-		ID        int64       `json:"id" example:"13"`
+		ID        int64       `json:"id" example:"1"`
 		FirstName string      `json:"first_name" example:"Max"`
 		LastName  string      `json:"last_name" example:"Mustermensch"`
-		AvatarURL null.String `json:"avatar_url" example:"/example.com/file"`
-		Email     string      `json:"email" example:"test@uni-tuebingen.de"`
-		Language  string      `json:"language" example:"de" len:"2"`
+		AvatarURL null.String `json:"avatar_url" example:"/url/to/file"`
+		Email     string      `json:"email" example:"test@unit-tuebingen.de"`
+		Language  string      `json:"language" example:"en" len:"2"`
+
+		// just for the frontend
+		// TODO(???): change frontend accordingly
+		StudentNumber string `json:"student_number" example:"0815"`
+		Semester      int    `json:"semester" example:"2" minval:"1"`
+		Subject       string `json:"subject" example:"bio informatics"`
+		Root          bool   `json:"root" example:"false"`
 	}{
 		ID:        t.ID,
 		FirstName: t.FirstName,
