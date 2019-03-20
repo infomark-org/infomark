@@ -21,6 +21,7 @@ package database
 import (
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/jmoiron/sqlx"
+  "github.com/lib/pq"
 )
 
 type GroupStore struct {
@@ -104,6 +105,49 @@ func (s *GroupStore) GetInCourseWithUser(userID int64, courseID int64) (*model.G
     WHERE
       ug.user_id = $1
     AND g.course_id = $2`, userID, courseID)
+  return p, err
+}
+
+func (s *GroupStore) EnrolledUsers(
+  courseID int64,
+  groupID int64,
+  roleFilter []string,
+  filterFirstName string,
+  filterLastName string,
+  filterEmail string,
+  filterSubject string,
+  filterLanguage string) ([]model.UserCourse, error) {
+  p := []model.UserCourse{}
+
+  // , u.avatar_path
+  err := s.db.Select(&p, `
+   SELECT
+      uc.role, u.id, u.first_name, u.last_name, u.email,
+      u.student_number, u.semester, u.subject, u.language, u.avatar_url FROM user_course uc
+    INNER JOIN
+      users u ON uc.user_id = u.id
+    INNER JOIN
+      user_group ug ON ug.user_id = u.id
+    WHERE
+      uc.course_id = $1
+    AND
+      ug.group_id = $2
+    AND
+      uc.role = ANY($3)
+    AND
+      LOWER(u.first_name) LIKE $4
+    AND
+      LOWER(u.last_name) LIKE $5
+    AND
+      LOWER(u.email) LIKE $6
+    AND
+      LOWER(u.subject) LIKE $7
+    AND
+      LOWER(u.language) LIKE $8
+    `, courseID, groupID, pq.Array(roleFilter),
+    filterFirstName, filterLastName, filterEmail,
+    filterSubject, filterLanguage,
+  )
   return p, err
 }
 

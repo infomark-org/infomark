@@ -148,7 +148,7 @@ func (body *enrollmentResponse) Render(w http.ResponseWriter, r *http.Request) e
 }
 
 // newCourseResponse creates a response from a course model.
-func (rs *CourseResource) newEnrollmentResponse(p *model.UserCourse) *enrollmentResponse {
+func newEnrollmentResponse(p *model.UserCourse) *enrollmentResponse {
 
 	user := struct {
 		ID            int64       `json:"id" example:"13"`
@@ -178,10 +178,10 @@ func (rs *CourseResource) newEnrollmentResponse(p *model.UserCourse) *enrollment
 	}
 }
 
-func (rs *CourseResource) newEnrollmentListResponse(enrollments []model.UserCourse) []render.Renderer {
+func newEnrollmentListResponse(enrollments []model.UserCourse) []render.Renderer {
 	list := []render.Renderer{}
 	for k := range enrollments {
-		list = append(list, rs.newEnrollmentResponse(&enrollments[k]))
+		list = append(list, newEnrollmentResponse(&enrollments[k]))
 	}
 
 	return list

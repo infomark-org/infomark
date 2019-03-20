@@ -119,6 +119,10 @@ type GroupStore interface {
   GetGroupEnrollmentOfUserInCourse(userID int64, courseID int64) (*model.GroupEnrollment, error)
   CreateGroupEnrollmentOfUserInCourse(p *model.GroupEnrollment) (*model.GroupEnrollment, error)
   ChangeGroupEnrollmentOfUserInCourse(p *model.GroupEnrollment) error
+
+  EnrolledUsers(courseID int64, groupID int64, roleFilter []string,
+    filterFirstName string, filterLastName string, filterEmail string, filterSubject string,
+    filterLanguage string) ([]model.UserCourse, error)
 }
 
 // MaterialStore defines material related database queries

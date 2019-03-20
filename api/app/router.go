@@ -178,6 +178,7 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 
                   r.Post("/bids", appAPI.Group.ChangeBidHandler)
                   r.Post("/emails", authorize.EndpointRequiresRole(appAPI.Group.SendEmailHandler, authorize.TUTOR))
+                  r.Get("/enrollments", appAPI.Group.IndexEnrollmentsHandler)
                   r.Post("/enrollments", authorize.EndpointRequiresRole(appAPI.Group.EditGroupEnrollmentHandler, authorize.ADMIN))
 
                   r.Get("/", appAPI.Group.GetHandler)

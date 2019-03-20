@@ -250,7 +250,7 @@ func (rs *CourseResource) IndexEnrollmentsHandler(w http.ResponseWriter, r *http
   }
 
   // render JSON reponse
-  if err = render.RenderList(w, r, rs.newEnrollmentListResponse(enrolledUsers)); err != nil {
+  if err = render.RenderList(w, r, newEnrollmentListResponse(enrolledUsers)); err != nil {
     render.Render(w, r, ErrRender(err))
     return
   }
@@ -282,7 +282,7 @@ func (rs *CourseResource) GetUserEnrollmentHandler(w http.ResponseWriter, r *htt
     return
   }
 
-  resp := rs.newEnrollmentResponse(userEnrollment)
+  resp := newEnrollmentResponse(userEnrollment)
 
   // render JSON reponse
   if err = render.Render(w, r, resp); err != nil {
@@ -393,7 +393,7 @@ func (rs *CourseResource) EnrollHandler(w http.ResponseWriter, r *http.Request) 
 
   render.Status(r, http.StatusCreated)
 
-  if err := render.Render(w, r, rs.newEnrollmentResponse(userEnrollment)); err != nil {
+  if err := render.Render(w, r, newEnrollmentResponse(userEnrollment)); err != nil {
     render.Render(w, r, ErrRender(err))
     return
   }

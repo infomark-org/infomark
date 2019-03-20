@@ -25,6 +25,7 @@ import (
   "net/http"
   "strconv"
 
+  "github.com/cgtuebingen/infomark-backend/api/helper"
   "github.com/cgtuebingen/infomark-backend/auth/authenticate"
   "github.com/cgtuebingen/infomark-backend/auth/authorize"
   "github.com/cgtuebingen/infomark-backend/email"
@@ -250,6 +251,66 @@ func (rs *GroupResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
   }
 
   render.Status(r, http.StatusNoContent)
+}
+
+// IndexEnrollmentsHandler is public endpoint for
+// URL: /courses/{course_id}/groups/{group_id}/enrollments
+// URLPARAM: course_id,integer
+// URLPARAM: group_id,integer
+// QUERYPARAM: roles,string
+// QUERYPARAM: first_name,string
+// QUERYPARAM: last_name,string
+// QUERYPARAM: email,string
+// QUERYPARAM: subject,string
+// QUERYPARAM: language,string
+// METHOD: get
+// TAG: enrollments
+// RESPONSE: 200,enrollmentResponseList
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  list all courses
+func (rs *GroupResource) IndexEnrollmentsHandler(w http.ResponseWriter, r *http.Request) {
+  // /courses/1/enrollments?roles=0,1
+  group := r.Context().Value("group").(*model.Group)
+  course := r.Context().Value("course").(*model.Course)
+
+  // extract filters
+  filterRoles := helper.StringArrayFromUrl(r, "roles", []string{"0", "1", "2"})
+  filterFirstName := helper.StringFromUrl(r, "first_name", "%%")
+  filterLastName := helper.StringFromUrl(r, "last_name", "%%")
+  filterEmail := helper.StringFromUrl(r, "email", "%%")
+  filterSubject := helper.StringFromUrl(r, "subject", "%%")
+  filterLanguage := helper.StringFromUrl(r, "language", "%%")
+
+  givenRole := r.Context().Value("course_role").(authorize.CourseRole)
+
+  if givenRole == authorize.STUDENT {
+    // students cannot query other students
+    filterRoles = []string{"1", "2"}
+  }
+
+  enrolledUsers, err := rs.Stores.Group.EnrolledUsers(course.ID, group.ID,
+    filterRoles, filterFirstName, filterLastName, filterEmail,
+    filterSubject, filterLanguage,
+  )
+  if err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
+  // users and tutors will not see student number
+  for k, _ := range enrolledUsers {
+    enrolledUsers[k].StudentNumber = ""
+  }
+
+  // render JSON reponse
+  if err = render.RenderList(w, r, newEnrollmentListResponse(enrolledUsers)); err != nil {
+    render.Render(w, r, ErrRender(err))
+    return
+  }
+
+  render.Status(r, http.StatusOK)
 }
 
 // EditGroupEnrollmentHandler is public endpoint for

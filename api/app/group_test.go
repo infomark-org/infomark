@@ -351,6 +351,24 @@ func TestGroup(t *testing.T) {
 
     })
 
+    g.It("Should be able to filter enrollments (all)", func() {
+      group_active, err := stores.Group.Get(1)
+      g.Assert(err).Equal(nil)
+
+      number_enrollments_expected, err := countEnrollments(
+        tape,
+        "SELECT count(*) FROM user_group WHERE group_id = $1",
+        group_active.ID,
+      )
+      g.Assert(err).Equal(nil)
+
+      w := tape.GetWithClaims("/api/v1/courses/1/groups/1/enrollments", 1, true)
+      enrollments_actual := []enrollmentResponse{}
+      err = json.NewDecoder(w.Body).Decode(&enrollments_actual)
+      g.Assert(err).Equal(nil)
+      g.Assert(len(enrollments_actual)).Equal(number_enrollments_expected)
+    })
+
     g.AfterEach(func() {
       tape.AfterEach()
     })
