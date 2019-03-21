@@ -150,6 +150,13 @@ func TestMaterial(t *testing.T) {
     g.It("Should upload material file", func() {
       defer helper.NewMaterialFileHandle(1).Delete()
 
+      // set to publish
+      material, err := stores.Material.Get(1)
+      g.Assert(err).Equal(nil)
+      material.PublishAt = NowUTC().Add(-2 * time.Hour)
+      err = stores.Material.Update(material)
+      g.Assert(err).Equal(nil)
+
       // no file so far
       g.Assert(helper.NewMaterialFileHandle(1).Exists()).Equal(false)
       filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
@@ -166,7 +173,6 @@ func TestMaterial(t *testing.T) {
       // admin
       w, err = tape.UploadWithClaims("/api/v1/courses/1/materials/1/file", filename, "application/zip", 1, false)
       g.Assert(err).Equal(nil)
-      fmt.Println(w.Body)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       // check disk
@@ -183,6 +189,13 @@ func TestMaterial(t *testing.T) {
     })
 
     g.It("Should perform updates", func() {
+
+      // set to publish
+      material, err := stores.Material.Get(1)
+      g.Assert(err).Equal(nil)
+      material.PublishAt = NowUTC().Add(-2 * time.Hour)
+      err = stores.Material.Update(material)
+      g.Assert(err).Equal(nil)
 
       material_sent := MaterialRequest{
         Name:      "Material_new",
@@ -214,6 +227,14 @@ func TestMaterial(t *testing.T) {
     })
 
     g.It("Should delete when valid access claims", func() {
+
+      // set to publish
+      material, err := stores.Material.Get(1)
+      g.Assert(err).Equal(nil)
+      material.PublishAt = NowUTC().Add(-2 * time.Hour)
+      err = stores.Material.Update(material)
+      g.Assert(err).Equal(nil)
+
       entries_before, err := stores.Material.GetAll()
       g.Assert(err).Equal(nil)
 
@@ -239,6 +260,28 @@ func TestMaterial(t *testing.T) {
 
       // verify a sheet less exists
       entries_after, err = stores.Material.GetAll()
+      g.Assert(err).Equal(nil)
+      g.Assert(len(entries_after)).Equal(len(entries_before) - 1)
+    })
+
+    g.It("Should delete when valid access claims and not published", func() {
+
+      // set to publish
+      material, err := stores.Material.Get(1)
+      g.Assert(err).Equal(nil)
+      material.PublishAt = NowUTC().Add(2 * time.Hour)
+      err = stores.Material.Update(material)
+      g.Assert(err).Equal(nil)
+
+      entries_before, err := stores.Material.GetAll()
+      g.Assert(err).Equal(nil)
+
+      // admin
+      w := tape.DeleteWithClaims("/api/v1/courses/1/materials/1", 1, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      // verify a sheet less exists
+      entries_after, err := stores.Material.GetAll()
       g.Assert(err).Equal(nil)
       g.Assert(len(entries_after)).Equal(len(entries_before) - 1)
     })

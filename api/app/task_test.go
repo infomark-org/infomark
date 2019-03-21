@@ -65,7 +65,7 @@ func TestTask(t *testing.T) {
       g.Assert(len(tasks_actual)).Equal(3)
     })
 
-    g.It("Should get a specific sheet", func() {
+    g.It("Should get a specific task", func() {
 
       task_expected, err := stores.Task.Get(1)
       g.Assert(err).Equal(nil)
@@ -79,6 +79,7 @@ func TestTask(t *testing.T) {
 
       g.Assert(task_actual.ID).Equal(task_expected.ID)
       g.Assert(task_actual.MaxPoints).Equal(task_expected.MaxPoints)
+      g.Assert(task_actual.Name).Equal(task_expected.Name)
       g.Assert(task_actual.PublicDockerImage).Equal(task_expected.PublicDockerImage)
       g.Assert(task_actual.PrivateDockerImage).Equal(task_expected.PrivateDockerImage)
 
@@ -98,6 +99,7 @@ func TestTask(t *testing.T) {
       g.Assert(err).Equal(nil)
 
       task_sent := TaskRequest{
+        Name:               "new Task",
         MaxPoints:          88,
         PublicDockerImage:  "TestImage-Public",
         PrivateDockerImage: "TestImage-Private",
@@ -111,6 +113,7 @@ func TestTask(t *testing.T) {
 
       task_return := &TaskResponse{}
       err = json.NewDecoder(w.Body).Decode(&task_return)
+      g.Assert(task_return.Name).Equal("new Task")
       g.Assert(task_return.MaxPoints).Equal(88)
       g.Assert(task_return.PrivateDockerImage).Equal(task_sent.PrivateDockerImage)
       g.Assert(task_return.PublicDockerImage).Equal(task_sent.PublicDockerImage)
@@ -186,6 +189,7 @@ func TestTask(t *testing.T) {
     g.It("Should perform updates", func() {
       data := H{
         "max_points":           555,
+        "name":                 "new blub",
         "public_docker_image":  "new_public",
         "private_docker_image": "new_private",
       }
@@ -196,6 +200,7 @@ func TestTask(t *testing.T) {
       task_after, err := stores.Task.Get(1)
       g.Assert(err).Equal(nil)
       g.Assert(task_after.MaxPoints).Equal(555)
+      g.Assert(task_after.Name).Equal("new blub")
       g.Assert(task_after.PublicDockerImage).Equal("new_public")
       g.Assert(task_after.PrivateDockerImage).Equal("new_private")
     })

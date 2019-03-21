@@ -25,12 +25,14 @@ import (
 )
 
 type Task struct {
-	ID                 int64     `db:"id"`
-	CreatedAt          time.Time `db:"created_at,omitempty"`
-	UpdatedAt          time.Time `db:"updated_at,omitempty"`
-	MaxPoints          int       `db:"max_points"`
-	PublicDockerImage  string    `db:"public_docker_image"`
-	PrivateDockerImage string    `db:"private_docker_image"`
+	ID        int64     `db:"id"`
+	CreatedAt time.Time `db:"created_at,omitempty"`
+	UpdatedAt time.Time `db:"updated_at,omitempty"`
+
+	Name               string `db:"name"`
+	MaxPoints          int    `db:"max_points"`
+	PublicDockerImage  string `db:"public_docker_image"`
+	PrivateDockerImage string `db:"private_docker_image"`
 }
 
 type TaskRating struct {

@@ -54,6 +54,10 @@ func (m *SheetRequest) Validate() error {
 			&m.DueAt,
 			validation.Required,
 		),
+		validation.Field(
+			&m.Name,
+			validation.Required,
+		),
 	)
 
 	if err == nil {

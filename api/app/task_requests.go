@@ -28,6 +28,7 @@ import (
 // TaskRequest is the request payload for Task management.
 type TaskRequest struct {
 	MaxPoints          int    `json:"max_points" example:"25"`
+	Name               string `json:"name" example:"Task 1"`
 	PublicDockerImage  string `json:"public_docker_image" example:"DefaultJavaTestingImage"`
 	PrivateDockerImage string `json:"private_docker_image" example:"DefaultJavaTestingImage"`
 }
@@ -45,6 +46,10 @@ func (m *TaskRequest) Validate() error {
 		validation.Field(
 			&m.MaxPoints,
 			validation.Min(0),
+		),
+		validation.Field(
+			&m.Name,
+			validation.Required,
 		),
 	)
 }

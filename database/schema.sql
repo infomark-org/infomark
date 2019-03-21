@@ -71,7 +71,7 @@ CREATE TABLE sheets(
   created_at TIMESTAMP not null DEFAULT current_timestamp,
   updated_at TIMESTAMP not null DEFAULT current_timestamp,
 
-  name TEXT,
+  name TEXT not null,
 
   -- we us the canonical naming "sheet{ordering}.zip"
   -- file_path TEXT,
@@ -84,7 +84,7 @@ CREATE TABLE sheet_course(
   id SERIAL not null primary key,
   sheet_id INT not null,
   course_id INT not null,
-  ordering INT not null,
+  -- ordering INT not null,
 
   -- PRIMARY KEY (sheet_id, course_id),
   FOREIGN KEY (sheet_id)  REFERENCES sheets (id)    ON DELETE CASCADE,
@@ -97,6 +97,7 @@ CREATE TABLE tasks(
   created_at TIMESTAMP not null DEFAULT current_timestamp,
   updated_at TIMESTAMP not null DEFAULT current_timestamp,
 
+  name TEXT not null,
   max_points INT DEFAULT 0,
   -- we keep both paths as they might be empty
   -- public_test_path TEXT,
@@ -110,7 +111,7 @@ CREATE TABLE task_sheet(
   id SERIAL not null primary key,
   task_id INT not null,
   sheet_id INT not null,
-  ordering INT ,
+  -- ordering INT ,
 
   -- PRIMARY KEY (task_id, sheet_id),
   FOREIGN KEY (task_id) REFERENCES tasks (id)     ON DELETE CASCADE,

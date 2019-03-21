@@ -63,17 +63,10 @@ func (s *TaskStore) Create(p *model.Task, sheetID int64) (*model.Task, error) {
     return nil, err
   }
 
-  // get maximum order
-  var maxOrder int
-  err = s.db.Get(&maxOrder, "SELECT max(ordering) FROM task_sheet WHERE sheet_id = $1", sheetID)
-  if err != nil {
-    return nil, err
-  }
-
   // now associate sheet with course
   _, err = s.db.Exec(`INSERT INTO task_sheet
-    (id,task_id,sheet_id,ordering)
-    VALUES (DEFAULT, $1, $2, $3);`, newID, sheetID, maxOrder+1)
+    (id,task_id,sheet_id)
+    VALUES (DEFAULT, $1, $2);`, newID, sheetID)
   if err != nil {
     return nil, err
   }
@@ -105,7 +98,7 @@ func (s *TaskStore) TasksOfSheet(sheetID int64, only_active bool) ([]model.Task,
     WHERE
       s.id = $1
     ORDER BY
-      ts.ordering ASC;`, sheetID)
+      t.name ASC;`, sheetID)
   return p, err
 }
 

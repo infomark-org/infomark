@@ -52,13 +52,6 @@ func (s *MaterialStore) Create(p *model.Material, courseID int64) (*model.Materi
     return nil, err
   }
 
-  // get maximum order
-  var maxOrder int
-  err = s.db.Get(&maxOrder, "SELECT max(ordering) FROM sheet_course WHERE course_id = $1", courseID)
-  if err != nil {
-    return nil, err
-  }
-
   // now associate sheet with course
   _, err = s.db.Exec(`
 INSERT INTO

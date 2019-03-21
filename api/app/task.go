@@ -123,6 +123,7 @@ func (rs *TaskResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
   }
 
   task := &model.Task{
+    Name:               data.Name,
     MaxPoints:          data.MaxPoints,
     PublicDockerImage:  data.PublicDockerImage,
     PrivateDockerImage: data.PrivateDockerImage,
@@ -192,6 +193,7 @@ func (rs *TaskResource) EditHandler(w http.ResponseWriter, r *http.Request) {
   }
 
   task := r.Context().Value("task").(*model.Task)
+  task.Name = data.Name
   task.MaxPoints = data.MaxPoints
   task.PublicDockerImage = data.PublicDockerImage
   task.PrivateDockerImage = data.PrivateDockerImage

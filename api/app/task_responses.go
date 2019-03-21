@@ -30,6 +30,7 @@ import (
 // TaskResponse is the response payload for Task management.
 type TaskResponse struct {
 	ID                 int64  `json:"id" example:"684"`
+	Name               string `json:"name" example:"Task 1"`
 	MaxPoints          int    `json:"max_points" example:"23"`
 	PublicDockerImage  string `json:"public_docker_image" example:"DefaultJavaTestingImage"`
 	PrivateDockerImage string `json:"private_docker_image" example:"DefaultJavaTestingImage"`
@@ -39,6 +40,7 @@ type TaskResponse struct {
 func newTaskResponse(p *model.Task) *TaskResponse {
 	return &TaskResponse{
 		ID:                 p.ID,
+		Name:               p.Name,
 		MaxPoints:          p.MaxPoints,
 		PublicDockerImage:  p.PublicDockerImage,
 		PrivateDockerImage: p.PrivateDockerImage,
@@ -64,6 +66,7 @@ func newTaskListResponse(Tasks []model.Task) []render.Renderer {
 type MissingTaskResponse struct {
 	Task *struct {
 		ID                 int64  `json:"id" example:"684"`
+		Name               string `json:"name" example:"Task 1"`
 		MaxPoints          int    `json:"max_points" example:"23"`
 		PublicDockerImage  string `json:"public_docker_image" example:"DefaultJavaTestingImage"`
 		PrivateDockerImage string `json:"private_docker_image" example:"DefaultJavaTestingImage"`
@@ -77,11 +80,13 @@ func newMissingTaskResponse(p *model.MissingTask) *MissingTaskResponse {
 
 	task := struct {
 		ID                 int64  `json:"id" example:"684"`
+		Name               string `json:"name" example:"Task 1"`
 		MaxPoints          int    `json:"max_points" example:"23"`
 		PublicDockerImage  string `json:"public_docker_image" example:"DefaultJavaTestingImage"`
 		PrivateDockerImage string `json:"private_docker_image" example:"DefaultJavaTestingImage"`
 	}{
 		p.ID,
+		p.Name,
 		p.MaxPoints,
 		p.PublicDockerImage,
 		p.PrivateDockerImage,

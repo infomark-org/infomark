@@ -122,19 +122,20 @@ def create_sheet_course(sheet_id, course_id, k):
       ('id', VAL.DEFAULT),
       ('sheet_id', sheet_id),
       ('course_id', course_id),
-      ('ordering', k),
+      # ('ordering', k),
   ])
 
   return data
 
 
-def create_task():
+def create_task(k):
   data = OrderedDict([
       ('id', VAL.DEFAULT),
       ('created_at', VAL.TIMESTAMP),
       ('updated_at', VAL.TIMESTAMP),
 
       ('max_points', fake.random_int(10, 100)),
+      ('name', "task %i" % k),
       # ('public_test_path', 'path/to/tests/public_dummy_test'),
       # ('private_test_path', 'path/to/tests/private_dummy_test'),
 
@@ -150,7 +151,7 @@ def create_task_sheet(task_id, sheet_id, k):
       ('id', VAL.DEFAULT),
       ('task_id', task_id),
       ('sheet_id', sheet_id),
-      ('ordering', k),
+      # ('ordering', k),
   ])
 
   return data
@@ -328,7 +329,7 @@ if __name__ == "__main__":
     sheet_course.append(create_sheet_course(
         sheetCounter, course_id, sheetCounter))
     for k in range(3):
-      tasks.append(create_task())
+      tasks.append(create_task(k))
       task_sheet.append(create_task_sheet(taskCounter, sheetCounter, k))
       taskCounter += 1
     sheetCounter += 1

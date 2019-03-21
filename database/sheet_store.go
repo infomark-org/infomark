@@ -52,21 +52,14 @@ func (s *SheetStore) Create(p *model.Sheet, courseID int64) (*model.Sheet, error
     return nil, err
   }
 
-  // get maximum order
-  var maxOrder int
-  err = s.db.Get(&maxOrder, "SELECT max(ordering) FROM sheet_course WHERE course_id = $1", courseID)
-  if err != nil {
-    return nil, err
-  }
-
   // now associate sheet with course
   _, err = s.db.Exec(`
 INSERT INTO
   sheet_course
-  (id,sheet_id,course_id,ordering)
+  (id,sheet_id,course_id)
 VALUES
-  (DEFAULT, $1, $2, $3);`,
-    newID, courseID, maxOrder+1)
+  (DEFAULT, $1, $2);`,
+    newID, courseID)
   if err != nil {
     return nil, err
   }
@@ -97,7 +90,7 @@ INNER JOIN
 WHERE
   sc.course_id = $1
 ORDER BY
-  sc.ordering ASC;`, courseID)
+  s.name ASC;`, courseID)
   return p, err
 }
 
