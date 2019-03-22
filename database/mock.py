@@ -171,6 +171,31 @@ def create_submission(user_id, task_id):
 
 
 def create_grade(submission_id, tutor_id, max_points):
+
+  dummy_log = """[   OK   ] BinaryToStringValueTest:
+[   OK   ] BinaryToStringClassStructureTest:
+[   OK   ] AckermanClassStructureTest:
+[ FAILED ] AckermannValueTest:
+        Error 1/1
+          - Tag: failure
+          - Typ: junit.framework.AssertionFailedError
+          - Msg: ackermann(2, 2) expected:<7> but was:<9>
+
+[   OK   ] FibonacciValueTest:
+[   OK   ] FibonacciClassStructureTest:
+[ FAILED ] FactorialValueTest:
+        Error 1/1
+          - Tag: error
+          - Typ: java.lang.ClassCastException
+          - Msg: java.base/java.lang.Float cannot be cast to java.base/java.lang.Integer
+
+[ FAILED ] FactorialClassStructureTest:
+        Error 1/1
+          - Tag: failure
+          - Typ: junit.framework.AssertionFailedError
+          - Msg: Method `public static float factorial (int )` in `class Factorial` found, but expected return type (`int`) is wrong. I just found `float`
+"""
+
   data = OrderedDict([
       ('id', VAL.DEFAULT),
       ('created_at', VAL.TIMESTAMP),
@@ -180,8 +205,8 @@ def create_grade(submission_id, tutor_id, max_points):
       ('private_execution_state', fake.random_int(0, 2)),
 
       ('acquired_points', fake.random_int(0, max_points)),
-      ('public_test_log', 'Lorem Ipsum Public Test Log Stdout'),
-      ('private_test_log', 'Lorem Ipsum private Test Log Stdout'),
+      ('public_test_log', dummy_log),
+      ('private_test_log', dummy_log),
 
       ('public_test_status', fake.random_int(0, 1)),
       ('private_test_status', fake.random_int(0, 1)),
