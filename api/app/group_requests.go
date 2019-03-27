@@ -27,7 +27,10 @@ import (
 
 // groupRequest is the request payload for course management.
 type groupRequest struct {
-	TutorID int64 `json:"tutor_id" example:"15"`
+	// note, we will only use the id
+	Tutor *struct {
+		ID int64 `json:"id" example:"1"`
+	} `json:"tutor"`
 	// CourseID    int64  `json:"course_id"`
 	Description string `json:"description" example:"Gruppe fuer ersties am Montag im Raum C25435"`
 }
@@ -39,18 +42,29 @@ func (body *groupRequest) Bind(r *http.Request) error {
 		return errors.New("missing \"group\" data")
 	}
 
+	if body.Tutor == nil {
+		return errors.New("missing \"tutor\" data")
+	}
+
 	return body.Validate()
 
 }
 
 func (m *groupRequest) Validate() error {
-	return validation.ValidateStruct(m,
-		validation.Field(
-			&m.TutorID,
-			validation.Required,
-		),
+
+	err := validation.ValidateStruct(m,
 		validation.Field(
 			&m.Description,
+			validation.Required,
+		),
+	)
+	if err != nil {
+		return err
+	}
+
+	return validation.ValidateStruct(m.Tutor,
+		validation.Field(
+			&m.Tutor.ID,
 			validation.Required,
 		),
 	)

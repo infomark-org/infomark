@@ -102,24 +102,28 @@ func TestGroup(t *testing.T) {
       entries_before, err := stores.Group.GroupsOfCourse(1)
       g.Assert(err).Equal(nil)
 
-      entry_sent := &groupRequest{
-        TutorID:     1,
-        Description: "blah blahe",
+      tutorID := int64(1)
+
+      entry_sent := helper.H{
+        "tutor": helper.H{
+          "id": tutorID,
+        },
+        "description": "blah blahe",
       }
 
-      err = entry_sent.Validate()
-      g.Assert(err).Equal(nil)
+      // err = entry_sent.Validate()
+      // g.Assert(err).Equal(nil)
 
-      w := tape.PostWithClaims("/api/v1/courses/1/groups", helper.ToH(entry_sent), 1, true)
+      w := tape.PostWithClaims("/api/v1/courses/1/groups", entry_sent, 1, true)
       g.Assert(w.Code).Equal(http.StatusCreated)
 
       entry_return := &GroupResponse{}
       err = json.NewDecoder(w.Body).Decode(&entry_return)
-      g.Assert(entry_return.Tutor.ID).Equal(entry_sent.TutorID)
+      g.Assert(entry_return.Tutor.ID).Equal(tutorID)
       g.Assert(entry_return.CourseID).Equal(int64(1))
-      g.Assert(entry_return.Description).Equal(entry_sent.Description)
+      g.Assert(entry_return.Description).Equal("blah blahe")
 
-      t, err := stores.User.Get(entry_sent.TutorID)
+      t, err := stores.User.Get(1)
       g.Assert(err).Equal(nil)
       g.Assert(entry_return.Tutor.FirstName).Equal(t.FirstName)
       g.Assert(entry_return.Tutor.LastName).Equal(t.LastName)
@@ -134,27 +138,30 @@ func TestGroup(t *testing.T) {
 
     g.It("Should update a group", func() {
       // group (id=1) belongs to course(id=1)
-      entry_sent := &groupRequest{
-        TutorID:     9,
-        Description: "new descr",
+      tutorID := int64(9)
+      entry_sent := helper.H{
+        "tutor": helper.H{
+          "id": tutorID,
+        },
+        "description": "new descr",
       }
 
       // students
-      w := tape.PlayDataWithClaims("PUT", "/api/v1/courses/1/groups/1", tape.ToH(entry_sent), 112, false)
+      w := tape.PlayDataWithClaims("PUT", "/api/v1/courses/1/groups/1", entry_sent, 112, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // tutors
-      w = tape.PlayDataWithClaims("PUT", "/api/v1/courses/1/groups/1", tape.ToH(entry_sent), 2, false)
+      w = tape.PlayDataWithClaims("PUT", "/api/v1/courses/1/groups/1", entry_sent, 2, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // admin
-      w = tape.PlayDataWithClaims("PUT", "/api/v1/courses/1/groups/1", tape.ToH(entry_sent), 1, false)
+      w = tape.PlayDataWithClaims("PUT", "/api/v1/courses/1/groups/1", entry_sent, 1, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       entry_after, err := stores.Group.Get(1)
       g.Assert(err).Equal(nil)
 
-      g.Assert(entry_after.TutorID).Equal(entry_sent.TutorID)
+      g.Assert(entry_after.TutorID).Equal(tutorID)
       g.Assert(entry_after.CourseID).Equal(int64(1))
     })
 

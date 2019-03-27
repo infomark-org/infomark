@@ -99,7 +99,7 @@ func (rs *GroupResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
   course := r.Context().Value("course").(*model.Course)
 
   group := &model.Group{}
-  group.TutorID = data.TutorID
+  group.TutorID = data.Tutor.ID
   group.CourseID = course.ID
   group.Description = data.Description
 
@@ -236,7 +236,7 @@ func (rs *GroupResource) EditHandler(w http.ResponseWriter, r *http.Request) {
   }
 
   group := r.Context().Value("group").(*model.Group)
-  group.TutorID = data.TutorID
+  group.TutorID = data.Tutor.ID
   group.Description = data.Description
 
   // update database entry
