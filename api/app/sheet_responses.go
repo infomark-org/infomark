@@ -68,7 +68,9 @@ func (rs *SheetResource) newSheetListResponse(givenRole authorize.CourseRole, Sh
 }
 
 type TaskPointsResponse struct {
-	TaskPoints *model.TaskPoints `json:"task_points" example:"12"`
+	AquiredPoints int `json:"acquired_points" example:"58"`
+	MaxPoints     int `json:"max_points" example:"90"`
+	TaskID        int `json:"task_id" example:"2"`
 }
 
 func (body *TaskPointsResponse) Render(w http.ResponseWriter, r *http.Request) error {
@@ -77,7 +79,9 @@ func (body *TaskPointsResponse) Render(w http.ResponseWriter, r *http.Request) e
 
 func newTaskPointsResponse(p *model.TaskPoints) *TaskPointsResponse {
 	return &TaskPointsResponse{
-		TaskPoints: p,
+		AquiredPoints: p.AquiredPoints,
+		MaxPoints:     p.MaxPoints,
+		TaskID:        p.TaskID,
 	}
 }
 
