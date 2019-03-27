@@ -26,7 +26,6 @@ import (
 
   "github.com/cgtuebingen/infomark-backend/api/helper"
   "github.com/cgtuebingen/infomark-backend/email"
-  "github.com/cgtuebingen/infomark-backend/model"
   "github.com/franela/goblin"
   "github.com/spf13/viper"
 )
@@ -59,10 +58,21 @@ func TestTask(t *testing.T) {
       w := tape.GetWithClaims("/api/v1/courses/1/sheets/1/tasks", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      tasks_actual := []model.Task{}
-      err := json.NewDecoder(w.Body).Decode(&tasks_actual)
+      tasks_expected, err := stores.Task.TasksOfSheet(1, false)
+      g.Assert(err).Equal(nil)
+
+      tasks_actual := []TaskResponse{}
+      err = json.NewDecoder(w.Body).Decode(&tasks_actual)
       g.Assert(err).Equal(nil)
       g.Assert(len(tasks_actual)).Equal(3)
+
+      for k, _ := range tasks_actual {
+        g.Assert(tasks_expected[k].ID).Equal(tasks_actual[k].ID)
+        g.Assert(tasks_expected[k].MaxPoints).Equal(tasks_actual[k].MaxPoints)
+        g.Assert(tasks_expected[k].Name).Equal(tasks_actual[k].Name)
+        g.Assert(tasks_expected[k].PublicDockerImage).Equal(tasks_actual[k].PublicDockerImage)
+        g.Assert(tasks_expected[k].PrivateDockerImage).Equal(tasks_actual[k].PrivateDockerImage)
+      }
     })
 
     g.It("Should get a specific task", func() {

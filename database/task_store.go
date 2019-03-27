@@ -88,7 +88,7 @@ func (s *TaskStore) TasksOfSheet(sheetID int64, only_active bool) ([]model.Task,
   // t.public_test_path, t.private_test_path,
   err := s.db.Select(&p, `
     SELECT
-      t.id, t.created_at, t.updated_at, t.max_points,
+      t.id, t.created_at, t.updated_at, t.max_points, t.name,
       t.public_docker_image, t.private_docker_image
     FROM task_sheet ts
     INNER JOIN
