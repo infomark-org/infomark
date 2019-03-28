@@ -59,6 +59,7 @@ type FileHandle struct {
   Category   FileCategory
   ID         int64    // an unique identifier (e.g. from database)
   Extensions []string // some extra flag (ugly but works)
+  MaxBytes   int64    // 0 means no limit
 }
 
 // NewAvatarFileHandle will handle user avatars. We support jpg only.
@@ -67,6 +68,7 @@ func NewAvatarFileHandle(userID int64) *FileHandle {
     Category:   AvatarCategory,
     ID:         userID,
     Extensions: []string{"jpg", "jpeg", "png"},
+    MaxBytes:   500 * 1024, // 500 kb
   }
 }
 
@@ -76,6 +78,7 @@ func NewSheetFileHandle(ID int64) *FileHandle {
     Category:   SheetCategory,
     ID:         ID,
     Extensions: []string{"zip"},
+    MaxBytes:   0,
   }
 }
 
@@ -86,6 +89,7 @@ func NewPublicTestFileHandle(ID int64) *FileHandle {
     Category:   PublicTestCategory,
     ID:         ID,
     Extensions: []string{"zip"},
+    MaxBytes:   0,
   }
 }
 
@@ -96,6 +100,7 @@ func NewPrivateTestFileHandle(ID int64) *FileHandle {
     Category:   PrivateTestCategory,
     ID:         ID,
     Extensions: []string{"zip"},
+    MaxBytes:   0,
   }
 }
 
@@ -105,6 +110,7 @@ func NewMaterialFileHandle(ID int64) *FileHandle {
     Category:   MaterialCategory,
     ID:         ID,
     Extensions: []string{"zip", "pdf"},
+    MaxBytes:   0,
   }
 }
 
@@ -114,6 +120,7 @@ func NewSubmissionFileHandle(ID int64) *FileHandle {
     Category:   SubmissionCategory,
     ID:         ID,
     Extensions: []string{"zip"},
+    MaxBytes:   4 * 1024 * 1024, // 4 Mb
   }
 }
 
@@ -243,9 +250,27 @@ func (f *FileHandle) WriteToBody(w http.ResponseWriter) error {
   return nil
 }
 
+type DummyWriter struct{}
+
+func (h DummyWriter) Header() http.Header {
+  return make(map[string][]string)
+}
+
+func (h DummyWriter) Write([]byte) (int, error) {
+  return 0, nil
+}
+
+func (h DummyWriter) WriteHeader(statusCode int) {}
+
 // WriteToDisk will save uploads from a http request to the directory specified
 // in the config.
 func (f *FileHandle) WriteToDisk(r *http.Request, fieldName string) error {
+
+  w := DummyWriter{}
+
+  if f.MaxBytes != 0 {
+    r.Body = http.MaxBytesReader(w, r.Body, f.MaxBytes)
+  }
 
   // receive data from post request
   if err := r.ParseMultipartForm(32 << 20); err != nil {

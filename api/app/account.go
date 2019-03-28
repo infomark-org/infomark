@@ -295,7 +295,7 @@ func (rs *AccountResource) ChangeAvatarHandler(w http.ResponseWriter, r *http.Re
   }
 
   if err := helper.NewAvatarFileHandle(user.ID).WriteToDisk(r, "file_data"); err != nil {
-    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    render.Render(w, r, ErrBadRequestWithDetails(err))
   }
 
   user.AvatarURL = null.StringFrom(fmt.Sprintf("/api/v1/users/%s/avatar", strconv.FormatInt(user.ID, 10)))

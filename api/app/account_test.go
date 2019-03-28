@@ -21,7 +21,9 @@ package app
 import (
   "encoding/json"
   "fmt"
+  "log"
   "net/http"
+  "os"
   "strings"
   "testing"
 
@@ -346,6 +348,42 @@ func TestAccount(t *testing.T) {
       g.Assert(err).Equal(nil)
       g.Assert(w.Code).Equal(http.StatusOK)
       g.Assert(strings.HasSuffix(w.HeaderMap["Content-Type"][0], "png")).Equal(true)
+
+    })
+
+    g.It("reject to large avatars (jpg)", func() {
+      defer helper.NewAvatarFileHandle(1).Delete()
+
+      // create 10MB file > 5kb
+      f, err := os.Create("/tmp/foo.jpg")
+      if err != nil {
+        log.Fatal(err)
+      }
+      if err := f.Truncate(1e7); err != nil {
+        log.Fatal(err)
+      }
+
+      defer func() {
+        os.Remove("/tmp/foo.jpg")
+      }()
+
+      // no file so far
+      g.Assert(helper.NewAvatarFileHandle(1).Exists()).Equal(false)
+
+      // no avatar by default
+      w := tape.GetWithClaims("/api/v1/account", 1, true)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      user_return := &userResponse{}
+      err = json.NewDecoder(w.Body).Decode(user_return)
+      g.Assert(err).Equal(nil)
+      g.Assert(user_return.AvatarURL.Valid).Equal(false)
+
+      // upload avatar
+      w, err = tape.UploadWithClaims("/api/v1/account/avatar", "/tmp/foo.jpg", "image/jpg", 1, true)
+      g.Assert(err).Equal(nil)
+      g.Assert(w.Code).Equal(http.StatusBadRequest)
+      g.Assert(helper.NewAvatarFileHandle(1).Exists()).Equal(false)
 
     })
 
