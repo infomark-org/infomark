@@ -56,23 +56,26 @@ type FileManager interface {
 
 // FileHandle represents all information for file being uploaded or downloaded.
 type FileHandle struct {
-  Category FileCategory
-  ID       int64 // an unique identifier (e.g. from database)
+  Category   FileCategory
+  ID         int64    // an unique identifier (e.g. from database)
+  Extensions []string // some extra flag (ugly but works)
 }
 
 // NewAvatarFileHandle will handle user avatars. We support jpg only.
 func NewAvatarFileHandle(userID int64) *FileHandle {
   return &FileHandle{
-    Category: AvatarCategory,
-    ID:       userID,
+    Category:   AvatarCategory,
+    ID:         userID,
+    Extensions: []string{"jpg", "jpeg", "png"},
   }
 }
 
 // NewSheetFileHandle will handle exercise sheets (zip files).
 func NewSheetFileHandle(ID int64) *FileHandle {
   return &FileHandle{
-    Category: SheetCategory,
-    ID:       ID,
+    Category:   SheetCategory,
+    ID:         ID,
+    Extensions: []string{"zip"},
   }
 }
 
@@ -80,8 +83,9 @@ func NewSheetFileHandle(ID int64) *FileHandle {
 // public unit tests (zip files).
 func NewPublicTestFileHandle(ID int64) *FileHandle {
   return &FileHandle{
-    Category: PublicTestCategory,
-    ID:       ID,
+    Category:   PublicTestCategory,
+    ID:         ID,
+    Extensions: []string{"zip"},
   }
 }
 
@@ -89,24 +93,27 @@ func NewPublicTestFileHandle(ID int64) *FileHandle {
 // private unit tests (zip files).
 func NewPrivateTestFileHandle(ID int64) *FileHandle {
   return &FileHandle{
-    Category: PrivateTestCategory,
-    ID:       ID,
+    Category:   PrivateTestCategory,
+    ID:         ID,
+    Extensions: []string{"zip"},
   }
 }
 
 // NewMaterialFileHandle will handle course slides or extra material (zip files).
 func NewMaterialFileHandle(ID int64) *FileHandle {
   return &FileHandle{
-    Category: MaterialCategory,
-    ID:       ID,
+    Category:   MaterialCategory,
+    ID:         ID,
+    Extensions: []string{"zip", "pdf"},
   }
 }
 
 // NewSubmissionFileHandle will handle homework/exercise submissiosn (zip files).
 func NewSubmissionFileHandle(ID int64) *FileHandle {
   return &FileHandle{
-    Category: SubmissionCategory,
-    ID:       ID,
+    Category:   SubmissionCategory,
+    ID:         ID,
+    Extensions: []string{"zip"},
   }
 }
 
@@ -131,7 +138,14 @@ func (f *FileHandle) Sha256() (string, error) {
 func (f *FileHandle) Path() string {
   switch f.Category {
   case AvatarCategory:
-    return fmt.Sprintf("%s/avatars/%s.jpg", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
+
+    for _, ext := range f.Extensions {
+      path := fmt.Sprintf("%s/avatars/%s.%s", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10), ext)
+      if fileExists(path) {
+        return path
+      }
+    }
+    return ""
 
   case SheetCategory:
     return fmt.Sprintf("%s/sheets/%s.zip", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
@@ -143,7 +157,14 @@ func (f *FileHandle) Path() string {
     return fmt.Sprintf("%s/tasks/%s-private.zip", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
 
   case MaterialCategory:
-    return fmt.Sprintf("%s/materials/%s.zip", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
+
+    for _, ext := range f.Extensions {
+      path := fmt.Sprintf("%s/materials/%s.%s", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10), ext)
+      if fileExists(path) {
+        return path
+      }
+    }
+    return ""
 
   case SubmissionCategory:
     return fmt.Sprintf("%s/submissions/%s.zip", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
@@ -152,13 +173,17 @@ func (f *FileHandle) Path() string {
 }
 
 // Exists checks if a file really exists.
-func (f *FileHandle) Exists() bool {
-
-  if _, err := os.Stat(f.Path()); os.IsNotExist(err) {
+func fileExists(path string) bool {
+  if _, err := os.Stat(path); os.IsNotExist(err) {
     return false
   }
 
   return true
+}
+
+// Exists checks if a file really exists.
+func (f *FileHandle) Exists() bool {
+  return fileExists(f.Path())
 }
 
 // Delete deletes a file from disk.
@@ -236,20 +261,27 @@ func (f *FileHandle) WriteToDisk(r *http.Request, fieldName string) error {
 
   givenContentType := handler.Header["Content-Type"][0]
 
+  path := f.Path()
+
   switch f.Category {
   case AvatarCategory:
 
     switch givenContentType {
-    case "image/jpeg", "image/jpg":
+    case "image/jpeg", "image/jpg", "image/png":
+
+      if givenContentType == "image/png" {
+        path = fmt.Sprintf("%s/avatars/%s.png", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
+      } else {
+        path = fmt.Sprintf("%s/avatars/%s.jpg", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
+      }
 
     default:
-      return errors.New(fmt.Sprintf("We support JPG/JPEG files only. But %s was given", givenContentType))
+      return errors.New(fmt.Sprintf("We support JPG/JPEG/PNG files only. But %s was given", givenContentType))
 
     }
   case SheetCategory,
     PublicTestCategory,
     PrivateTestCategory,
-    MaterialCategory,
     SubmissionCategory:
     switch givenContentType {
     case "application/zip", "application/octet-stream":
@@ -258,10 +290,25 @@ func (f *FileHandle) WriteToDisk(r *http.Request, fieldName string) error {
       return errors.New(fmt.Sprintf("We support ZIP files only. But %s was given", givenContentType))
 
     }
-  }
+  case MaterialCategory:
+    switch givenContentType {
+    case "application/zip", "application/octet-stream", "application/pdf":
 
+      if givenContentType == "application/pdf" {
+        path = fmt.Sprintf("%s/materials/%s.pdf", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
+
+      } else {
+        path = fmt.Sprintf("%s/materials/%s.zip", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
+
+      }
+
+    default:
+      return errors.New(fmt.Sprintf("We support ZIP files only. But %s was given", givenContentType))
+
+    }
+  }
   // try to open new file
-  hnd, err := os.OpenFile(f.Path(), os.O_WRONLY|os.O_CREATE, 0666)
+  hnd, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0666)
   if err != nil {
     return err
   }
@@ -269,9 +316,6 @@ func (f *FileHandle) WriteToDisk(r *http.Request, fieldName string) error {
 
   // copy file from request
   _, err = io.Copy(hnd, file)
-  if err != nil {
-    return err
-  }
+  return err
 
-  return nil
 }

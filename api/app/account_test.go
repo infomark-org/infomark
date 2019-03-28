@@ -22,6 +22,7 @@ import (
   "encoding/json"
   "fmt"
   "net/http"
+  "strings"
   "testing"
 
   "github.com/cgtuebingen/infomark-backend/api/helper"
@@ -265,7 +266,7 @@ func TestAccount(t *testing.T) {
       g.Assert(user_after.ConfirmEmailToken.Valid).Equal(false)
     })
 
-    g.It("Should have empty avatar url when no avatar is given", func() {
+    g.It("should change avatar (jpg)", func() {
       defer helper.NewAvatarFileHandle(1).Delete()
 
       // no file so far
@@ -297,6 +298,54 @@ func TestAccount(t *testing.T) {
       err = json.NewDecoder(w.Body).Decode(&user_return)
       g.Assert(err).Equal(nil)
       g.Assert(user_return.AvatarURL.Valid).Equal(true)
+
+      w = tape.GetWithClaims("/api/v1/account/avatar", 1, true)
+      g.Assert(err).Equal(nil)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      if !strings.HasSuffix(w.HeaderMap["Content-Type"][0], "jpeg") {
+        g.Assert(strings.HasSuffix(w.HeaderMap["Content-Type"][0], "jpg")).Equal(true)
+      }
+
+    })
+
+    g.It("should change avatar (png)", func() {
+      defer helper.NewAvatarFileHandle(1).Delete()
+
+      // no file so far
+      g.Assert(helper.NewAvatarFileHandle(1).Exists()).Equal(false)
+
+      // no avatar by default
+      w := tape.GetWithClaims("/api/v1/account", 1, true)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      user_return := &userResponse{}
+      err := json.NewDecoder(w.Body).Decode(user_return)
+      g.Assert(err).Equal(nil)
+      g.Assert(user_return.AvatarURL.Valid).Equal(false)
+
+      // upload avatar
+      avatar_filename := fmt.Sprintf("%s/default-avatar.png", viper.GetString("fixtures_dir"))
+      w, err = tape.UploadWithClaims("/api/v1/account/avatar", avatar_filename, "image/png", 1, true)
+      g.Assert(err).Equal(nil)
+      g.Assert(w.Code).Equal(http.StatusOK)
+      g.Assert(helper.NewAvatarFileHandle(1).Exists()).Equal(true)
+
+      user, err := stores.User.Get(1)
+      g.Assert(err).Equal(nil)
+      g.Assert(user.AvatarURL.Valid).Equal(true)
+
+      // there should be now an avatar
+      w = tape.GetWithClaims("/api/v1/account", 1, true)
+      g.Assert(w.Code).Equal(http.StatusOK)
+      err = json.NewDecoder(w.Body).Decode(&user_return)
+      g.Assert(err).Equal(nil)
+      g.Assert(user_return.AvatarURL.Valid).Equal(true)
+
+      w = tape.GetWithClaims("/api/v1/account/avatar", 1, true)
+      g.Assert(err).Equal(nil)
+      g.Assert(w.Code).Equal(http.StatusOK)
+      g.Assert(strings.HasSuffix(w.HeaderMap["Content-Type"][0], "png")).Equal(true)
 
     })
 

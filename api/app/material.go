@@ -233,14 +233,13 @@ func (rs *MaterialResource) GetFileHandler(w http.ResponseWriter, r *http.Reques
 
   material := r.Context().Value("material").(*model.Material)
   hnd := helper.NewMaterialFileHandle(material.ID)
-
   if !hnd.Exists() {
     render.Render(w, r, ErrNotFound)
     return
-  } else {
-    if err := hnd.WriteToBody(w); err != nil {
-      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-    }
+  }
+
+  if err := hnd.WriteToBody(w); err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
   }
 }
 
@@ -256,6 +255,8 @@ func (rs *MaterialResource) GetFileHandler(w http.ResponseWriter, r *http.Reques
 // RESPONSE: 401,Unauthenticated
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  change the zip file of a sheet
+// DESCRIPTION:
+// This endpoint will only support pdf or zip files.
 func (rs *MaterialResource) ChangeFileHandler(w http.ResponseWriter, r *http.Request) {
   // will always be a POST
   material := r.Context().Value("material").(*model.Material)

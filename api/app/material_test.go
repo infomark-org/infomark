@@ -143,6 +143,11 @@ func TestMaterial(t *testing.T) {
     })
 
     g.It("Should skip non-existent material file", func() {
+
+      hnd := helper.NewMaterialFileHandle(1)
+      g.Assert(hnd.Exists()).Equal(false)
+      g.Assert(hnd.Exists()).Equal(false)
+
       w := tape.GetWithClaims("/api/v1/courses/1/materials/1/file", 1, true)
       g.Assert(w.Code).Equal(http.StatusNotFound)
     })
@@ -176,10 +181,47 @@ func TestMaterial(t *testing.T) {
       g.Assert(w.Code).Equal(http.StatusOK)
 
       // check disk
-      g.Assert(helper.NewMaterialFileHandle(1).Exists()).Equal(true)
+      hnd := helper.NewMaterialFileHandle(1)
+      g.Assert(hnd.Exists()).Equal(true)
 
       // a file should be now served
       w = tape.GetWithClaims("/api/v1/courses/1/materials/1/file", 1, true)
+      g.Assert(w.Code).Equal(http.StatusOK)
+    })
+
+    g.It("Should upload material file (zip)", func() {
+      defer helper.NewMaterialFileHandle(1).Delete()
+      filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
+      // admin
+      w, err := tape.UploadWithClaims("/api/v1/courses/1/materials/1/file", filename, "application/zip", 1, false)
+      g.Assert(err).Equal(nil)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      // check disk
+      hnd := helper.NewMaterialFileHandle(1)
+      g.Assert(hnd.Exists()).Equal(true)
+
+      // a file should be now served
+      w = tape.GetWithClaims("/api/v1/courses/1/materials/1/file", 1, true)
+      g.Assert(w.HeaderMap["Content-Type"][0]).Equal("application/zip")
+      g.Assert(w.Code).Equal(http.StatusOK)
+    })
+
+    g.It("Should upload material file (pdf)", func() {
+      defer helper.NewMaterialFileHandle(1).Delete()
+      filename := fmt.Sprintf("%s/empty.pdf", viper.GetString("fixtures_dir"))
+      // admin
+      w, err := tape.UploadWithClaims("/api/v1/courses/1/materials/1/file", filename, "application/pdf", 1, false)
+      g.Assert(err).Equal(nil)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      // check disk
+      hnd := helper.NewMaterialFileHandle(1)
+      g.Assert(hnd.Exists()).Equal(true)
+
+      // a file should be now served
+      w = tape.GetWithClaims("/api/v1/courses/1/materials/1/file", 1, true)
+      g.Assert(w.HeaderMap["Content-Type"][0]).Equal("application/pdf")
       g.Assert(w.Code).Equal(http.StatusOK)
     })
 

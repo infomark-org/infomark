@@ -259,9 +259,14 @@ func (rs *AccountResource) GetHandler(w http.ResponseWriter, r *http.Request) {
 func (rs *AccountResource) GetAvatarHandler(w http.ResponseWriter, r *http.Request) {
 
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
-  user, err := rs.Stores.User.Get(accessClaims.LoginID)
+  file := helper.NewAvatarFileHandle(accessClaims.LoginID)
 
-  if err = helper.NewAvatarFileHandle(user.ID).WriteToBody(w); err != nil {
+  if !file.Exists() {
+    render.Render(w, r, ErrNotFound)
+    return
+  }
+
+  if err := file.WriteToBody(w); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
   }
 
@@ -277,7 +282,7 @@ func (rs *AccountResource) GetAvatarHandler(w http.ResponseWriter, r *http.Reque
 // RESPONSE: 401,Unauthenticated
 // SUMMARY:  Change the specific account avatar of the request identity
 // DESCRIPTION:
-// We currently support only jpg images.
+// We currently support only jpg, jpeg,png images.
 func (rs *AccountResource) ChangeAvatarHandler(w http.ResponseWriter, r *http.Request) {
 
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
