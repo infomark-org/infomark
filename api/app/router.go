@@ -89,6 +89,7 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
           r.Route("/{user_id}", func(r chi.Router) {
             r.Use(appAPI.User.Context)
             r.Get("/", appAPI.User.GetHandler)
+            r.Get("/avatar", appAPI.User.GetAvatarHandler)
             r.Put("/", appAPI.User.EditHandler)
             r.Delete("/", appAPI.User.DeleteHandler)
             r.Post("/emails", appAPI.User.SendEmailHandler)

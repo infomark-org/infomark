@@ -293,7 +293,7 @@ func (rs *AccountResource) ChangeAvatarHandler(w http.ResponseWriter, r *http.Re
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
   }
 
-  user.AvatarURL = null.StringFrom(fmt.Sprintf("/api/v1/user/%s/avatar", strconv.FormatInt(user.ID, 10)))
+  user.AvatarURL = null.StringFrom(fmt.Sprintf("/api/v1/users/%s/avatar", strconv.FormatInt(user.ID, 10)))
   if err := rs.Stores.User.Update(user); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
   }

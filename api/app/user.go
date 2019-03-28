@@ -23,6 +23,7 @@ import (
   "net/http"
   "strconv"
 
+  "github.com/cgtuebingen/infomark-backend/api/helper"
   "github.com/cgtuebingen/infomark-backend/auth"
   "github.com/cgtuebingen/infomark-backend/auth/authenticate"
   "github.com/cgtuebingen/infomark-backend/email"
@@ -123,6 +124,31 @@ func (rs *UserResource) GetHandler(w http.ResponseWriter, r *http.Request) {
   if err := render.Render(w, r, newUserResponse(user)); err != nil {
     render.Render(w, r, ErrRender(err))
     return
+  }
+}
+
+// GetAvatarHandler is public endpoint for
+// URL: /users/{user_id}/avatar
+// URLPARAM: user_id,integer
+// METHOD: get
+// TAG: users
+// RESPONSE: 200,userResponse
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// SUMMARY:  Get user details
+func (rs *UserResource) GetAvatarHandler(w http.ResponseWriter, r *http.Request) {
+  // `user` is retrieved via middle-ware
+  user := r.Context().Value("user").(*model.User)
+
+  file := helper.NewAvatarFileHandle(user.ID)
+
+  if !file.Exists() {
+    render.Render(w, r, ErrNotFound)
+    return
+  }
+
+  if err := file.WriteToBody(w); err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
   }
 }
 
