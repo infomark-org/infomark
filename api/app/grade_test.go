@@ -55,13 +55,16 @@ func TestGrade(t *testing.T) {
     g.It("Should list all grades of a group", func() {
       url := "/api/v1/courses/1/grades?group_id=1"
 
+      grades_expected, err := stores.Grade.GetFiltered(1, 0, 0, 1, 0, 0, "%%", -1, 0, 0, -1, -1)
+      g.Assert(err).Equal(nil)
+
       w := tape.GetWithClaims(url, 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       grades_actual := []GradeResponse{}
-      err := json.NewDecoder(w.Body).Decode(&grades_actual)
+      err = json.NewDecoder(w.Body).Decode(&grades_actual)
       g.Assert(err).Equal(nil)
-      g.Assert(len(grades_actual)).Equal(229)
+      g.Assert(len(grades_actual)).Equal(len(grades_expected))
     })
 
     g.It("Should list all grades of a group with some filters", func() {

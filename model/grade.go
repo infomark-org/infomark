@@ -39,24 +39,12 @@ type Grade struct {
 	AcquiredPoints        int    `db:"acquired_points"`
 	Feedback              string `db:"feedback"`
 	TutorID               int64  `db:"tutor_id"`
+	UserID                int64  `db:"user_id,readonly"`
 	SubmissionID          int64  `db:"submission_id"`
 }
 
 type MissingGrade struct {
-	ID                    int64     `db:"id"`
-	CreatedAt             time.Time `db:"created_at,omitempty"`
-	UpdatedAt             time.Time `db:"updated_at,omitempty"`
-	PublicExecutionState  int       `db:"public_execution_state"`
-	PrivateExecutionState int       `db:"private_execution_state"`
-	PublicTestLog         string    `db:"public_test_log"`
-	PrivateTestLog        string    `db:"private_test_log"`
-	PublicTestStatus      int       `db:"public_test_status"`
-	PrivateTestStatus     int       `db:"private_test_status"`
-	AcquiredPoints        int       `db:"acquired_points"`
-	Feedback              string    `db:"feedback"`
-	TutorID               int64     `db:"tutor_id"`
-	SubmissionID          int64     `db:"submission_id"`
-
+	Grade
 	CourseID int64 `db:"course_id"`
 	SheetID  int64 `db:"sheet_id"`
 	TaskID   int64 `db:"task_id"`

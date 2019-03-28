@@ -84,8 +84,9 @@ func (d *DatabaseSyntax) placeholder(n int) string {
 
 // represents an entry in a struct
 type structField struct {
-  column string
-  index  int
+  column   string
+  index    int
+  readonly bool
 }
 
 // represents all entries from a struct
@@ -141,10 +142,15 @@ func parseStruct(objectType reflect.Type) (*structInfo, error) {
 
     // default to the field name
     name := f.Name
+    readonly := false
 
     // the tag can override the field name
     if len(tag) > 0 && tag[0] != "" {
       name = tag[0]
+    }
+
+    if len(tag) > 1 && tag[1] == "readonly" {
+      readonly = true
     }
 
     if name == "id" {
@@ -166,8 +172,9 @@ func parseStruct(objectType reflect.Type) (*structInfo, error) {
       return nil, fmt.Errorf("sqlorcale found multiple fields for column %s", name)
     }
     data.fields[name] = &structField{
-      column: name,
-      index:  i,
+      column:   name,
+      index:    i,
+      readonly: readonly,
     }
     data.columns = append(data.columns, name)
 
@@ -285,6 +292,10 @@ func (d *DatabaseSyntax) PackStatementData(src interface{}) ([]StatementData, er
     field, present := data.fields[name]
 
     if name == "id" {
+      continue
+    }
+
+    if field.readonly {
       continue
     }
 

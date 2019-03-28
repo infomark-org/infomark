@@ -39,6 +39,7 @@ type GradeResponse struct {
   AcquiredPoints        int    `json:"acquired_points" example:"19"`
   Feedback              string `json:"feedback" example:"Some feedback"`
   TutorID               int64  `json:"tutor_id" example:"2"`
+  UserID                int64  `json:"user_id" example:"222"`
   SubmissionID          int64  `json:"submission_id" example:"31"`
 }
 
@@ -60,6 +61,7 @@ func newGradeResponse(p *model.Grade) *GradeResponse {
     AcquiredPoints:        p.AcquiredPoints,
     Feedback:              p.Feedback,
     TutorID:               p.TutorID,
+    UserID:                p.UserID,
     SubmissionID:          p.SubmissionID,
   }
 }
@@ -87,6 +89,7 @@ type MissingGradeResponse struct {
     AcquiredPoints        int    `json:"acquired_points" example:"19"`
     Feedback              string `json:"feedback" example:"Some feedback"`
     TutorID               int64  `json:"tutor_id" example:"2"`
+    UserID                int64  `json:"user_id" example:"222"`
     SubmissionID          int64  `json:"submission_id" example:"31"`
   } `json:"grade"`
   CourseID int64 `json:"course_id" example:"1"`
@@ -118,6 +121,7 @@ func newMissingGradeResponse(p *model.MissingGrade) *MissingGradeResponse {
   r.Grade.AcquiredPoints = p.AcquiredPoints
   r.Grade.Feedback = p.Feedback
   r.Grade.TutorID = p.TutorID
+  r.Grade.UserID = p.UserID
   r.Grade.SubmissionID = p.SubmissionID
   return r
 
@@ -125,7 +129,6 @@ func newMissingGradeResponse(p *model.MissingGrade) *MissingGradeResponse {
 
 // newMissingGradeListResponse creates a response from a list of Grade models.
 func newMissingGradeListResponse(Grades []model.MissingGrade) []render.Renderer {
-  // https://stackoverflow.com/a/36463641/7443104
   list := []render.Renderer{}
   for k := range Grades {
     list = append(list, newMissingGradeResponse(&Grades[k]))

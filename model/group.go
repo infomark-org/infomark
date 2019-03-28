@@ -42,13 +42,7 @@ type GroupEnrollment struct {
 }
 
 type GroupWithTutor struct {
-  ID        int64     `db:"id"`
-  CreatedAt time.Time `db:"created_at,omitempty"`
-  UpdatedAt time.Time `db:"updated_at,omitempty"`
-
-  TutorID     int64  `db:"tutor_id"`
-  CourseID    int64  `db:"course_id"`
-  Description string `db:"description"`
+  Group
 
   TutorFirstName string      `db:"tutor_first_name"`
   TutorLastName  string      `db:"tutor_last_name"`
