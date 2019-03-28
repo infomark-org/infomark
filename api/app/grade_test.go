@@ -125,6 +125,42 @@ func TestGrade(t *testing.T) {
       g.Assert(entry_after.TutorID).Equal(int64(3))
     })
 
+    g.It("Should not perform updates (too many points)", func() {
+
+      task, err := stores.Grade.IdentifyTaskOfGrade(1)
+      g.Assert(err).Equal(nil)
+
+      entry_before, err := stores.Grade.Get(1)
+      g.Assert(err).Equal(nil)
+
+      data := H{
+        "acquired_points": task.MaxPoints + 10,
+        "feedback":        "Lorem Ipsum_update",
+      }
+
+      w := tape.Put("/api/v1/courses/1/grades/1", data)
+      g.Assert(w.Code).Equal(http.StatusUnauthorized)
+
+      // students
+      w = tape.PutWithClaims("/api/v1/courses/1/grades/1", data, 112, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+
+      // admin
+      w = tape.PutWithClaims("/api/v1/courses/1/grades/1", data, 1, false)
+      g.Assert(w.Code).Equal(http.StatusBadRequest)
+
+      // tutors
+      w = tape.PutWithClaims("/api/v1/courses/1/grades/1", data, 3, false)
+      g.Assert(w.Code).Equal(http.StatusBadRequest)
+
+      entry_after, err := stores.Grade.Get(1)
+      g.Assert(err).Equal(nil)
+
+      g.Assert(entry_after.Feedback).Equal(entry_before.Feedback)
+      g.Assert(entry_after.AcquiredPoints).Equal(entry_before.AcquiredPoints)
+      g.Assert(entry_after.TutorID).Equal(entry_before.TutorID)
+    })
+
     g.It("Should list missing grades", func() {
       result := []MissingGradeResponse{}
       // students have no missing data

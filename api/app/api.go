@@ -171,6 +171,7 @@ type GradeStore interface {
 
   UpdatePrivateTestInfo(gradeID int64, log string, status int) error
   UpdatePublicTestInfo(gradeID int64, log string, status int) error
+  IdentifyTaskOfGrade(gradeID int64) (*model.Task, error)
 }
 
 // API provides application resources and handlers.

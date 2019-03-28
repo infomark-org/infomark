@@ -174,3 +174,22 @@ WHERE g.id = $1`,
 
   return course, err
 }
+
+func (s *GradeStore) IdentifyTaskOfGrade(gradeID int64) (*model.Task, error) {
+
+  task := &model.Task{}
+  err := s.db.Get(task,
+    `
+SELECT t.*
+FROM grades g
+INNER JOIN submissions s ON s.id = g.submission_id
+INNER JOIN task_sheet ts ON ts.task_id = s.task_id
+INNER JOIN tasks t ON ts.task_id = t.id
+WHERE g.id = $1`,
+    gradeID)
+  if err != nil {
+    return nil, err
+  }
+
+  return task, err
+}

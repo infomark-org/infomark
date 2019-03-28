@@ -21,6 +21,7 @@ package app
 import (
   "context"
   "errors"
+  "fmt"
   "net/http"
   "strconv"
 
@@ -65,8 +66,21 @@ func (rs *GradeResource) EditHandler(w http.ResponseWriter, r *http.Request) {
     render.Render(w, r, ErrBadRequestWithDetails(err))
     return
   }
+
+  task, err := rs.Stores.Grade.IdentifyTaskOfGrade(currentGrade.ID)
+  if err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
+  if data.AcquiredPoints > task.MaxPoints {
+    render.Render(w, r, ErrBadRequestWithDetails(fmt.Errorf("aquired points is larger than max-points %v is more than %v", data.AcquiredPoints, task.MaxPoints)))
+    return
+  }
+
   currentGrade.Feedback = data.Feedback
   currentGrade.AcquiredPoints = data.AcquiredPoints
+
   currentGrade.TutorID = accessClaims.LoginID
 
   // update database entry
