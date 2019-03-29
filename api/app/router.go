@@ -25,6 +25,7 @@ import (
   "os"
   "path/filepath"
   "strings"
+  "time"
 
   "github.com/cgtuebingen/infomark-backend/auth/authenticate"
   "github.com/cgtuebingen/infomark-backend/auth/authorize"
@@ -38,6 +39,8 @@ import (
   "github.com/spf13/viper"
 )
 
+// The golang fork-join multi-threading allows no easy way to cancel started request
+// Therefore we limit the amount of data which is read by the server.
 func LimitedDecoder(r *http.Request, v interface{}) error {
   var err error
 
@@ -56,6 +59,35 @@ func init() {
   render.Decode = LimitedDecoder
 }
 
+// Version writes the current API version to the headers.
+func VersionMiddleware(next http.Handler) http.Handler {
+  return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+    w.Header().Set("X-INFOMARK-VERSION", "0.0.1")
+    next.ServeHTTP(w, r)
+  })
+}
+
+// Secure writes required access headers to all requests.
+func SecureMiddleware(next http.Handler) http.Handler {
+  return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+    w.Header().Set("X-Frame-Options", "DENY")
+    w.Header().Set("X-Content-Type-Options", "nosniff")
+    w.Header().Set("X-XSS-Protection", "1; mode=block")
+    next.ServeHTTP(w, r)
+  })
+}
+
+// NoCache writes required cache headers to all requests.
+func NoCache(next http.Handler) http.Handler {
+  return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+    w.Header().Set("Cache-Control", "no-cache, no-store, max-age=0, must-revalidate, value")
+    w.Header().Set("Expires", "Thu, 01 Jan 1970 00:00:00 GMT")
+    w.Header().Set("Last-Modified", time.Now().UTC().Format(http.TimeFormat))
+
+    next.ServeHTTP(w, r)
+  })
+}
+
 // New configures application resources and routes.
 func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
   logger := logging.NewLogger()
@@ -72,6 +104,9 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
   }
 
   r := chi.NewRouter()
+  r.Use(VersionMiddleware)
+  r.Use(SecureMiddleware)
+  r.Use(NoCache)
   r.Use(middleware.Recoverer)
   r.Use(middleware.RequestID)
   // the following line does not make any sense
