@@ -167,7 +167,7 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
   ds := service.NewDockerService()
   defer ds.Client.Close()
 
-  stdout, exit, err := ds.Run(msg.DockerImage, submission_path, framework_path)
+  stdout, exit, err := ds.Run(msg.DockerImage, submission_path, framework_path, viper.GetInt64("worker_docker_memory_bytes"))
   if err != nil {
     return err
   }

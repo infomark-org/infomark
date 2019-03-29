@@ -101,6 +101,7 @@ func (ds *DockerService) Run(
   imageName string,
   submissionZipFile string,
   frameworkZipFile string,
+  DockerMemoryBytes int64,
 ) (string, int64, error) {
   // create some context for docker
 
@@ -121,13 +122,14 @@ func (ds *DockerService) Run(
     AttachStdout:    true,
     AttachStderr:    true,
     NetworkDisabled: true, // no network activity required
+    // StopTimeout:
   }
 
   hostCfg := &container.HostConfig{
-    // Resources: container.Resources{
-    //   Memory:     1024 * 1024 * 200, // 200mb
-    //   MemorySwap: 0,
-    // },
+    Resources: container.Resources{
+      Memory:     DockerMemoryBytes, // 200mb
+      MemorySwap: 0,
+    },
     // AutoRemove: true,
     Mounts: []mount.Mount{
       {
@@ -155,6 +157,9 @@ func (ds *DockerService) Run(
   }
 
   exitCode, err := ds.Client.ContainerWait(ds.Context, resp.ID)
+  if err != nil {
+    return "", exitCode, err
+  }
   outputReader, err := ds.Client.ContainerLogs(ds.Context, resp.ID, types.ContainerLogsOptions{ShowStdout: true})
   if err != nil {
     return "", 0, err

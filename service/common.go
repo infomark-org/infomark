@@ -21,16 +21,16 @@ package service
 import "github.com/streadway/amqp"
 
 type Worker interface {
-  Setup() error
-  Shutdown() error
-  HandleLoop(deliveries <-chan amqp.Delivery)
+	Setup() error
+	Shutdown() error
+	HandleLoop(deliveries <-chan amqp.Delivery)
 }
 
 type Config struct {
-  Tag          string
-  Connection   string
-  Exchange     string
-  ExchangeType string
-  Queue        string
-  Key          string
+	Tag          string
+	Connection   string
+	Exchange     string
+	ExchangeType string
+	Queue        string
+	Key          string
 }
