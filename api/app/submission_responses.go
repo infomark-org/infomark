@@ -39,11 +39,14 @@ type SubmissionResponse struct {
 
 // newSubmissionResponse creates a response from a Submission model.
 func newSubmissionResponse(p *model.Submission) *SubmissionResponse {
+	// this does always exists
+	fileURL := fmt.Sprintf("/api/v1/submissions/%s/file", strconv.FormatInt(p.ID, 10))
+
 	sr := &SubmissionResponse{
 		ID:      p.ID,
 		UserID:  p.UserID,
 		TaskID:  p.TaskID,
-		FileURL: fmt.Sprintf("/api/v1/submissions/%s/file", strconv.FormatInt(p.ID, 10)),
+		FileURL: fileURL,
 	}
 
 	return sr

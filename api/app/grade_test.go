@@ -20,12 +20,43 @@ package app
 
 import (
   "encoding/json"
+  "fmt"
+  "io"
   "net/http"
+  "os"
+  "strconv"
   "testing"
 
+  "github.com/cgtuebingen/infomark-backend/api/helper"
   "github.com/cgtuebingen/infomark-backend/email"
   "github.com/franela/goblin"
+  "github.com/spf13/viper"
 )
+
+func copyFile(src, dst string) (int64, error) {
+  sourceFileStat, err := os.Stat(src)
+  if err != nil {
+    return 0, err
+  }
+
+  if !sourceFileStat.Mode().IsRegular() {
+    return 0, fmt.Errorf("%s is not a regular file", src)
+  }
+
+  source, err := os.Open(src)
+  if err != nil {
+    return 0, err
+  }
+  defer source.Close()
+
+  destination, err := os.Create(dst)
+  if err != nil {
+    return 0, err
+  }
+  defer destination.Close()
+  nBytes, err := io.Copy(destination, source)
+  return nBytes, err
+}
 
 func TestGrade(t *testing.T) {
   g := goblin.Goblin(t)
@@ -50,6 +81,60 @@ func TestGrade(t *testing.T) {
 
       w = tape.GetWithClaims(url, 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
+    })
+
+    g.It("Should get a specific grade", func() {
+
+      w := tape.GetWithClaims("/api/v1/courses/1/grades/1", 1, true)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      grade_actual := &GradeResponse{}
+      err := json.NewDecoder(w.Body).Decode(grade_actual)
+      g.Assert(err).Equal(nil)
+
+      grade_expected, err := stores.Grade.Get(1)
+      g.Assert(err).Equal(nil)
+
+      g.Assert(grade_actual.ID).Equal(grade_expected.ID)
+      g.Assert(grade_actual.PublicExecutionState).Equal(grade_expected.PublicExecutionState)
+      g.Assert(grade_actual.PrivateExecutionState).Equal(grade_expected.PrivateExecutionState)
+      g.Assert(grade_actual.PublicTestLog).Equal(grade_expected.PublicTestLog)
+      g.Assert(grade_actual.PrivateTestLog).Equal(grade_expected.PrivateTestLog)
+      g.Assert(grade_actual.PublicTestStatus).Equal(grade_expected.PublicTestStatus)
+      g.Assert(grade_actual.PrivateTestStatus).Equal(grade_expected.PrivateTestStatus)
+      g.Assert(grade_actual.AcquiredPoints).Equal(grade_expected.AcquiredPoints)
+      g.Assert(grade_actual.Feedback).Equal(grade_expected.Feedback)
+      g.Assert(grade_actual.TutorID).Equal(grade_expected.TutorID)
+      g.Assert(grade_actual.UserID).Equal(grade_expected.UserID)
+      g.Assert(grade_actual.SubmissionID).Equal(grade_expected.SubmissionID)
+      g.Assert(grade_actual.FileURL).Equal("")
+
+      defer helper.NewSubmissionFileHandle(grade_actual.SubmissionID).Delete()
+      // now file exists
+      src := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
+      dest := fmt.Sprintf("%s/submissions/%s.zip", viper.GetString("uploads_dir"), strconv.FormatInt(grade_actual.SubmissionID, 10))
+      copyFile(src, dest)
+
+      w = tape.GetWithClaims("/api/v1/courses/1/grades/1", 1, true)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      err = json.NewDecoder(w.Body).Decode(grade_actual)
+      g.Assert(err).Equal(nil)
+
+      g.Assert(grade_actual.ID).Equal(grade_expected.ID)
+      g.Assert(grade_actual.PublicExecutionState).Equal(grade_expected.PublicExecutionState)
+      g.Assert(grade_actual.PrivateExecutionState).Equal(grade_expected.PrivateExecutionState)
+      g.Assert(grade_actual.PublicTestLog).Equal(grade_expected.PublicTestLog)
+      g.Assert(grade_actual.PrivateTestLog).Equal(grade_expected.PrivateTestLog)
+      g.Assert(grade_actual.PublicTestStatus).Equal(grade_expected.PublicTestStatus)
+      g.Assert(grade_actual.PrivateTestStatus).Equal(grade_expected.PrivateTestStatus)
+      g.Assert(grade_actual.AcquiredPoints).Equal(grade_expected.AcquiredPoints)
+      g.Assert(grade_actual.Feedback).Equal(grade_expected.Feedback)
+      g.Assert(grade_actual.TutorID).Equal(grade_expected.TutorID)
+      g.Assert(grade_actual.UserID).Equal(grade_expected.UserID)
+      g.Assert(grade_actual.SubmissionID).Equal(grade_expected.SubmissionID)
+      g.Assert(grade_actual.FileURL).Equal("/api/v1/submissions/1/file")
+
     })
 
     g.It("Should list all grades of a group", func() {

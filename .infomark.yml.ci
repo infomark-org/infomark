@@ -36,6 +36,11 @@ fixtures_dir: /drone/src/files/fixtures
 
 use_backend_worker: false
 
+server_read_timeout_sec: 30
+server_write_timeout_sec: 30
+# default is 1MB = 1048576 bytes
+server_max_header_bytes: 1048576
+
 # 2 * 1024 * 1024 = 2097152
 max_request_json_bytes: 2097152
 # 1 * 1024 * 1024 = 1048576

@@ -25,6 +25,7 @@ import (
 	"os"
 	"os/signal"
 	"strings"
+	"time"
 
 	"github.com/cgtuebingen/infomark-backend/api/app"
 	"github.com/cgtuebingen/infomark-backend/logging"
@@ -66,8 +67,11 @@ func NewServer() (*Server, error) {
 	}
 
 	srv := http.Server{
-		Addr:    addr,
-		Handler: apiHandler,
+		Addr:           addr,
+		Handler:        apiHandler,
+		ReadTimeout:    time.Duration(viper.GetInt64("server_read_timeout_sec")) * time.Second,
+		WriteTimeout:   time.Duration(viper.GetInt64("server_write_timeout_sec")) * time.Second,
+		MaxHeaderBytes: viper.GetInt("server_write_timeout_sec"),
 	}
 
 	return &Server{&srv}, nil

@@ -19,8 +19,11 @@
 package app
 
 import (
+  "fmt"
   "net/http"
+  "strconv"
 
+  "github.com/cgtuebingen/infomark-backend/api/helper"
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/go-chi/render"
 )
@@ -41,6 +44,7 @@ type GradeResponse struct {
   TutorID               int64  `json:"tutor_id" example:"2"`
   UserID                int64  `json:"user_id" example:"222"`
   SubmissionID          int64  `json:"submission_id" example:"31"`
+  FileURL               string `json:"file_url" example:"/api/v1/submissions/61/file"`
 }
 
 // Render post-processes a GradeResponse.
@@ -50,6 +54,12 @@ func (body *GradeResponse) Render(w http.ResponseWriter, r *http.Request) error 
 
 // newGradeResponse creates a response from a Grade model.
 func newGradeResponse(p *model.Grade) *GradeResponse {
+
+  fileURL := ""
+  if helper.NewSubmissionFileHandle(p.ID).Exists() {
+    fileURL = fmt.Sprintf("/api/v1/submissions/%s/file", strconv.FormatInt(p.SubmissionID, 10))
+  }
+
   return &GradeResponse{
     ID:                    p.ID,
     PublicExecutionState:  p.PublicExecutionState,
@@ -63,6 +73,7 @@ func newGradeResponse(p *model.Grade) *GradeResponse {
     TutorID:               p.TutorID,
     UserID:                p.UserID,
     SubmissionID:          p.SubmissionID,
+    FileURL:               fileURL,
   }
 }
 
@@ -91,6 +102,7 @@ type MissingGradeResponse struct {
     TutorID               int64  `json:"tutor_id" example:"2"`
     UserID                int64  `json:"user_id" example:"222"`
     SubmissionID          int64  `json:"submission_id" example:"31"`
+    FileURL               string `json:"file_url" example:"/api/v1/submissions/61/file"`
   } `json:"grade"`
   CourseID int64 `json:"course_id" example:"1"`
   SheetID  int64 `json:"sheet_id" example:"10"`
@@ -111,6 +123,11 @@ func newMissingGradeResponse(p *model.MissingGrade) *MissingGradeResponse {
     TaskID:   p.TaskID,
   }
 
+  fileURL := ""
+  if helper.NewSubmissionFileHandle(p.SubmissionID).Exists() {
+    fileURL = fmt.Sprintf("/api/v1/submissions/%s/file", strconv.FormatInt(p.SubmissionID, 10))
+  }
+
   r.Grade.ID = p.ID
   r.Grade.PublicExecutionState = p.PublicExecutionState
   r.Grade.PrivateExecutionState = p.PrivateExecutionState
@@ -123,6 +140,7 @@ func newMissingGradeResponse(p *model.MissingGrade) *MissingGradeResponse {
   r.Grade.TutorID = p.TutorID
   r.Grade.UserID = p.UserID
   r.Grade.SubmissionID = p.SubmissionID
+  r.Grade.FileURL = fileURL
   return r
 
 }
