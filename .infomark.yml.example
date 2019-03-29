@@ -33,6 +33,9 @@ sendmail_binary: /usr/sbin/sendmail
 
 use_backend_worker: true
 
+# 2 * 1024 * 1024 = 2097152
+max_request_json_bytes: 2097152
+
 # worker
 # ------------------------------------------------------------------------------
 worker_workdir: /tmp

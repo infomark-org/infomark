@@ -70,6 +70,15 @@ func ErrInternalServerErrorWithDetails(err error) *ErrResponse {
   }
 }
 
+func ErrTimeoutWithDetails(err error) *ErrResponse {
+  return &ErrResponse{
+    Err:            err,
+    HTTPStatusCode: http.StatusGatewayTimeout,
+    StatusText:     http.StatusText(http.StatusGatewayTimeout),
+    ErrorText:      err.Error(),
+  }
+}
+
 // see https://stackoverflow.com/a/50143519/7443104
 var (
   // ErrBadRequest returns status 400 Bad Request for malformed request body.

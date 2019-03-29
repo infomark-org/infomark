@@ -19,11 +19,12 @@
 package app
 
 import (
+  "errors"
+  "io"
   "net/http"
   "os"
   "path/filepath"
   "strings"
-  "time"
 
   "github.com/cgtuebingen/infomark-backend/auth/authenticate"
   "github.com/cgtuebingen/infomark-backend/auth/authorize"
@@ -34,7 +35,26 @@ import (
   "github.com/go-chi/render"
   "github.com/jmoiron/sqlx"
   _ "github.com/lib/pq"
+  "github.com/spf13/viper"
 )
+
+func LimitedDecoder(r *http.Request, v interface{}) error {
+  var err error
+
+  switch render.GetRequestContentType(r) {
+  case render.ContentTypeJSON:
+    body := io.LimitReader(r.Body, viper.GetInt64("max_request_json_bytes"))
+    err = render.DecodeJSON(body, v)
+  default:
+    err = errors.New("render: unable to automatically decode the request content type")
+  }
+
+  return err
+}
+
+func init() {
+  render.Decode = LimitedDecoder
+}
 
 // New configures application resources and routes.
 func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
@@ -54,7 +74,8 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
   r := chi.NewRouter()
   r.Use(middleware.Recoverer)
   r.Use(middleware.RequestID)
-  r.Use(middleware.Timeout(15 * time.Second))
+  // the following line does not make any sense
+  // r.Use(middleware.Timeout(15 * time.Second))
   if log {
     r.Use(logging.NewStructuredLogger(logger))
   }
