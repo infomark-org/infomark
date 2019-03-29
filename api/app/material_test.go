@@ -83,6 +83,26 @@ func TestMaterial(t *testing.T) {
       // g.Assert(material_actual.DueAt.Equal(material_expected.DueAt)).Equal(true)
     })
 
+    g.It("Should not get a specific material (unpublish)", func() {
+      material_expected, err := stores.Material.Get(1)
+      g.Assert(err).Equal(nil)
+
+      material_expected.PublishAt = NowUTC().Add(time.Hour)
+      err = stores.Material.Update(material_expected)
+      g.Assert(err).Equal(nil)
+
+      w := tape.GetWithClaims("/api/v1/courses/1/materials/1", 112, false)
+      g.Assert(w.Code).Equal(http.StatusBadRequest)
+
+      material_expected.PublishAt = NowUTC().Add(-time.Hour)
+      err = stores.Material.Update(material_expected)
+      g.Assert(err).Equal(nil)
+
+      w = tape.GetWithClaims("/api/v1/courses/1/materials/1", 112, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+    })
+
     g.It("Should create valid material", func() {
 
       materials_before, err := stores.Material.MaterialsOfCourse(1, false)

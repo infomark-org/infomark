@@ -145,6 +145,12 @@ func (rs *MaterialResource) GetHandler(w http.ResponseWriter, r *http.Request) {
   // `Material` is retrieved via middle-ware
   material := r.Context().Value("material").(*model.Material)
 
+  givenRole := r.Context().Value("course_role").(authorize.CourseRole)
+  if givenRole == authorize.STUDENT && !PublicYet(material.PublishAt) {
+    render.Render(w, r, ErrNotFound)
+    return
+  }
+
   // render JSON reponse
   if err := render.Render(w, r, rs.newMaterialResponse(material)); err != nil {
     render.Render(w, r, ErrRender(err))
@@ -234,6 +240,12 @@ func (rs *MaterialResource) GetFileHandler(w http.ResponseWriter, r *http.Reques
   material := r.Context().Value("material").(*model.Material)
   hnd := helper.NewMaterialFileHandle(material.ID)
   if !hnd.Exists() {
+    render.Render(w, r, ErrNotFound)
+    return
+  }
+
+  givenRole := r.Context().Value("course_role").(authorize.CourseRole)
+  if givenRole == authorize.STUDENT && !PublicYet(material.PublishAt) {
     render.Render(w, r, ErrNotFound)
     return
   }
