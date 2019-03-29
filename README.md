@@ -113,3 +113,22 @@ go generate
 ```
 
 
+
+## Group Assignment
+
+Using the informark cli console, we can export (anonymously) the bids of each student for eachg group by
+
+```bash
+export COURSEID = 1
+export FILENAME = test2
+export MINGROUP = 28
+export MAXGROUP = 35
+
+./infomark console assignments dump_bids ${COURSEID} ${FILENAME} ${MINGROUP} ${MAXGROUP}
+
+# solve
+sudo docker run -v "$PWD":/data -it patwie/symphony  /var/symphony/bin/symphony -F test2.mod -D test2.dat -f test2.par > solution.txt
+
+
+./infomark console assignments import-solution ${COURSEID} solution.txt
+```

@@ -1,0 +1,1 @@
+sudo docker run -v "$PWD":/data -it patwie/symphony  /var/symphony/bin/symphony -F request.mod -D request.dat -f request.par

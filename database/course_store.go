@@ -126,7 +126,7 @@ func (s *CourseStore) GetUserEnrollment(courseID int64, userID int64) (*model.Us
 }
 
 func (s *CourseStore) EnrolledUsers(
-  course *model.Course,
+  courseID int64,
   roleFilter []string,
   filterFirstName string,
   filterLastName string,
@@ -156,7 +156,7 @@ func (s *CourseStore) EnrolledUsers(
       LOWER(u.subject) LIKE $6
     AND
       LOWER(u.language) LIKE $7
-    `, course.ID, pq.Array(roleFilter),
+    `, courseID, pq.Array(roleFilter),
     filterFirstName, filterLastName, filterEmail,
     filterSubject, filterLanguage,
   )

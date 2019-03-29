@@ -53,7 +53,7 @@ type CourseStore interface {
   Enroll(courseID int64, userID int64) error
   Disenroll(courseID int64, userID int64) error
   EnrolledUsers(
-    course *model.Course,
+    courseId int64,
     roleFilter []string,
     filterFirstName string,
     filterLastName string,

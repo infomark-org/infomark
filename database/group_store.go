@@ -79,7 +79,9 @@ u.language as tutor_language
       groups g
     INNER JOIN users u ON g.tutor_id = u.id
     WHERE
-      course_id = $1`, courseID)
+      course_id = $1
+      ORDER BY
+      g.id ASC`, courseID)
   return p, err
 }
 

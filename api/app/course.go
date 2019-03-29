@@ -235,7 +235,7 @@ func (rs *CourseResource) IndexEnrollmentsHandler(w http.ResponseWriter, r *http
     filterRoles = []string{"1", "2"}
   }
 
-  enrolledUsers, err := rs.Stores.Course.EnrolledUsers(course,
+  enrolledUsers, err := rs.Stores.Course.EnrolledUsers(course.ID,
     filterRoles, filterFirstName, filterLastName, filterEmail,
     filterSubject, filterLanguage,
   )
@@ -481,7 +481,7 @@ func (rs *CourseResource) SendEmailHandler(w http.ResponseWriter, r *http.Reques
   filterSubject := "%%"
   filterLanguage := "%%"
 
-  recipients, err := rs.Stores.Course.EnrolledUsers(course,
+  recipients, err := rs.Stores.Course.EnrolledUsers(course.ID,
     filterRoles, filterFirstName, filterLastName, filterEmail,
     filterSubject, filterLanguage,
   )

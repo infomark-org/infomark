@@ -19,21 +19,33 @@
 package cmd
 
 import (
+  "bufio"
   "encoding/json"
   "fmt"
+  "io"
   "log"
+  "os"
   "strconv"
+  "strings"
 
   "github.com/cgtuebingen/infomark-backend/api/app"
   "github.com/cgtuebingen/infomark-backend/api/shared"
   "github.com/cgtuebingen/infomark-backend/auth/authenticate"
+  "github.com/cgtuebingen/infomark-backend/model"
   "github.com/cgtuebingen/infomark-backend/service"
   "github.com/go-ozzo/ozzo-validation/is"
   "github.com/jmoiron/sqlx"
+  "github.com/lib/pq"
   "github.com/spf13/cobra"
   "github.com/spf13/viper"
   null "gopkg.in/guregu/null.v3"
 )
+
+func fail(err error) {
+  if err != nil {
+    panic(fail)
+  }
+}
 
 var ConsoleCmd = &cobra.Command{
   Use:   "console",
@@ -72,9 +84,7 @@ var UserPromoteCmd = &cobra.Command{
     userID := int64(arg0)
 
     _, stores, err := ConnectAndStores()
-    if err != nil {
-      panic(err)
-    }
+    fail(err)
 
     user, err := stores.User.Get(userID)
     if err != nil {
@@ -102,9 +112,7 @@ var UserDowngradeCmd = &cobra.Command{
     userID := int64(arg0)
 
     _, stores, err := ConnectAndStores()
-    if err != nil {
-      panic(err)
-    }
+    fail(err)
 
     user, err := stores.User.Get(userID)
     if err != nil {
@@ -132,9 +140,7 @@ var UserConfirmCmd = &cobra.Command{
     userID := int64(arg0)
 
     _, stores, err := ConnectAndStores()
-    if err != nil {
-      panic(err)
-    }
+    fail(err)
 
     user, err := stores.User.Get(userID)
     if err != nil {
@@ -168,9 +174,7 @@ var UserSetEmailCmd = &cobra.Command{
     }
 
     _, stores, err := ConnectAndStores()
-    if err != nil {
-      panic(err)
-    }
+    fail(err)
 
     user, err := stores.User.Get(userID)
     if err != nil {
@@ -237,14 +241,10 @@ var SubmissionEnqueueCmd = &cobra.Command{
     }
 
     tokenManager, err := authenticate.NewTokenAuth()
-    if err != nil {
-      panic(err)
-    }
+    fail(err)
     accessToken, err := tokenManager.CreateAccessJWT(
       authenticate.NewAccessClaims(1, true))
-    if err != nil {
-      panic(err)
-    }
+    fail(err)
 
     request := &shared.SubmissionAMQPWorkerRequest{
       SubmissionID: submissionID,
@@ -277,6 +277,286 @@ var SubmissionCmd = &cobra.Command{
   Short: "Management of submission",
 }
 
+var CourseReadBids = &cobra.Command{
+
+  // ./infomark console submission enqueue 24 10 24 "test_java_submission:v1"
+  // cp files/fixtures/unittest.zip files/uploads/tasks/24-public.zip
+  // cp files/fixtures/submission.zip files/uploads/submissions/10.zip
+
+  Use:   "dump-bids [courseID] [file]  [min_per_group] [max_per_group]",
+  Short: "export group-bids of all users in a course",
+  Long:  `for assignment`,
+  Args:  cobra.ExactArgs(4),
+  Run: func(cmd *cobra.Command, args []string) {
+
+    arg0, err := strconv.Atoi(args[0])
+    if err != nil {
+      fmt.Printf("cannot convert courseID '%s' to int\n", args[0])
+      return
+    }
+
+    minPerGroup, err := strconv.Atoi(args[2])
+    if err != nil {
+      fmt.Printf("cannot convert minPerGroup '%s' to int\n", args[2])
+      return
+    }
+
+    maxPerGroup, err := strconv.Atoi(args[3])
+    if err != nil {
+      fmt.Printf("cannot convert maxPerGroup '%s' to int\n", args[3])
+      return
+    }
+
+    fmt.Printf("bound Group Capacitiy >= %v\n", minPerGroup)
+    fmt.Printf("bound Group Capacitiy <= %v\n", maxPerGroup)
+
+    f, err := os.Create(fmt.Sprintf("%s.dat", args[1]))
+    fail(err)
+    defer f.Close()
+
+    db, stores, err := ConnectAndStores()
+    fail(err)
+
+    course, err := stores.Course.Get(int64(arg0))
+    if err != nil {
+      fmt.Printf("course with id %v not found\n", course.ID)
+      return
+    }
+
+    groups, err := stores.Group.GroupsOfCourse(course.ID)
+    fail(err)
+
+    fmt.Printf("found %v groups\n", len(groups))
+
+    group_id_array := []int64{}
+    for _, group := range groups {
+      group_id_array = append(group_id_array, group.ID)
+    }
+    gids := strings.Trim(strings.Replace(fmt.Sprint(group_id_array), " ", " g", -1), "[]")
+
+    students, err := stores.Course.EnrolledUsers(course.ID,
+      []string{"0"},
+      "%%",
+      "%%",
+      "%%",
+      "%%",
+      "%%",
+    )
+    fail(err)
+
+    fmt.Printf("found %v students\n", len(students))
+    fmt.Printf("\n")
+    fmt.Printf("\n")
+
+    // for _, student := range students {
+    //   fmt.Println(student)
+    // }
+
+    uids := ""
+    for _, student := range students {
+      g := strconv.FormatInt(student.ID, 10)
+      uids = uids + " u" + g
+    }
+
+    // Select gb.* from group_bids gb
+    // INNER JOIN groups g ON g.id = gb.group_id
+    // WHERE user_id = 112
+    // AND g.course_id = 1
+
+    f.WriteString(fmt.Sprintf("set group := g%s;\n", gids))
+    f.WriteString(fmt.Sprintf("set student := %s;\n", uids))
+    f.WriteString(fmt.Sprintf("\n"))
+    f.WriteString(fmt.Sprintf("param pref:\n"))
+    f.WriteString(fmt.Sprintf("     g%s:=\n", gids))
+
+    for _, student := range students {
+      uid := strconv.FormatInt(student.ID, 10)
+      // uids = uids + " uid" + uid
+      bids := []model.GroupBid{}
+
+      err := db.Select(&bids, `
+    Select * from group_bids
+WHERE user_id = $1
+AND group_id = ANY($2)
+ORDER BY group_id ASC`, student.ID, pq.Array(group_id_array))
+      if err != nil {
+        panic(err)
+      }
+
+      f.WriteString(fmt.Sprintf("u%s", uid))
+
+      for _, group := range groups {
+        bidValue := 0
+
+        for _, bid := range bids {
+          if bid.GroupID == group.ID {
+            bidValue = bid.Bid
+            break
+          }
+
+        }
+
+        f.WriteString(fmt.Sprintf(" %v", bidValue))
+      }
+
+      f.WriteString(fmt.Sprintf("\n"))
+    }
+
+    f.WriteString(fmt.Sprintf(";\n"))
+    f.WriteString(fmt.Sprintf("\n"))
+    f.WriteString(fmt.Sprintf("end;\n"))
+
+    // write mod
+    //
+
+    fmod, err := os.Create(fmt.Sprintf("%s.mod", args[1]))
+    fail(err)
+    defer fmod.Close()
+
+    fmod.WriteString(fmt.Sprintf("set student;\n"))
+    fmod.WriteString(fmt.Sprintf("set group;\n"))
+    fmod.WriteString(fmt.Sprintf("\n"))
+    fmod.WriteString(fmt.Sprintf("var assign{i in student, j in group} binary;\n"))
+    fmod.WriteString(fmt.Sprintf("param pref{i in student, j in group};\n"))
+    fmod.WriteString(fmt.Sprintf("\n"))
+    fmod.WriteString(fmt.Sprintf("maximize totalPref:\n"))
+    fmod.WriteString(fmt.Sprintf("    sum{i in student, j in group} pref[i,j]*assign[i,j];\n"))
+    fmod.WriteString(fmt.Sprintf("\n"))
+    fmod.WriteString(fmt.Sprintf("subject to exactly_one_group {i in student}:\n"))
+    fmod.WriteString(fmt.Sprintf("    sum {j in group} assign[i,j] =1;\n"))
+    fmod.WriteString(fmt.Sprintf("\n"))
+    fmod.WriteString(fmt.Sprintf("subject to min3{j in group}:\n"))
+    fmod.WriteString(fmt.Sprintf("    sum{i in student} assign[i,j]>=%v;\n", minPerGroup))
+    fmod.WriteString(fmt.Sprintf("\n"))
+    fmod.WriteString(fmt.Sprintf("subject to max4{j in group}:\n"))
+    fmod.WriteString(fmt.Sprintf("    sum{i in student} assign[i,j]<=%v;\n", maxPerGroup))
+    fmod.WriteString(fmt.Sprintf("\n"))
+    fmod.WriteString(fmt.Sprintf("end;\n"))
+    fmod.WriteString(fmt.Sprintf("\n"))
+    fmod.WriteString(fmt.Sprintf("\n"))
+
+    fmt.Println("run then")
+    fmt.Println("")
+    fmt.Println("")
+    fmt.Printf("sudo docker run -v \"$PWD\":/data -it patwie/symphony  /var/symphony/bin/symphony -F %s.mod -D %s.dat -f %s.par\n", args[1], args[1], args[1])
+    fmt.Println("")
+
+    fpar, err := os.Create(fmt.Sprintf("%s.par", args[1]))
+    fail(err)
+    fpar.WriteString(fmt.Sprintf("time_limit 50\n"))
+    fpar.WriteString(fmt.Sprintf("\n"))
+    defer fpar.Close()
+
+  },
+}
+
+var CourseParseBidsSolution = &cobra.Command{
+
+  // ./infomark console submission enqueue 24 10 24 "test_java_submission:v1"
+  // cp files/fixtures/unittest.zip files/uploads/tasks/24-public.zip
+  // cp files/fixtures/submission.zip files/uploads/submissions/10.zip
+
+  Use:   "import-solution [courseID] [file]",
+  Short: "parse solution and assign students to groups",
+  Long:  `for assignment`,
+  Args:  cobra.ExactArgs(2),
+  Run: func(cmd *cobra.Command, args []string) {
+
+    type Assignment struct {
+      GroupID int64
+      UserID  int64
+    }
+
+    arg0, err := strconv.Atoi(args[0])
+    if err != nil {
+      fmt.Printf("cannot convert courseID '%s' to int\n", args[0])
+      return
+    }
+
+    db, stores, err := ConnectAndStores()
+    fail(err)
+    _ = db
+
+    course, err := stores.Course.Get(int64(arg0))
+    if err != nil {
+      fmt.Printf("course with id %v not found\n", course.ID)
+      return
+    }
+    fmt.Println("work on course", course.ID)
+
+    file, err := os.Open(args[1])
+    fail(err)
+
+    defer file.Close()
+
+    reader := bufio.NewReader(file)
+
+    uids := []int64{}
+
+    assignments := []Assignment{}
+    for {
+      line, _, err := reader.ReadLine()
+      if err == io.EOF {
+        break
+      }
+
+      string := fmt.Sprintf("%s", line)
+
+      if strings.HasPrefix(string, "assign[") {
+        parts := strings.Split(string, "[")
+        parts = strings.Split(parts[1], "]")
+        parts = strings.Split(parts[0], ",")
+
+        v, err := strconv.Atoi(parts[0][1:])
+        fail(err)
+        w, err := strconv.Atoi(parts[1][1:])
+        fail(err)
+
+        assignments = append(assignments, Assignment{GroupID: int64(w), UserID: int64(v)})
+        uids = append(uids, int64(v))
+      }
+
+    }
+
+    tx, err := db.Begin()
+    // delete assignments so far
+    _, err = tx.Exec(`DELETE FROM user_group ug
+USING groups g
+WHERE ug.group_id = g.id
+AND g.course_id = $1
+AND ug.user_id = ANY($2)`, course.ID, pq.Array(uids))
+    if err != nil {
+      fmt.Println(err)
+      tx.Rollback()
+      fail(err)
+    }
+
+    for _, assignment := range assignments {
+      fmt.Printf("%v %v\n", assignment.UserID, assignment.GroupID)
+
+      _, err = tx.Exec("INSERT INTO user_group (id,user_id,group_id) VALUES (DEFAULT,$1,$2);", assignment.UserID, assignment.GroupID)
+      if err != nil {
+        tx.Rollback()
+        fail(err)
+      }
+    }
+
+    err = tx.Commit()
+    if err != nil {
+      tx.Rollback()
+      fail(err)
+    }
+
+    fmt.Println("Done")
+
+  },
+}
+
+var AssignmentCmd = &cobra.Command{
+  Use:   "assignments",
+  Short: "Management of groups assignment",
+}
+
 func init() {
   UserCmd.AddCommand(UserDowngradeCmd)
   UserCmd.AddCommand(UserPromoteCmd)
@@ -285,6 +565,10 @@ func init() {
 
   SubmissionCmd.AddCommand(SubmissionEnqueueCmd)
   ConsoleCmd.AddCommand(SubmissionCmd)
+
+  AssignmentCmd.AddCommand(CourseReadBids)
+  AssignmentCmd.AddCommand(CourseParseBidsSolution)
+  ConsoleCmd.AddCommand(AssignmentCmd)
 
   RootCmd.AddCommand(ConsoleCmd)
 }
