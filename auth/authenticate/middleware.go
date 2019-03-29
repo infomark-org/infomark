@@ -61,6 +61,9 @@ func RequiredValidAccessClaims(next http.Handler) http.Handler {
           render.Render(w, r, auth.ErrUnauthorized)
           return
         }
+
+        // session is valid --> we will extend the session
+        w = accessClaims.WriteToSession(w, r)
       } else {
         // fmt.Println("NO session found")
 
