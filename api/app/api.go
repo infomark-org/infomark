@@ -106,9 +106,9 @@ type GroupStore interface {
   Delete(taskID int64) error
   // GroupsOfCourse(courseID int64) ([]model.Group, error)
   GroupsOfCourse(courseID int64) ([]model.GroupWithTutor, error)
-  GetInCourseWithUser(userID int64, courseID int64) (*model.Group, error)
+  GetInCourseWithUser(userID int64, courseID int64) ([]model.GroupWithTutor, error)
   GetMembers(groupID int64) ([]model.User, error)
-  GetOfTutor(tutorID int64, courseID int64) (*model.Group, error)
+  GetOfTutor(tutorID int64, courseID int64) ([]model.GroupWithTutor, error)
   IdentifyCourseOfGroup(groupID int64) (*model.Course, error)
 
   GetBidOfUserForGroup(userID int64, groupID int64) (bid int, err error)

@@ -180,7 +180,6 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
               r.Get("/enrollments", appAPI.Course.IndexEnrollmentsHandler)
               r.Delete("/enrollments", appAPI.Course.DisenrollHandler)
 
-              r.Get("/group", appAPI.Group.GetMineHandler)
               r.Get("/points", appAPI.Course.PointsHandler)
               r.Get("/bids", appAPI.Course.BidsHandler)
 
@@ -224,7 +223,7 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
               })
 
               r.Route("/groups", func(r chi.Router) {
-
+                r.Get("/own", appAPI.Group.GetMineHandler)
                 r.Get("/", appAPI.Group.IndexHandler)
                 r.Post("/", authorize.EndpointRequiresRole(appAPI.Group.CreateHandler, authorize.ADMIN))
                 r.Route("/{group_id}", func(r chi.Router) {
