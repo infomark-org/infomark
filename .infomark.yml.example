@@ -35,8 +35,14 @@ use_backend_worker: true
 
 # 2 * 1024 * 1024 = 2097152
 max_request_json_bytes: 2097152
+# 1 * 1024 * 1024 = 1048576
+max_request_avatar_bytes: 1048576
+# 4 * 1024 * 1024 = 4194304
+max_request_submission_bytes: 4194304
 
 # worker
 # ------------------------------------------------------------------------------
 worker_workdir: /tmp
 worker_void: false  # true = ignore request (for unit tests which might violate the db transactions)
+# 200 * 1024 * 1024 = 209715200
+worker_docker_memory_bytes: 209715200

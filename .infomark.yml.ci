@@ -38,7 +38,14 @@ use_backend_worker: false
 
 # 2 * 1024 * 1024 = 2097152
 max_request_json_bytes: 2097152
+# 1 * 1024 * 1024 = 1048576
+max_request_avatar_bytes: 1048576
+# 4 * 1024 * 1024 = 4194304
+max_request_submission_bytes: 4194304
+
 # worker
 # ------------------------------------------------------------------------------
 worker_workdir: /tmp
 worker_void: true
+# 200 * 1024 * 1024 = 209715200
+worker_docker_memory_bytes: 209715200

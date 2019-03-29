@@ -68,7 +68,7 @@ func NewAvatarFileHandle(userID int64) *FileHandle {
     Category:   AvatarCategory,
     ID:         userID,
     Extensions: []string{"jpg", "jpeg", "png"},
-    MaxBytes:   500 * 1024, // 500 kb
+    MaxBytes:   viper.GetInt64("max_request_avatar_bytes"),
   }
 }
 
@@ -120,7 +120,7 @@ func NewSubmissionFileHandle(ID int64) *FileHandle {
     Category:   SubmissionCategory,
     ID:         ID,
     Extensions: []string{"zip"},
-    MaxBytes:   4 * 1024 * 1024, // 4 Mb
+    MaxBytes:   viper.GetInt64("max_request_submission_bytes"),
   }
 }
 
