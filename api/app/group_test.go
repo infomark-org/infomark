@@ -227,45 +227,45 @@ func TestGroup(t *testing.T) {
       // a random student (checked via pgweb)
       loginID := int64(112)
 
-      w := tape.Get("/api/v1/courses/1/group")
+      w := tape.Get("/api/v1/courses/1/groups/own")
       g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
-      w = tape.GetWithClaims("/api/v1/courses/1/group", loginID, false)
+      w = tape.GetWithClaims("/api/v1/courses/1/groups/own", loginID, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      entry_return := &GroupResponse{}
+      entry_return := []GroupResponse{}
       err := json.NewDecoder(w.Body).Decode(&entry_return)
       g.Assert(err).Equal(nil)
 
       // we cannot check the other entries
-      g.Assert(entry_return.CourseID).Equal(int64(1))
+      g.Assert(entry_return[0].CourseID).Equal(int64(1))
     })
 
     g.It("Find my group when being a tutor", func() {
       // a random student (checked via pgweb)
       loginID := int64(2)
 
-      w := tape.Get("/api/v1/courses/1/group")
+      w := tape.Get("/api/v1/courses/1/groups/own")
       g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
-      w = tape.GetWithClaims("/api/v1/courses/1/group", loginID, true)
+      w = tape.GetWithClaims("/api/v1/courses/1/groups/own", loginID, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      entry_return := &GroupResponse{}
+      entry_return := []GroupResponse{}
       err := json.NewDecoder(w.Body).Decode(&entry_return)
       g.Assert(err).Equal(nil)
 
       // we cannot check the other entries
-      g.Assert(entry_return.CourseID).Equal(int64(1))
-      g.Assert(entry_return.Tutor.ID).Equal(loginID)
+      g.Assert(entry_return[0].CourseID).Equal(int64(1))
+      g.Assert(entry_return[0].Tutor.ID).Equal(loginID)
 
       t, err := stores.User.Get(loginID)
       g.Assert(err).Equal(nil)
-      g.Assert(entry_return.Tutor.FirstName).Equal(t.FirstName)
-      g.Assert(entry_return.Tutor.LastName).Equal(t.LastName)
-      g.Assert(entry_return.Tutor.AvatarURL).Equal(t.AvatarURL)
-      g.Assert(entry_return.Tutor.Email).Equal(t.Email)
-      g.Assert(entry_return.Tutor.Language).Equal(t.Language)
+      g.Assert(entry_return[0].Tutor.FirstName).Equal(t.FirstName)
+      g.Assert(entry_return[0].Tutor.LastName).Equal(t.LastName)
+      g.Assert(entry_return[0].Tutor.AvatarURL).Equal(t.AvatarURL)
+      g.Assert(entry_return[0].Tutor.Email).Equal(t.Email)
+      g.Assert(entry_return[0].Tutor.Language).Equal(t.Language)
 
     })
 

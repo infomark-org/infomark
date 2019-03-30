@@ -100,19 +100,27 @@ WHERE
   return p, err
 }
 
-func (s *GroupStore) GetInCourseWithUser(userID int64, courseID int64) (*model.Group, error) {
-  p := &model.Group{}
+func (s *GroupStore) GetInCourseWithUser(userID int64, courseID int64) ([]model.GroupWithTutor, error) {
+  p := []model.GroupWithTutor{}
 
-  err := s.db.Get(p, `
+  err := s.db.Select(&p, `
     SELECT
-      g.*
+      g.*,
+u.first_name as tutor_first_name,
+u.last_name as tutor_last_name,
+u.avatar_url as tutor_avatar_url,
+u.email as tutor_email,
+u.language as tutor_language
     FROM
       groups g
+    INNER JOIN users u ON g.tutor_id = u.id
     INNER JOIN
       user_group ug on g.id = ug.group_id
     WHERE
-      ug.user_id = $1
-    AND g.course_id = $2`, userID, courseID)
+      course_id = $2
+    AND ug.user_id = $1
+      ORDER BY
+      g.id ASC`, userID, courseID)
   return p, err
 }
 
@@ -190,19 +198,25 @@ func (s *GroupStore) ChangeGroupEnrollmentOfUserInCourse(p *model.GroupEnrollmen
   return Update(s.db, "user_group", p.ID, p)
 }
 
-func (s *GroupStore) GetOfTutor(tutorID int64, courseID int64) (*model.Group, error) {
-  p := &model.Group{}
+func (s *GroupStore) GetOfTutor(tutorID int64, courseID int64) ([]model.GroupWithTutor, error) {
+  p := []model.GroupWithTutor{}
 
-  err := s.db.Get(p, `
+  err := s.db.Select(&p, `
     SELECT
-      g.*
+      g.*,
+u.first_name as tutor_first_name,
+u.last_name as tutor_last_name,
+u.avatar_url as tutor_avatar_url,
+u.email as tutor_email,
+u.language as tutor_language
     FROM
       groups g
+    INNER JOIN users u ON g.tutor_id = u.id
     WHERE
-      g.tutor_id = $1
-    AND
-      g.course_id = $2
-    `, tutorID, courseID)
+      course_id = $2
+    AND g.tutor_id = $1
+      ORDER BY
+      g.id ASC`, tutorID, courseID)
   return p, err
 }
 

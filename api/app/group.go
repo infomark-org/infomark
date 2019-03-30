@@ -157,11 +157,11 @@ func (rs *GroupResource) GetHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetMineHandler is public endpoint for
-// URL: /courses/{course_id}/group
+// URL: /courses/{course_id}/groups/own
 // URLPARAM: course_id,integer
 // METHOD: get
 // TAG: groups
-// RESPONSE: 200,GroupResponse
+// RESPONSE: 200,GroupResponseList
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
 // RESPONSE: 403,Unauthorized
@@ -175,18 +175,16 @@ func (rs *GroupResource) GetMineHandler(w http.ResponseWriter, r *http.Request) 
   courseRole := r.Context().Value("course_role").(authorize.CourseRole)
 
   var (
-    group *model.Group
-    err   error
+    groups []model.GroupWithTutor
+    err    error
   )
 
   if courseRole == authorize.STUDENT {
     // here catch on the cases, when user is a student and enrolled in a group
-
-    group, err = rs.Stores.Group.GetInCourseWithUser(accessClaims.LoginID, course.ID)
-
+    groups, err = rs.Stores.Group.GetInCourseWithUser(accessClaims.LoginID, course.ID)
   } else {
     // must be tutor
-    group, err = rs.Stores.Group.GetOfTutor(accessClaims.LoginID, course.ID)
+    groups, err = rs.Stores.Group.GetOfTutor(accessClaims.LoginID, course.ID)
 
   }
 
@@ -197,14 +195,16 @@ func (rs *GroupResource) GetMineHandler(w http.ResponseWriter, r *http.Request) 
     return
   }
 
-  tutor, err := rs.Stores.User.Get(group.TutorID)
-  if err != nil {
-    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-    return
-  }
+  // // students can be only within one group -> [0] is ok
+  // // tutors can be in multiple groups -> [0] is ok (they are the same person)
+  // tutor, err := rs.Stores.User.Get(groups[0].TutorID)
+  // if err != nil {
+  //   render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+  //   return
+  // }
 
   // render JSON reponse
-  if err := render.Render(w, r, rs.newGroupResponse(group, tutor)); err != nil {
+  if err := render.RenderList(w, r, rs.newGroupListResponse(groups)); err != nil {
     render.Render(w, r, ErrRender(err))
     return
   }
