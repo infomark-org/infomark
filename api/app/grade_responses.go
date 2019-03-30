@@ -42,9 +42,14 @@ type GradeResponse struct {
   AcquiredPoints        int    `json:"acquired_points" example:"19"`
   Feedback              string `json:"feedback" example:"Some feedback"`
   TutorID               int64  `json:"tutor_id" example:"2"`
-  UserID                int64  `json:"user_id" example:"222"`
   SubmissionID          int64  `json:"submission_id" example:"31"`
   FileURL               string `json:"file_url" example:"/api/v1/submissions/61/file"`
+  User                  *struct {
+    ID        int64  `json:"id" example:"1"`
+    FirstName string `json:"first_name" example:"Max"`
+    LastName  string `json:"last_name" example:"Mustermensch"`
+    Email     string `json:"email" example:"test@unit-tuebingen.de"`
+  } `json:"tutor"`
 }
 
 // Render post-processes a GradeResponse.
@@ -60,6 +65,18 @@ func newGradeResponse(p *model.Grade) *GradeResponse {
     fileURL = fmt.Sprintf("/api/v1/submissions/%s/file", strconv.FormatInt(p.SubmissionID, 10))
   }
 
+  user := &struct {
+    ID        int64  `json:"id" example:"1"`
+    FirstName string `json:"first_name" example:"Max"`
+    LastName  string `json:"last_name" example:"Mustermensch"`
+    Email     string `json:"email" example:"test@unit-tuebingen.de"`
+  }{
+    ID:        p.UserID,
+    FirstName: p.UserFirstName,
+    LastName:  p.UserLastName,
+    Email:     p.UserEmail,
+  }
+
   return &GradeResponse{
     ID:                    p.ID,
     PublicExecutionState:  p.PublicExecutionState,
@@ -71,7 +88,7 @@ func newGradeResponse(p *model.Grade) *GradeResponse {
     AcquiredPoints:        p.AcquiredPoints,
     Feedback:              p.Feedback,
     TutorID:               p.TutorID,
-    UserID:                p.UserID,
+    User:                  user,
     SubmissionID:          p.SubmissionID,
     FileURL:               fileURL,
   }

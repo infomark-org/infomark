@@ -105,7 +105,10 @@ func TestGrade(t *testing.T) {
       g.Assert(grade_actual.AcquiredPoints).Equal(grade_expected.AcquiredPoints)
       g.Assert(grade_actual.Feedback).Equal(grade_expected.Feedback)
       g.Assert(grade_actual.TutorID).Equal(grade_expected.TutorID)
-      g.Assert(grade_actual.UserID).Equal(grade_expected.UserID)
+      g.Assert(grade_actual.User.ID).Equal(grade_expected.UserID)
+      g.Assert(grade_actual.User.FirstName).Equal(grade_expected.UserFirstName)
+      g.Assert(grade_actual.User.LastName).Equal(grade_expected.UserLastName)
+      g.Assert(grade_actual.User.Email).Equal(grade_expected.UserEmail)
       g.Assert(grade_actual.SubmissionID).Equal(grade_expected.SubmissionID)
       g.Assert(grade_actual.FileURL).Equal("")
 
@@ -131,7 +134,10 @@ func TestGrade(t *testing.T) {
       g.Assert(grade_actual.AcquiredPoints).Equal(grade_expected.AcquiredPoints)
       g.Assert(grade_actual.Feedback).Equal(grade_expected.Feedback)
       g.Assert(grade_actual.TutorID).Equal(grade_expected.TutorID)
-      g.Assert(grade_actual.UserID).Equal(grade_expected.UserID)
+      g.Assert(grade_actual.User.ID).Equal(grade_expected.UserID)
+      g.Assert(grade_actual.User.FirstName).Equal(grade_expected.UserFirstName)
+      g.Assert(grade_actual.User.LastName).Equal(grade_expected.UserLastName)
+      g.Assert(grade_actual.User.Email).Equal(grade_expected.UserEmail)
       g.Assert(grade_actual.SubmissionID).Equal(grade_expected.SubmissionID)
       g.Assert(grade_actual.FileURL).Equal("/api/v1/submissions/1/file")
 

@@ -42,8 +42,13 @@ func NewGradeStore(db *sqlx.DB) *GradeStore {
 func (s *GradeStore) Get(id int64) (*model.Grade, error) {
   p := model.Grade{ID: id}
   err := s.db.Get(&p, `
-SELECT g.*, s.user_id FROM grades g
-INNER JOIN submissions s ON s.id = g.submission_id
+SELECT g.*, s.user_id,
+u.last_name user_last_name,
+u.first_name user_first_name,
+u.email user_email
+FROM grades g
+INNER JOIN submissions s ON g.submission_id = s.id
+INNER JOIN users u ON s.user_id = u.id
 WHERE g.id = $1 LIMIT 1;
 `, p.ID)
   return &p, err
@@ -86,10 +91,15 @@ func (s *GradeStore) GetAllMissingGrades(tutorID int64) ([]model.MissingGrade, e
 
   err := s.db.Select(&p,
     `
-SELECT g.*, ts.task_id, ts.sheet_id, sg.course_id, s.user_id from grades g
+SELECT g.*, ts.task_id, ts.sheet_id, sg.course_id, s.user_id,
+u.last_name user_last_name,
+u.first_name user_first_name,
+u.email user_email
+from grades g
 INNER JOIN submissions s ON s.id = g.submission_id
 INNER JOIN task_sheet ts ON ts.task_id = s.task_id
 INNER JOIN sheet_course sg ON sg.sheet_id = ts.sheet_id
+INNER JOIN users u ON s.user_id = u.id
 WHERE g.feedback like '' and tutor_id = $1;
   `, tutorID)
   return p, err
@@ -118,13 +128,17 @@ func (s *GradeStore) GetFiltered(
   err := s.db.Select(&p,
     `
 SELECT
-  g.*, s.user_id
+  g.*, s.user_id,
+  u.last_name user_last_name,
+  u.first_name user_first_name,
+  u.email user_email
 FROM
   grades g
 INNER JOIN submissions s ON s.id = g.submission_id
 INNER JOIN task_sheet ts ON ts.task_id = s.task_id
 INNER JOIN sheet_course sc ON sc.sheet_id = ts.sheet_id
 INNER JOIN user_group ug ON ug.user_id = s.user_id
+INNER JOIN users u ON s.user_id = u.id
 WHERE course_id = $1
 AND ug.group_id = $4
 AND ($2 = 0 OR ts.sheet_id = $2)

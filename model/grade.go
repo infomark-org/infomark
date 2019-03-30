@@ -39,8 +39,11 @@ type Grade struct {
 	AcquiredPoints        int    `db:"acquired_points"`
 	Feedback              string `db:"feedback"`
 	TutorID               int64  `db:"tutor_id"`
-	UserID                int64  `db:"user_id,readonly"`
 	SubmissionID          int64  `db:"submission_id"`
+	UserID                int64  `db:"user_id,readonly"`
+	UserFirstName         string `db:"user_first_name,readonly"`
+	UserLastName          string `db:"user_last_name,readonly"`
+	UserEmail             string `db:"user_email,readonly"`
 }
 
 type MissingGrade struct {
