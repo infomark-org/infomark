@@ -253,28 +253,28 @@ func TestGrade(t *testing.T) {
     })
 
     g.It("Should list missing grades", func() {
-      result := []MissingGradeResponse{}
+      grades_actual := []MissingGradeResponse{}
       // students have no missing data
       // but we do not know if a user is student in a course
       w := tape.GetWithClaims("/api/v1/courses/1/grades/missing", 112, false)
       g.Assert(w.Code).Equal(http.StatusOK)
-      err := json.NewDecoder(w.Body).Decode(&result)
+      err := json.NewDecoder(w.Body).Decode(&grades_actual)
       g.Assert(err).Equal(nil)
-      g.Assert(len(result)).Equal(0)
+      g.Assert(len(grades_actual)).Equal(0)
 
       // admin (mock creates feed back for all submissions)
       w = tape.GetWithClaims("/api/v1/courses/1/grades/missing", 1, false)
       g.Assert(w.Code).Equal(http.StatusOK)
-      err = json.NewDecoder(w.Body).Decode(&result)
+      err = json.NewDecoder(w.Body).Decode(&grades_actual)
       g.Assert(err).Equal(nil)
-      g.Assert(len(result)).Equal(0)
+      g.Assert(len(grades_actual)).Equal(0)
 
       // tutors (mock creates feed back for all submissions)
       w = tape.GetWithClaims("/api/v1/courses/1/grades/missing", 3, false)
       g.Assert(w.Code).Equal(http.StatusOK)
-      err = json.NewDecoder(w.Body).Decode(&result)
+      err = json.NewDecoder(w.Body).Decode(&grades_actual)
       g.Assert(err).Equal(nil)
-      g.Assert(len(result)).Equal(0)
+      g.Assert(len(grades_actual)).Equal(0)
 
       _, err = tape.DB.Exec("UPDATE grades SET feedback='' WHERE tutor_id = 3 ")
       g.Assert(err).Equal(nil)
@@ -282,14 +282,32 @@ func TestGrade(t *testing.T) {
       // tutors (mock creates feed back for all submissions)
       w = tape.GetWithClaims("/api/v1/courses/1/grades/missing", 3, false)
       g.Assert(w.Code).Equal(http.StatusOK)
-      err = json.NewDecoder(w.Body).Decode(&result)
+      err = json.NewDecoder(w.Body).Decode(&grades_actual)
       g.Assert(err).Equal(nil)
-      // see mock.py
-      g.Assert(len(result)).Equal(945)
 
-      for _, el := range result {
-        g.Assert(el.Grade.TutorID).Equal(int64(3))
+      grades_expected, err := stores.Grade.GetAllMissingGrades(3)
+      g.Assert(err).Equal(nil)
+
+      // see mock.py
+      g.Assert(len(grades_actual)).Equal(len(grades_expected))
+      for k, el := range grades_actual {
+        g.Assert(el.Grade.ID).Equal(grades_expected[k].Grade.ID)
+        g.Assert(el.Grade.PublicExecutionState).Equal(grades_expected[k].Grade.PublicExecutionState)
+        g.Assert(el.Grade.PrivateExecutionState).Equal(grades_expected[k].Grade.PrivateExecutionState)
+        g.Assert(el.Grade.PublicTestLog).Equal(grades_expected[k].Grade.PublicTestLog)
+        g.Assert(el.Grade.PrivateTestLog).Equal(grades_expected[k].Grade.PrivateTestLog)
+        g.Assert(el.Grade.PublicTestStatus).Equal(grades_expected[k].Grade.PublicTestStatus)
+        g.Assert(el.Grade.PrivateTestStatus).Equal(grades_expected[k].Grade.PrivateTestStatus)
+        g.Assert(el.Grade.AcquiredPoints).Equal(grades_expected[k].Grade.AcquiredPoints)
+        g.Assert(el.Grade.PrivateTestLog).Equal(grades_expected[k].Grade.PrivateTestLog)
         g.Assert(el.Grade.Feedback).Equal("")
+        g.Assert(el.Grade.TutorID).Equal(int64(3))
+        g.Assert(el.Grade.SubmissionID).Equal(grades_expected[k].Grade.SubmissionID)
+
+        g.Assert(el.Grade.User.ID).Equal(grades_expected[k].Grade.UserID)
+        g.Assert(el.Grade.User.FirstName).Equal(grades_expected[k].Grade.UserFirstName)
+        g.Assert(el.Grade.User.LastName).Equal(grades_expected[k].Grade.UserLastName)
+        g.Assert(el.Grade.User.Email).Equal(grades_expected[k].Grade.UserEmail)
       }
     })
 

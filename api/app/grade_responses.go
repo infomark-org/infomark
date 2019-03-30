@@ -106,7 +106,7 @@ func newGradeListResponse(Grades []model.Grade) []render.Renderer {
 
 // GradeResponse is the response payload for Grade management.
 type MissingGradeResponse struct {
-  Grade struct {
+  Grade *struct {
     ID                    int64  `json:"id" example:"1"`
     PublicExecutionState  int    `json:"public_execution_state" example:"1"`
     PrivateExecutionState int    `json:"private_execution_state" example:"1"`
@@ -117,9 +117,14 @@ type MissingGradeResponse struct {
     AcquiredPoints        int    `json:"acquired_points" example:"19"`
     Feedback              string `json:"feedback" example:"Some feedback"`
     TutorID               int64  `json:"tutor_id" example:"2"`
-    UserID                int64  `json:"user_id" example:"222"`
     SubmissionID          int64  `json:"submission_id" example:"31"`
     FileURL               string `json:"file_url" example:"/api/v1/submissions/61/file"`
+    User                  *struct {
+      ID        int64  `json:"id" example:"1"`
+      FirstName string `json:"first_name" example:"Max"`
+      LastName  string `json:"last_name" example:"Mustermensch"`
+      Email     string `json:"email" example:"test@unit-tuebingen.de"`
+    } `json:"user"`
   } `json:"grade"`
   CourseID int64 `json:"course_id" example:"1"`
   SheetID  int64 `json:"sheet_id" example:"10"`
@@ -133,31 +138,65 @@ func (body *MissingGradeResponse) Render(w http.ResponseWriter, r *http.Request)
 
 // newMissingGradeResponse creates a response from a Grade model.
 func newMissingGradeResponse(p *model.MissingGrade) *MissingGradeResponse {
-  r := &MissingGradeResponse{
-    // Grade:    p.Grade,
-    CourseID: p.CourseID,
-    SheetID:  p.SheetID,
-    TaskID:   p.TaskID,
-  }
-
   fileURL := ""
   if helper.NewSubmissionFileHandle(p.SubmissionID).Exists() {
     fileURL = fmt.Sprintf("/api/v1/submissions/%s/file", strconv.FormatInt(p.SubmissionID, 10))
   }
 
-  r.Grade.ID = p.ID
-  r.Grade.PublicExecutionState = p.PublicExecutionState
-  r.Grade.PrivateExecutionState = p.PrivateExecutionState
-  r.Grade.PublicTestLog = p.PublicTestLog
-  r.Grade.PrivateTestLog = p.PrivateTestLog
-  r.Grade.PublicTestStatus = p.PublicTestStatus
-  r.Grade.PrivateTestStatus = p.PrivateTestStatus
-  r.Grade.AcquiredPoints = p.AcquiredPoints
-  r.Grade.Feedback = p.Feedback
-  r.Grade.TutorID = p.TutorID
-  r.Grade.UserID = p.UserID
-  r.Grade.SubmissionID = p.SubmissionID
-  r.Grade.FileURL = fileURL
+  user := &struct {
+    ID        int64  `json:"id" example:"1"`
+    FirstName string `json:"first_name" example:"Max"`
+    LastName  string `json:"last_name" example:"Mustermensch"`
+    Email     string `json:"email" example:"test@unit-tuebingen.de"`
+  }{
+    ID:        p.UserID,
+    FirstName: p.UserFirstName,
+    LastName:  p.UserLastName,
+    Email:     p.UserEmail,
+  }
+
+  grade := &struct {
+    ID                    int64  `json:"id" example:"1"`
+    PublicExecutionState  int    `json:"public_execution_state" example:"1"`
+    PrivateExecutionState int    `json:"private_execution_state" example:"1"`
+    PublicTestLog         string `json:"public_test_log" example:"Lorem Ipsum"`
+    PrivateTestLog        string `json:"private_test_log" example:"Lorem Ipsum"`
+    PublicTestStatus      int    `json:"public_test_status" example:"1"`
+    PrivateTestStatus     int    `json:"private_test_status" example:"0"`
+    AcquiredPoints        int    `json:"acquired_points" example:"19"`
+    Feedback              string `json:"feedback" example:"Some feedback"`
+    TutorID               int64  `json:"tutor_id" example:"2"`
+    SubmissionID          int64  `json:"submission_id" example:"31"`
+    FileURL               string `json:"file_url" example:"/api/v1/submissions/61/file"`
+    User                  *struct {
+      ID        int64  `json:"id" example:"1"`
+      FirstName string `json:"first_name" example:"Max"`
+      LastName  string `json:"last_name" example:"Mustermensch"`
+      Email     string `json:"email" example:"test@unit-tuebingen.de"`
+    } `json:"user"`
+  }{
+    ID:                    p.ID,
+    PublicExecutionState:  p.PublicExecutionState,
+    PrivateExecutionState: p.PrivateExecutionState,
+    PublicTestLog:         p.PublicTestLog,
+    PrivateTestLog:        p.PrivateTestLog,
+    PublicTestStatus:      p.PublicTestStatus,
+    PrivateTestStatus:     p.PrivateTestStatus,
+    AcquiredPoints:        p.AcquiredPoints,
+    Feedback:              p.Feedback,
+    TutorID:               p.TutorID,
+    User:                  user,
+    SubmissionID:          p.SubmissionID,
+    FileURL:               fileURL,
+  }
+
+  r := &MissingGradeResponse{
+    Grade:    grade,
+    CourseID: p.CourseID,
+    SheetID:  p.SheetID,
+    TaskID:   p.TaskID,
+  }
+
   return r
 
 }
