@@ -479,7 +479,6 @@ func (rs *GroupResource) SendEmailHandler(w http.ResponseWriter, r *http.Request
   }
 
   for _, recipient := range recipients {
-    // add sender identity
     msg := email.NewEmailFromUser(
       recipient.Email,
       data.Subject,
@@ -487,10 +486,7 @@ func (rs *GroupResource) SendEmailHandler(w http.ResponseWriter, r *http.Request
       accessUser,
     )
 
-    if err := email.DefaultMail.Send(msg); err != nil {
-      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-      return
-    }
+    email.OutgoingEmailsChannel <- msg
   }
 
 }

@@ -28,6 +28,7 @@ import (
 	"time"
 
 	"github.com/cgtuebingen/infomark-backend/api/app"
+	"github.com/cgtuebingen/infomark-backend/email"
 	"github.com/cgtuebingen/infomark-backend/logging"
 	"github.com/jmoiron/sqlx"
 	"github.com/spf13/viper"
@@ -79,6 +80,7 @@ func NewServer() (*Server, error) {
 
 // Start runs ListenAndServe on the http.Server with graceful shutdown.
 func (srv *Server) Start() {
+
 	log.Println("starting server...")
 	go func() {
 		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
@@ -86,6 +88,9 @@ func (srv *Server) Start() {
 		}
 	}()
 	log.Printf("Listening on %s\n", srv.Addr)
+
+	log.Println("starting background email sender...")
+	go email.BackgroundSend(email.OutgoingEmailsChannel)
 
 	quit := make(chan os.Signal)
 	signal.Notify(quit, os.Interrupt)
@@ -98,3 +103,27 @@ func (srv *Server) Start() {
 	}
 	log.Println("Server gracefully stopped")
 }
+
+// func SendEmailWorker(
+// 	recipients <-chan User,
+// 	subject string,
+// 	body string,
+// 	sender User,
+// ) {
+// 	fmt.Println("Register the worker")
+// 	for _, recipient := range recipients {
+// 		// add sender identity
+// 		// msg := email.NewEmailFromUser(
+// 		// 	recipient.Email,
+// 		// 	data.Subject,
+// 		// 	data.Body,
+// 		// 	accessUser,
+// 		// )
+
+// 		// if err := email.DefaultMail.Send(msg); err != nil {
+// 		// 	render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+// 		// 	return
+// 		// }
+// 		fmt.Println("send email to", recipient)
+// 	}
+// }

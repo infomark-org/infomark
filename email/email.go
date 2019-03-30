@@ -36,6 +36,8 @@ type Email struct {
 	Body    string
 }
 
+var OutgoingEmailsChannel chan *Email
+
 func NewEmail(toEmail string, subject string, body string) *Email {
 	email := &Email{
 		From:    viper.GetString("email_from"),
@@ -100,10 +102,17 @@ var DefaultMail Emailer
 
 func init() {
 	DefaultMail = TerminalMail
+	OutgoingEmailsChannel = make(chan *Email)
 }
 
 func (sm *VoidMailer) Send(e *Email) error {
 	return nil
+}
+
+func BackgroundSend(emails <-chan *Email) {
+	for email := range emails {
+		DefaultMail.Send(email)
+	}
 }
 
 // TerminalMailer prints everything to stdout.
@@ -164,32 +173,3 @@ func LoadAndFillTemplate(file string, data map[string]string) (string, error) {
 	err = t.Execute(&tpl, data)
 	return tpl.String(), nil
 }
-
-// func main() {
-
-// 	viper.SetConfigFile("/home/wieschol/git/github.com/cgtuebingen/infomark-go/infomark-backend/infomark-backend.yml")
-// 	if err := viper.ReadInConfig(); err == nil {
-// 		fmt.Println("Using config file:", viper.ConfigFileUsed())
-// 	}
-
-// 	body, err := LoadAndFillTemplate(
-// 		"request_password_token.de.txt",
-// 		map[string]string{
-// 			"first_name":  "Patrick",
-// 			"last_name":   "Wiesch",
-// 			"reset_url":   "http://info2.informatik.uni-tuebingen.de/reset",
-// 			"reset_token": "sdjfgsdjkfddd",
-// 		},
-// 	)
-// 	if err != nil {
-// 		fmt.Println(err)
-// 	}
-
-// 	// fmt.Println(body)
-// 	if err == nil {
-// 		SendEmail("patrick.wieschollek@uni-tuebingen.de", "GoSubject222", body)
-
-// 	} else {
-// 		fmt.Println(err)
-// 	}
-// }

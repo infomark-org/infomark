@@ -500,10 +500,7 @@ func (rs *CourseResource) SendEmailHandler(w http.ResponseWriter, r *http.Reques
       accessUser,
     )
 
-    if err := email.DefaultMail.Send(msg); err != nil {
-      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-      return
-    }
+    email.OutgoingEmailsChannel <- msg
   }
 
 }

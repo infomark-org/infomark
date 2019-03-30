@@ -37,8 +37,11 @@ func countEnrollments(tape *Tape, stmt string, courseID int64) (int, error) {
 }
 
 func TestCourse(t *testing.T) {
+
   g := goblin.Goblin(t)
   email.DefaultMail = email.VoidMail
+  // email.DefaultMail = email.TerminalMail
+  go email.BackgroundSend(email.OutgoingEmailsChannel)
 
   tape := &Tape{}
 
@@ -260,7 +263,13 @@ func TestCourse(t *testing.T) {
       g.Assert(len(courses_after)).Equal(len(courses_before) + 1)
     })
 
-    g.Xit("Should send email to all enrolled users", func() {})
+    g.It("Should send email to all enrolled users", func() {
+      w := tape.PostWithClaims("/api/v1/courses/1/emails", H{
+        "subject": "subj",
+        "body":    "text",
+      }, 1, true)
+      g.Assert(w.Code).Equal(http.StatusOK)
+    })
 
     g.It("Changes should require access claims", func() {
       w := tape.Put("/api/v1/courses/1", H{})
