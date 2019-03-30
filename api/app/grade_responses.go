@@ -49,7 +49,7 @@ type GradeResponse struct {
     FirstName string `json:"first_name" example:"Max"`
     LastName  string `json:"last_name" example:"Mustermensch"`
     Email     string `json:"email" example:"test@unit-tuebingen.de"`
-  } `json:"tutor"`
+  } `json:"user"`
 }
 
 // Render post-processes a GradeResponse.
