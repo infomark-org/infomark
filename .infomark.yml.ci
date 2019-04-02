@@ -12,24 +12,25 @@ rabbitmq_key: test-key
 # backend
 # ------------------------------------------------------------------------------
 url: http://info2.informatik.uni-tuebingen.de
-
-auth_jwt_secret: fffff
-auth_jwt_access_expiry: 15m
-auth_jwt_refresh_expiry: 10h
-
-auth_session_secret: u46IpCV9y5Vlur8YvODJEhgOY8m9JVE4sdfdfsdf
-
 log_level: debug
 port: 0.0.0.0:3000
 
+# authentication
+auth_jwt_secret: fffff
+auth_jwt_access_expiry: 15m
+auth_jwt_refresh_expiry: 10h
+auth_session_secret: u46IpCV9y5Vlur8YvODJEhgOY8m9JVE4sdfdfsdf
+min_password_length: 7
+
+# database
 database_connection: host=database user=postgres dbname=infomark password=postgres sslmode=disable
 db_debug: false
 
-min_password_length: 7
-
+# email
 email_from: no-reply@info2.informatik.uni-tuebingen.de
 email_templates_dir: /drone/src/email
 sendmail_binary: /usr/sbin/sendmail
+email_channel_size: 300
 
 cronjob_intervall_submission_zip: every 5s
 

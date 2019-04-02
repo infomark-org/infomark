@@ -10,47 +10,44 @@ rabbitmq_key: test-key
 # backend
 # ------------------------------------------------------------------------------
 url: http://localhost:3000
+log_level: debug
+port: 0.0.0.0:3000
+
+# authentication
+auth_jwt_secret: fffff
+auth_jwt_access_expiry: 15m
+auth_jwt_refresh_expiry: 10h
+auth_session_secret: u46IpCV9y5Vlur8YvODJEhgOY8m9JVE4sdfdfsdf
+
+# database
+database_connection: postgres://user:pass@localhost:5433/db?sslmode=disable&connect_timeout=1
+db_debug: false
+
+# email
+email_from: no-reply@info2.informatik.uni-tuebingen.de
+email_templates_dir: /home/patwie/git/github.com/cgtuebingen/infomark/infomark-backend/email
+sendmail_binary: /usr/sbin/sendmail
+email_channel_size: 300
+
+
 min_password_length: 7
+cronjob_intervall_submission_zip: every 5s
+use_backend_worker: true
+
 uploads_dir: /home/patwie/git/github.com/cgtuebingen/infomark/infomark-backend/files/uploads
 generated_files_dir: /home/patwie/git/github.com/cgtuebingen/infomark/infomark-backend/files/generated_files
 fixtures_dir: /home/patwie/git/github.com/cgtuebingen/infomark/infomark-backend/files/fixtures
 
-# openssl rand -hex 32
-auth_jwt_secret: fffff
-auth_jwt_access_expiry: 15m
-auth_jwt_refresh_expiry: 10h
-
-auth_session_secret: u46IpCV9y5Vlur8YvODJEhgOY8m9JVE4sdfdfsdf
-log_level: debug
-port: 0.0.0.0:3000
-
-database_connection: postgres://user:pass@localhost:5433/db?sslmode=disable&connect_timeout=1
-db_debug: false
-
-
-email_from: no-reply@info2.informatik.uni-tuebingen.de
-email_templates_dir: /home/patwie/git/github.com/cgtuebingen/infomark/infomark-backend/email
-sendmail_binary: /usr/sbin/sendmail
-
-cronjob_intervall_submission_zip: every 5s
-
-use_backend_worker: true
-
 server_read_timeout_sec: 30
 server_write_timeout_sec: 30
-# default is 1MB = 1048576 bytes
-server_max_header_bytes: 1048576
 
-# 2 * 1024 * 1024 = 2097152
-max_request_json_bytes: 2097152
-# 1 * 1024 * 1024 = 1048576
-max_request_avatar_bytes: 1048576
-# 4 * 1024 * 1024 = 4194304
-max_request_submission_bytes: 4194304
+server_max_header_bytes: 1048576      # default is 1MB = 1048576 bytes
+max_request_json_bytes: 2097152       # 2 * 1024 * 1024 = 2097152
+max_request_avatar_bytes: 1048576     # 1 * 1024 * 1024 = 1048576
+max_request_submission_bytes: 4194304 # 4 * 1024 * 1024 = 4194304
 
 # worker
 # ------------------------------------------------------------------------------
 worker_workdir: /tmp
-worker_void: false  # true = ignore request (for unit tests which might violate the db transactions)
-# 200 * 1024 * 1024 = 209715200
-worker_docker_memory_bytes: 209715200
+worker_void: false  # true -> background jobs are always skipped
+worker_docker_memory_bytes: 209715200 # 200 * 1024 * 1024 = 209715200

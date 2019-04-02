@@ -106,7 +106,7 @@ func (srv *Server) Start() {
 	log.Println("starting cronjob for zipping submissions...")
 	srv.Cron.Start()
 
-	quit := make(chan os.Signal)
+	quit := make(chan os.Signal, viper.GetInt("email_channel_size"))
 	signal.Notify(quit, os.Interrupt)
 	sig := <-quit
 	log.Println("Shutting down server... Reason:", sig)
