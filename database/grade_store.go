@@ -86,7 +86,7 @@ func (s *GradeStore) GetForSubmission(id int64) (*model.Grade, error) {
   return &p, err
 }
 
-func (s *GradeStore) GetAllMissingGrades(courseID int64, tutorID int64) ([]model.MissingGrade, error) {
+func (s *GradeStore) GetAllMissingGrades(courseID int64, tutorID int64, groupID int64) ([]model.MissingGrade, error) {
   p := []model.MissingGrade{}
 
   err := s.db.Select(&p,
@@ -100,9 +100,11 @@ INNER JOIN submissions s ON s.id = g.submission_id
 INNER JOIN task_sheet ts ON ts.task_id = s.task_id
 INNER JOIN sheet_course sg ON sg.sheet_id = ts.sheet_id
 INNER JOIN users u ON s.user_id = u.id
+INNER JOIN user_group ug ON ug.user_id = u.id
 WHERE g.feedback like '' and g.tutor_id = $1
 AND sg.course_id = $2
-  `, tutorID, courseID)
+AND ($3 = 0 OR ug.group_id = $3)
+  `, tutorID, courseID, groupID)
   return p, err
 }
 

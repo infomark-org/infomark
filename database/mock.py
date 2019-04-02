@@ -412,8 +412,6 @@ if __name__ == "__main__":
     materials.append(create_material(fake))
     material_course.append(create_material_course(i + 1, 1))
 
-
-
   with open('mock.sql', 'w') as f:
     f.write('BEGIN;')
     # users

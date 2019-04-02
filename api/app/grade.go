@@ -266,6 +266,7 @@ func (rs *GradeResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 // IndexMissingHandler is public endpoint for
 // URL: /courses/{course_id}/grades/missing
 // URLPARAM: course_id,integer
+// QUERYPARAM: group_id,integer
 // METHOD: get
 // TAG: grades
 // RESPONSE: 200,MissingGradeResponseList
@@ -277,7 +278,9 @@ func (rs *GradeResource) IndexMissingHandler(w http.ResponseWriter, r *http.Requ
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
   course := r.Context().Value("course").(*model.Course)
 
-  grades, err := rs.Stores.Grade.GetAllMissingGrades(course.ID, accessClaims.LoginID)
+  filterGroupID := helper.Int64FromUrl(r, "group_id", 0)
+
+  grades, err := rs.Stores.Grade.GetAllMissingGrades(course.ID, accessClaims.LoginID, filterGroupID)
   if err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return

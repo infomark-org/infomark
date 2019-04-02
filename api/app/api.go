@@ -166,7 +166,7 @@ type GradeStore interface {
   GetForSubmission(id int64) (*model.Grade, error)
   Update(p *model.Grade) error
   IdentifyCourseOfGrade(gradeID int64) (*model.Course, error)
-  GetAllMissingGrades(courseID int64, tutorID int64) ([]model.MissingGrade, error)
+  GetAllMissingGrades(courseID int64, tutorID int64, groupID int64) ([]model.MissingGrade, error)
   Create(p *model.Grade) (*model.Grade, error)
 
   UpdatePrivateTestInfo(gradeID int64, log string, status int) error

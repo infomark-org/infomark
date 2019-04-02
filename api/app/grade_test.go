@@ -268,14 +268,20 @@ func TestGrade(t *testing.T) {
       g.Assert(w.Code).Equal(http.StatusOK)
       err = json.NewDecoder(w.Body).Decode(&grades_actual)
       g.Assert(err).Equal(nil)
-      g.Assert(len(grades_actual)).Equal(0)
+
+      expected_grades, err := stores.Grade.GetAllMissingGrades(1, 1, 0)
+      g.Assert(err).Equal(nil)
+      g.Assert(len(grades_actual)).Equal(len(expected_grades))
 
       // tutors (mock creates feed back for all submissions)
       w = tape.GetWithClaims("/api/v1/courses/1/grades/missing", 3, false)
       g.Assert(w.Code).Equal(http.StatusOK)
       err = json.NewDecoder(w.Body).Decode(&grades_actual)
       g.Assert(err).Equal(nil)
-      g.Assert(len(grades_actual)).Equal(0)
+
+      expected_grades, err = stores.Grade.GetAllMissingGrades(1, 3, 0)
+      g.Assert(err).Equal(nil)
+      g.Assert(len(grades_actual)).Equal(len(expected_grades))
 
       _, err = tape.DB.Exec("UPDATE grades SET feedback='' WHERE tutor_id = 3 ")
       g.Assert(err).Equal(nil)
@@ -286,7 +292,7 @@ func TestGrade(t *testing.T) {
       err = json.NewDecoder(w.Body).Decode(&grades_actual)
       g.Assert(err).Equal(nil)
 
-      grades_expected, err := stores.Grade.GetAllMissingGrades(1, 3)
+      grades_expected, err := stores.Grade.GetAllMissingGrades(1, 3, 0)
       g.Assert(err).Equal(nil)
 
       // see mock.py
