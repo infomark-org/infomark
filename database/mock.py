@@ -195,6 +195,7 @@ def create_grade(submission_id, tutor_id, max_points):
           - Typ: junit.framework.AssertionFailedError
           - Msg: Method `public static float factorial (int )` in `class Factorial` found, but expected return type (`int`) is wrong. I just found `float`
 """
+  graded = fake.random_int(0, 1)
 
   data = OrderedDict([
       ('id', VAL.DEFAULT),
@@ -204,14 +205,14 @@ def create_grade(submission_id, tutor_id, max_points):
       ('public_execution_state', fake.random_int(0, 2)),
       ('private_execution_state', fake.random_int(0, 2)),
 
-      ('acquired_points', fake.random_int(0, max_points)),
+      ('acquired_points', fake.random_int(0, max_points) if graded else 0),
       ('public_test_log', dummy_log),
       ('private_test_log', dummy_log),
 
       ('public_test_status', fake.random_int(0, 1)),
       ('private_test_status', fake.random_int(0, 1)),
 
-      ('feedback', 'Lorem Ipsum Feedback'),
+      ('feedback', 'Lorem Ipsum Feedback' if graded else ""),
 
       ('tutor_id', tutor_id),
       ('submission_id', submission_id),
