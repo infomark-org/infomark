@@ -1,14 +1,6 @@
 FROM ubuntu:18.04
 
-# RUN echo "deb http://de.archive.ubuntu.com/ubuntu/ bionic main restricted " >> /etc/apt/sources.list
-# RUN echo "deb-src http://de.archive.ubuntu.com/ubuntu/ bionic main restricted " >> /etc/apt/sources.list
-# RUN echo "deb-src http://de.archive.ubuntu.com/ubuntu/ bionic main restricted " >> /etc/apt/sources.list
-
-RUN echo "deb http://nurse.informatik.uni-tuebingen.de/snapshot_bionic/stable/ubuntu bionic main restricted universe multiverse" >> /etc/apt/sources.list
-RUN echo "deb http://nurse.informatik.uni-tuebingen.de/snapshot_bionic/stable/ubuntu bionic-updates main restricted universe multiverse" >> /etc/apt/sources.list
-RUN echo "deb http://nurse.informatik.uni-tuebingen.de/snapshot_bionic/stable/ubuntu bionic-security main restricted universe multiverse" >> /etc/apt/sources.list
-
-# RUN apt-get update
+RUN apt-get update
 RUN apt-get -y install git subversion gcc g++ make wget gfortran
 RUN apt-get -y install golang
 
