@@ -62,7 +62,7 @@ func (rs *MaterialResource) IndexHandler(w http.ResponseWriter, r *http.Request)
   var err error
   // we use middle to detect whether there is a course given
   course := r.Context().Value("course").(*model.Course)
-  materials, err = rs.Stores.Material.MaterialsOfCourse(course.ID, false)
+  materials, err = rs.Stores.Material.MaterialsOfCourse(course.ID)
 
   if err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))

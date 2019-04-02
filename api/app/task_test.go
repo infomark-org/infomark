@@ -58,7 +58,7 @@ func TestTask(t *testing.T) {
       w := tape.GetWithClaims("/api/v1/courses/1/sheets/1/tasks", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      tasks_expected, err := stores.Task.TasksOfSheet(1, false)
+      tasks_expected, err := stores.Task.TasksOfSheet(1)
       g.Assert(err).Equal(nil)
 
       tasks_actual := []TaskResponse{}
@@ -66,7 +66,7 @@ func TestTask(t *testing.T) {
       g.Assert(err).Equal(nil)
       g.Assert(len(tasks_actual)).Equal(3)
 
-      for k, _ := range tasks_actual {
+      for k := range tasks_actual {
         g.Assert(tasks_expected[k].ID).Equal(tasks_actual[k].ID)
         g.Assert(tasks_expected[k].MaxPoints).Equal(tasks_actual[k].MaxPoints)
         g.Assert(tasks_expected[k].Name).Equal(tasks_actual[k].Name)
@@ -105,7 +105,7 @@ func TestTask(t *testing.T) {
     })
 
     g.It("Should create valid task", func() {
-      tasks_before, err := stores.Task.TasksOfSheet(1, false)
+      tasks_before, err := stores.Task.TasksOfSheet(1)
       g.Assert(err).Equal(nil)
 
       task_sent := TaskRequest{
@@ -128,7 +128,7 @@ func TestTask(t *testing.T) {
       g.Assert(task_return.PrivateDockerImage).Equal(task_sent.PrivateDockerImage)
       g.Assert(task_return.PublicDockerImage).Equal(task_sent.PublicDockerImage)
 
-      tasks_after, err := stores.Task.TasksOfSheet(1, false)
+      tasks_after, err := stores.Task.TasksOfSheet(1)
       g.Assert(err).Equal(nil)
       g.Assert(len(tasks_after)).Equal(len(tasks_before) + 1)
     })

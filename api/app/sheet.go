@@ -63,7 +63,7 @@ func (rs *SheetResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
   // we use middle to detect whether there is a course given
 
   course := r.Context().Value("course").(*model.Course)
-  sheets, err = rs.Stores.Sheet.SheetsOfCourse(course.ID, false)
+  sheets, err = rs.Stores.Sheet.SheetsOfCourse(course.ID)
 
   givenRole := r.Context().Value("course_role").(authorize.CourseRole)
 

@@ -46,9 +46,9 @@ type StudentSubmission struct {
   StudentLastName  string `db:"last_name"`
 }
 
-func FetchStudentSubmissions(groupID int64, taskID int64) ([]StudentSubmission, error) {
+func FetchStudentSubmissions(db *sqlx.DB, groupID int64, taskID int64) ([]StudentSubmission, error) {
   p := []StudentSubmission{}
-  err := s.db.Select(&p, `
+  err := db.Select(&p, `
   SELECT s.id, u.first_name, u.last_name FROM submissions s
   INNER JOIN user_group ug ON ug.user_id = s.user_id
   INNER JOIN users u ON u.id  = s.user_id
@@ -99,8 +99,8 @@ func (job *SubmissionFileZipper) Run() {
               helper.FileTouch(dest_zip_lock)
             }
 
-            submissions, _ := FetchStudentSubmissions(group.ID, task.ID)
-
+            submissions, _ := FetchStudentSubmissions(job.DB, group.ID, task.ID)
+            _ = submissions
           }
 
         }

@@ -105,7 +105,7 @@ func TestMaterial(t *testing.T) {
 
     g.It("Should create valid material", func() {
 
-      materials_before, err := stores.Material.MaterialsOfCourse(1, false)
+      materials_before, err := stores.Material.MaterialsOfCourse(1)
       g.Assert(err).Equal(nil)
 
       material_sent := MaterialRequest{
@@ -139,7 +139,7 @@ func TestMaterial(t *testing.T) {
       g.Assert(material_return.PublishAt.Equal(material_sent.PublishAt)).Equal(true)
       g.Assert(material_return.LectureAt.Equal(material_sent.LectureAt)).Equal(true)
 
-      materials_after, err := stores.Material.MaterialsOfCourse(1, false)
+      materials_after, err := stores.Material.MaterialsOfCourse(1)
       g.Assert(err).Equal(nil)
 
       g.Assert(len(materials_after)).Equal(len(materials_before) + 1)

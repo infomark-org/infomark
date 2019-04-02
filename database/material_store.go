@@ -75,7 +75,7 @@ func (s *MaterialStore) Delete(sheetID int64) error {
   return Delete(s.db, "materials", sheetID)
 }
 
-func (s *MaterialStore) MaterialsOfCourse(courseID int64, only_active bool) ([]model.Material, error) {
+func (s *MaterialStore) MaterialsOfCourse(courseID int64) ([]model.Material, error) {
   p := []model.Material{}
 
   err := s.db.Select(&p, `

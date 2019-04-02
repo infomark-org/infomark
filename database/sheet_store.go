@@ -75,7 +75,7 @@ func (s *SheetStore) Delete(sheetID int64) error {
   return Delete(s.db, "sheets", sheetID)
 }
 
-func (s *SheetStore) SheetsOfCourse(courseID int64, only_active bool) ([]model.Sheet, error) {
+func (s *SheetStore) SheetsOfCourse(courseID int64) ([]model.Sheet, error) {
   p := []model.Sheet{}
 
   err := s.db.Select(&p, `

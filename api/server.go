@@ -115,6 +115,9 @@ func (srv *Server) Start() {
 	srv.Cron.Stop()
 	log.Println("Cronjobs gracefully stopped")
 
+	close(email.OutgoingEmailsChannel)
+	log.Println("Background email sender gracefully stopped")
+
 	if err := srv.Http.Shutdown(context.Background()); err != nil {
 		panic(err)
 	}

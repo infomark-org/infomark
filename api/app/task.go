@@ -60,7 +60,7 @@ func (rs *TaskResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
   var err error
   // we use middle to detect whether there is a sheet given
   sheet := r.Context().Value("sheet").(*model.Sheet)
-  tasks, err = rs.Stores.Task.TasksOfSheet(sheet.ID, false)
+  tasks, err = rs.Stores.Task.TasksOfSheet(sheet.ID)
 
   // render JSON reponse
   if err = render.RenderList(w, r, newTaskListResponse(tasks)); err != nil {

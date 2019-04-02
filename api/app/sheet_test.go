@@ -117,7 +117,7 @@ func TestSheet(t *testing.T) {
     })
 
     g.It("Should create valid sheet", func() {
-      sheets_before, err := stores.Sheet.SheetsOfCourse(1, false)
+      sheets_before, err := stores.Sheet.SheetsOfCourse(1)
       g.Assert(err).Equal(nil)
 
       sheet_sent := SheetRequest{
@@ -146,7 +146,7 @@ func TestSheet(t *testing.T) {
       g.Assert(sheet_return.PublishAt.Equal(sheet_sent.PublishAt)).Equal(true)
       g.Assert(sheet_return.DueAt.Equal(sheet_sent.DueAt)).Equal(true)
 
-      sheets_after, err := stores.Sheet.SheetsOfCourse(1, false)
+      sheets_after, err := stores.Sheet.SheetsOfCourse(1)
       g.Assert(err).Equal(nil)
       g.Assert(len(sheets_after)).Equal(len(sheets_before) + 1)
     })

@@ -82,7 +82,7 @@ func (s *TaskStore) Delete(taskID int64) error {
   return Delete(s.db, "tasks", taskID)
 }
 
-func (s *TaskStore) TasksOfSheet(sheetID int64, only_active bool) ([]model.Task, error) {
+func (s *TaskStore) TasksOfSheet(sheetID int64) ([]model.Task, error) {
   p := []model.Task{}
 
   // t.public_test_path, t.private_test_path,

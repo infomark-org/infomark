@@ -73,7 +73,7 @@ type SheetStore interface {
   GetAll() ([]model.Sheet, error)
   Create(p *model.Sheet, courseID int64) (*model.Sheet, error)
   Delete(SheetID int64) error
-  SheetsOfCourse(courseID int64, only_active bool) ([]model.Sheet, error)
+  SheetsOfCourse(courseID int64) ([]model.Sheet, error)
   IdentifyCourseOfSheet(sheetID int64) (*model.Course, error)
   PointsForUser(userID int64, sheetID int64) ([]model.TaskPoints, error)
 }
@@ -85,7 +85,7 @@ type TaskStore interface {
   GetAll() ([]model.Task, error)
   Create(p *model.Task, sheetID int64) (*model.Task, error)
   Delete(TaskID int64) error
-  TasksOfSheet(sheetID int64, only_active bool) ([]model.Task, error)
+  TasksOfSheet(sheetID int64) ([]model.Task, error)
   IdentifyCourseOfTask(taskID int64) (*model.Course, error)
   IdentifySheetOfTask(taskID int64) (*model.Sheet, error)
 
@@ -133,7 +133,7 @@ type MaterialStore interface {
   Create(p *model.Material, courseID int64) (*model.Material, error)
   Update(p *model.Material) error
   Delete(sheetID int64) error
-  MaterialsOfCourse(courseID int64, only_active bool) ([]model.Material, error)
+  MaterialsOfCourse(courseID int64) ([]model.Material, error)
   IdentifyCourseOfMaterial(sheetID int64) (*model.Course, error)
   GetAll() ([]model.Material, error)
 }
