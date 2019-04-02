@@ -31,7 +31,10 @@ email_from: no-reply@info2.informatik.uni-tuebingen.de
 email_templates_dir: /drone/src/email
 sendmail_binary: /usr/sbin/sendmail
 
+cronjob_intervall_submission_zip: every 5s
+
 uploads_dir: /drone/src/files/uploads
+generated_files_dir: /drone/src/files/generated_files_dir
 fixtures_dir: /drone/src/files/fixtures
 
 use_backend_worker: false

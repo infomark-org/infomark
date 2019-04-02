@@ -12,6 +12,7 @@ rabbitmq_key: test-key
 url: http://localhost:3000
 min_password_length: 7
 uploads_dir: /home/patwie/git/github.com/cgtuebingen/infomark/infomark-backend/files/uploads
+generated_files_dir: /home/patwie/git/github.com/cgtuebingen/infomark/infomark-backend/files/generated_files
 fixtures_dir: /home/patwie/git/github.com/cgtuebingen/infomark/infomark-backend/files/fixtures
 
 # openssl rand -hex 32
@@ -30,6 +31,8 @@ db_debug: false
 email_from: no-reply@info2.informatik.uni-tuebingen.de
 email_templates_dir: /home/patwie/git/github.com/cgtuebingen/infomark/infomark-backend/email
 sendmail_binary: /usr/sbin/sendmail
+
+cronjob_intervall_submission_zip: every 5s
 
 use_backend_worker: true
 

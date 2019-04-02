@@ -30,6 +30,9 @@ static/
 .infomark-backend.yml
 .infomark.yml
 
+files/generated_files/*
+!files/generated_files/.keep
+
 files/uploads/avatars/*
 files/uploads/materials/*
 files/uploads/sheets/*

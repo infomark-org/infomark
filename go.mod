@@ -27,6 +27,7 @@ require (
 	github.com/mitchellh/go-homedir v1.0.0
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/pkg/errors v0.8.1 // indirect
+	github.com/robfig/cron v0.0.0-20180505203441-b41be1df6967
 	github.com/sirupsen/logrus v1.3.0
 	github.com/spf13/afero v1.2.0 // indirect
 	github.com/spf13/cobra v0.0.3

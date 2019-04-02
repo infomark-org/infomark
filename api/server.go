@@ -20,6 +20,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -28,15 +29,18 @@ import (
 	"time"
 
 	"github.com/cgtuebingen/infomark-backend/api/app"
+	"github.com/cgtuebingen/infomark-backend/api/cronjob"
 	"github.com/cgtuebingen/infomark-backend/email"
 	"github.com/cgtuebingen/infomark-backend/logging"
 	"github.com/jmoiron/sqlx"
+	"github.com/robfig/cron"
 	"github.com/spf13/viper"
 )
 
 // Server provides an http.Server.
 type Server struct {
-	*http.Server
+	Http *http.Server
+	Cron *cron.Cron
 }
 
 // NewServer creates and configures an APIServer serving all application routes.
@@ -75,7 +79,14 @@ func NewServer() (*Server, error) {
 		MaxHeaderBytes: viper.GetInt("server_write_timeout_sec"),
 	}
 
-	return &Server{&srv}, nil
+	c := cron.New()
+	c.AddJob(fmt.Sprintf("@%s", viper.GetString("cronjob_intervall_submission_zip")), &cronjob.SubmissionFileZipper{
+		Stores:    app.NewStores(db),
+		DB:        db,
+		Directory: viper.GetString("generated_files_dir"),
+	})
+
+	return &Server{Http: &srv, Cron: c}, nil
 }
 
 // Start runs ListenAndServe on the http.Server with graceful shutdown.
@@ -83,22 +94,28 @@ func (srv *Server) Start() {
 
 	log.Println("starting server...")
 	go func() {
-		if err := srv.ListenAndServe(); err != http.ErrServerClosed {
+		if err := srv.Http.ListenAndServe(); err != http.ErrServerClosed {
 			panic(err)
 		}
 	}()
-	log.Printf("Listening on %s\n", srv.Addr)
+	log.Printf("Listening on %s\n", srv.Http.Addr)
 
 	log.Println("starting background email sender...")
 	go email.BackgroundSend(email.OutgoingEmailsChannel)
+
+	log.Println("starting cronjob for zipping submissions...")
+	srv.Cron.Start()
 
 	quit := make(chan os.Signal)
 	signal.Notify(quit, os.Interrupt)
 	sig := <-quit
 	log.Println("Shutting down server... Reason:", sig)
-	// teardown logic...
 
-	if err := srv.Shutdown(context.Background()); err != nil {
+	// teardown logic...
+	srv.Cron.Stop()
+	log.Println("Cronjobs gracefully stopped")
+
+	if err := srv.Http.Shutdown(context.Background()); err != nil {
 		panic(err)
 	}
 	log.Println("Server gracefully stopped")
@@ -110,7 +127,7 @@ func (srv *Server) Start() {
 // 	body string,
 // 	sender User,
 // ) {
-// 	fmt.Println("Register the worker")
+// 	log.Println("Register the worker")
 // 	for _, recipient := range recipients {
 // 		// add sender identity
 // 		// msg := email.NewEmailFromUser(
@@ -124,6 +141,6 @@ func (srv *Server) Start() {
 // 		// 	render.Render(w, r, ErrInternalServerErrorWithDetails(err))
 // 		// 	return
 // 		// }
-// 		fmt.Println("send email to", recipient)
+// 		log.Println("send email to", recipient)
 // 	}
 // }

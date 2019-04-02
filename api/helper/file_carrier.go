@@ -148,7 +148,7 @@ func (f *FileHandle) Path() string {
 
     for _, ext := range f.Extensions {
       path := fmt.Sprintf("%s/avatars/%s.%s", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10), ext)
-      if fileExists(path) {
+      if FileExists(path) {
         return path
       }
     }
@@ -167,7 +167,7 @@ func (f *FileHandle) Path() string {
 
     for _, ext := range f.Extensions {
       path := fmt.Sprintf("%s/materials/%s.%s", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10), ext)
-      if fileExists(path) {
+      if FileExists(path) {
         return path
       }
     }
@@ -180,7 +180,7 @@ func (f *FileHandle) Path() string {
 }
 
 // Exists checks if a file really exists.
-func fileExists(path string) bool {
+func FileExists(path string) bool {
   if _, err := os.Stat(path); os.IsNotExist(err) {
     return false
   }
@@ -188,9 +188,16 @@ func fileExists(path string) bool {
   return true
 }
 
+// FileTouch creates an empty file
+func FileTouch(path string) error {
+  emptyFile, err := os.Create(path)
+  defer emptyFile.Close()
+  return err
+}
+
 // Exists checks if a file really exists.
 func (f *FileHandle) Exists() bool {
-  return fileExists(f.Path())
+  return FileExists(f.Path())
 }
 
 // Delete deletes a file from disk.
