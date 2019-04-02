@@ -257,6 +257,7 @@ func TestGrade(t *testing.T) {
       // students have no missing data
       // but we do not know if a user is student in a course
       w := tape.GetWithClaims("/api/v1/courses/1/grades/missing", 112, false)
+      fmt.Println(w.Body)
       g.Assert(w.Code).Equal(http.StatusOK)
       err := json.NewDecoder(w.Body).Decode(&grades_actual)
       g.Assert(err).Equal(nil)
@@ -285,7 +286,7 @@ func TestGrade(t *testing.T) {
       err = json.NewDecoder(w.Body).Decode(&grades_actual)
       g.Assert(err).Equal(nil)
 
-      grades_expected, err := stores.Grade.GetAllMissingGrades(3)
+      grades_expected, err := stores.Grade.GetAllMissingGrades(1, 3)
       g.Assert(err).Equal(nil)
 
       // see mock.py

@@ -275,8 +275,9 @@ func (rs *GradeResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 // SUMMARY:  the missing grades for the request identity
 func (rs *GradeResource) IndexMissingHandler(w http.ResponseWriter, r *http.Request) {
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  course := r.Context().Value("course").(*model.Course)
 
-  grades, err := rs.Stores.Grade.GetAllMissingGrades(accessClaims.LoginID)
+  grades, err := rs.Stores.Grade.GetAllMissingGrades(course.ID, accessClaims.LoginID)
   if err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return
