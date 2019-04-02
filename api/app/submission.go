@@ -202,6 +202,19 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
       render.Render(w, r, ErrInternalServerErrorWithDetails(err))
       return
     }
+
+    // and update the grade
+    grade.PublicExecutionState = 0
+    grade.PrivateExecutionState = 0
+    grade.PublicTestLog = "..."
+    grade.PrivateTestLog = "..."
+
+    err = rs.Stores.Grade.Update(grade)
+    if err != nil {
+      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+      return
+    }
+
   }
 
   // the file will be located
@@ -234,15 +247,15 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
   request := &shared.SubmissionAMQPWorkerRequest{
     SubmissionID: submission.ID,
     AccessToken:  accessToken,
-    FrameworkFileURL: fmt.Sprintf("%s/api/v1/courses/%stasks/%s/public_file",
+    FrameworkFileURL: fmt.Sprintf("%s/api/v1/courses/%s/tasks/%s/public_file",
       viper.GetString("url"),
       strconv.FormatInt(course.ID, 10),
       strconv.FormatInt(task.ID, 10)),
-    SubmissionFileURL: fmt.Sprintf("%s/api/v1/courses/%ssubmissions/%s/file",
+    SubmissionFileURL: fmt.Sprintf("%s/api/v1/courses/%s/submissions/%s/file",
       viper.GetString("url"),
       strconv.FormatInt(course.ID, 10),
       strconv.FormatInt(submission.ID, 10)),
-    ResultEndpointURL: fmt.Sprintf("%s/api/v1/courses/%sgrades/%s/public_result",
+    ResultEndpointURL: fmt.Sprintf("%s/api/v1/courses/%s/grades/%s/public_result",
       viper.GetString("url"),
       strconv.FormatInt(course.ID, 10),
       strconv.FormatInt(grade.ID, 10)),
@@ -266,15 +279,15 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
   request = &shared.SubmissionAMQPWorkerRequest{
     SubmissionID: submission.ID,
     AccessToken:  accessToken,
-    FrameworkFileURL: fmt.Sprintf("%s/api/v1/courses/%stasks/%s/private_file",
+    FrameworkFileURL: fmt.Sprintf("%s/api/v1/courses/%s/tasks/%s/private_file",
       viper.GetString("url"),
       strconv.FormatInt(course.ID, 10),
       strconv.FormatInt(task.ID, 10)),
-    SubmissionFileURL: fmt.Sprintf("%s/api/v1/courses/%ssubmissions/%s/file",
+    SubmissionFileURL: fmt.Sprintf("%s/api/v1/courses/%s/submissions/%s/file",
       viper.GetString("url"),
       strconv.FormatInt(course.ID, 10),
       strconv.FormatInt(submission.ID, 10)),
-    ResultEndpointURL: fmt.Sprintf("%s/api/v1/courses/%sgrades/%s/private_result",
+    ResultEndpointURL: fmt.Sprintf("%s/api/v1/courses/%s/grades/%s/private_result",
       viper.GetString("url"),
       strconv.FormatInt(course.ID, 10),
       strconv.FormatInt(grade.ID, 10)),

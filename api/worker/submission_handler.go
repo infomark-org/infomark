@@ -124,8 +124,14 @@ func cleanDockerOutput(stdout string) string {
   logEnd := "--- END --- INFOMARK -- WORKER"
 
   rsl := strings.Split(stdout, logStart)
-  rsl = strings.Split(rsl[1], logEnd)
-  return rsl[0]
+
+  if len(rsl) > 1 {
+    rsl = strings.Split(rsl[1], logEnd)
+    return rsl[0]
+
+  } else {
+    return stdout
+  }
 }
 
 func (h *RealSubmissionHandler) Handle(body []byte) error {
@@ -172,6 +178,9 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
     return err
   }
 
+  fmt.Println("stdout", stdout)
+  fmt.Println("bytes", viper.GetInt64("worker_docker_memory_bytes"))
+
   // fmt.Println("docker", stdout)
   stdout = cleanDockerOutput(stdout)
   // fmt.Println("docker", stdout)
@@ -184,6 +193,9 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
     Log:    stdout,
     Status: int(exit),
   }
+
+  fmt.Println("Log", stdout)
+  fmt.Println("Status", exit)
 
   // fmt.Println(workerResp.Log)
   // fmt.Println(workerResp.Status)
@@ -200,6 +212,7 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
   }
   defer resp.Body.Close()
   fmt.Println("response Status:", resp.Status)
+  fmt.Println("response Body:", resp.Body)
 
   // fmt.Println(resp.Body)
 
