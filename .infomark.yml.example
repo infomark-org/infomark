@@ -25,7 +25,7 @@ db_debug: false
 
 # email
 email_from: no-reply@info2.informatik.uni-tuebingen.de
-email_templates_dir: /home/patwie/git/github.com/cgtuebingen/infomark/infomark-backend/email
+email_templates_dir: /var/www/infomark-staging/app/email
 sendmail_binary: /usr/sbin/sendmail
 email_channel_size: 300
 
@@ -34,9 +34,9 @@ min_password_length: 7
 cronjob_intervall_submission_zip: every 5s
 use_backend_worker: true
 
-uploads_dir: /home/patwie/git/github.com/cgtuebingen/infomark/infomark-backend/files/uploads
-generated_files_dir: /home/patwie/git/github.com/cgtuebingen/infomark/infomark-backend/files/generated_files
-fixtures_dir: /home/patwie/git/github.com/cgtuebingen/infomark/infomark-backend/files/fixtures
+uploads_dir: /var/www/infomark-staging/app/files/uploads
+generated_files_dir: /var/www/infomark-staging/app/files/generated_files
+fixtures_dir: /var/www/infomark-staging/app/files/fixtures
 
 server_read_timeout_sec: 30
 server_write_timeout_sec: 30
