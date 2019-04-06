@@ -123,11 +123,15 @@ func Time(t time.Time) time.Time {
 
 // SetConfigFile will search the homedirectoy for a custom config file.
 func SetConfigFile() {
+	home := os.Getenv("INFOMARK_CONFIG_DIR")
+	var err error
+	if home == "" {
 
-	// Find home directory.
-	home, err := os.UserHomeDir()
-	if err != nil {
-		log.Fatal(err)
+		// Find home directory.
+		home, err = os.Getwd()
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	// Search config in home directory with name ".go-base" (without extension).

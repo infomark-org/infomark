@@ -49,7 +49,8 @@ steps:
   pull: default
   image: golang
   commands:
-  - cp .infomark.yml.ci ~/.infomark.yml
+  - cp .infomark.yml.ci .infomark.yml
+  - export INFOMARK_CONFIG_DIR=`pwd`
   - go test ./api/app -cover -v
   - go test ./api/helper -cover -v
   environment:
@@ -59,7 +60,6 @@ steps:
   pull: default
   image: golang
   commands:
-  - cp .infomark.yml.ci ~/.infomark.yml
   - go generate
   environment:
     GOPROXY: https://gomods.patwie.com/

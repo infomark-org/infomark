@@ -69,8 +69,8 @@ func ConnectAndStores() (*sqlx.DB, *app.Stores, error) {
 
 }
 
-var UserPromoteCmd = &cobra.Command{
-  Use:   "promote [userID]",
+var AdminAddCmd = &cobra.Command{
+  Use:   "add [userID]",
   Short: "set gives an user global admin permission",
   Long:  `Will set the gobal root flag o true for a user bypassing all permission tests`,
   Args:  cobra.ExactArgs(1),
@@ -97,8 +97,8 @@ var UserPromoteCmd = &cobra.Command{
   },
 }
 
-var UserDowngradeCmd = &cobra.Command{
-  Use:   "downgrade [userID]",
+var AdminRemoveCmd = &cobra.Command{
+  Use:   "remove [userID]",
   Short: "removes global admin permission from a user",
   Long:  `Will set the gobal root flag to false for a user `,
   Args:  cobra.ExactArgs(1),
@@ -189,6 +189,11 @@ var UserSetEmailCmd = &cobra.Command{
 var UserCmd = &cobra.Command{
   Use:   "user",
   Short: "Management of users",
+}
+
+var AdminCmd = &cobra.Command{
+  Use:   "admin",
+  Short: "Management of admins",
 }
 
 // -----------------------------------------------------------------------------
@@ -558,8 +563,11 @@ var AssignmentCmd = &cobra.Command{
 }
 
 func init() {
-  UserCmd.AddCommand(UserDowngradeCmd)
-  UserCmd.AddCommand(UserPromoteCmd)
+
+  AdminCmd.AddCommand(AdminRemoveCmd)
+  AdminCmd.AddCommand(AdminAddCmd)
+  ConsoleCmd.AddCommand(AdminCmd)
+
   UserCmd.AddCommand(UserSetEmailCmd)
   ConsoleCmd.AddCommand(UserCmd)
 

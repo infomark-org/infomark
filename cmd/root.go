@@ -23,7 +23,6 @@ import (
 	"log"
 	"os"
 
-	homedir "github.com/mitchellh/go-homedir"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -62,10 +61,15 @@ func SetConfigFile() {
 		// Use config file from the flag.
 		viper.SetConfigFile(cfgFile)
 	} else {
+		var err error
 		// Find home directory.
-		home, err := homedir.Dir()
-		if err != nil {
-			log.Fatal(err)
+		home := os.Getenv("INFOMARK_CONFIG_DIR")
+
+		if home == "" {
+			home, err = os.Getwd()
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
 
 		// Search config in home directory with name ".go-base" (without extension).

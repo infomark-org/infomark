@@ -23,12 +23,12 @@ import (
   olog "log"
   "net/http"
   "net/http/httptest"
+  "os"
 
   "github.com/cgtuebingen/infomark-backend/api/helper"
   "github.com/cgtuebingen/infomark-backend/auth/authenticate"
   otape "github.com/cgtuebingen/infomark-backend/tape"
   "github.com/jmoiron/sqlx"
-  homedir "github.com/mitchellh/go-homedir"
   "github.com/spf13/viper"
 )
 
@@ -46,11 +46,15 @@ func addJWTClaims(r *http.Request, loginID int64, root bool) {
 var tokenManager *authenticate.TokenAuth
 
 func SetConfigFile() {
+  var err error
+  home := os.Getenv("INFOMARK_CONFIG_DIR")
 
-  // Find home directory.
-  home, err := homedir.Dir()
-  if err != nil {
-    olog.Fatal(err)
+  if home == "" {
+    // Find home directory.
+    home, err = os.Getwd()
+    if err != nil {
+      olog.Fatal(err)
+    }
   }
 
   viper.AddConfigPath(home)
