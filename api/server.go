@@ -123,27 +123,3 @@ func (srv *Server) Start() {
 	}
 	log.Println("Server gracefully stopped")
 }
-
-// func SendEmailWorker(
-// 	recipients <-chan User,
-// 	subject string,
-// 	body string,
-// 	sender User,
-// ) {
-// 	log.Println("Register the worker")
-// 	for _, recipient := range recipients {
-// 		// add sender identity
-// 		// msg := email.NewEmailFromUser(
-// 		// 	recipient.Email,
-// 		// 	data.Subject,
-// 		// 	data.Body,
-// 		// 	accessUser,
-// 		// )
-
-// 		// if err := email.DefaultMail.Send(msg); err != nil {
-// 		// 	render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-// 		// 	return
-// 		// }
-// 		log.Println("send email to", recipient)
-// 	}
-// }

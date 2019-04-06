@@ -126,25 +126,19 @@ var AdminRemoveCmd = &cobra.Command{
 }
 
 var UserConfirmCmd = &cobra.Command{
-  Use:   "confirm [userID]",
+  Use:   "confirm [email]",
   Short: "confirms the email address manually",
   Long:  `Will run confirmation procedure for an user `,
   Args:  cobra.ExactArgs(1),
   Run: func(cmd *cobra.Command, args []string) {
-
-    arg0, err := strconv.Atoi(args[0])
-    if err != nil {
-      fmt.Printf("cannot convert userID '%s' to int\n", args[0])
-      return
-    }
-    userID := int64(arg0)
-
     _, stores, err := ConnectAndStores()
     fail(err)
 
-    user, err := stores.User.Get(userID)
+    email := args[0]
+
+    user, err := stores.User.FindByEmail(email)
     if err != nil {
-      fmt.Printf("user with id %v not found\n", userID)
+      fmt.Printf("user with email %v not found\n", email)
       return
     }
     user.ConfirmEmailToken = null.String{}
@@ -569,6 +563,7 @@ func init() {
   ConsoleCmd.AddCommand(AdminCmd)
 
   UserCmd.AddCommand(UserSetEmailCmd)
+  UserCmd.AddCommand(UserConfirmCmd)
   ConsoleCmd.AddCommand(UserCmd)
 
   SubmissionCmd.AddCommand(SubmissionEnqueueCmd)
