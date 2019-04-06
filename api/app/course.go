@@ -245,19 +245,6 @@ func (rs *CourseResource) IndexEnrollmentsHandler(w http.ResponseWriter, r *http
   }
 
   enrolledUsers = EnsurePrivacyInEnrollments(enrolledUsers, givenRole)
-  // if givenRole == authorize.STUDENT {
-  //   for k, _ := range enrolledUsers {
-  //     enrolledUsers[k].Email = ""
-  //   }
-  // }
-
-  // if givenRole != authorize.ADMIN {
-  //   for k, _ := range enrolledUsers {
-  //     enrolledUsers[k].StudentNumber = ""
-  //     enrolledUsers[k].Semester = 0
-  //     enrolledUsers[k].Subject = ""
-  //   }
-  // }
 
   // render JSON reponse
   if err = render.RenderList(w, r, newEnrollmentListResponse(enrolledUsers)); err != nil {
@@ -389,8 +376,13 @@ func (rs *CourseResource) EnrollHandler(w http.ResponseWriter, r *http.Request) 
   course := r.Context().Value("course").(*model.Course)
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
 
+  role := int64(0)
+  if accessClaims.Root {
+    role = int64(2)
+  }
+
   // update database entry
-  if err := rs.Stores.Course.Enroll(course.ID, accessClaims.LoginID); err != nil {
+  if err := rs.Stores.Course.Enroll(course.ID, accessClaims.LoginID, role); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return
   }

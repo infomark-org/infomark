@@ -30,10 +30,16 @@ import (
   "github.com/franela/goblin"
 )
 
-func countEnrollments(tape *Tape, stmt string, courseID int64) (int, error) {
-  var number_enrollments_expected int
-  err := tape.DB.Get(&number_enrollments_expected, stmt, courseID)
-  return number_enrollments_expected, err
+func DBGetInt(tape *Tape, stmt string, param1 int64) (int, error) {
+  var rsl int
+  err := tape.DB.Get(&rsl, stmt, param1)
+  return rsl, err
+}
+
+func DBGetInt2(tape *Tape, stmt string, param1 int64, param2 int64) (int, error) {
+  var rsl int
+  err := tape.DB.Get(&rsl, stmt, param1, param2)
+  return rsl, err
 }
 
 func TestCourse(t *testing.T) {
@@ -99,7 +105,7 @@ func TestCourse(t *testing.T) {
       course_active, err := stores.Course.Get(1)
       g.Assert(err).Equal(nil)
 
-      number_enrollments_expected, err := countEnrollments(
+      number_enrollments_expected, err := DBGetInt(
         tape,
         "SELECT count(*) FROM user_course WHERE course_id = $1",
         course_active.ID,
@@ -117,7 +123,7 @@ func TestCourse(t *testing.T) {
       course_active, err := stores.Course.Get(1)
       g.Assert(err).Equal(nil)
 
-      number_enrollments_expected, err := countEnrollments(
+      number_enrollments_expected, err := DBGetInt(
         tape,
         "SELECT count(*) FROM user_course WHERE course_id = $1 and role = 0",
         course_active.ID,
@@ -135,7 +141,7 @@ func TestCourse(t *testing.T) {
       course_active, err := stores.Course.Get(1)
       g.Assert(err).Equal(nil)
 
-      number_enrollments_expected, err := countEnrollments(
+      number_enrollments_expected, err := DBGetInt(
         tape,
         "SELECT count(*) FROM user_course WHERE course_id = $1 and role = 1",
         course_active.ID,
@@ -153,7 +159,7 @@ func TestCourse(t *testing.T) {
       course_active, err := stores.Course.Get(1)
       g.Assert(err).Equal(nil)
 
-      number_enrollments_expected, err := countEnrollments(
+      number_enrollments_expected, err := DBGetInt(
         tape,
         "SELECT count(*) FROM user_course WHERE course_id = $1 and role IN (0,1)",
         course_active.ID,
@@ -171,7 +177,7 @@ func TestCourse(t *testing.T) {
       course_active, err := stores.Course.Get(1)
       g.Assert(err).Equal(nil)
 
-      number_enrollments_expected, err := countEnrollments(
+      number_enrollments_expected, err := DBGetInt(
         tape,
         "SELECT count(*) FROM user_course WHERE course_id = $1 and role IN (1, 2)",
         course_active.ID,
@@ -340,11 +346,47 @@ func TestCourse(t *testing.T) {
       g.Assert(len(entries_after)).Equal(len(entries_before) - 1)
     })
 
+    g.It("Non-Global root enroll as students", func() {
+
+      courseID := int64(1)
+      userID := int64(112)
+
+      w := tape.PostWithClaims("/api/v1/courses/1/enrollments", helper.H{}, userID, false)
+      g.Assert(w.Code).Equal(http.StatusCreated)
+
+      role, err := DBGetInt2(
+        tape,
+        "SELECT role FROM user_course WHERE course_id = $1 and user_id = $2",
+        courseID, userID,
+      )
+      g.Assert(err).Equal(nil)
+      g.Assert(role).Equal(0)
+
+    })
+
+    g.It("Global root enroll as admins", func() {
+
+      courseID := int64(1)
+      userID := int64(112)
+
+      w := tape.PostWithClaims("/api/v1/courses/1/enrollments", helper.H{}, userID, true)
+      g.Assert(w.Code).Equal(http.StatusCreated)
+
+      role, err := DBGetInt2(
+        tape,
+        "SELECT role FROM user_course WHERE course_id = $1 and user_id = $2",
+        courseID, userID,
+      )
+      g.Assert(err).Equal(nil)
+      g.Assert(role).Equal(2)
+
+    })
+
     g.It("Can disenroll from course", func() {
 
       courseID := int64(1)
 
-      number_enrollments_before, err := countEnrollments(
+      number_enrollments_before, err := DBGetInt(
         tape,
         "SELECT count(*) FROM user_course WHERE course_id = $1 and role = 0",
         courseID,
@@ -354,7 +396,7 @@ func TestCourse(t *testing.T) {
       w := tape.DeleteWithClaims("/api/v1/courses/1/enrollments", 112, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      number_enrollments_after, err := countEnrollments(
+      number_enrollments_after, err := DBGetInt(
         tape,
         "SELECT count(*) FROM user_course WHERE course_id = $1 and role = 0",
         courseID,
@@ -368,7 +410,7 @@ func TestCourse(t *testing.T) {
 
       courseID := int64(1)
 
-      number_enrollments_before, err := countEnrollments(
+      number_enrollments_before, err := DBGetInt(
         tape,
         "SELECT count(*) FROM user_course WHERE course_id = $1 and role = 0",
         courseID,
@@ -379,7 +421,7 @@ func TestCourse(t *testing.T) {
       w := tape.DeleteWithClaims("/api/v1/courses/1/enrollments/113", 1, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      number_enrollments_after, err := countEnrollments(
+      number_enrollments_after, err := DBGetInt(
         tape,
         "SELECT count(*) FROM user_course WHERE course_id = $1 and role = 0",
         courseID,
@@ -393,7 +435,7 @@ func TestCourse(t *testing.T) {
 
       courseID := int64(1)
 
-      number_enrollments_before, err := countEnrollments(
+      number_enrollments_before, err := DBGetInt(
         tape,
         "SELECT count(*) FROM user_course WHERE course_id = $1 and role = 0",
         courseID,
@@ -404,7 +446,7 @@ func TestCourse(t *testing.T) {
       w := tape.DeleteWithClaims("/api/v1/courses/1/enrollments/2", 1, false)
       g.Assert(w.Code).Equal(http.StatusBadRequest)
 
-      number_enrollments_after, err := countEnrollments(
+      number_enrollments_after, err := DBGetInt(
         tape,
         "SELECT count(*) FROM user_course WHERE course_id = $1 and role = 0",
         courseID,
@@ -418,7 +460,7 @@ func TestCourse(t *testing.T) {
       courseID := int64(1)
       userID := int64(2)
 
-      number_enrollments_before, err := countEnrollments(
+      number_enrollments_before, err := DBGetInt(
         tape,
         "SELECT count(*) FROM user_course WHERE course_id = $1 and role = 0",
         courseID,
@@ -428,7 +470,7 @@ func TestCourse(t *testing.T) {
       w := tape.DeleteWithClaims("/api/v1/courses/1/enrollments", userID, false)
       g.Assert(w.Code).Equal(http.StatusBadRequest)
 
-      number_enrollments_after, err := countEnrollments(
+      number_enrollments_after, err := DBGetInt(
         tape,
         "SELECT count(*) FROM user_course WHERE course_id = $1 and role = 0",
         courseID,

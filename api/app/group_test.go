@@ -387,7 +387,7 @@ func TestGroup(t *testing.T) {
       group_active, err := stores.Group.Get(1)
       g.Assert(err).Equal(nil)
 
-      number_enrollments_expected, err := countEnrollments(
+      number_enrollments_expected, err := DBGetInt(
         tape,
         "SELECT count(*) FROM user_group WHERE group_id = $1",
         group_active.ID,

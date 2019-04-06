@@ -50,7 +50,7 @@ type CourseStore interface {
   GetAll() ([]model.Course, error)
   Create(p *model.Course) (*model.Course, error)
   Delete(courseID int64) error
-  Enroll(courseID int64, userID int64) error
+  Enroll(courseID int64, userID int64, role int64) error
   Disenroll(courseID int64, userID int64) error
   EnrolledUsers(
     courseId int64,

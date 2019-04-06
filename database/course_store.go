@@ -94,9 +94,13 @@ func (s *CourseStore) Delete(courseID int64) error {
   return Delete(s.db, "courses", courseID)
 }
 
-func (s *CourseStore) Enroll(courseID int64, userID int64) error {
+func (s *CourseStore) Enroll(courseID int64, userID int64, role int64) error {
+  err := s.Disenroll(courseID, userID)
+  if err != nil {
+    return err
+  }
   stmt := "INSERT INTO user_course (id, user_id, course_id, role) VALUES (DEFAULT, $1, $2, $3);"
-  _, err := s.db.Exec(stmt, userID, courseID, 0)
+  _, err = s.db.Exec(stmt, userID, courseID, role)
   return err
 }
 

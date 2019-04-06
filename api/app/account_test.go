@@ -77,7 +77,6 @@ func TestAccount(t *testing.T) {
       g.Assert(len(enrollments_actual)).Equal(len(enrollments_expected))
 
       for j := 0; j < len(enrollments_expected); j++ {
-        // fmt.Println(j)
         g.Assert(enrollments_actual[j].Role).Equal(enrollments_expected[j].Role)
         g.Assert(enrollments_actual[j].CourseID).Equal(enrollments_expected[j].CourseID)
         g.Assert(enrollments_actual[j].ID).Equal(int64(0))
