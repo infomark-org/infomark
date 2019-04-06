@@ -94,6 +94,8 @@ var AdminAddCmd = &cobra.Command{
     user.Root = true
     stores.User.Update(user)
 
+    fmt.Printf("user %s %s (%v) is now an admin\n", user.FirstName, user.LastName, user.ID)
+
   },
 }
 
@@ -122,6 +124,45 @@ var AdminRemoveCmd = &cobra.Command{
     user.Root = false
     stores.User.Update(user)
 
+    fmt.Printf("user %s %s (%v) is not an admin anymore\n", user.FirstName, user.LastName, user.ID)
+
+  },
+}
+
+var UserFindCmd = &cobra.Command{
+  Use:   "find [query]",
+  Short: "find user by first_name, last_name or email",
+  Long:  `List all users matching the query`,
+  Args:  cobra.ExactArgs(1),
+  Run: func(cmd *cobra.Command, args []string) {
+    db, _, err := ConnectAndStores()
+    fail(err)
+
+    query := fmt.Sprintf("%%%s%%", args[0])
+
+    users := []model.User{}
+    err = db.Select(&users, `
+    SELECT *
+FROM users
+WHERE
+ last_name LIKE $1
+OR
+ first_name LIKE $1
+OR
+ email LIKE $1`, query)
+    if err != nil {
+      panic(err)
+    }
+
+    fmt.Printf("found %v users matching %s\n", len(users), query)
+    for k, user := range users {
+      fmt.Printf("%4d %20s %20s %50s\n", user.ID, user.FirstName, user.LastName, user.Email)
+      if k%10 == 0 && k != 0 {
+        fmt.Println("")
+      }
+    }
+
+    fmt.Printf("found %v users matching %s\n", len(users), query)
   },
 }
 
@@ -143,6 +184,8 @@ var UserConfirmCmd = &cobra.Command{
     }
     user.ConfirmEmailToken = null.String{}
     stores.User.Update(user)
+
+    fmt.Printf("email of user %s %s has been confirmed", user.FirstName, user.LastName)
   },
 }
 
@@ -177,6 +220,8 @@ var UserSetEmailCmd = &cobra.Command{
     }
     user.Email = email
     stores.User.Update(user)
+
+    fmt.Printf("email of user %s %s is now %s", user.FirstName, user.LastName, user.Email)
   },
 }
 
@@ -564,6 +609,7 @@ func init() {
 
   UserCmd.AddCommand(UserSetEmailCmd)
   UserCmd.AddCommand(UserConfirmCmd)
+  UserCmd.AddCommand(UserFindCmd)
   ConsoleCmd.AddCommand(UserCmd)
 
   SubmissionCmd.AddCommand(SubmissionEnqueueCmd)
