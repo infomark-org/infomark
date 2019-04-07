@@ -15,9 +15,13 @@ No manual settings, plug and play:
 # get code
 git clone https://github.com/cgtuebingen/infomark-backend.git
 go build infomark.go
+
 # copy pre-defined config (just for demo purposes)
-cp .informark.yml.example ~/.informark.yml
-# start dependencies (postgres, rabbitmq)
+cp .informark.yml.example .informark.yml
+# the backend will search for .infomark.yml in the directory $INFOMARK_CONFIG_DIR
+# or use the file in the current directory
+
+# start dependencies (postgres, rabbitmq, redis)
 sudo docker-compose up -d
 
 # initialize database
