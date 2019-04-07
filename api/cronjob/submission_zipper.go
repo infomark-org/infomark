@@ -19,8 +19,10 @@
 package cronjob
 
 import (
+  "archive/zip"
   "fmt"
-  "strconv"
+  "io"
+  "os"
 
   "github.com/cgtuebingen/infomark-backend/api/app"
   "github.com/cgtuebingen/infomark-backend/api/helper"
@@ -68,48 +70,101 @@ func (job *SubmissionFileZipper) Run() {
   sheets, _ := job.Stores.Sheet.GetAll()
 
   for _, sheet := range sheets {
-    fmt.Println(sheet.DueAt)
     if app.OverTime(sheet.DueAt) {
-      fmt.Println("work on ", sheet.ID)
-      sheet_lock_path := fmt.Sprintf("%s/infomark-sheet%s.lock", job.Directory, strconv.FormatInt(sheet.ID, 10))
-      fmt.Println("create file %s", sheet_lock_path)
+      // fmt.Println("work on ", sheet.ID)
+      sheet_lock_path := fmt.Sprintf("%s/infomark-sheet%d.lock", job.Directory, sheet.ID)
+
+      fmt.Printf("test lock file '%s'\n", sheet_lock_path)
+
       if !helper.FileExists(sheet_lock_path) {
-        fmt.Println(sheet.DueAt)
+        fmt.Println(" --> create", sheet.ID)
         helper.FileTouch(sheet_lock_path)
 
         courseID := int64(0)
         job.DB.Get(&courseID, "SELECT course_id FROM sheet_course WHERE sheet_id = $1;", sheet.ID)
 
-        fmt.Println("course ", courseID)
-
         groups, _ := job.Stores.Group.GroupsOfCourse(courseID)
         tasks, _ := job.Stores.Task.TasksOfSheet(sheet.ID)
 
         for _, task := range tasks {
+          fmt.Println("  work on task ", task.ID)
+
           for _, group := range groups {
-            dest_zip_lock := fmt.Sprintf("%s/infomark-sheet%s-task%s-group%s.lock",
-              job.Directory,
-              strconv.FormatInt(sheet.ID, 10),
-              strconv.FormatInt(task.ID, 10),
-              strconv.FormatInt(group.ID, 10),
-            )
+            archiv_lock_path := fmt.Sprintf("%s/infomark-sheet%d-task%d-group%d.lock", job.Directory, sheet.ID, task.ID, group.ID)
+            archiv_zip_path := fmt.Sprintf("%s/infomark-sheet%d-task%d-group%d.zip", job.Directory, sheet.ID, task.ID, group.ID)
 
-            if !helper.FileExists(dest_zip_lock) {
+            if !helper.FileExists(archiv_lock_path) && !helper.FileExists(archiv_zip_path) {
+
               // we gonna zip all submissions from students in group x for task y
-              helper.FileTouch(dest_zip_lock)
-            }
+              helper.FileTouch(archiv_lock_path)
 
-            submissions, _ := FetchStudentSubmissions(job.DB, group.ID, task.ID)
-            _ = submissions
+              submissions, _ := FetchStudentSubmissions(job.DB, group.ID, task.ID)
+
+              newZipFile, err := os.Create(archiv_zip_path)
+              if err != nil {
+                return
+              }
+              defer newZipFile.Close()
+
+              zipWriter := zip.NewWriter(newZipFile)
+              defer zipWriter.Close()
+
+              for _, submission := range submissions {
+                // fmt.Println(submission)
+
+                submission_hnd := helper.NewSubmissionFileHandle(submission.ID)
+
+                // student did upload a zip file
+                if submission_hnd.Exists() {
+                  // see https://stackoverflow.com/a/53802396/7443104
+                  // fmt.Println("add sbmission ", submission.ID, " to ", archiv_zip_path)
+
+                  // refer to the zip file
+                  zipfile, err := os.Open(submission_hnd.Path())
+                  if err != nil {
+                    return
+                  }
+                  defer zipfile.Close()
+
+                  // Get the file information
+                  info, err := zipfile.Stat()
+                  if err != nil {
+                    return
+                  }
+
+                  header, err := zip.FileInfoHeader(info)
+                  if err != nil {
+                    return
+                  }
+
+                  // Using FileInfoHeader() above only uses the basename of the file. If we want
+                  // to preserve the folder structure we can overwrite this with the full path.
+                  header.Name = fmt.Sprintf("%s-%s.zip", submission.StudentLastName, submission.StudentFirstName)
+
+                  // Change to deflate to gain better compression
+                  // see http://golang.org/pkg/archive/zip/#pkg-constants
+                  header.Method = zip.Deflate
+
+                  writer, err := zipWriter.CreateHeader(header)
+                  if err != nil {
+                    return
+                  }
+                  if _, err = io.Copy(writer, zipfile); err != nil {
+                    return
+                  }
+                }
+
+              }
+            }
           }
 
         }
-
       } else {
-        fmt.Println("already done", sheet.ID)
+        fmt.Println(" --> already done", sheet.ID)
       }
+
     } else {
-      fmt.Println("ok", sheet.ID)
+      // fmt.Println("ok", sheet.ID)
     }
 
   }

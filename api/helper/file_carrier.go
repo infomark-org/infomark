@@ -195,6 +195,11 @@ func FileTouch(path string) error {
   return err
 }
 
+// FileDelete deletes an file
+func FileDelete(path string) error {
+  return os.Remove(path)
+}
+
 // Exists checks if a file really exists.
 func (f *FileHandle) Exists() bool {
   return FileExists(f.Path())

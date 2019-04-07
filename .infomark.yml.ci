@@ -35,7 +35,7 @@ email_channel_size: 300
 cronjob_intervall_submission_zip: every 5s
 
 uploads_dir: /drone/src/files/uploads
-generated_files_dir: /drone/src/files/generated_files_dir
+generated_files_dir: /drone/src/files/generated_files
 fixtures_dir: /drone/src/files/fixtures
 
 use_backend_worker: false
