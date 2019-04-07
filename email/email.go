@@ -102,7 +102,7 @@ var DefaultMail Emailer
 
 func init() {
 	DefaultMail = TerminalMail
-	OutgoingEmailsChannel = make(chan *Email)
+	OutgoingEmailsChannel = make(chan *Email, 300)
 }
 
 func (sm *VoidMailer) Send(e *Email) error {

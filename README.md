@@ -15,7 +15,7 @@ No manual settings, plug and play:
 # get code
 git clone https://github.com/cgtuebingen/infomark-backend.git
 go build infomark.go
-# copy pre-defined config
+# copy pre-defined config (just for demo purposes)
 cp .informark.yml.example ~/.informark.yml
 # start dependencies (postgres, rabbitmq)
 sudo docker-compose up -d
@@ -28,8 +28,10 @@ python3 mock.py
 PGPASSWORD=pass psql -h 127.0.0.1 -U user -p 5433 -d db -f mock.sql
 cd ..
 
-# start a single background worker (feel free to start more instanced)
+# start a single background worker (feel free to start more instances)
 # as it uses docker, sudo permissions are required to talk to the docker context
+sudo ./infomark worker &
+sudo ./infomark worker &
 sudo ./infomark worker &
 
 # start server
@@ -58,20 +60,19 @@ Just run
 go generate
 ```
 
-and use the Swagger-UI.
+and use the Swagger-UI to serve the file `api.yaml`.
 
 
 
 ## Development + Unit-Tests
 
-Some tools have been proven useful during development. We suggest [pgweb](https://github.com/sosedoff/pgweb) to visualize the database queries
+Some tools have been proven useful during development. We suggest [pgweb](https://github.com/sosedoff/pgweb) to debug the database queries
 
 ```bash
-# debug database
 pgweb --host=127.0.0.1 --port 5433 --user=user --pass=pass --db=db
 ```
 
-To run the unit-tests you will need to mock the database (we need some data to test again) in python:
+To run the unit-tests you will need to mock the database content (we need some data to test again) in python:
 
 ```bash
 # do it once to create schema and mock
@@ -96,4 +97,4 @@ sudo docker-compose rm
 sudo docker-compose up --force-recreate
 ```
 
-If you are working on the [mock-generator](./database/mock.py) please add new lines to the bottom as the random seed is fixed and some unit tests depend on the actual random seed.
+If you are working on the [mock-generator](./database/mock.py) please add new lines to the end of the file as the random seed is fixed and some unit tests depend on the actual random seed.

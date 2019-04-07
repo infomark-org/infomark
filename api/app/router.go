@@ -20,6 +20,7 @@ package app
 
 import (
   "errors"
+  "fmt"
   "io"
   "net/http"
   "os"
@@ -40,7 +41,8 @@ import (
 )
 
 // The golang fork-join multi-threading allows no easy way to cancel started request
-// Therefore we limit the amount of data which is read by the server.
+// Therefore we limit the amount of data which is read by the server whenever
+// we need to parse a JSON request.
 func LimitedDecoder(r *http.Request, v interface{}) error {
   var err error
 
@@ -51,7 +53,7 @@ func LimitedDecoder(r *http.Request, v interface{}) error {
   default:
     err = errors.New("render: unable to automatically decode the request content type")
   }
-
+  //
   return err
 }
 
@@ -124,6 +126,14 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 
       // open routes
       r.Group(func(r chi.Router) {
+
+        // we assume 600 students
+        // so we reset to 600 request per minute here
+        r.Use(authenticate.RateLimitMiddleware("infomark-logins",
+          fmt.Sprintf("%d-M", viper.GetInt64("auth_total_requests_per_minute")),
+          viper.GetString("redis_url"),
+        ))
+
         r.Post("/auth/token", appAPI.Auth.RefreshAccessTokenHandler)
         r.Post("/auth/sessions", appAPI.Auth.LoginHandler)
         r.Post("/auth/request_password_reset", appAPI.Auth.RequestPasswordResetHandler)
@@ -311,9 +321,6 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
                   // ensures user is enrolled in the associated course
 
                   r.Get("/", appAPI.Task.GetHandler)
-                  r.Get("/public_file", appAPI.Task.GetPublicTestFileHandler)
-                  r.Get("/private_file", appAPI.Task.GetPrivateTestFileHandler)
-
                   r.Get("/ratings", appAPI.TaskRating.GetHandler)
                   r.Post("/ratings", appAPI.TaskRating.ChangeHandler)
 
@@ -327,6 +334,9 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 
                     r.Put("/", appAPI.Task.EditHandler)
                     r.Delete("/", appAPI.Task.DeleteHandler)
+
+                    r.Get("/public_file", appAPI.Task.GetPublicTestFileHandler)
+                    r.Get("/private_file", appAPI.Task.GetPrivateTestFileHandler)
 
                     r.Post("/public_file", appAPI.Task.ChangePublicTestFileHandler)
                     r.Post("/private_file", appAPI.Task.ChangePrivateTestFileHandler)

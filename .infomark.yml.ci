@@ -14,6 +14,7 @@ rabbitmq_key: test-key
 url: http://info2.informatik.uni-tuebingen.de
 log_level: debug
 port: 0.0.0.0:3000
+redis_url: redis://redis_service:6379/0
 
 # authentication
 auth_jwt_secret: fffff
@@ -21,6 +22,7 @@ auth_jwt_access_expiry: 15m
 auth_jwt_refresh_expiry: 10h
 auth_session_secret: u46IpCV9y5Vlur8YvODJEhgOY8m9JVE4sdfdfsdf
 min_password_length: 7
+auth_total_requests_per_minute: 10
 
 # database
 database_connection: host=database user=postgres dbname=infomark password=postgres sslmode=disable

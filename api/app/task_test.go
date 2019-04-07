@@ -149,6 +149,9 @@ func TestTask(t *testing.T) {
       g.Assert(helper.NewPublicTestFileHandle(1).Exists()).Equal(false)
       g.Assert(helper.NewPrivateTestFileHandle(1).Exists()).Equal(false)
 
+      w := tape.GetWithClaims("/api/v1/courses/1/tasks/1/public_file", 1, true)
+      g.Assert(w.Code).Equal(http.StatusNotFound)
+
       // public test
       filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
       w, err := tape.UploadWithClaims("/api/v1/courses/1/tasks/1/public_file", filename, "application/zip", 1, true)
@@ -162,8 +165,11 @@ func TestTask(t *testing.T) {
       w = tape.GetWithClaims("/api/v1/courses/1/tasks/1/public_file", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      w = tape.GetWithClaims("/api/v1/courses/1/tasks/1/private_file", 1, true)
-      g.Assert(w.Code).Equal(http.StatusNotFound)
+      w = tape.GetWithClaims("/api/v1/courses/1/tasks/1/public_file", 2, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+
+      w = tape.GetWithClaims("/api/v1/courses/1/tasks/1/public_file", 122, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
     })
 
     g.It("Should upload private test file", func() {
@@ -173,6 +179,9 @@ func TestTask(t *testing.T) {
       // no files so far
       g.Assert(helper.NewPublicTestFileHandle(1).Exists()).Equal(false)
       g.Assert(helper.NewPrivateTestFileHandle(1).Exists()).Equal(false)
+
+      w := tape.GetWithClaims("/api/v1/courses/1/tasks/1/private_file", 1, true)
+      g.Assert(w.Code).Equal(http.StatusNotFound)
 
       // public test
       filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
@@ -184,11 +193,14 @@ func TestTask(t *testing.T) {
       g.Assert(helper.NewPublicTestFileHandle(1).Exists()).Equal(false)
       g.Assert(helper.NewPrivateTestFileHandle(1).Exists()).Equal(true)
 
-      w = tape.GetWithClaims("/api/v1/courses/1/tasks/1/public_file", 1, true)
-      g.Assert(w.Code).Equal(http.StatusNotFound)
-
       w = tape.GetWithClaims("/api/v1/courses/1/tasks/1/private_file", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
+
+      w = tape.GetWithClaims("/api/v1/courses/1/tasks/1/private_file", 2, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+
+      w = tape.GetWithClaims("/api/v1/courses/1/tasks/1/private_file", 122, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
     })
 
     g.It("Changes should require claims", func() {
@@ -213,14 +225,27 @@ func TestTask(t *testing.T) {
       g.Assert(task_after.Name).Equal("new blub")
       g.Assert(task_after.PublicDockerImage).Equal("new_public")
       g.Assert(task_after.PrivateDockerImage).Equal("new_private")
+
+      w = tape.PutWithClaims("/api/v1/courses/1/tasks/1", data, 2, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+
+      w = tape.PutWithClaims("/api/v1/courses/1/tasks/1", data, 112, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
     })
 
     g.It("Should delete when valid access claims", func() {
+
       entries_before, err := stores.Task.GetAll()
       g.Assert(err).Equal(nil)
 
       w := tape.Delete("/api/v1/courses/1/tasks/1")
       g.Assert(w.Code).Equal(http.StatusUnauthorized)
+
+      w = tape.DeleteWithClaims("/api/v1/courses/1/tasks/1", 2, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+
+      w = tape.DeleteWithClaims("/api/v1/courses/1/tasks/1", 112, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // verify nothing has changes
       entries_after, err := stores.Task.GetAll()
@@ -234,6 +259,7 @@ func TestTask(t *testing.T) {
       entries_after, err = stores.Task.GetAll()
       g.Assert(err).Equal(nil)
       g.Assert(len(entries_after)).Equal(len(entries_before) - 1)
+
     })
 
     g.It("students should see public results", func() {

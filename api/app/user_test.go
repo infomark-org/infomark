@@ -20,7 +20,6 @@ package app
 
 import (
   "encoding/json"
-  "fmt"
   "net/http"
   "testing"
 
@@ -213,7 +212,6 @@ func TestUser(t *testing.T) {
       g.Assert(err).Equal(nil)
 
       w := tape.PutWithClaims("/api/v1/me", helper.ToH(user_sent), 1, true)
-      fmt.Println(w.Body)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       user_after, err := stores.User.Get(1)

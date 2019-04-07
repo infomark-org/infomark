@@ -26,6 +26,8 @@ import (
   "github.com/cgtuebingen/infomark-backend/auth"
   "github.com/cgtuebingen/infomark-backend/email"
   "github.com/franela/goblin"
+  redis "github.com/go-redis/redis"
+  "github.com/spf13/viper"
   null "gopkg.in/guregu/null.v3"
 )
 
@@ -37,6 +39,12 @@ func TestAuth(t *testing.T) {
 
   var w *httptest.ResponseRecorder
   var stores *Stores
+
+  option, err := redis.ParseURL(viper.GetString("redis_url"))
+  if err != nil {
+    panic(err)
+  }
+  redisClient := redis.NewClient(option)
 
   g.Describe("Auth", func() {
 
@@ -213,8 +221,24 @@ func TestAuth(t *testing.T) {
       g.Assert(user_after.ConfirmEmailToken.Valid).Equal(false)
     })
 
+    g.It("Should limit requests per minute to do an login", func() {
+      payload := H{
+        "email":          "test@uni-tuebingen.de",
+        "plain_password": "test",
+      }
+
+      for i := 0; i < 10; i++ {
+        w = tape.Post("/api/v1/auth/sessions", payload)
+      }
+      g.Assert(w.Code).Equal(http.StatusOK)
+      w = tape.Post("/api/v1/auth/sessions", payload)
+      g.Assert(w.Code).Equal(http.StatusTooManyRequests)
+    })
+
     g.AfterEach(func() {
       tape.AfterEach()
+      err := redisClient.Set("infomark-logins:1.2.3.4-infomark-logins", "0", 0).Err()
+      g.Assert(err).Equal(nil)
     })
 
   })

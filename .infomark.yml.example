@@ -12,12 +12,14 @@ rabbitmq_key: test-key
 url: http://localhost:3000
 log_level: debug
 port: 0.0.0.0:3000
+redis_url: redis://localhost:6379/0
 
 # authentication
 auth_jwt_secret: fffff
 auth_jwt_access_expiry: 15m
 auth_jwt_refresh_expiry: 10h
 auth_session_secret: u46IpCV9y5Vlur8YvODJEhgOY8m9JVE4sdfdfsdf
+auth_total_requests_per_minute: 600
 
 # database
 database_connection: postgres://user:pass@localhost:5433/db?sslmode=disable&connect_timeout=1
