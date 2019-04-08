@@ -48,6 +48,10 @@ func NewServer() (*Server, error) {
 	log.Println("configuring server...")
 	logger := logging.NewLogger()
 
+	if viper.GetString("sendmail_binary") != "" {
+		email.DefaultMail = email.SendMail
+	}
+
 	// db, err := sqlx.Connect("sqlite3", "__deleteme.db")
 	db, err := sqlx.Connect("postgres", viper.GetString("database_connection"))
 	// db, err := sqlx.Connect("postgres", "user=postgres dbname=infomark password=postgres sslmode=disable")
