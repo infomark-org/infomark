@@ -46,7 +46,7 @@ func (m *GradeRequest) Validate() error {
 		// ),
 		validation.Field(
 			&m.AcquiredPoints,
-			validation.Required,
+			validation.Min(0),
 		),
 		validation.Field(
 			&m.Feedback,

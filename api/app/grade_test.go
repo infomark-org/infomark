@@ -216,6 +216,60 @@ func TestGrade(t *testing.T) {
       g.Assert(entry_after.TutorID).Equal(int64(3))
     })
 
+    g.It("Should perform updates when zero points", func() {
+
+      data := H{
+        "acquired_points": 0,
+        "feedback":        "Lorem Ipsum_update",
+      }
+
+      w := tape.Put("/api/v1/courses/1/grades/1", data)
+      g.Assert(w.Code).Equal(http.StatusUnauthorized)
+
+      // students
+      w = tape.PutWithClaims("/api/v1/courses/1/grades/1", data, 112, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+
+      // admin
+      w = tape.PutWithClaims("/api/v1/courses/1/grades/1", data, 1, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      // tutors
+      w = tape.PutWithClaims("/api/v1/courses/1/grades/1", data, 3, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      entry_after, err := stores.Grade.Get(1)
+      g.Assert(err).Equal(nil)
+
+      g.Assert(entry_after.Feedback).Equal("Lorem Ipsum_update")
+      g.Assert(entry_after.AcquiredPoints).Equal(0)
+      g.Assert(entry_after.TutorID).Equal(int64(3))
+    })
+
+    g.Xit("Should not perform updates when missing points", func() {
+      // todo difference between "0" and None
+      data := H{
+        // "acquired_points": 0,
+        "feedback": "Lorem Ipsum_update",
+      }
+
+      w := tape.Put("/api/v1/courses/1/grades/1", data)
+      g.Assert(w.Code).Equal(http.StatusUnauthorized)
+
+      // students
+      w = tape.PutWithClaims("/api/v1/courses/1/grades/1", data, 112, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+
+      // admin
+      w = tape.PutWithClaims("/api/v1/courses/1/grades/1", data, 1, false)
+      g.Assert(w.Code).Equal(http.StatusBadRequest)
+
+      // tutors
+      w = tape.PutWithClaims("/api/v1/courses/1/grades/1", data, 3, false)
+      g.Assert(w.Code).Equal(http.StatusBadRequest)
+
+    })
+
     g.It("Should not perform updates (too many points)", func() {
 
       task, err := stores.Grade.IdentifyTaskOfGrade(1)
