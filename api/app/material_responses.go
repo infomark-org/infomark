@@ -33,7 +33,6 @@ import (
 type MaterialResponse struct {
 	ID        int64     `json:"id" example:"55"`
 	Name      string    `json:"name" example:"Schleifen und Bedingungen"`
-	Filename  string    `json:"filename" example:"chapter03-loops.zip"` // we keep the original name, since it is meaningful
 	FileURL   string    `json:"file_url" example:"/api/v1/materials/55/file"`
 	Kind      int       `json:"kind" example:"0"`
 	PublishAt time.Time `json:"publish_at" example:"auto"`
@@ -45,7 +44,6 @@ func (rs *MaterialResource) newMaterialResponse(p *model.Material) *MaterialResp
 	return &MaterialResponse{
 		ID:        p.ID,
 		Name:      p.Name,
-		Filename:  p.Filename,
 		Kind:      p.Kind,
 		PublishAt: p.PublishAt,
 		LectureAt: p.LectureAt,

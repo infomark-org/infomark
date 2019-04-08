@@ -30,7 +30,6 @@ import (
 type MaterialRequest struct {
 	Name      string    `json:"name" example:"Einfuehrung"`
 	Kind      int       `json:"kind" example:"1"`
-	Filename  string    `json:"filename" example:"chapter01.zip"`
 	PublishAt time.Time `json:"publish_at" example:"auto"`
 	LectureAt time.Time `json:"lecture_at" example:"auto"`
 }
@@ -50,10 +49,6 @@ func (m *MaterialRequest) Validate() error {
 	return validation.ValidateStruct(m,
 		validation.Field(
 			&m.Name,
-			validation.Required,
-		),
-		validation.Field(
-			&m.Filename,
 			validation.Required,
 		),
 		validation.Field(

@@ -219,7 +219,7 @@ CREATE TABLE materials(
 
   name TEXT not null,
   -- should be unique in one course (keep original filename as it has some meaning)
-  filename TEXT not null,
+  -- filename TEXT not null,
   -- 0: slide, 1: supplementary
   kind INT DEFAULT 0,
   publish_at TIMESTAMP not null,

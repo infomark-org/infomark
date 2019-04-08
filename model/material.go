@@ -29,7 +29,6 @@ type Material struct {
 	UpdatedAt time.Time `db:"updated_at,omitempty"`
 
 	Name      string    `db:"name"`
-	Filename  string    `db:"filename"` // we keep the original name, since it is meaningful
 	Kind      int       `db:"kind"`
 	PublishAt time.Time `db:"publish_at"`
 	LectureAt time.Time `db:"lecture_at"`

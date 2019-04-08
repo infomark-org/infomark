@@ -106,7 +106,6 @@ func (rs *MaterialResource) CreateHandler(w http.ResponseWriter, r *http.Request
   material := &model.Material{
     Name:      data.Name,
     Kind:      data.Kind,
-    Filename:  data.Filename,
     PublishAt: data.PublishAt,
     LectureAt: data.LectureAt,
   }
@@ -188,7 +187,6 @@ func (rs *MaterialResource) EditHandler(w http.ResponseWriter, r *http.Request) 
 
   material.Name = data.Name
   material.Kind = data.Kind
-  material.Filename = data.Filename
   material.PublishAt = data.PublishAt
   material.LectureAt = data.LectureAt
 

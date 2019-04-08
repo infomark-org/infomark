@@ -110,7 +110,6 @@ func TestMaterial(t *testing.T) {
 
       material_sent := MaterialRequest{
         Name:      "Material_new",
-        Filename:  "Filename",
         Kind:      0,
         PublishAt: helper.Time(time.Now()),
         LectureAt: helper.Time(time.Now()),
@@ -134,7 +133,6 @@ func TestMaterial(t *testing.T) {
       err = json.NewDecoder(w.Body).Decode(&material_return)
       g.Assert(err).Equal(nil)
       g.Assert(material_return.Name).Equal(material_sent.Name)
-      g.Assert(material_return.Filename).Equal(material_sent.Filename)
       g.Assert(material_return.Kind).Equal(material_sent.Kind)
       g.Assert(material_return.PublishAt.Equal(material_sent.PublishAt)).Equal(true)
       g.Assert(material_return.LectureAt.Equal(material_sent.LectureAt)).Equal(true)
@@ -154,8 +152,7 @@ func TestMaterial(t *testing.T) {
       data := H{
         "name":       "Sheet_new",
         "publish_at": "2019-02-01T01:02:03Z",
-        "lecture_at": "2019-02-01T01:02:03Z",
-        // "due_at" is be missing
+        // "lecture_at" is be missing
       }
 
       w := tape.PlayDataWithClaims("POST", "/api/v1/courses/1/materials", data, 1, true)
@@ -261,7 +258,6 @@ func TestMaterial(t *testing.T) {
 
       material_sent := MaterialRequest{
         Name:      "Material_new",
-        Filename:  "Filename",
         Kind:      0,
         PublishAt: helper.Time(time.Now()),
         LectureAt: helper.Time(time.Now()),
@@ -282,7 +278,6 @@ func TestMaterial(t *testing.T) {
       material_after, err := stores.Material.Get(1)
       g.Assert(err).Equal(nil)
       g.Assert(material_after.Name).Equal(material_sent.Name)
-      g.Assert(material_after.Filename).Equal(material_sent.Filename)
       g.Assert(material_after.Kind).Equal(material_sent.Kind)
       g.Assert(material_after.PublishAt.Equal(material_sent.PublishAt)).Equal(true)
       g.Assert(material_after.LectureAt.Equal(material_sent.LectureAt)).Equal(true)
