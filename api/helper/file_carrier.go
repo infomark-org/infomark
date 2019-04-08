@@ -27,6 +27,7 @@ import (
   "net/http"
   "os"
   "strconv"
+  "strings"
 
   "github.com/spf13/viper"
 )
@@ -236,6 +237,18 @@ func (f *FileHandle) GetContentType() (string, error) {
   return contentType, nil
 }
 
+type DummyWriter struct{}
+
+func (h DummyWriter) Header() http.Header {
+  return make(map[string][]string)
+}
+
+func (h DummyWriter) Write([]byte) (int, error) {
+  return 0, nil
+}
+
+func (h DummyWriter) WriteHeader(statusCode int) {}
+
 // WriteToBody will write a file from disk to the http reponse (download process)
 func (f *FileHandle) WriteToBody(w http.ResponseWriter) error {
 
@@ -245,6 +258,11 @@ func (f *FileHandle) WriteToBody(w http.ResponseWriter) error {
     return err
   }
   defer file.Close()
+
+  path_split := strings.Split(f.Path(), "/")
+  publicFilename := fmt.Sprintf("%s-%s", path_split[len(path_split)-2], path_split[len(path_split)-1])
+
+  w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename='infomark-%s'", publicFilename))
 
   // prepare header
   fileType, err := f.GetContentType()
@@ -261,18 +279,6 @@ func (f *FileHandle) WriteToBody(w http.ResponseWriter) error {
 
   return nil
 }
-
-type DummyWriter struct{}
-
-func (h DummyWriter) Header() http.Header {
-  return make(map[string][]string)
-}
-
-func (h DummyWriter) Write([]byte) (int, error) {
-  return 0, nil
-}
-
-func (h DummyWriter) WriteHeader(statusCode int) {}
 
 // WriteToDisk will save uploads from a http request to the directory specified
 // in the config.
