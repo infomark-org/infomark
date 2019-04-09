@@ -203,6 +203,11 @@ func (rs *GroupResource) GetMineHandler(w http.ResponseWriter, r *http.Request) 
   //   return
   // }
 
+  if len(groups) == 0 {
+    render.Render(w, r, ErrNotFound)
+    return
+  }
+
   // render JSON reponse
   if err := render.RenderList(w, r, rs.newGroupListResponse(groups)); err != nil {
     render.Render(w, r, ErrRender(err))

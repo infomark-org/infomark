@@ -9,7 +9,7 @@ rabbitmq_key: test-key
 
 # backend
 # ------------------------------------------------------------------------------
-url: http://localhost:3000
+url: https://infomark-staging.informatik.uni-tuebingen.de
 log_level: debug
 port: 0.0.0.0:3000
 redis_url: redis://localhost:6379/0
@@ -33,7 +33,7 @@ email_channel_size: 300
 
 
 min_password_length: 7
-cronjob_intervall_submission_zip: every 5s
+cronjob_intervall_submission_zip: every 120s
 use_backend_worker: true
 
 uploads_dir: /var/www/infomark-staging/app/files/uploads

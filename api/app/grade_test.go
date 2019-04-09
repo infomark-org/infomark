@@ -92,6 +92,8 @@ func TestGrade(t *testing.T) {
       err := json.NewDecoder(w.Body).Decode(grade_actual)
       g.Assert(err).Equal(nil)
 
+      hnd := helper.NewSubmissionFileHandle(grade_actual.SubmissionID)
+      g.Assert(hnd.Exists()).Equal(false)
       grade_expected, err := stores.Grade.Get(1)
       g.Assert(err).Equal(nil)
 
@@ -112,11 +114,13 @@ func TestGrade(t *testing.T) {
       g.Assert(grade_actual.SubmissionID).Equal(grade_expected.SubmissionID)
       g.Assert(grade_actual.FileURL).Equal("")
 
-      defer helper.NewSubmissionFileHandle(grade_actual.SubmissionID).Delete()
+      defer hnd.Delete()
       // now file exists
       src := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
       dest := fmt.Sprintf("%s/submissions/%s.zip", viper.GetString("uploads_dir"), strconv.FormatInt(grade_actual.SubmissionID, 10))
       copyFile(src, dest)
+
+      g.Assert(hnd.Exists()).Equal(true)
 
       w = tape.GetWithClaims("/api/v1/courses/1/grades/1", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
@@ -139,7 +143,10 @@ func TestGrade(t *testing.T) {
       g.Assert(grade_actual.User.LastName).Equal(grade_expected.UserLastName)
       g.Assert(grade_actual.User.Email).Equal(grade_expected.UserEmail)
       g.Assert(grade_actual.SubmissionID).Equal(grade_expected.SubmissionID)
-      g.Assert(grade_actual.FileURL).Equal("/api/v1/submissions/1/file")
+
+      url := viper.GetString("url")
+
+      g.Assert(grade_actual.FileURL).Equal(fmt.Sprintf("%s/api/v1/submissions/1/file", url))
 
     })
 

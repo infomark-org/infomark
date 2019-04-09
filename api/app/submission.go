@@ -91,6 +91,65 @@ func (rs *SubmissionResource) GetFileHandler(w http.ResponseWriter, r *http.Requ
   }
 }
 
+// GetCollectionHandler is public endpoint for
+// URL: /courses/{course_id}/tasks/{task_id}/groups/{group_id}/file
+// URLPARAM: course_id,integer
+// URLPARAM: sheet_id,integer
+// URLPARAM: task_id,integer
+// URLPARAM: group_id,integer
+// METHOD: get
+// TAG: submissions
+// RESPONSE: 200,ZipFile
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  get the zip file containing all submissions for a given task and a given group
+func (rs *SubmissionResource) GetCollectionHandler(w http.ResponseWriter, r *http.Request) {
+  givenRole := r.Context().Value("course_role").(authorize.CourseRole)
+
+  if givenRole == authorize.STUDENT {
+    render.Render(w, r, ErrUnauthorized)
+    return
+  }
+
+  course := r.Context().Value("course").(*model.Course)
+  task := r.Context().Value("task").(*model.Task)
+
+  var groupID int64
+  var err error
+
+  // try to get id from URL
+  if groupID, err = strconv.ParseInt(chi.URLParam(r, "group_id"), 10, 64); err != nil {
+    render.Render(w, r, ErrNotFound)
+    return
+  }
+
+  sheet, err := rs.Stores.Task.IdentifySheetOfTask(task.ID)
+  if err != nil {
+    render.Render(w, r, ErrNotFound)
+    return
+  }
+
+  // find specific group in database
+  group, err := rs.Stores.Group.Get(groupID)
+  if err != nil {
+    render.Render(w, r, ErrNotFound)
+    return
+  }
+
+  hnd := helper.NewSubmissionsCollectionFileHandle(course.ID, sheet.ID, task.ID, group.ID)
+
+  if !hnd.Exists() {
+    render.Render(w, r, ErrNotFound)
+    return
+  } else {
+    if err := hnd.WriteToBody(w); err != nil {
+      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+      return
+    }
+  }
+}
+
 // GetFileByIdHandler is public endpoint for
 // URL: /courses/{course_id}/submissions/{submission_id}/file
 // URLPARAM: course_id,integer

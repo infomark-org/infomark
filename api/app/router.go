@@ -216,7 +216,12 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 
                   r.Get("/", appAPI.Sheet.GetHandler)
 
-                  r.Get("/tasks", appAPI.Task.IndexHandler)
+                  r.Route("/tasks", func(r chi.Router) {
+                    r.Get("/", appAPI.Task.IndexHandler)
+                    r.Post("/", authorize.EndpointRequiresRole(appAPI.Task.CreateHandler, authorize.ADMIN))
+
+                  })
+
                   r.Get("/file", appAPI.Sheet.GetFileHandler)
                   r.Get("/points", appAPI.Sheet.PointsHandler)
 
@@ -225,7 +230,7 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 
                     r.Put("/", appAPI.Sheet.EditHandler)
                     r.Delete("/", appAPI.Sheet.DeleteHandler)
-                    r.Post("/tasks", appAPI.Task.CreateHandler)
+
                     r.Post("/file", appAPI.Sheet.ChangeFileHandler)
                   })
 
@@ -341,6 +346,14 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
                     r.Post("/public_file", appAPI.Task.ChangePublicTestFileHandler)
                     r.Post("/private_file", appAPI.Task.ChangePrivateTestFileHandler)
                   })
+
+                  r.Route("/groups/{group_id}", func(r chi.Router) {
+                    r.Use(authorize.RequiresAtLeastCourseRole(authorize.TUTOR))
+                    r.Use(appAPI.Group.Context)
+                    r.Get("/file", appAPI.Submission.GetCollectionHandler)
+
+                  })
+
                 })
 
               }) // tasks

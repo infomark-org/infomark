@@ -38,12 +38,13 @@ import (
 type FileCategory int32
 
 const (
-  AvatarCategory      FileCategory = 0
-  SheetCategory       FileCategory = 1
-  PublicTestCategory  FileCategory = 2
-  PrivateTestCategory FileCategory = 3
-  MaterialCategory    FileCategory = 4
-  SubmissionCategory  FileCategory = 5
+  AvatarCategory                FileCategory = 0
+  SheetCategory                 FileCategory = 1
+  PublicTestCategory            FileCategory = 2
+  PrivateTestCategory           FileCategory = 3
+  MaterialCategory              FileCategory = 4
+  SubmissionCategory            FileCategory = 5
+  SubmissionsCollectionCategory FileCategory = 6
 )
 
 type FileManager interface {
@@ -59,8 +60,9 @@ type FileManager interface {
 type FileHandle struct {
   Category   FileCategory
   ID         int64    // an unique identifier (e.g. from database)
-  Extensions []string // some extra flag (ugly but works)
+  Extensions []string //
   MaxBytes   int64    // 0 means no limit
+  Infos      []int64
 }
 
 // NewAvatarFileHandle will handle user avatars. We support jpg only.
@@ -125,6 +127,17 @@ func NewSubmissionFileHandle(ID int64) *FileHandle {
   }
 }
 
+// NewSubmissionFileHandle will handle homework/exercise submissiosn (zip files).
+func NewSubmissionsCollectionFileHandle(courseID int64, sheetID int64, taskID int64, groupID int64) *FileHandle {
+  return &FileHandle{
+    Category:   SubmissionsCollectionCategory,
+    ID:         0,
+    Extensions: []string{"zip"},
+    MaxBytes:   0,
+    Infos:      []int64{courseID, sheetID, taskID, groupID},
+  }
+}
+
 // Path returns a path without checking if it exists.
 func (f *FileHandle) Sha256() (string, error) {
 
@@ -148,7 +161,7 @@ func (f *FileHandle) Path() string {
   case AvatarCategory:
 
     for _, ext := range f.Extensions {
-      path := fmt.Sprintf("%s/avatars/%s.%s", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10), ext)
+      path := fmt.Sprintf("%s/avatars/%d.%s", viper.GetString("uploads_dir"), f.ID, ext)
       if FileExists(path) {
         return path
       }
@@ -156,18 +169,18 @@ func (f *FileHandle) Path() string {
     return ""
 
   case SheetCategory:
-    return fmt.Sprintf("%s/sheets/%s.zip", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
+    return fmt.Sprintf("%s/sheets/%d.zip", viper.GetString("uploads_dir"), f.ID)
 
   case PublicTestCategory:
-    return fmt.Sprintf("%s/tasks/%s-public.zip", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
+    return fmt.Sprintf("%s/tasks/%d-public.zip", viper.GetString("uploads_dir"), f.ID)
 
   case PrivateTestCategory:
-    return fmt.Sprintf("%s/tasks/%s-private.zip", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
+    return fmt.Sprintf("%s/tasks/%d-private.zip", viper.GetString("uploads_dir"), f.ID)
 
   case MaterialCategory:
 
     for _, ext := range f.Extensions {
-      path := fmt.Sprintf("%s/materials/%s.%s", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10), ext)
+      path := fmt.Sprintf("%s/materials/%d.%s", viper.GetString("uploads_dir"), f.ID, ext)
       if FileExists(path) {
         return path
       }
@@ -175,7 +188,10 @@ func (f *FileHandle) Path() string {
     return ""
 
   case SubmissionCategory:
-    return fmt.Sprintf("%s/submissions/%s.zip", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
+    return fmt.Sprintf("%s/submissions/%d.zip", viper.GetString("uploads_dir"), f.ID)
+  case SubmissionsCollectionCategory:
+    return fmt.Sprintf("%s/infomark-course%d-sheet%d-task%d-group%d.zip",
+      viper.GetString("generated_files_dir"), f.Infos[0], f.Infos[1], f.Infos[2], f.Infos[3])
   }
   return ""
 }
@@ -262,7 +278,7 @@ func (f *FileHandle) WriteToBody(w http.ResponseWriter) error {
   path_split := strings.Split(f.Path(), "/")
   publicFilename := fmt.Sprintf("%s-%s", path_split[len(path_split)-2], path_split[len(path_split)-1])
 
-  w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename='infomark-%s'", publicFilename))
+  w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=infomark-%s", publicFilename))
 
   // prepare header
   fileType, err := f.GetContentType()

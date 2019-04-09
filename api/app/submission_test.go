@@ -57,6 +57,41 @@ func TestSubmission(t *testing.T) {
       g.Assert(w.Code).Equal(http.StatusNotFound)
     })
 
+    g.It("Tutors can download a collection of submissions", func() {
+
+      courseID := int64(1)
+      taskID := int64(1)
+      groupID := int64(1)
+
+      sheet, err := stores.Task.IdentifySheetOfTask(taskID)
+      g.Assert(err).Equal(nil)
+
+      hnd := helper.NewSubmissionsCollectionFileHandle(courseID, sheet.ID, taskID, groupID)
+
+      defer hnd.Delete()
+
+      // no files so far
+      g.Assert(hnd.Exists()).Equal(false)
+
+      src := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
+      copyFile(src, hnd.Path())
+
+      g.Assert(hnd.Exists()).Equal(true)
+
+      w := tape.Get("/api/v1/courses/1/tasks/1/groups/1/file")
+      g.Assert(w.Code).Equal(http.StatusUnauthorized)
+
+      w = tape.GetWithClaims("/api/v1/courses/1/tasks/1/groups/1/file", 112, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+
+      w = tape.GetWithClaims("/api/v1/courses/1/tasks/1/groups/1/file", 2, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      w = tape.GetWithClaims("/api/v1/courses/1/tasks/1/groups/1/file", 1, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+    })
+
     g.It("Students can upload solution (create)", func() {
 
       deadlineAt := NowUTC().Add(time.Hour)
@@ -89,7 +124,6 @@ func TestSubmission(t *testing.T) {
       filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
       w, err = tape.UploadWithClaims("/api/v1/courses/1/tasks/1/submission", filename, "application/zip", 112, false)
       g.Assert(err).Equal(nil)
-      fmt.Println(w.Body)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       createdSubmission, err := stores.Submission.GetByUserAndTask(112, 1)

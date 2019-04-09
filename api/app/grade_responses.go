@@ -26,6 +26,7 @@ import (
   "github.com/cgtuebingen/infomark-backend/api/helper"
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/go-chi/render"
+  "github.com/spf13/viper"
 )
 
 // .............................................................................
@@ -62,7 +63,10 @@ func newGradeResponse(p *model.Grade) *GradeResponse {
 
   fileURL := ""
   if helper.NewSubmissionFileHandle(p.ID).Exists() {
-    fileURL = fmt.Sprintf("/api/v1/submissions/%s/file", strconv.FormatInt(p.SubmissionID, 10))
+    fileURL = fmt.Sprintf("%s/api/v1/submissions/%s/file",
+      viper.GetString("url"),
+      strconv.FormatInt(p.SubmissionID, 10),
+    )
   }
 
   user := &struct {
