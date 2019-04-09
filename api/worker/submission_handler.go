@@ -27,6 +27,7 @@ import (
   "os"
   "strings"
 
+  "github.com/cgtuebingen/infomark-backend/api/helper"
   "github.com/cgtuebingen/infomark-backend/api/shared"
   "github.com/cgtuebingen/infomark-backend/logging"
   "github.com/cgtuebingen/infomark-backend/service"
@@ -185,6 +186,8 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
     return err
   }
 
+  defer helper.FileDelete(submission_path)
+
   // 3. fetch framework file from server
   r, err = http.NewRequest("GET", msg.FrameworkFileURL, nil)
   r.Header.Add("Authorization", "Bearer "+msg.AccessToken)
@@ -192,6 +195,14 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
     DefaultLogger.Printf("error: %v\n", err)
     return err
   }
+  defer helper.FileDelete(framework_path)
+
+  // we use a HTTP Request to send the answer
+  r = tape.BuildDataRequest("POST", msg.ResultEndpointURL, tape.ToH(&shared.SubmissionWorkerResponse{
+    Log:    "submission is currently being tested ...",
+    Status: 0,
+  }))
+  r.Header.Add("Authorization", "Bearer "+msg.AccessToken)
 
   // 4. verify checksums to avoid race conditions
   if err := verifySha256(submission_path, msg.Sha256); err != nil {
@@ -218,27 +229,13 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
     return err
   }
 
-  // fmt.Println("stdout", stdout)
-  // fmt.Println("bytes", viper.GetInt64("worker_docker_memory_bytes"))
-
-  // fmt.Println("docker", stdout)
   stdout = cleanDockerOutput(stdout)
-  // fmt.Println("docker", stdout)
-
-  // fmt.Println("docker", exit)
-  // fmt.Println("docker", err)
 
   // 3. push result back to server
   workerResp := &shared.SubmissionWorkerResponse{
     Log:    stdout,
     Status: int(exit),
   }
-
-  // fmt.Println("Log", stdout)
-  // fmt.Println("Status", exit)
-
-  // fmt.Println(workerResp.Log)
-  // fmt.Println(workerResp.Status)
 
   // we use a HTTP Request to send the answer
   r = tape.BuildDataRequest("POST", msg.ResultEndpointURL, tape.ToH(workerResp))

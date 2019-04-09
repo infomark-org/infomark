@@ -239,12 +239,12 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
     grade = &model.Grade{
       PublicExecutionState:  0,
       PrivateExecutionState: 0,
-      PublicTestLog:         "...",
-      PrivateTestLog:        "...",
+      PublicTestLog:         "submission received and will be tested",
+      PrivateTestLog:        "submission received and will be tested",
       PublicTestStatus:      0,
       PrivateTestStatus:     0,
       AcquiredPoints:        0,
-      Feedback:              "...",
+      Feedback:              "",
       TutorID:               1,
       SubmissionID:          submission.ID,
     }
@@ -265,8 +265,8 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
     // and update the grade
     grade.PublicExecutionState = 0
     grade.PrivateExecutionState = 0
-    grade.PublicTestLog = "..."
-    grade.PrivateTestLog = "..."
+    grade.PublicTestLog = "submission received and will be tested"
+    grade.PrivateTestLog = "submission received and will be tested"
 
     err = rs.Stores.Grade.Update(grade)
     if err != nil {
