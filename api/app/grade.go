@@ -104,11 +104,11 @@ func (rs *GradeResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  get a grade
 func (rs *GradeResource) GetByIDHandler(w http.ResponseWriter, r *http.Request) {
-
+  course := r.Context().Value("course").(*model.Course)
   currentGrade := r.Context().Value("grade").(*model.Grade)
 
   // return Material information of created entry
-  if err := render.Render(w, r, newGradeResponse(currentGrade)); err != nil {
+  if err := render.Render(w, r, newGradeResponse(currentGrade, course.ID)); err != nil {
     render.Render(w, r, ErrRender(err))
     return
   }
@@ -254,7 +254,7 @@ func (rs *GradeResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
   }
 
   // render JSON reponse
-  if err = render.RenderList(w, r, newGradeListResponse(submissions)); err != nil {
+  if err = render.RenderList(w, r, newGradeListResponse(submissions, course.ID)); err != nil {
     render.Render(w, r, ErrRender(err))
     return
   }

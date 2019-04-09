@@ -343,7 +343,7 @@ func (rs *TaskResource) ChangePrivateTestFileHandler(w http.ResponseWriter, r *h
 // SUMMARY:  the the public results (grades) for a test and the request identity
 func (rs *TaskResource) GetSubmissionResultHandler(w http.ResponseWriter, r *http.Request) {
   givenRole := r.Context().Value("course_role").(authorize.CourseRole)
-
+  course := r.Context().Value("course").(*model.Course)
   if givenRole != authorize.STUDENT {
     render.Render(w, r, ErrBadRequest)
     return
@@ -370,7 +370,7 @@ func (rs *TaskResource) GetSubmissionResultHandler(w http.ResponseWriter, r *htt
   grade.PrivateTestLog = ""
 
   // render JSON reponse
-  if err := render.Render(w, r, newGradeResponse(grade)); err != nil {
+  if err := render.Render(w, r, newGradeResponse(grade, course.ID)); err != nil {
     render.Render(w, r, ErrRender(err))
     return
   }

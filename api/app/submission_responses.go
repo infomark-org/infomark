@@ -21,10 +21,10 @@ package app
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/cgtuebingen/infomark-backend/model"
 	"github.com/go-chi/render"
+	"github.com/spf13/viper"
 )
 
 // .............................................................................
@@ -38,9 +38,13 @@ type SubmissionResponse struct {
 }
 
 // newSubmissionResponse creates a response from a Submission model.
-func newSubmissionResponse(p *model.Submission) *SubmissionResponse {
+func newSubmissionResponse(p *model.Submission, courseID int64) *SubmissionResponse {
 	// this does always exists
-	fileURL := fmt.Sprintf("/api/v1/submissions/%s/file", strconv.FormatInt(p.ID, 10))
+	fileURL := fmt.Sprintf("%s/api/v1/courses/%d/submissions/%d/file",
+		viper.GetString("url"),
+		courseID,
+		p.ID,
+	)
 
 	sr := &SubmissionResponse{
 		ID:      p.ID,
@@ -53,11 +57,11 @@ func newSubmissionResponse(p *model.Submission) *SubmissionResponse {
 }
 
 // newSubmissionListResponse creates a response from a list of Submission models.
-func newSubmissionListResponse(Submissions []model.Submission) []render.Renderer {
+func newSubmissionListResponse(Submissions []model.Submission, courseID int64) []render.Renderer {
 	// https://stackoverflow.com/a/36463641/7443104
 	list := []render.Renderer{}
 	for k := range Submissions {
-		list = append(list, newSubmissionResponse(&Submissions[k]))
+		list = append(list, newSubmissionResponse(&Submissions[k], courseID))
 	}
 	return list
 }

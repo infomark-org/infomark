@@ -146,7 +146,7 @@ func TestGrade(t *testing.T) {
 
       url := viper.GetString("url")
 
-      g.Assert(grade_actual.FileURL).Equal(fmt.Sprintf("%s/api/v1/submissions/1/file", url))
+      g.Assert(grade_actual.FileURL).Equal(fmt.Sprintf("%s/api/v1/courses/1/submissions/1/file", url))
 
     })
 

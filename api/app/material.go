@@ -71,7 +71,7 @@ func (rs *MaterialResource) IndexHandler(w http.ResponseWriter, r *http.Request)
 
   givenRole := r.Context().Value("course_role").(authorize.CourseRole)
   // render JSON reponse
-  if err = render.RenderList(w, r, rs.newMaterialListResponse(givenRole, materials)); err != nil {
+  if err = render.RenderList(w, r, rs.newMaterialListResponse(givenRole, course.ID, materials)); err != nil {
     render.Render(w, r, ErrRender(err))
     return
   }
@@ -120,7 +120,7 @@ func (rs *MaterialResource) CreateHandler(w http.ResponseWriter, r *http.Request
   render.Status(r, http.StatusCreated)
 
   // return Material information of created entry
-  if err := render.Render(w, r, rs.newMaterialResponse(newMaterial)); err != nil {
+  if err := render.Render(w, r, rs.newMaterialResponse(newMaterial, course.ID)); err != nil {
     render.Render(w, r, ErrRender(err))
     return
   }
@@ -143,6 +143,7 @@ func (rs *MaterialResource) CreateHandler(w http.ResponseWriter, r *http.Request
 func (rs *MaterialResource) GetHandler(w http.ResponseWriter, r *http.Request) {
   // `Material` is retrieved via middle-ware
   material := r.Context().Value("material").(*model.Material)
+  course := r.Context().Value("course").(*model.Course)
 
   givenRole := r.Context().Value("course_role").(authorize.CourseRole)
   if givenRole == authorize.STUDENT && !PublicYet(material.PublishAt) {
@@ -151,7 +152,7 @@ func (rs *MaterialResource) GetHandler(w http.ResponseWriter, r *http.Request) {
   }
 
   // render JSON reponse
-  if err := render.Render(w, r, rs.newMaterialResponse(material)); err != nil {
+  if err := render.Render(w, r, rs.newMaterialResponse(material, course.ID)); err != nil {
     render.Render(w, r, ErrRender(err))
     return
   }

@@ -59,13 +59,14 @@ func (body *GradeResponse) Render(w http.ResponseWriter, r *http.Request) error 
 }
 
 // newGradeResponse creates a response from a Grade model.
-func newGradeResponse(p *model.Grade) *GradeResponse {
+func newGradeResponse(p *model.Grade, courseID int64) *GradeResponse {
 
   fileURL := ""
   if helper.NewSubmissionFileHandle(p.ID).Exists() {
-    fileURL = fmt.Sprintf("%s/api/v1/submissions/%s/file",
+    fileURL = fmt.Sprintf("%s/api/v1/courses/%d/submissions/%d/file",
       viper.GetString("url"),
-      strconv.FormatInt(p.SubmissionID, 10),
+      courseID,
+      p.SubmissionID,
     )
   }
 
@@ -99,11 +100,11 @@ func newGradeResponse(p *model.Grade) *GradeResponse {
 }
 
 // newGradeListResponse creates a response from a list of Grade models.
-func newGradeListResponse(Grades []model.Grade) []render.Renderer {
+func newGradeListResponse(Grades []model.Grade, courseID int64) []render.Renderer {
   // https://stackoverflow.com/a/36463641/7443104
   list := []render.Renderer{}
   for k := range Grades {
-    list = append(list, newGradeResponse(&Grades[k]))
+    list = append(list, newGradeResponse(&Grades[k], courseID))
   }
   return list
 }

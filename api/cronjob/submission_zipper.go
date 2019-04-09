@@ -91,16 +91,18 @@ func (job *SubmissionFileZipper) Run() {
 
           for _, group := range groups {
             archiv_lock_path := fmt.Sprintf("%s/infomark-course%d-sheet%d-task%d-group%d.lock", job.Directory, courseID, sheet.ID, task.ID, group.ID)
-            archiv_zip_path := fmt.Sprintf("%s/infomark-course%d-sheet%d-task%d-group%d.zip", job.Directory, courseID, sheet.ID, task.ID, group.ID)
+            // archiv_zip_path := fmt.Sprintf("%s/infomark-course%d-sheet%d-task%d-group%d.zip", job.Directory, courseID, sheet.ID, task.ID, group.ID)
 
-            if !helper.FileExists(archiv_lock_path) && !helper.FileExists(archiv_zip_path) {
+            archiv_zip := helper.NewSubmissionsCollectionFileHandle(courseID, sheet.ID, task.ID, group.ID)
+
+            if !helper.FileExists(archiv_lock_path) && !archiv_zip.Exists() {
 
               // we gonna zip all submissions from students in group x for task y
               helper.FileTouch(archiv_lock_path)
 
               submissions, _ := FetchStudentSubmissions(job.DB, group.ID, task.ID)
 
-              newZipFile, err := os.Create(archiv_zip_path)
+              newZipFile, err := os.Create(archiv_zip.Path())
               if err != nil {
                 return
               }
@@ -117,7 +119,7 @@ func (job *SubmissionFileZipper) Run() {
                 // student did upload a zip file
                 if submission_hnd.Exists() {
                   // see https://stackoverflow.com/a/53802396/7443104
-                  // fmt.Println("add sbmission ", submission.ID, " to ", archiv_zip_path)
+                  // fmt.Println("add sbmission ", submission.ID, " to ", archiv_zip)
 
                   // refer to the zip file
                   zipfile, err := os.Open(submission_hnd.Path())

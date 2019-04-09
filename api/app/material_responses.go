@@ -21,7 +21,6 @@ package app
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 	"time"
 
 	"github.com/cgtuebingen/infomark-backend/auth/authorize"
@@ -41,28 +40,29 @@ type MaterialResponse struct {
 }
 
 // newMaterialResponse creates a response from a Material model.
-func (rs *MaterialResource) newMaterialResponse(p *model.Material) *MaterialResponse {
+func (rs *MaterialResource) newMaterialResponse(p *model.Material, courseID int64) *MaterialResponse {
 	return &MaterialResponse{
 		ID:        p.ID,
 		Name:      p.Name,
 		Kind:      p.Kind,
 		PublishAt: p.PublishAt,
 		LectureAt: p.LectureAt,
-		FileURL: fmt.Sprintf("%s/api/v1/materials/%s/file",
+		FileURL: fmt.Sprintf("%s/api/v1/courses/%d/materials/%d/file",
 			viper.GetString("url"),
-			strconv.FormatInt(p.ID, 10),
+			courseID,
+			p.ID,
 		),
 	}
 }
 
 // newMaterialListResponse creates a response from a list of Material models.
-func (rs *MaterialResource) newMaterialListResponse(givenRole authorize.CourseRole, Materials []model.Material) []render.Renderer {
+func (rs *MaterialResource) newMaterialListResponse(givenRole authorize.CourseRole, courseID int64, Materials []model.Material) []render.Renderer {
 	list := []render.Renderer{}
 	for k := range Materials {
 		if givenRole == authorize.STUDENT && !PublicYet(Materials[k].PublishAt) {
 			continue
 		}
-		list = append(list, rs.newMaterialResponse(&Materials[k]))
+		list = append(list, rs.newMaterialResponse(&Materials[k], courseID))
 
 	}
 	return list
