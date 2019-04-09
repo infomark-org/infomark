@@ -141,6 +141,7 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
         r.Post("/auth/confirm_email", appAPI.Auth.ConfirmEmailHandler)
         r.Post("/account", appAPI.Account.CreateHandler)
         r.Get("/ping", appAPI.Common.PingHandler)
+        r.Get("/privacy_statement", appAPI.Common.PrivacyStatementHandler)
       })
 
       // protected routes
@@ -350,7 +351,8 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
                   r.Route("/groups/{group_id}", func(r chi.Router) {
                     r.Use(authorize.RequiresAtLeastCourseRole(authorize.TUTOR))
                     r.Use(appAPI.Group.Context)
-                    r.Get("/file", appAPI.Submission.GetCollectionHandler)
+                    r.Get("/file", appAPI.Submission.GetCollectionFileHandler)
+                    r.Get("/", appAPI.Submission.GetCollectionHandler)
 
                   })
 

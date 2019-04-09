@@ -192,7 +192,7 @@ func (rs *AuthResource) LoginHandler(w http.ResponseWriter, r *http.Request) {
   // does such a user exists with request email adress?
   potentialUser, err := rs.Stores.User.FindByEmail(data.Email)
   if err != nil {
-    render.Render(w, r, ErrBadRequestWithDetails(err))
+    render.Render(w, r, ErrBadRequest)
     return
   }
 
@@ -270,6 +270,7 @@ func (rs *AuthResource) RequestPasswordResetHandler(w http.ResponseWriter, r *ht
   rs.Stores.User.Update(user)
 
   // Send Email to User
+  // https://infomark-staging.informatik.uni-tuebingen.de/#/password_reset/example@uni-tuebingen.de/af1ecf6f
   msg, err := email.NewEmailFromTemplate(
     user.Email,
     "Password Reset Instructions",
@@ -277,7 +278,8 @@ func (rs *AuthResource) RequestPasswordResetHandler(w http.ResponseWriter, r *ht
     map[string]string{
       "first_name":           user.FirstName,
       "last_name":            user.LastName,
-      "reset_password_url":   fmt.Sprintf("%s/reset_password", viper.GetString("url")),
+      "email_address":        user.Email,
+      "reset_password_url":   fmt.Sprintf("%s/#/password_reset", viper.GetString("url")),
       "reset_password_token": user.ResetPasswordToken.String,
     })
   if err != nil {

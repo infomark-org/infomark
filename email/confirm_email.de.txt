@@ -10,7 +10,3 @@ Bitte verwende den folgenden Link, um deine E-Mail-Adresse zu bestätigen:
 
 {{.confirm_email_url}}/{{.confirm_email_address}}/{{.confirm_email_token}}
 
-If this does not work, please use the following token in the form:
-
-{{.confirm_email_token}}
-
