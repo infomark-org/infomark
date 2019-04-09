@@ -63,6 +63,7 @@ func init() {
   } else {
     DefaultLogger.Info("Failed to log to file, using default stderr")
   }
+  defer file.Close()
 
 }
 

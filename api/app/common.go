@@ -19,11 +19,15 @@
 package app
 
 import (
+	"fmt"
+	"io/ioutil"
 	"net/http"
 	"time"
 
 	"github.com/cgtuebingen/infomark-backend/auth/authorize"
 	"github.com/cgtuebingen/infomark-backend/model"
+	"github.com/go-chi/render"
+	"github.com/spf13/viper"
 )
 
 // CommonResource specifies user management handler.
@@ -46,6 +50,29 @@ func NewCommonResource(stores *Stores) *CommonResource {
 // SUMMARY:  heartbeat of backend
 func (rs *CommonResource) PingHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("pong"))
+}
+
+// PrivacyStatementHandler is public endpoint for
+// URL: /privacy_statement
+// METHOD: get
+// TAG: common
+// RESPONSE: 200,rawResponse
+// SUMMARY:  heartbeat of backend
+func (rs *CommonResource) PrivacyStatementHandler(w http.ResponseWriter, r *http.Request) {
+
+	buf, err := ioutil.ReadFile(fmt.Sprintf("%s/privacy_statement.md", viper.GetString("common_dir"))) // just pass the file name
+	if err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
+
+	text := string(buf) // convert content to a 'string'
+
+	if err := render.Render(w, r, newRawResponse(text)); err != nil {
+		render.Render(w, r, ErrRender(err))
+		return
+	}
+
 }
 
 func EnsurePrivacyInEnrollments(enrolledUsers []model.UserCourse, givenRole authorize.CourseRole) []model.UserCourse {
