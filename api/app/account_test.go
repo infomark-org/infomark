@@ -361,6 +361,7 @@ func TestAccount(t *testing.T) {
       if err := f.Truncate(1e7); err != nil {
         log.Fatal(err)
       }
+      defer f.Close()
 
       defer func() {
         os.Remove("/tmp/foo.jpg")
