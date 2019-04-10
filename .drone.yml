@@ -76,7 +76,7 @@ steps:
   pull: default
   image: patwie/tar
   commands:
-    - tar -czvf infomark-backend.tar.gz api.yaml infomark README.md LICENSE .infomark.yml.example docker-compose.yml database/schema.sql email/*.txt files/uploads/ files/generated_files/
+    - tar -czvf infomark-backend.tar.gz api.yaml infomark README.md LICENSE .infomark.yml.example docker-compose.yml database/schema.sql email/*.txt files/uploads/ files/generated_files/ files/common/
 
 - name: publish_release
   image: plugins/github-release

@@ -198,12 +198,24 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
   }
   defer helper.FileDelete(framework_path)
 
+  client := &http.Client{}
+
   // we use a HTTP Request to send the answer
-  r = tape.BuildDataRequest("POST", msg.ResultEndpointURL, tape.ToH(&shared.SubmissionWorkerResponse{
-    Log:    "submission is currently being tested ...",
-    Status: 0,
-  }))
-  r.Header.Add("Authorization", "Bearer "+msg.AccessToken)
+  // r = tape.BuildDataRequest("POST", msg.ResultEndpointURL, tape.ToH(&shared.SubmissionWorkerResponse{
+  //   Log:    "submission is currently being tested ...",
+  //   Status: 1,
+  // }))
+  // r.Header.Add("Authorization", "Bearer "+msg.AccessToken)
+  // resp, err := client.Do(r)
+  // if err != nil {
+  //   DefaultLogger.WithFields(logrus.Fields{
+  //     "action":       "send result to backend",
+  //     "SubmissionID": msg.SubmissionID,
+  //     "resp":         resp,
+  //   }).Warn(err)
+
+  //   return err
+  // }
 
   // 4. verify checksums to avoid race conditions
   if err := verifySha256(submission_path, msg.Sha256); err != nil {
@@ -243,7 +255,6 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
   r.Header.Add("Authorization", "Bearer "+msg.AccessToken)
 
   // run request
-  client := &http.Client{}
   resp, err := client.Do(r)
   if err != nil {
     DefaultLogger.WithFields(logrus.Fields{
@@ -251,6 +262,7 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
       "SubmissionID": msg.SubmissionID,
       "stdout":       stdout,
       "exitcode":     exit,
+      "resp":         resp,
     }).Warn(err)
 
     return err

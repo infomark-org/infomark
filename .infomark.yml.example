@@ -37,6 +37,7 @@ cronjob_intervall_submission_zip: every 120s
 use_backend_worker: true
 
 uploads_dir: /var/www/infomark-staging/app/files/uploads
+common_dir: /var/www/infomark-staging/app/files/common
 generated_files_dir: /var/www/infomark-staging/app/files/generated_files
 fixtures_dir: /var/www/infomark-staging/app/files/fixtures
 

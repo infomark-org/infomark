@@ -366,6 +366,9 @@ func (f *FileHandle) WriteToDisk(r *http.Request, fieldName string) error {
 
     }
   }
+
+  // delete path
+  FileDelete(path)
   // try to open new file
   hnd, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0666)
   if err != nil {
