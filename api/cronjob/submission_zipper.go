@@ -90,7 +90,7 @@ func (job *SubmissionFileZipper) Run() {
           fmt.Println("  work on task ", task.ID)
 
           for _, group := range groups {
-            archiv_lock_path := fmt.Sprintf("%s/infomark-course%d-sheet%d-task%d-group%d.lock", job.Directory, courseID, sheet.ID, task.ID, group.ID)
+            archiv_lock_path := fmt.Sprintf("%s/collection-course%d-sheet%d-task%d-group%d.lock", job.Directory, courseID, sheet.ID, task.ID, group.ID)
             // archiv_zip_path := fmt.Sprintf("%s/infomark-course%d-sheet%d-task%d-group%d.zip", job.Directory, courseID, sheet.ID, task.ID, group.ID)
 
             archiv_zip := helper.NewSubmissionsCollectionFileHandle(courseID, sheet.ID, task.ID, group.ID)

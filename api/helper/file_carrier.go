@@ -190,7 +190,7 @@ func (f *FileHandle) Path() string {
   case SubmissionCategory:
     return fmt.Sprintf("%s/submissions/%d.zip", viper.GetString("uploads_dir"), f.ID)
   case SubmissionsCollectionCategory:
-    return fmt.Sprintf("%s/infomark-course%d-sheet%d-task%d-group%d.zip",
+    return fmt.Sprintf("%s/collection-course%d-sheet%d-task%d-group%d.zip",
       viper.GetString("generated_files_dir"), f.Infos[0], f.Infos[1], f.Infos[2], f.Infos[3])
   }
   return ""
