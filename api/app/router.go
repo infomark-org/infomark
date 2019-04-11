@@ -75,6 +75,14 @@ func SecureMiddleware(next http.Handler) http.Handler {
     w.Header().Set("X-Frame-Options", "DENY")
     w.Header().Set("X-Content-Type-Options", "nosniff")
     w.Header().Set("X-XSS-Protection", "1; mode=block")
+
+    if r.UserAgent() == "" {
+      render.Render(w, r, ErrBadRequestWithDetails(
+        fmt.Errorf(`Request forbidden by administrative rules.
+Please make sure your request has a User-Agent header.`)))
+      return
+    }
+
     next.ServeHTTP(w, r)
   })
 }

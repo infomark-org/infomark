@@ -47,6 +47,7 @@ steps:
   pull: default
   image: golang
   commands:
+  - export INFOVERS=`git describe --tags` && sed -i 's/"X-INFOMARK-VERSION", "0.0.1"/"X-INFOMARK-VERSION", "$${INFOVERS}"/g' api/app/router.go
   - go version
   - go build infomark.go
   environment:

@@ -112,6 +112,7 @@ func BuildDataRequest(method, url string, data map[string]interface{}) *http.Req
 
   r.Header.Set("Content-Type", "application/json")
   r.Header.Add("X-Forwarded-For", "1.2.3.4")
+  r.Header.Set("User-Agent", "Test-Agent")
 
   return r
 }

@@ -172,6 +172,8 @@ func (t *Tape) UploadWithClaims(url string, filename string, contentType string,
     return nil, err
   }
   r.Header.Set("Content-Type", ct)
+  r.Header.Add("X-Forwarded-For", "1.2.3.4")
+  r.Header.Set("User-Agent", "Test-Agent")
 
   addJWTClaims(r, loginID, root)
   return t.PlayRequest(r), nil
