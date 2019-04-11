@@ -89,11 +89,10 @@ func EnsurePrivacyInEnrollments(enrolledUsers []model.UserCourse, givenRole auth
 	if givenRole != authorize.ADMIN {
 		for k, _ := range enrolledUsers {
 
-			if enrolledUsers[k].Role == 0 {
-				enrolledUsers[k].StudentNumber = ""
-				enrolledUsers[k].Semester = 0
-				enrolledUsers[k].Subject = ""
-			}
+			enrolledUsers[k].StudentNumber = ""
+			enrolledUsers[k].Semester = 0
+			enrolledUsers[k].Subject = ""
+
 		}
 	}
 	return enrolledUsers
