@@ -242,12 +242,20 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
     return err
   }
 
-  stdout = cleanDockerOutput(stdout)
+  var workerResp *shared.SubmissionWorkerResponse
+  if exit == 0 {
 
-  // 3. push result back to server
-  workerResp := &shared.SubmissionWorkerResponse{
-    Log:    stdout,
-    Status: int(exit),
+    stdout = cleanDockerOutput(stdout)
+    // 3. push result back to server
+    workerResp = &shared.SubmissionWorkerResponse{
+      Log:    stdout,
+      Status: int(exit),
+    }
+  } else {
+    workerResp = &shared.SubmissionWorkerResponse{
+      Log:    "There has been an issue without your upload. JUnit cannot test it.\n",
+      Status: int(exit),
+    }
   }
 
   // we use a HTTP Request to send the answer
