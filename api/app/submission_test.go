@@ -300,7 +300,6 @@ func TestSubmission(t *testing.T) {
 
       // access own submission
       w = tape.GetWithClaims("/api/v1/courses/1/submissions/3001/file", 112, false)
-      fmt.Println(w.Body)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       // access others submission

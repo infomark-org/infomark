@@ -38,8 +38,7 @@ func TestCommon(t *testing.T) {
     })
 
     g.It("Should pong", func() {
-      r, _ := http.NewRequest("GET", "/api/v1/ping", nil)
-      w := tape.PlayRequest(r)
+      w := tape.Get("/api/v1/ping")
       g.Assert(w.Code).Equal(http.StatusOK)
       g.Assert(w.Body.String()).Equal("pong")
 
