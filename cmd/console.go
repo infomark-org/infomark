@@ -29,6 +29,7 @@ import (
   "strings"
 
   "github.com/cgtuebingen/infomark-backend/api/app"
+  "github.com/cgtuebingen/infomark-backend/api/helper"
   "github.com/cgtuebingen/infomark-backend/api/shared"
   "github.com/cgtuebingen/infomark-backend/auth/authenticate"
   "github.com/cgtuebingen/infomark-backend/model"
@@ -244,34 +245,39 @@ var SubmissionEnqueueCmd = &cobra.Command{
   // cp files/fixtures/unittest.zip files/uploads/tasks/24-public.zip
   // cp files/fixtures/submission.zip files/uploads/submissions/10.zip
 
-  Use:   "enqueue [taskID] [submissionID] [gradeID] [dockerimage]",
+  Use:   "enqueue [submissionID]",
   Short: "put submission into testing queue",
   Long:  `will enqueue a submission again into the testing queue`,
-  Args:  cobra.ExactArgs(4),
+  Args:  cobra.ExactArgs(1),
   Run: func(cmd *cobra.Command, args []string) {
 
     arg0, err := strconv.Atoi(args[0])
     if err != nil {
-      fmt.Printf("cannot convert userID '%s' to int\n", args[0])
+      fmt.Printf("cannot convert submissionID '%s' to int\n", args[0])
       return
     }
 
-    arg1, err := strconv.Atoi(args[1])
-    if err != nil {
-      fmt.Printf("cannot convert submissionID '%s' to int\n", args[1])
-      return
-    }
+    submissionID := int64(arg0)
 
-    arg2, err := strconv.Atoi(args[2])
-    if err != nil {
-      fmt.Printf("cannot convert gradeID '%s' to int\n", args[2])
-      return
-    }
+    _, stores, err := ConnectAndStores()
+    fail(err)
 
-    taskID := int64(arg0)
-    submissionID := int64(arg1)
-    gradeID := int64(arg2)
-    dockerimage := args[3]
+    submission, err := stores.Submission.Get(submissionID)
+    fail(err)
+
+    taskID := submission.TaskID
+
+    task, err := stores.Task.Get(taskID)
+    fail(err)
+
+    sheet, err := stores.Task.IdentifySheetOfTask(taskID)
+    fail(err)
+
+    course, err := stores.Sheet.IdentifyCourseOfSheet(sheet.ID)
+    fail(err)
+
+    grade, err := stores.Grade.GetForSubmission(submission.ID)
+    fail(err)
 
     log.Println("starting producer...")
 
@@ -284,6 +290,9 @@ var SubmissionEnqueueCmd = &cobra.Command{
       Tag:          "SimpleSubmission",
     }
 
+    sha256, err := helper.NewSubmissionFileHandle(submission.ID).Sha256()
+    fail(err)
+
     tokenManager, err := authenticate.NewTokenAuth()
     fail(err)
     accessToken, err := tokenManager.CreateAccessJWT(
@@ -291,18 +300,22 @@ var SubmissionEnqueueCmd = &cobra.Command{
     fail(err)
 
     request := &shared.SubmissionAMQPWorkerRequest{
-      SubmissionID: submissionID,
+      SubmissionID: submission.ID,
       AccessToken:  accessToken,
-      FrameworkFileURL: fmt.Sprintf("%s/api/v1/tasks/%s/private_file",
+      FrameworkFileURL: fmt.Sprintf("%s/api/v1/courses/%s/tasks/%s/public_file",
         viper.GetString("url"),
+        strconv.FormatInt(course.ID, 10),
         strconv.FormatInt(taskID, 10)),
-      SubmissionFileURL: fmt.Sprintf("%s/api/v1/submissions/%s/file",
+      SubmissionFileURL: fmt.Sprintf("%s/api/v1/courses/%s/submissions/%s/file",
         viper.GetString("url"),
+        strconv.FormatInt(course.ID, 10),
         strconv.FormatInt(submissionID, 10)),
-      ResultEndpointURL: fmt.Sprintf("%s/api/v1/grades/%s/private_result",
+      ResultEndpointURL: fmt.Sprintf("%s/api/v1/courses/%s/grades/%s/public_result",
         viper.GetString("url"),
-        strconv.FormatInt(gradeID, 10)),
-      DockerImage: dockerimage,
+        strconv.FormatInt(course.ID, 10),
+        strconv.FormatInt(grade.ID, 10)),
+      DockerImage: task.PublicDockerImage,
+      Sha256:      sha256,
     }
 
     body, err := json.Marshal(request)
@@ -601,6 +614,67 @@ var AssignmentCmd = &cobra.Command{
   Short: "Management of groups assignment",
 }
 
+var CourseCmd = &cobra.Command{
+  Use:   "course",
+  Short: "Management of cours assignment",
+}
+
+var UserEnrollInCourse = &cobra.Command{
+  Use:   "enroll [courseID] [userID] [role]",
+  Short: "will enroll a user into course",
+  Args:  cobra.ExactArgs(3),
+  Run: func(cmd *cobra.Command, args []string) {
+
+    var err error
+
+    arg0, err := strconv.Atoi(args[0])
+    if err != nil {
+      fmt.Printf("cannot convert courseID '%s' to int\n", args[0])
+      return
+    }
+    courseID := int64(arg0)
+
+    arg1, err := strconv.Atoi(args[1])
+    if err != nil {
+      fmt.Printf("cannot convert userID '%s' to int\n", args[1])
+      return
+    }
+    userID := int64(arg1)
+
+    arg2, err := strconv.Atoi(args[2])
+    if err != nil {
+      fmt.Printf("cannot convert role '%s' to int\n", args[2])
+      return
+    }
+    role := int64(arg2)
+
+    if role > 2 || role < 0 {
+      fmt.Printf("role must be 0 or 1 or 2 but is \n", args[2])
+      return
+    }
+
+    _, stores, err := ConnectAndStores()
+    fail(err)
+
+    user, err := stores.User.Get(userID)
+    if err != nil {
+      fmt.Printf("user with id %v not found\n", userID)
+      return
+    }
+
+    course, err := stores.Course.Get(courseID)
+    if err != nil {
+      fmt.Printf("user with id %v not found\n", userID)
+      return
+    }
+
+    stores.Course.Enroll(course.ID, user.ID, role)
+    fail(err)
+
+    fmt.Printf("user %s %s is now enrolled in course %v with role %v", user.FirstName, user.LastName, course.ID, role)
+  },
+}
+
 func init() {
 
   AdminCmd.AddCommand(AdminRemoveCmd)
@@ -611,6 +685,9 @@ func init() {
   UserCmd.AddCommand(UserConfirmCmd)
   UserCmd.AddCommand(UserFindCmd)
   ConsoleCmd.AddCommand(UserCmd)
+
+  CourseCmd.AddCommand(UserEnrollInCourse)
+  ConsoleCmd.AddCommand(CourseCmd)
 
   SubmissionCmd.AddCommand(SubmissionEnqueueCmd)
   ConsoleCmd.AddCommand(SubmissionCmd)

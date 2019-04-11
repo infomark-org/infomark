@@ -78,15 +78,22 @@ func (rs *CommonResource) PrivacyStatementHandler(w http.ResponseWriter, r *http
 func EnsurePrivacyInEnrollments(enrolledUsers []model.UserCourse, givenRole authorize.CourseRole) []model.UserCourse {
 	if givenRole == authorize.STUDENT {
 		for k, _ := range enrolledUsers {
-			enrolledUsers[k].Email = ""
+
+			if enrolledUsers[k].Role == 0 {
+				enrolledUsers[k].Email = ""
+
+			}
 		}
 	}
 
 	if givenRole != authorize.ADMIN {
 		for k, _ := range enrolledUsers {
-			enrolledUsers[k].StudentNumber = ""
-			enrolledUsers[k].Semester = 0
-			enrolledUsers[k].Subject = ""
+
+			if enrolledUsers[k].Role == 0 {
+				enrolledUsers[k].StudentNumber = ""
+				enrolledUsers[k].Semester = 0
+				enrolledUsers[k].Subject = ""
+			}
 		}
 	}
 	return enrolledUsers
