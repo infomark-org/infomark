@@ -214,3 +214,35 @@ func newMissingGradeListResponse(Grades []model.MissingGrade) []render.Renderer 
   }
   return list
 }
+
+// MaterialResponse is the response payload for Material management.
+type GradeOverviewResponse struct {
+  UserID  int64  `json:"user_id" example:"112"`
+  SheetID int64  `json:"sheet_id" example:"1"`
+  Name    string `json:"name" example:"Sheet 8"`
+  Points  int64  `json:"points" example:"4"`
+}
+
+// newGradeOverviewResponse creates a response from a Material model.
+func newGradeOverviewResponse(p *model.OverviewGrade) *GradeOverviewResponse {
+  return &GradeOverviewResponse{
+    UserID:  p.UserID,
+    SheetID: p.SheetID,
+    Name:    p.Name,
+    Points:  p.Points,
+  }
+}
+
+// newGradeOverviewListResponse creates a response from a list of Material models.
+func newGradeOverviewListResponse(collection []model.OverviewGrade) []render.Renderer {
+  list := []render.Renderer{}
+  for k := range collection {
+    list = append(list, newGradeOverviewResponse(&collection[k]))
+  }
+  return list
+}
+
+// Render post-processes a GradeOverviewResponse.
+func (body *GradeOverviewResponse) Render(w http.ResponseWriter, r *http.Request) error {
+  return nil
+}

@@ -263,6 +263,38 @@ func (rs *GradeResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// IndexOverviewHandler is public endpoint for
+// URL: /courses/{course_id}/grades/overview
+// URLPARAM: course_id,integer
+// QUERYPARAM: sheet_id,integer
+// QUERYPARAM: group_id,integer
+// METHOD: get
+// TAG: grades
+// RESPONSE: 200,GradeResponseList
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  Query grades in a course
+func (rs *GradeResource) IndexOverviewHandler(w http.ResponseWriter, r *http.Request) {
+  course := r.Context().Value("course").(*model.Course)
+  filterGroupID := helper.Int64FromUrl(r, "group_id", 0)
+
+  grades, err := rs.Stores.Grade.GetOverviewGrades(course.ID, filterGroupID)
+  if err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
+  // render JSON reponse
+  if err = render.RenderList(w, r, newGradeOverviewListResponse(grades)); err != nil {
+    render.Render(w, r, ErrRender(err))
+    return
+  }
+
+  render.Status(r, http.StatusOK)
+
+}
+
 // IndexMissingHandler is public endpoint for
 // URL: /courses/{course_id}/grades/missing
 // URLPARAM: course_id,integer

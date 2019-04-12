@@ -52,3 +52,10 @@ type MissingGrade struct {
 	SheetID  int64 `db:"sheet_id"`
 	TaskID   int64 `db:"task_id"`
 }
+
+type OverviewGrade struct {
+	UserID  int64  `db:"user_id"`
+	SheetID int64  `db:"sheet_id"`
+	Name    string `db:"name"`
+	Points  int64  `db:"points"`
+}

@@ -86,6 +86,30 @@ func (s *GradeStore) GetForSubmission(id int64) (*model.Grade, error) {
   return &p, err
 }
 
+func (s *GradeStore) GetOverviewGrades(courseID int64, groupID int64) ([]model.OverviewGrade, error) {
+  p := []model.OverviewGrade{}
+  err := s.db.Select(&p, `
+SELECT sum(g.acquired_points) points, s.user_id, ts.sheet_id, sh.name
+FROM grades g
+INNER JOIN submissions s ON g.submission_id = s.id
+INNER JOIN tasks t ON s.task_id = t.id
+INNER JOIn task_sheet ts ON ts.task_id = t.id
+INNER JOIn sheets sh ON sh.id = ts.sheet_id
+INNER JOIN sheet_course sc ON sc.sheet_id = ts.sheet_id
+INNEr JOIN courses c ON c.id = sc.course_id
+INNER JOIN user_course uc ON uc.user_id = s.user_id
+INNER JOIN user_group ug ON ug.user_id = s.user_id
+INNER JOIN groups gs ON gs.id = ug.group_id
+WHERE c.ID = $1
+AND uc.role = 0
+AND gs.course_id = $1
+AND ($2 = 0 OR gs.id = $2)
+GROUP BY ts.sheet_id, s.user_id, sh.name
+ORDER BY s.user_id
+`, courseID, groupID)
+  return p, err
+}
+
 func (s *GradeStore) GetAllMissingGrades(courseID int64, tutorID int64, groupID int64) ([]model.MissingGrade, error) {
   p := []model.MissingGrade{}
 
