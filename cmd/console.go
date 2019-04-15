@@ -186,7 +186,7 @@ var UserConfirmCmd = &cobra.Command{
     user.ConfirmEmailToken = null.String{}
     stores.User.Update(user)
 
-    fmt.Printf("email of user %s %s has been confirmed", user.FirstName, user.LastName)
+    fmt.Printf("email of user %s %s has been confirmed\n", user.FirstName, user.LastName)
   },
 }
 
@@ -222,7 +222,7 @@ var UserSetEmailCmd = &cobra.Command{
     user.Email = email
     stores.User.Update(user)
 
-    fmt.Printf("email of user %s %s is now %s", user.FirstName, user.LastName, user.Email)
+    fmt.Printf("email of user %s %s is now %s\n", user.FirstName, user.LastName, user.Email)
   },
 }
 
@@ -495,7 +495,7 @@ ORDER BY group_id ASC`, student.ID, pq.Array(group_id_array))
     fmt.Println("run then")
     fmt.Println("")
     fmt.Println("")
-    fmt.Printf("sudo docker run -v \"$PWD\":/data -it patwie/symphony  /var/symphony/bin/symphony -F %s.mod -D %s.dat -f %s.par\n", args[1], args[1], args[1])
+    fmt.Printf("sudo docker run -v \"$PWD\":/data -it patwie/symphony  /var/symphony/bin/symphony -F %s.mod -D /data/%s.dat -f /data/%s.par\n", args[1], args[1], args[1])
     fmt.Println("")
 
     fpar, err := os.Create(fmt.Sprintf("%s.par", args[1]))
@@ -671,7 +671,7 @@ var UserEnrollInCourse = &cobra.Command{
     stores.Course.Enroll(course.ID, user.ID, role)
     fail(err)
 
-    fmt.Printf("user %s %s is now enrolled in course %v with role %v", user.FirstName, user.LastName, course.ID, role)
+    fmt.Printf("user %s %s is now enrolled in course %v with role %v\n", user.FirstName, user.LastName, course.ID, role)
   },
 }
 
