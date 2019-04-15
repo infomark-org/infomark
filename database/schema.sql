@@ -222,7 +222,7 @@ CREATE TABLE materials(
   -- filename TEXT not null,
   -- 0: slide, 1: supplementary
   kind INT DEFAULT 0,
-  required_role INT DEFAULT 0,
+  -- required_role INT DEFAULT 0,
   publish_at TIMESTAMP not null,
   lecture_at TIMESTAMP not null
 );
