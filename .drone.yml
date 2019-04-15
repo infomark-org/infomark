@@ -40,8 +40,9 @@ steps:
   image: postgres:11.2-alpine
   commands:
   - cd database
-  - POSTGRES_HOST=database ./reset_db.sh
-  - POSTGRES_HOST=database ./mock_db.sh
+  - "PGPASSWORD=postgres psql -h 'database' -U 'postgres' -d 'infomark' -f schema.sql >/dev/null"
+  - "PGPASSWORD=postgres psql -h 'database' -U 'postgres' -d 'infomark' -f migration/0.0.1alpha14.sql >/dev/null"
+  - "PGPASSWORD=postgres psql -h 'database' -U 'postgres' -d 'infomark' -f mock.sql >/dev/null"
 
 - name: build
   pull: default
@@ -114,6 +115,6 @@ services:
 
 ---
 kind: signature
-hmac: ff630be9e0a62d87854f1f9f08d8fe6a710bc8d61f2b376bac67d36da0bf9a7e
+hmac: c8d724afd8b400a8d6411a5d25b29e490f3a7695a0dee5f458d5e55b43627800
 
 ...

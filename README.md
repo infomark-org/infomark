@@ -26,10 +26,9 @@ sudo docker-compose up -d
 
 # initialize database
 cd database
-PGPASSWORD=pass psql -h 127.0.0.1 -U user -p 5433 -d db -f schema.sql
-# generate some dummy data
-python3 mock.py
-PGPASSWORD=pass psql -h 127.0.0.1 -U user -p 5433 -d db -f mock.sql
+export POSTGRES_HOST=localhost
+./reset_db.sql
+./mock_db.sql
 cd ..
 
 # start a single background worker (feel free to start more instances)
@@ -81,11 +80,8 @@ To run the unit-tests you will need to mock the database content (we need some d
 ```bash
 # do it once to create schema and mock
 cd database
-python3 mock.py
-# reset database
-PGPASSWORD=pass psql -h 127.0.0.1 -U user -p 5433 -d db -f schema.sql
-# generate some data
-PGPASSWORD=pass psql -h 127.0.0.1 -U user -p 5433 -d db -f mock.sql
+./reset_db.sh
+./mock_db.sql
 cd ..
 
 cd api/app
