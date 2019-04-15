@@ -60,6 +60,11 @@ type CourseStore interface {
     filterEmail string,
     filterSubject string,
     filterLanguage string) ([]model.UserCourse, error)
+  FindEnrolledUsers(
+    courseID int64,
+    roleFilter []string,
+    filterQuery string,
+  ) ([]model.UserCourse, error)
   GetUserEnrollment(courseID int64, userID int64) (*model.UserCourse, error)
   PointsForUser(userID int64, courseID int64) ([]model.SheetPoints, error)
   RoleInCourse(userID int64, courseID int64) (authorize.CourseRole, error)

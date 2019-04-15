@@ -21,6 +21,7 @@ package app
 import (
   "context"
   "errors"
+  "fmt"
   "net/http"
   "strconv"
 
@@ -209,6 +210,7 @@ func (rs *CourseResource) DeleteHandler(w http.ResponseWriter, r *http.Request) 
 // QUERYPARAM: email,string
 // QUERYPARAM: subject,string
 // QUERYPARAM: language,string
+// QUERYPARAM: q,string
 // METHOD: get
 // TAG: enrollments
 // RESPONSE: 200,enrollmentResponseList
@@ -216,9 +218,15 @@ func (rs *CourseResource) DeleteHandler(w http.ResponseWriter, r *http.Request) 
 // RESPONSE: 401,Unauthenticated
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  list all courses
+// DESCRIPTION:
+// If the query 'q' parameter is given this endpoints returns all users which matches the query
+// by first_name, last_name or email. The 'q' does not need be wrapped by '%'. But all other query strings
+// do need to be wrapped by '%' to indicated end and start of a string.
 func (rs *CourseResource) IndexEnrollmentsHandler(w http.ResponseWriter, r *http.Request) {
   // /courses/1/enrollments?roles=0,1
   course := r.Context().Value("course").(*model.Course)
+
+  filterQuery := helper.StringFromUrl(r, "q", "")
 
   // extract filters
   filterRoles := helper.StringArrayFromUrl(r, "roles", []string{"0", "1", "2"})
@@ -235,10 +243,24 @@ func (rs *CourseResource) IndexEnrollmentsHandler(w http.ResponseWriter, r *http
     filterRoles = []string{"1", "2"}
   }
 
-  enrolledUsers, err := rs.Stores.Course.EnrolledUsers(course.ID,
-    filterRoles, filterFirstName, filterLastName, filterEmail,
-    filterSubject, filterLanguage,
+  var (
+    enrolledUsers []model.UserCourse
+    err           error
   )
+
+  if filterQuery != "" {
+    filterQuery = fmt.Sprintf("%%%s%%", filterQuery)
+    enrolledUsers, err = rs.Stores.Course.FindEnrolledUsers(course.ID,
+      filterRoles, filterQuery,
+    )
+  } else {
+    enrolledUsers, err = rs.Stores.Course.EnrolledUsers(course.ID,
+      filterRoles, filterFirstName, filterLastName, filterEmail,
+      filterSubject, filterLanguage,
+    )
+
+  }
+
   if err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return

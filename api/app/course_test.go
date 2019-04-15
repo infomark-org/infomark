@@ -137,6 +137,21 @@ func TestCourse(t *testing.T) {
       g.Assert(len(enrollments_actual)).Equal(number_enrollments_expected)
     })
 
+    g.It("Should be able to query enrollments (tutor+admin only)", func() {
+      course_active, err := stores.Course.Get(1)
+      g.Assert(err).Equal(nil)
+
+      enrollments_expected, err := stores.Course.FindEnrolledUsers(course_active.ID,
+        []string{"0", "1", "2"}, "%chi%",
+      )
+
+      w := tape.GetWithClaims("/api/v1/courses/1/enrollments?q=chi", 1, false)
+      enrollments_actual := []enrollmentResponse{}
+      err = json.NewDecoder(w.Body).Decode(&enrollments_actual)
+      g.Assert(err).Equal(nil)
+      g.Assert(len(enrollments_actual)).Equal(len(enrollments_expected))
+    })
+
     g.It("Should be able to filter enrollments (tutors only)", func() {
       course_active, err := stores.Course.Get(1)
       g.Assert(err).Equal(nil)

@@ -129,6 +129,38 @@ func (s *CourseStore) GetUserEnrollment(courseID int64, userID int64) (*model.Us
   return &p, err
 }
 
+func (s *CourseStore) FindEnrolledUsers(
+  courseID int64,
+  roleFilter []string,
+  filterQuery string,
+) ([]model.UserCourse, error) {
+  p := []model.UserCourse{}
+
+  // , u.avatar_path
+  err := s.db.Select(&p, `
+    SELECT
+      uc.role, u.id, u.first_name, u.last_name, u.email,
+      u.student_number, u.semester, u.subject, u.language, u.avatar_url FROM user_course uc
+    INNER JOIN
+      users u ON uc.user_id = u.id
+    WHERE
+      uc.course_id = $1
+    AND
+      uc.role = ANY($2)
+    AND
+    (
+      LOWER(u.first_name) LIKE $3
+    OR
+      LOWER(u.last_name) LIKE $3
+    OR
+      LOWER(u.email) LIKE $3
+    )
+    `, courseID, pq.Array(roleFilter),
+    filterQuery,
+  )
+  return p, err
+}
+
 func (s *CourseStore) EnrolledUsers(
   courseID int64,
   roleFilter []string,
