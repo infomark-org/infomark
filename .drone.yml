@@ -41,7 +41,7 @@ steps:
   commands:
   - cd database
   - "PGPASSWORD=postgres psql -h 'database' -U 'postgres' -d 'infomark' -f schema.sql >/dev/null"
-  - "PGPASSWORD=postgres psql -h 'database' -U 'postgres' -d 'infomark' -f migration/0.0.1alpha14.sql >/dev/null"
+  - "PGPASSWORD=postgres psql -h 'database' -U 'postgres' -d 'infomark' -f migrations/0.0.1alpha14.sql >/dev/null"
   - "PGPASSWORD=postgres psql -h 'database' -U 'postgres' -d 'infomark' -f mock.sql >/dev/null"
 
 - name: build
@@ -115,6 +115,6 @@ services:
 
 ---
 kind: signature
-hmac: c8d724afd8b400a8d6411a5d25b29e490f3a7695a0dee5f458d5e55b43627800
+hmac: e0a1e1a1447df5a025f877660db65a0ab1381376eb36c5f50687ee3641131449
 
 ...
