@@ -31,22 +31,24 @@ import (
 
 // MaterialResponse is the response payload for Material management.
 type MaterialResponse struct {
-	ID        int64     `json:"id" example:"55"`
-	Name      string    `json:"name" example:"Schleifen und Bedingungen"`
-	FileURL   string    `json:"file_url" example:"/api/v1/materials/55/file"`
-	Kind      int       `json:"kind" example:"0"`
-	PublishAt time.Time `json:"publish_at" example:"auto"`
-	LectureAt time.Time `json:"lecture_at" example:"auto"`
+	ID           int64     `json:"id" example:"55"`
+	Name         string    `json:"name" example:"Schleifen und Bedingungen"`
+	FileURL      string    `json:"file_url" example:"/api/v1/materials/55/file"`
+	Kind         int       `json:"kind" example:"0"`
+	PublishAt    time.Time `json:"publish_at" example:"auto"`
+	LectureAt    time.Time `json:"lecture_at" example:"auto"`
+	RequiredRole int       `json:"required_role" example:"1"`
 }
 
 // newMaterialResponse creates a response from a Material model.
 func (rs *MaterialResource) newMaterialResponse(p *model.Material, courseID int64) *MaterialResponse {
 	return &MaterialResponse{
-		ID:        p.ID,
-		Name:      p.Name,
-		Kind:      p.Kind,
-		PublishAt: p.PublishAt,
-		LectureAt: p.LectureAt,
+		ID:           p.ID,
+		Name:         p.Name,
+		Kind:         p.Kind,
+		PublishAt:    p.PublishAt,
+		LectureAt:    p.LectureAt,
+		RequiredRole: 1,
 		FileURL: fmt.Sprintf("%s/api/v1/courses/%d/materials/%d/file",
 			viper.GetString("url"),
 			courseID,
