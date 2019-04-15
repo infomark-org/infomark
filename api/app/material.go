@@ -62,14 +62,14 @@ func (rs *MaterialResource) IndexHandler(w http.ResponseWriter, r *http.Request)
   var err error
   // we use middle to detect whether there is a course given
   course := r.Context().Value("course").(*model.Course)
-  materials, err = rs.Stores.Material.MaterialsOfCourse(course.ID)
+  givenRole := r.Context().Value("course_role").(authorize.CourseRole)
+  materials, err = rs.Stores.Material.MaterialsOfCourse(course.ID, givenRole.ToInt())
 
   if err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return
   }
 
-  givenRole := r.Context().Value("course_role").(authorize.CourseRole)
   // render JSON reponse
   if err = render.RenderList(w, r, rs.newMaterialListResponse(givenRole, course.ID, materials)); err != nil {
     render.Render(w, r, ErrRender(err))
@@ -104,10 +104,11 @@ func (rs *MaterialResource) CreateHandler(w http.ResponseWriter, r *http.Request
   }
 
   material := &model.Material{
-    Name:      data.Name,
-    Kind:      data.Kind,
-    PublishAt: data.PublishAt,
-    LectureAt: data.LectureAt,
+    Name:         data.Name,
+    Kind:         data.Kind,
+    PublishAt:    data.PublishAt,
+    LectureAt:    data.LectureAt,
+    RequiredRole: data.RequiredRole,
   }
 
   // create Material entry in database
@@ -151,6 +152,11 @@ func (rs *MaterialResource) GetHandler(w http.ResponseWriter, r *http.Request) {
     return
   }
 
+  if material.RequiredRole > givenRole.ToInt() {
+    render.Render(w, r, ErrBadRequest)
+    return
+  }
+
   // render JSON reponse
   if err := render.Render(w, r, rs.newMaterialResponse(material, course.ID)); err != nil {
     render.Render(w, r, ErrRender(err))
@@ -190,6 +196,7 @@ func (rs *MaterialResource) EditHandler(w http.ResponseWriter, r *http.Request) 
   material.Kind = data.Kind
   material.PublishAt = data.PublishAt
   material.LectureAt = data.LectureAt
+  material.RequiredRole = data.RequiredRole
 
   // update database entry
   if err := rs.Stores.Material.Update(material); err != nil {

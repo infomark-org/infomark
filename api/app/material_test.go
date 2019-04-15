@@ -26,6 +26,7 @@ import (
   "time"
 
   "github.com/cgtuebingen/infomark-backend/api/helper"
+  "github.com/cgtuebingen/infomark-backend/auth/authorize"
   "github.com/cgtuebingen/infomark-backend/email"
   "github.com/franela/goblin"
   "github.com/spf13/viper"
@@ -55,15 +56,63 @@ func TestMaterial(t *testing.T) {
       g.Assert(w.Code).Equal(http.StatusOK)
     })
 
-    g.It("Should list all materials a course", func() {
+    g.It("Should list all materials a course (student)", func() {
+      materials_expected, err := stores.Material.MaterialsOfCourse(1, authorize.STUDENT.ToInt())
+      g.Assert(err).Equal(nil)
 
-      w := tape.GetWithClaims("/api/v1/courses/1/materials", 1, true)
+      for _, mat := range materials_expected {
+        mat.PublishAt = NowUTC().Add(-time.Hour)
+        stores.Material.Update(&mat)
+      }
+
+      user, err := stores.Course.GetUserEnrollment(1, 112)
+      g.Assert(err).Equal(nil)
+      g.Assert(user.Role).Equal(int64(0))
+
+      w := tape.GetWithClaims("/api/v1/courses/1/materials", user.ID, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       materials_actual := []MaterialResponse{}
-      err := json.NewDecoder(w.Body).Decode(&materials_actual)
+      err = json.NewDecoder(w.Body).Decode(&materials_actual)
       g.Assert(err).Equal(nil)
-      g.Assert(len(materials_actual)).Equal(10)
+
+      g.Assert(len(materials_actual)).Equal(len(materials_expected))
+    })
+
+    g.It("Should list all materials a course (tutor)", func() {
+
+      user, err := stores.Course.GetUserEnrollment(1, 2)
+      g.Assert(err).Equal(nil)
+      g.Assert(user.Role).Equal(int64(1))
+
+      w := tape.GetWithClaims("/api/v1/courses/1/materials", user.ID, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      materials_actual := []MaterialResponse{}
+      err = json.NewDecoder(w.Body).Decode(&materials_actual)
+      g.Assert(err).Equal(nil)
+
+      materials_expected, err := stores.Material.MaterialsOfCourse(1, authorize.TUTOR.ToInt())
+      g.Assert(err).Equal(nil)
+      g.Assert(len(materials_actual)).Equal(len(materials_expected))
+    })
+
+    g.It("Should list all materials a course (admin)", func() {
+
+      user, err := stores.Course.GetUserEnrollment(1, 1)
+      g.Assert(err).Equal(nil)
+      g.Assert(user.Role).Equal(int64(2))
+
+      w := tape.GetWithClaims("/api/v1/courses/1/materials", user.ID, false)
+      g.Assert(w.Code).Equal(http.StatusOK)
+
+      materials_actual := []MaterialResponse{}
+      err = json.NewDecoder(w.Body).Decode(&materials_actual)
+      g.Assert(err).Equal(nil)
+
+      materials_expected, err := stores.Material.MaterialsOfCourse(1, authorize.ADMIN.ToInt())
+      g.Assert(err).Equal(nil)
+      g.Assert(len(materials_actual)).Equal(len(materials_expected))
     })
 
     g.It("Should get a specific material", func() {
@@ -72,7 +121,6 @@ func TestMaterial(t *testing.T) {
 
       w := tape.GetWithClaims("/api/v1/courses/1/materials/1", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
-
       material_actual := &MaterialResponse{}
       err = json.NewDecoder(w.Body).Decode(material_actual)
       g.Assert(err).Equal(nil)
@@ -86,6 +134,8 @@ func TestMaterial(t *testing.T) {
     g.It("Should not get a specific material (unpublish)", func() {
       material_expected, err := stores.Material.Get(1)
       g.Assert(err).Equal(nil)
+      material_expected.RequiredRole = 0
+      stores.Material.Update(material_expected)
 
       material_expected.PublishAt = NowUTC().Add(time.Hour)
       err = stores.Material.Update(material_expected)
@@ -103,16 +153,23 @@ func TestMaterial(t *testing.T) {
 
     })
 
-    g.It("Should create valid material", func() {
+    g.It("Should create valid material for tutors", func() {
 
-      materials_before, err := stores.Material.MaterialsOfCourse(1)
+      materials_before_student, err := stores.Material.MaterialsOfCourse(1, authorize.STUDENT.ToInt())
+      g.Assert(err).Equal(nil)
+
+      materials_before_tutor, err := stores.Material.MaterialsOfCourse(1, authorize.TUTOR.ToInt())
+      g.Assert(err).Equal(nil)
+
+      materials_before_admin, err := stores.Material.MaterialsOfCourse(1, authorize.ADMIN.ToInt())
       g.Assert(err).Equal(nil)
 
       material_sent := MaterialRequest{
-        Name:      "Material_new",
-        Kind:      0,
-        PublishAt: helper.Time(time.Now()),
-        LectureAt: helper.Time(time.Now()),
+        Name:         "Material_new",
+        Kind:         0,
+        RequiredRole: authorize.TUTOR.ToInt(),
+        PublishAt:    helper.Time(time.Now()),
+        LectureAt:    helper.Time(time.Now()),
       }
 
       g.Assert(material_sent.Validate()).Equal(nil)
@@ -129,18 +186,79 @@ func TestMaterial(t *testing.T) {
       w = tape.PostWithClaims("/api/v1/courses/1/materials", helper.ToH(material_sent), 1, false)
       g.Assert(w.Code).Equal(http.StatusCreated)
 
+      materials_after_student, err := stores.Material.MaterialsOfCourse(1, authorize.STUDENT.ToInt())
+      g.Assert(err).Equal(nil)
+      materials_after_tutor, err := stores.Material.MaterialsOfCourse(1, authorize.TUTOR.ToInt())
+      g.Assert(err).Equal(nil)
+      materials_after_admin, err := stores.Material.MaterialsOfCourse(1, authorize.ADMIN.ToInt())
+      g.Assert(err).Equal(nil)
+
       material_return := &MaterialResponse{}
       err = json.NewDecoder(w.Body).Decode(&material_return)
       g.Assert(err).Equal(nil)
       g.Assert(material_return.Name).Equal(material_sent.Name)
       g.Assert(material_return.Kind).Equal(material_sent.Kind)
+      g.Assert(material_return.RequiredRole).Equal(material_sent.RequiredRole)
       g.Assert(material_return.PublishAt.Equal(material_sent.PublishAt)).Equal(true)
       g.Assert(material_return.LectureAt.Equal(material_sent.LectureAt)).Equal(true)
 
-      materials_after, err := stores.Material.MaterialsOfCourse(1)
+      g.Assert(len(materials_after_student)).Equal(len(materials_before_student))
+      g.Assert(len(materials_after_tutor)).Equal(len(materials_before_tutor) + 1)
+      g.Assert(len(materials_after_admin)).Equal(len(materials_before_admin) + 1)
+    })
+
+    g.It("Should create valid material for admins", func() {
+
+      materials_before_student, err := stores.Material.MaterialsOfCourse(1, authorize.STUDENT.ToInt())
       g.Assert(err).Equal(nil)
 
-      g.Assert(len(materials_after)).Equal(len(materials_before) + 1)
+      materials_before_tutor, err := stores.Material.MaterialsOfCourse(1, authorize.TUTOR.ToInt())
+      g.Assert(err).Equal(nil)
+
+      materials_before_admin, err := stores.Material.MaterialsOfCourse(1, authorize.ADMIN.ToInt())
+      g.Assert(err).Equal(nil)
+
+      material_sent := MaterialRequest{
+        Name:         "Material_new",
+        Kind:         0,
+        RequiredRole: authorize.ADMIN.ToInt(),
+        PublishAt:    helper.Time(time.Now()),
+        LectureAt:    helper.Time(time.Now()),
+      }
+
+      g.Assert(material_sent.Validate()).Equal(nil)
+
+      w := tape.Post("/api/v1/courses/1/materials", helper.ToH(material_sent))
+      g.Assert(w.Code).Equal(http.StatusUnauthorized)
+
+      w = tape.PostWithClaims("/api/v1/courses/1/materials", helper.ToH(material_sent), 112, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+
+      w = tape.PostWithClaims("/api/v1/courses/1/materials", helper.ToH(material_sent), 2, false)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
+
+      w = tape.PostWithClaims("/api/v1/courses/1/materials", helper.ToH(material_sent), 1, false)
+      g.Assert(w.Code).Equal(http.StatusCreated)
+
+      materials_after_student, err := stores.Material.MaterialsOfCourse(1, authorize.STUDENT.ToInt())
+      g.Assert(err).Equal(nil)
+      materials_after_tutor, err := stores.Material.MaterialsOfCourse(1, authorize.TUTOR.ToInt())
+      g.Assert(err).Equal(nil)
+      materials_after_admin, err := stores.Material.MaterialsOfCourse(1, authorize.ADMIN.ToInt())
+      g.Assert(err).Equal(nil)
+
+      material_return := &MaterialResponse{}
+      err = json.NewDecoder(w.Body).Decode(&material_return)
+      g.Assert(err).Equal(nil)
+      g.Assert(material_return.Name).Equal(material_sent.Name)
+      g.Assert(material_return.Kind).Equal(material_sent.Kind)
+      g.Assert(material_return.RequiredRole).Equal(material_sent.RequiredRole)
+      g.Assert(material_return.PublishAt.Equal(material_sent.PublishAt)).Equal(true)
+      g.Assert(material_return.LectureAt.Equal(material_sent.LectureAt)).Equal(true)
+
+      g.Assert(len(materials_after_student)).Equal(len(materials_before_student))
+      g.Assert(len(materials_after_tutor)).Equal(len(materials_before_tutor))
+      g.Assert(len(materials_after_admin)).Equal(len(materials_before_admin) + 1)
     })
 
     g.It("Creating a material should require body", func() {

@@ -28,8 +28,9 @@ type Material struct {
 	CreatedAt time.Time `db:"created_at,omitempty"`
 	UpdatedAt time.Time `db:"updated_at,omitempty"`
 
-	Name      string    `db:"name"`
-	Kind      int       `db:"kind"`
-	PublishAt time.Time `db:"publish_at"`
-	LectureAt time.Time `db:"lecture_at"`
+	Name         string    `db:"name"`
+	Kind         int       `db:"kind"`
+	PublishAt    time.Time `db:"publish_at"`
+	LectureAt    time.Time `db:"lecture_at"`
+	RequiredRole int       `db:"required_role"`
 }

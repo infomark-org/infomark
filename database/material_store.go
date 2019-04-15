@@ -75,7 +75,7 @@ func (s *MaterialStore) Delete(sheetID int64) error {
   return Delete(s.db, "materials", sheetID)
 }
 
-func (s *MaterialStore) MaterialsOfCourse(courseID int64) ([]model.Material, error) {
+func (s *MaterialStore) MaterialsOfCourse(courseID int64, requiredRole int) ([]model.Material, error) {
   p := []model.Material{}
 
   err := s.db.Select(&p, `
@@ -83,7 +83,8 @@ SELECT m.*
 FROM materials m
 INNER JOIN material_course mc ON m.id = mc.material_id
 WHERE mc.course_id = $1
-ORDER BY m.lecture_at ASC;`, courseID)
+AND m.required_role <= $2
+ORDER BY m.lecture_at ASC;`, courseID, requiredRole)
   return p, err
 }
 

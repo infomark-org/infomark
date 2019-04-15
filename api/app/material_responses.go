@@ -48,7 +48,7 @@ func (rs *MaterialResource) newMaterialResponse(p *model.Material, courseID int6
 		Kind:         p.Kind,
 		PublishAt:    p.PublishAt,
 		LectureAt:    p.LectureAt,
-		RequiredRole: 1,
+		RequiredRole: p.RequiredRole,
 		FileURL: fmt.Sprintf("%s/api/v1/courses/%d/materials/%d/file",
 			viper.GetString("url"),
 			courseID,

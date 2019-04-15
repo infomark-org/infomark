@@ -138,7 +138,7 @@ type MaterialStore interface {
   Create(p *model.Material, courseID int64) (*model.Material, error)
   Update(p *model.Material) error
   Delete(sheetID int64) error
-  MaterialsOfCourse(courseID int64) ([]model.Material, error)
+  MaterialsOfCourse(courseID int64, requiredRole int) ([]model.Material, error)
   IdentifyCourseOfMaterial(sheetID int64) (*model.Course, error)
   GetAll() ([]model.Material, error)
 }

@@ -28,10 +28,11 @@ import (
 
 // MaterialRequest is the request payload for Material management.
 type MaterialRequest struct {
-	Name      string    `json:"name" example:"Einfuehrung"`
-	Kind      int       `json:"kind" example:"1"`
-	PublishAt time.Time `json:"publish_at" example:"auto"`
-	LectureAt time.Time `json:"lecture_at" example:"auto"`
+	Name         string    `json:"name" example:"Einfuehrung"`
+	Kind         int       `json:"kind" example:"1"`
+	PublishAt    time.Time `json:"publish_at" example:"auto"`
+	LectureAt    time.Time `json:"lecture_at" example:"auto"`
+	RequiredRole int       `json:"required_role" example:"1"`
 }
 
 // Bind preprocesses a MaterialRequest.
@@ -64,6 +65,12 @@ func (m *MaterialRequest) Validate() error {
 			// validation.Required,
 			validation.Min(0),
 			validation.Max(1),
+		),
+		validation.Field(
+			&m.RequiredRole,
+			// validation.Required,
+			validation.Min(0),
+			validation.Max(2),
 		),
 	)
 }

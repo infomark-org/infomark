@@ -35,6 +35,21 @@ const (
   ADMIN        CourseRole = 2
 )
 
+func (r CourseRole) ToInt() int {
+  switch r {
+  default:
+    return -1
+  case NOCOURSEROLE:
+    return -1
+  case STUDENT:
+    return 0
+  case TUTOR:
+    return 1
+  case ADMIN:
+    return 2
+  }
+}
+
 // RequiresRole middleware restricts access to accounts having role parameter in their jwt claims.
 func RequiresAtLeastCourseRole(requiredRole CourseRole) func(next http.Handler) http.Handler {
   return func(next http.Handler) http.Handler {
