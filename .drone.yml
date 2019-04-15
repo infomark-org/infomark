@@ -40,8 +40,8 @@ steps:
   image: postgres:11.2-alpine
   commands:
   - cd database
-  - "PGPASSWORD=postgres psql -h 'database' -U 'postgres' -d 'infomark' -f schema.sql >/dev/null"
-  - "PGPASSWORD=postgres psql -h 'database' -U 'postgres' -d 'infomark' -f mock.sql >/dev/null"
+  - POSTGRES_HOST=database ./reset_db.sh
+  - POSTGRES_HOST=database ./mock_db.sh
 
 - name: build
   pull: default
