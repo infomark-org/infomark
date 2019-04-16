@@ -48,7 +48,7 @@ steps:
   pull: default
   image: golang
   commands:
-  - export INFOVERS=`git describe --tags` && sed -i 's/"X-INFOMARK-VERSION", "0.0.1"/"X-INFOMARK-VERSION", "$${INFOVERS}"/g' api/app/router.go
+  - sed -i 's/"X-INFOMARK-VERSION", "0.0.1"/"X-INFOMARK-VERSION", "${DRONE_COMMIT_SHA}"/g' api/app/router.go
   - go version
   - go build infomark.go
   environment:
@@ -115,6 +115,6 @@ services:
 
 ---
 kind: signature
-hmac: e0a1e1a1447df5a025f877660db65a0ab1381376eb36c5f50687ee3641131449
+hmac: 3f58079efec5fc3fdac304e1a7fe3dabcbbda165315a800c72a9081c830716df
 
 ...
