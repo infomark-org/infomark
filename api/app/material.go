@@ -148,12 +148,12 @@ func (rs *MaterialResource) GetHandler(w http.ResponseWriter, r *http.Request) {
 
   givenRole := r.Context().Value("course_role").(authorize.CourseRole)
   if givenRole == authorize.STUDENT && !PublicYet(material.PublishAt) {
-    render.Render(w, r, ErrNotFound)
+    render.Render(w, r, ErrUnauthorizedWithDetails(fmt.Errorf("Not public yet.")))
     return
   }
 
   if material.RequiredRole > givenRole.ToInt() {
-    render.Render(w, r, ErrBadRequest)
+    render.Render(w, r, ErrUnauthorizedWithDetails(fmt.Errorf("no access allowed with your role")))
     return
   }
 
@@ -313,7 +313,7 @@ func (rs *MaterialResource) Context(next http.Handler) http.Handler {
 
     // public yet?
     if r.Context().Value("course_role").(authorize.CourseRole) == authorize.STUDENT && !PublicYet(material.PublishAt) {
-      render.Render(w, r, ErrBadRequestWithDetails(fmt.Errorf("material not published yet")))
+      render.Render(w, r, ErrUnauthorizedWithDetails(fmt.Errorf("material not published yet")))
       return
     }
 

@@ -6,8 +6,8 @@ services:
       - RABBITMQ_DEFAULT_USER=user
       - RABBITMQ_DEFAULT_PASS=password
     ports:
-      - 5672:5672
-      - 15672:15672
+      - 127.0.0.1:5672:5672
+      - 127.0.0.1:15672:15672
     volumes:
       - rabbitmq_data:/data
   database:
@@ -19,13 +19,13 @@ services:
       - POSTGRES_USER=user
       - PGPASSWORD=pass
     ports:
-      - 5433:5432
+      - 127.0.0.1:5433:5432
     volumes:
       - db-data:/var/lib/postgresql/data
   redis:
     image: redis:5.0.4-alpine
     ports:
-      - 6379:6379
+      - 127.0.0.1:6379:6379
 volumes:
   rabbitmq_data:
   db-data:

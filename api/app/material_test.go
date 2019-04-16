@@ -126,9 +126,9 @@ func TestMaterial(t *testing.T) {
       g.Assert(err).Equal(nil)
 
       g.Assert(material_actual.ID).Equal(material_expected.ID)
-      // g.Assert(material_actual.Name).Equal(material_expected.Name)
-      // g.Assert(material_actual.PublishAt.Equal(material_expected.PublishAt)).Equal(true)
-      // g.Assert(material_actual.DueAt.Equal(material_expected.DueAt)).Equal(true)
+      g.Assert(material_actual.Name).Equal(material_expected.Name)
+      g.Assert(material_actual.PublishAt.Equal(material_expected.PublishAt)).Equal(true)
+      g.Assert(material_actual.LectureAt.Equal(material_expected.LectureAt)).Equal(true)
     })
 
     g.It("Should not get a specific material (unpublish)", func() {
@@ -142,7 +142,7 @@ func TestMaterial(t *testing.T) {
       g.Assert(err).Equal(nil)
 
       w := tape.GetWithClaims("/api/v1/courses/1/materials/1", 112, false)
-      g.Assert(w.Code).Equal(http.StatusBadRequest)
+      g.Assert(w.Code).Equal(http.StatusForbidden)
 
       material_expected.PublishAt = NowUTC().Add(-time.Hour)
       err = stores.Material.Update(material_expected)

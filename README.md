@@ -17,7 +17,8 @@ git clone https://github.com/cgtuebingen/infomark-backend.git
 go build infomark.go
 
 # copy pre-defined config (just for demo purposes)
-cp .informark.yml.example .informark.yml
+cp .informark.example.yml .informark.yml
+cp docker-compose.example.yml docker-compose.yml
 # the backend will search for .infomark.yml in the directory $INFOMARK_CONFIG_DIR
 # or use the file in the current directory
 
@@ -31,7 +32,7 @@ export POSTGRES_HOST=localhost
 ./mock_db.sql
 cd ..
 
-# start a single background worker (feel free to start more instances)
+# start some background worker (feel free to start more instances)
 # as it uses docker, sudo permissions are required to talk to the docker context
 sudo ./infomark worker &
 sudo ./infomark worker &

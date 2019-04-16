@@ -79,6 +79,15 @@ func ErrTimeoutWithDetails(err error) *ErrResponse {
   }
 }
 
+func ErrUnauthorizedWithDetails(err error) *ErrResponse {
+  return &ErrResponse{
+    Err:            err,
+    HTTPStatusCode: http.StatusForbidden,
+    StatusText:     http.StatusText(http.StatusForbidden),
+    ErrorText:      err.Error(),
+  }
+}
+
 // see https://stackoverflow.com/a/50143519/7443104
 var (
   // ErrBadRequest returns status 400 Bad Request for malformed request body.

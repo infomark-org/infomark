@@ -286,6 +286,16 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
 
   var grade *model.Grade
 
+  defaultPublicTestLog := "submission received and will be tested"
+  if task.PublicDockerImage == "" || !helper.NewPublicTestFileHandle(task.ID).Exists() {
+    defaultPublicTestLog = "no unit tests for this task are available"
+  }
+
+  defaultPrivateTestLog := "submission received and will be tested"
+  if task.PrivateDockerImage == "" || !helper.NewPrivateTestFileHandle(task.ID).Exists() {
+    defaultPrivateTestLog = "no unit tests for this task are available"
+  }
+
   // create ssubmisison if not exists
   submission, err := rs.Stores.Submission.GetByUserAndTask(accessClaims.LoginID, task.ID)
   if err != nil {
@@ -300,8 +310,8 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
     grade = &model.Grade{
       PublicExecutionState:  0,
       PrivateExecutionState: 0,
-      PublicTestLog:         "submission received and will be tested",
-      PrivateTestLog:        "submission received and will be tested",
+      PublicTestLog:         defaultPublicTestLog,
+      PrivateTestLog:        defaultPrivateTestLog,
       PublicTestStatus:      0,
       PrivateTestStatus:     0,
       AcquiredPoints:        0,
@@ -326,8 +336,8 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
     // and update the grade
     grade.PublicExecutionState = 0
     grade.PrivateExecutionState = 0
-    grade.PublicTestLog = "submission received and will be tested"
-    grade.PrivateTestLog = "submission received and will be tested"
+    grade.PublicTestLog = defaultPublicTestLog
+    grade.PrivateTestLog = defaultPrivateTestLog
 
     err = rs.Stores.Grade.Update(grade)
     if err != nil {
@@ -363,68 +373,73 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
     return
   }
 
-  // enqueue public test
-  request := &shared.SubmissionAMQPWorkerRequest{
-    SubmissionID: submission.ID,
-    AccessToken:  accessToken,
-    FrameworkFileURL: fmt.Sprintf("%s/api/v1/courses/%s/tasks/%s/public_file",
-      viper.GetString("url"),
-      strconv.FormatInt(course.ID, 10),
-      strconv.FormatInt(task.ID, 10)),
-    SubmissionFileURL: fmt.Sprintf("%s/api/v1/courses/%s/submissions/%s/file",
-      viper.GetString("url"),
-      strconv.FormatInt(course.ID, 10),
-      strconv.FormatInt(submission.ID, 10)),
-    ResultEndpointURL: fmt.Sprintf("%s/api/v1/courses/%s/grades/%s/public_result",
-      viper.GetString("url"),
-      strconv.FormatInt(course.ID, 10),
-      strconv.FormatInt(grade.ID, 10)),
-    DockerImage: task.PublicDockerImage,
-    Sha256:      sha256,
+  if task.PublicDockerImage != "" && helper.NewPublicTestFileHandle(task.ID).Exists() {
+    // enqueue public test
+    request := &shared.SubmissionAMQPWorkerRequest{
+      SubmissionID: submission.ID,
+      AccessToken:  accessToken,
+      FrameworkFileURL: fmt.Sprintf("%s/api/v1/courses/%s/tasks/%s/public_file",
+        viper.GetString("url"),
+        strconv.FormatInt(course.ID, 10),
+        strconv.FormatInt(task.ID, 10)),
+      SubmissionFileURL: fmt.Sprintf("%s/api/v1/courses/%s/submissions/%s/file",
+        viper.GetString("url"),
+        strconv.FormatInt(course.ID, 10),
+        strconv.FormatInt(submission.ID, 10)),
+      ResultEndpointURL: fmt.Sprintf("%s/api/v1/courses/%s/grades/%s/public_result",
+        viper.GetString("url"),
+        strconv.FormatInt(course.ID, 10),
+        strconv.FormatInt(grade.ID, 10)),
+      DockerImage: task.PublicDockerImage,
+      Sha256:      sha256,
+    }
+
+    body, err := json.Marshal(request)
+    if err != nil {
+      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+      return
+    }
+
+    err = DefaultSubmissionProducer.Publish(body)
+    if err != nil {
+      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+      return
+    }
+
   }
 
-  body, err := json.Marshal(request)
-  if err != nil {
-    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-    return
-  }
+  if task.PrivateDockerImage != "" && helper.NewPrivateTestFileHandle(task.ID).Exists() {
+    // enqueue private test
+    request := &shared.SubmissionAMQPWorkerRequest{
+      SubmissionID: submission.ID,
+      AccessToken:  accessToken,
+      FrameworkFileURL: fmt.Sprintf("%s/api/v1/courses/%s/tasks/%s/private_file",
+        viper.GetString("url"),
+        strconv.FormatInt(course.ID, 10),
+        strconv.FormatInt(task.ID, 10)),
+      SubmissionFileURL: fmt.Sprintf("%s/api/v1/courses/%s/submissions/%s/file",
+        viper.GetString("url"),
+        strconv.FormatInt(course.ID, 10),
+        strconv.FormatInt(submission.ID, 10)),
+      ResultEndpointURL: fmt.Sprintf("%s/api/v1/courses/%s/grades/%s/private_result",
+        viper.GetString("url"),
+        strconv.FormatInt(course.ID, 10),
+        strconv.FormatInt(grade.ID, 10)),
+      DockerImage: task.PrivateDockerImage,
+      Sha256:      sha256,
+    }
 
-  err = DefaultSubmissionProducer.Publish(body)
-  if err != nil {
-    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-    return
-  }
+    body, err := json.Marshal(request)
+    if err != nil {
+      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+      return
+    }
 
-  // enqueue private test
-  request = &shared.SubmissionAMQPWorkerRequest{
-    SubmissionID: submission.ID,
-    AccessToken:  accessToken,
-    FrameworkFileURL: fmt.Sprintf("%s/api/v1/courses/%s/tasks/%s/private_file",
-      viper.GetString("url"),
-      strconv.FormatInt(course.ID, 10),
-      strconv.FormatInt(task.ID, 10)),
-    SubmissionFileURL: fmt.Sprintf("%s/api/v1/courses/%s/submissions/%s/file",
-      viper.GetString("url"),
-      strconv.FormatInt(course.ID, 10),
-      strconv.FormatInt(submission.ID, 10)),
-    ResultEndpointURL: fmt.Sprintf("%s/api/v1/courses/%s/grades/%s/private_result",
-      viper.GetString("url"),
-      strconv.FormatInt(course.ID, 10),
-      strconv.FormatInt(grade.ID, 10)),
-    DockerImage: task.PrivateDockerImage,
-    Sha256:      sha256,
-  }
-
-  body, err = json.Marshal(request)
-  if err != nil {
-    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-    return
-  }
-
-  err = DefaultSubmissionProducer.Publish(body)
-  if err != nil {
-    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-    return
+    err = DefaultSubmissionProducer.Publish(body)
+    if err != nil {
+      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+      return
+    }
   }
 
   render.Status(r, http.StatusOK)
