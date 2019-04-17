@@ -61,9 +61,10 @@ func init() {
   if err == nil {
     DefaultLogger.Out = file
   } else {
+    fmt.Println(err)
     DefaultLogger.Info("Failed to log to file, using default stderr")
   }
-  defer file.Close()
+  // defer file.Close()
 
 }
 
@@ -162,14 +163,14 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
     return err
   }
 
-  DefaultLogger.WithFields(logrus.Fields{
-    "SubmissionID":      msg.SubmissionID,
-    "AccessToken":       msg.AccessToken,
-    "SubmissionFileURL": msg.SubmissionFileURL,
-    "FrameworkFileURL":  msg.FrameworkFileURL,
-    "ResultEndpointURL": msg.ResultEndpointURL,
-    "Sha256":            msg.Sha256,
-  }).Info("handle")
+  // DefaultLogger.WithFields(logrus.Fields{
+  //   "SubmissionID":      msg.SubmissionID,
+  //   "AccessToken":       msg.AccessToken,
+  //   "SubmissionFileURL": msg.SubmissionFileURL,
+  //   "FrameworkFileURL":  msg.FrameworkFileURL,
+  //   "ResultEndpointURL": msg.ResultEndpointURL,
+  //   "Sha256":            msg.Sha256,
+  // }).Info("handle")
 
   uuid, err := uuid.NewRandom()
   if err != nil {
@@ -244,7 +245,6 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
 
   var workerResp *shared.SubmissionWorkerResponse
   if exit == 0 {
-
     stdout = cleanDockerOutput(stdout)
     // 3. push result back to server
     workerResp = &shared.SubmissionWorkerResponse{
