@@ -343,7 +343,11 @@ func (f *FileHandle) WriteToDisk(r *http.Request, fieldName string) error {
     PrivateTestCategory,
     SubmissionCategory:
     switch givenContentType {
-    case "application/zip", "application/x-zip-compressed", "application/octet-stream":
+    case "application/zip",
+      "application/x-zip-compressed",
+      "application/octet-stream",
+      "multipart/x-zip",
+      "application/zip-compressed":
 
     default:
       return errors.New(fmt.Sprintf("We support ZIP files only. But %s was given", givenContentType))
