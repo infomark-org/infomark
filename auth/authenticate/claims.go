@@ -155,6 +155,17 @@ func (ret *AccessClaims) WriteToSession(w http.ResponseWriter, r *http.Request) 
   return w
 }
 
+func (ret *AccessClaims) UpdateSession(w http.ResponseWriter, r *http.Request) http.ResponseWriter {
+  session := SessionManager.Load(r)
+
+  err := session.Touch(w)
+  if err != nil {
+    panic("hh")
+  }
+
+  return w
+}
+
 func (ret *AccessClaims) DestroyInSession(w http.ResponseWriter, r *http.Request) error {
   session := SessionManager.Load(r)
   return session.Destroy(w)

@@ -70,7 +70,7 @@ func RequiredValidAccessClaims(next http.Handler) http.Handler {
         }
 
         // session is valid --> we will extend the session
-        w = accessClaims.WriteToSession(w, r)
+        w = accessClaims.UpdateSession(w, r)
       } else {
         // fmt.Println("NO session found")
 
