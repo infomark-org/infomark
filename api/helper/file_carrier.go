@@ -363,8 +363,12 @@ func (f *FileHandle) WriteToDisk(r *http.Request, fieldName string) error {
 	case AvatarCategory:
 		if IsJpegFile(file_magic) {
 			path = fmt.Sprintf("%s/avatars/%s.jpg", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
+			path_to_delete := fmt.Sprintf("%s/avatars/%s.png", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
+			FileDelete(path_to_delete)
 		} else if IsPngFile(file_magic) {
 			path = fmt.Sprintf("%s/avatars/%s.png", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
+			path_to_delete := fmt.Sprintf("%s/avatars/%s.jpg", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
+			FileDelete(path_to_delete)
 		} else {
 			return errors.New("We support JPG/JPEG/PNG files only.")
 		}
@@ -379,8 +383,12 @@ func (f *FileHandle) WriteToDisk(r *http.Request, fieldName string) error {
 	case MaterialCategory:
 		if IsPdfFile(file_magic) {
 			path = fmt.Sprintf("%s/materials/%s.pdf", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
+			path_to_delete := fmt.Sprintf("%s/materials/%s.zip", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
+			FileDelete(path_to_delete)
 		} else if IsZipFile(file_magic) {
 			path = fmt.Sprintf("%s/materials/%s.zip", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
+			path_to_delete := fmt.Sprintf("%s/materials/%s.pdf", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
+			FileDelete(path_to_delete)
 		} else {
 			return errors.New("Only PDF and ZIP files are allowed.")
 		}
