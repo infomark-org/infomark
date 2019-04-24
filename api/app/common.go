@@ -57,7 +57,7 @@ func (rs *CommonResource) PingHandler(w http.ResponseWriter, r *http.Request) {
 // METHOD: get
 // TAG: common
 // RESPONSE: 200,rawResponse
-// SUMMARY:  heartbeat of backend
+// SUMMARY:  the privacy statement
 func (rs *CommonResource) PrivacyStatementHandler(w http.ResponseWriter, r *http.Request) {
 
 	buf, err := ioutil.ReadFile(fmt.Sprintf("%s/privacy_statement.md", viper.GetString("common_dir"))) // just pass the file name

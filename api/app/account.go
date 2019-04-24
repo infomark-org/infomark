@@ -294,7 +294,7 @@ func (rs *AccountResource) ChangeAvatarHandler(w http.ResponseWriter, r *http.Re
     return
   }
 
-  if err := helper.NewAvatarFileHandle(user.ID).WriteToDisk(r, "file_data"); err != nil {
+  if _, err := helper.NewAvatarFileHandle(user.ID).WriteToDisk(r, "file_data"); err != nil {
     render.Render(w, r, ErrBadRequestWithDetails(err))
   }
 

@@ -256,7 +256,7 @@ func (rs *MaterialResource) GetFileHandler(w http.ResponseWriter, r *http.Reques
     return
   }
 
-  if err := hnd.WriteToBody(w); err != nil {
+  if err := hnd.WriteToBodyWithName(material.Filename, w); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
   }
 }
@@ -279,11 +279,24 @@ func (rs *MaterialResource) ChangeFileHandler(w http.ResponseWriter, r *http.Req
   // will always be a POST
   material := r.Context().Value("material").(*model.Material)
 
+  var (
+    err      error
+    filename string
+  )
+
   // the file will be located
-  if err := helper.NewMaterialFileHandle(material.ID).WriteToDisk(r, "file_data"); err != nil {
+  if filename, err = helper.NewMaterialFileHandle(material.ID).WriteToDisk(r, "file_data"); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
   }
-  render.Status(r, http.StatusOK)
+
+  material.Filename = filename
+
+  if err := rs.Stores.Material.Update(material); err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
+  render.Status(r, http.StatusNoContent)
 }
 
 // .............................................................................

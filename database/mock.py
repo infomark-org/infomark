@@ -276,7 +276,7 @@ def create_material(fake):
       ('updated_at', VAL.TIMESTAMP),
 
       ('name', fake.text()),
-      # ('filename', "path2"),
+      ('filename', "path2"),
       ('kind', fake.random_int(0, 1)),
       ('required_role', fake.random_int(0, 2)),
       ('publish_at', VAL.TIMESTAMP),

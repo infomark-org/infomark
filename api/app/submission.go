@@ -348,7 +348,7 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
   }
 
   // the file will be located
-  if err := helper.NewSubmissionFileHandle(submission.ID).WriteToDisk(r, "file_data"); err != nil {
+  if _, err := helper.NewSubmissionFileHandle(submission.ID).WriteToDisk(r, "file_data"); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     return
   }

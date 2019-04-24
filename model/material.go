@@ -30,6 +30,7 @@ type Material struct {
 
 	Name         string    `db:"name"`
 	Kind         int       `db:"kind"`
+	Filename     string    `db:"filename"`
 	PublishAt    time.Time `db:"publish_at"`
 	LectureAt    time.Time `db:"lecture_at"`
 	RequiredRole int       `db:"required_role"`

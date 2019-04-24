@@ -225,7 +225,7 @@ func (rs *SheetResource) GetFileHandler(w http.ResponseWriter, r *http.Request) 
     render.Render(w, r, ErrNotFound)
     return
   } else {
-    if err := hnd.WriteToBody(w); err != nil {
+    if err := hnd.WriteToBodyWithName(fmt.Sprintf("infomark-%s.zip", sheet.Name), w); err != nil {
       render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     }
   }
@@ -248,7 +248,7 @@ func (rs *SheetResource) ChangeFileHandler(w http.ResponseWriter, r *http.Reques
   sheet := r.Context().Value("sheet").(*model.Sheet)
 
   // the file will be located
-  if err := helper.NewSheetFileHandle(sheet.ID).WriteToDisk(r, "file_data"); err != nil {
+  if _, err := helper.NewSheetFileHandle(sheet.ID).WriteToDisk(r, "file_data"); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
   }
   render.Status(r, http.StatusOK)
