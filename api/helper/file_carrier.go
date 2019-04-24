@@ -279,7 +279,7 @@ func (f *FileHandle) WriteToBody(w http.ResponseWriter) error {
   path_split := strings.Split(f.Path(), "/")
   publicFilename := fmt.Sprintf("%s-%s", path_split[len(path_split)-2], path_split[len(path_split)-1])
 
-  w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=infomark-%s", publicFilename))
+  w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"infomark-%s\"", publicFilename))
 
   // prepare header
   fileType, err := f.GetContentType()
@@ -306,7 +306,7 @@ func (f *FileHandle) WriteToBodyWithName(publicFilename string, w http.ResponseW
   }
   defer file.Close()
 
-  w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", publicFilename))
+  w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", publicFilename))
 
   // prepare header
   fileType, err := f.GetContentType()
