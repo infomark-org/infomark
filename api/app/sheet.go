@@ -219,13 +219,14 @@ func (rs *SheetResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 func (rs *SheetResource) GetFileHandler(w http.ResponseWriter, r *http.Request) {
 
   sheet := r.Context().Value("sheet").(*model.Sheet)
+  course := r.Context().Value("course").(*model.Course)
   hnd := helper.NewSheetFileHandle(sheet.ID)
 
   if !hnd.Exists() {
     render.Render(w, r, ErrNotFound)
     return
   } else {
-    if err := hnd.WriteToBodyWithName(fmt.Sprintf("infomark-%s.zip", sheet.Name), w); err != nil {
+    if err := hnd.WriteToBodyWithName(fmt.Sprintf("%s-%s.zip", course.Name, sheet.Name), w); err != nil {
       render.Render(w, r, ErrInternalServerErrorWithDetails(err))
     }
   }

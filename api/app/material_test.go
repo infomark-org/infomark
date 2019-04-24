@@ -344,7 +344,7 @@ func TestMaterial(t *testing.T) {
 
       _, params, err := mime.ParseMediaType(w.HeaderMap["Content-Disposition"][0])
       g.Assert(err).Equal(nil)
-      g.Assert(params["filename"]).Equal("empty.zip")
+      g.Assert(params["filename"]).Equal("Info2-empty.zip")
     })
 
     g.It("Should upload material file (pdf)", func() {
@@ -366,7 +366,7 @@ func TestMaterial(t *testing.T) {
 
       _, params, err := mime.ParseMediaType(w.HeaderMap["Content-Disposition"][0])
       g.Assert(err).Equal(nil)
-      g.Assert(params["filename"]).Equal("empty.pdf")
+      g.Assert(params["filename"]).Equal("Info2-empty.pdf")
     })
 
     g.It("Changes should require claims", func() {

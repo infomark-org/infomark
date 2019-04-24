@@ -244,6 +244,7 @@ func (rs *MaterialResource) DeleteHandler(w http.ResponseWriter, r *http.Request
 func (rs *MaterialResource) GetFileHandler(w http.ResponseWriter, r *http.Request) {
 
   material := r.Context().Value("material").(*model.Material)
+  course := r.Context().Value("course").(*model.Course)
   hnd := helper.NewMaterialFileHandle(material.ID)
   if !hnd.Exists() {
     render.Render(w, r, ErrNotFound)
@@ -256,7 +257,7 @@ func (rs *MaterialResource) GetFileHandler(w http.ResponseWriter, r *http.Reques
     return
   }
 
-  if err := hnd.WriteToBodyWithName(material.Filename, w); err != nil {
+  if err := hnd.WriteToBodyWithName(fmt.Sprintf("%s-%s", course.Name, material.Filename), w); err != nil {
     render.Render(w, r, ErrInternalServerErrorWithDetails(err))
   }
 }
