@@ -21,6 +21,7 @@ package app
 import (
   "encoding/json"
   "fmt"
+  "mime"
   "net/http"
   "testing"
   "time"
@@ -340,6 +341,10 @@ func TestMaterial(t *testing.T) {
       w = tape.GetWithClaims("/api/v1/courses/1/materials/1/file", 1, true)
       g.Assert(w.HeaderMap["Content-Type"][0]).Equal("application/zip")
       g.Assert(w.Code).Equal(http.StatusOK)
+
+      _, params, err := mime.ParseMediaType(w.HeaderMap["Content-Disposition"][0])
+      g.Assert(err).Equal(nil)
+      g.Assert(params["filename"]).Equal("empty.zip")
     })
 
     g.It("Should upload material file (pdf)", func() {
@@ -358,6 +363,10 @@ func TestMaterial(t *testing.T) {
       w = tape.GetWithClaims("/api/v1/courses/1/materials/1/file", 1, true)
       g.Assert(w.HeaderMap["Content-Type"][0]).Equal("application/pdf")
       g.Assert(w.Code).Equal(http.StatusOK)
+
+      _, params, err := mime.ParseMediaType(w.HeaderMap["Content-Disposition"][0])
+      g.Assert(err).Equal(nil)
+      g.Assert(params["filename"]).Equal("empty.pdf")
     })
 
     g.It("Changes should require claims", func() {
