@@ -342,9 +342,12 @@ func TestMaterial(t *testing.T) {
       g.Assert(w.HeaderMap["Content-Type"][0]).Equal("application/zip")
       g.Assert(w.Code).Equal(http.StatusOK)
 
+      course, err := stores.Material.IdentifyCourseOfMaterial(1)
+      g.Assert(err).Equal(nil)
+
       _, params, err := mime.ParseMediaType(w.HeaderMap["Content-Disposition"][0])
       g.Assert(err).Equal(nil)
-      g.Assert(params["filename"]).Equal("Info2-empty.zip")
+      g.Assert(params["filename"]).Equal(fmt.Sprintf("%s-empty.zip", course.Name))
     })
 
     g.It("Should upload material file (pdf)", func() {
@@ -364,9 +367,12 @@ func TestMaterial(t *testing.T) {
       g.Assert(w.HeaderMap["Content-Type"][0]).Equal("application/pdf")
       g.Assert(w.Code).Equal(http.StatusOK)
 
+      course, err := stores.Material.IdentifyCourseOfMaterial(1)
+      g.Assert(err).Equal(nil)
+
       _, params, err := mime.ParseMediaType(w.HeaderMap["Content-Disposition"][0])
       g.Assert(err).Equal(nil)
-      g.Assert(params["filename"]).Equal("Info2-empty.pdf")
+      g.Assert(params["filename"]).Equal(fmt.Sprintf("%s-empty.pdf", course.Name))
     })
 
     g.It("Changes should require claims", func() {
