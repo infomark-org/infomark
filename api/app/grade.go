@@ -27,6 +27,7 @@ import (
 
   "github.com/cgtuebingen/infomark-backend/api/helper"
   "github.com/cgtuebingen/infomark-backend/auth/authenticate"
+  "github.com/cgtuebingen/infomark-backend/auth/authorize"
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/go-chi/chi"
   "github.com/go-chi/render"
@@ -263,21 +264,24 @@ func (rs *GradeResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 
 }
 
-// IndexOverviewHandler is public endpoint for
-// URL: /courses/{course_id}/grades/overview
+// IndexSummaryHandler is public endpoint for
+// URL: /courses/{course_id}/grades/summary
 // URLPARAM: course_id,integer
-// QUERYPARAM: sheet_id,integer
 // QUERYPARAM: group_id,integer
 // METHOD: get
 // TAG: grades
-// RESPONSE: 200,GradeResponseList
+// RESPONSE: 200,GradeOverviewResponse
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  Query grades in a course
-func (rs *GradeResource) IndexOverviewHandler(w http.ResponseWriter, r *http.Request) {
+// DESCRIPTION:
+// {"sheets":[{"id":179,"name":"1"},{"id":180,"name":"2"}],"achievements":[{"user_info":{"id":42,"first_name":"Sören","last_name":"Haase","student_number":"1161"},"points":[5,0]},{"user_info":{"id":43,"first_name":"Resi","last_name":"Naser","student_number":"1000"},"points":[8,7]}]}
+func (rs *GradeResource) IndexSummaryHandler(w http.ResponseWriter, r *http.Request) {
   course := r.Context().Value("course").(*model.Course)
   filterGroupID := helper.Int64FromUrl(r, "group_id", 0)
+
+  givenRole := r.Context().Value("course_role").(authorize.CourseRole)
 
   grades, err := rs.Stores.Grade.GetOverviewGrades(course.ID, filterGroupID)
   if err != nil {
@@ -285,8 +289,14 @@ func (rs *GradeResource) IndexOverviewHandler(w http.ResponseWriter, r *http.Req
     return
   }
 
+  sheets, err := rs.Stores.Sheet.SheetsOfCourse(course.ID)
+  if err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
   // render JSON reponse
-  if err = render.RenderList(w, r, newGradeOverviewListResponse(grades)); err != nil {
+  if err = render.Render(w, r, newGradeOverviewResponse(grades, sheets, givenRole)); err != nil {
     render.Render(w, r, ErrRender(err))
     return
   }

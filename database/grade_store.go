@@ -89,22 +89,24 @@ func (s *GradeStore) GetForSubmission(id int64) (*model.Grade, error) {
 func (s *GradeStore) GetOverviewGrades(courseID int64, groupID int64) ([]model.OverviewGrade, error) {
   p := []model.OverviewGrade{}
   err := s.db.Select(&p, `
-SELECT sum(g.acquired_points) points, s.user_id, ts.sheet_id, sh.name
+  SELECT sum(g.acquired_points) points, s.user_id, ts.sheet_id, sh.name, u.first_name user_first_name, u.last_name user_last_name, u.student_number user_student_number
 FROM grades g
 INNER JOIN submissions s ON g.submission_id = s.id
 INNER JOIN tasks t ON s.task_id = t.id
-INNER JOIn task_sheet ts ON ts.task_id = t.id
-INNER JOIn sheets sh ON sh.id = ts.sheet_id
-INNER JOIN sheet_course sc ON sc.sheet_id = ts.sheet_id
-INNEr JOIN courses c ON c.id = sc.course_id
-INNER JOIN user_course uc ON uc.user_id = s.user_id
-INNER JOIN user_group ug ON ug.user_id = s.user_id
-INNER JOIN groups gs ON gs.id = ug.group_id
+INNER JOIn task_sheet ts ON t.id = ts.task_id
+INNER JOIn sheets sh ON ts.sheet_id = sh.id
+INNER JOIN sheet_course sc ON ts.sheet_id = sc.sheet_id
+INNEr JOIN courses c ON sc.course_id = c.id
+INNER JOIN user_course uc ON s.user_id = uc.user_id
+INNER JOIN user_group ug ON  s.user_id = ug.user_id
+INNER JOIN groups gs ON  ug.group_id = gs.id
+INNER JOIN users u ON  s.user_id = u.id
 WHERE c.ID = $1
 AND uc.role = 0
 AND gs.course_id = $1
+AND uc.course_id = $1
 AND ($2 = 0 OR gs.id = $2)
-GROUP BY ts.sheet_id, s.user_id, sh.name
+GROUP BY s.user_id, ts.sheet_id, sh.name, u.first_name, u.last_name, u.student_number
 ORDER BY s.user_id
 `, courseID, groupID)
   return p, err

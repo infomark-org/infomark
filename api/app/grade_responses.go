@@ -24,6 +24,7 @@ import (
   "strconv"
 
   "github.com/cgtuebingen/infomark-backend/api/helper"
+  "github.com/cgtuebingen/infomark-backend/auth/authorize"
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/go-chi/render"
   "github.com/spf13/viper"
@@ -215,31 +216,140 @@ func newMissingGradeListResponse(Grades []model.MissingGrade) []render.Renderer 
   return list
 }
 
-// MaterialResponse is the response payload for Material management.
+// // MaterialResponse is the response payload for Material management.
+// type GradeOverviewResponse struct {
+//   UserID  int64  `json:"user_id" example:"112"`
+//   SheetID int64  `json:"sheet_id" example:"1"`
+//   Name    string `json:"name" example:"Sheet 8"`
+//   Points  int64  `json:"points" example:"4"`
+// }
+
+// // newGradeOverviewResponse creates a response from a Material model.
+// func newGradeOverviewResponse(p *model.OverviewGrade) *GradeOverviewResponse {
+//   return &GradeOverviewResponse{
+//     UserID:  p.UserID,
+//     SheetID: p.SheetID,
+//     Name:    p.Name,
+//     Points:  p.Points,
+//   }
+// }
+
+// // newGradeOverviewListResponse creates a response from a list of Material models.
+// func newGradeOverviewListResponse(collection []model.OverviewGrade) []render.Renderer {
+//   list := []render.Renderer{}
+//   for k := range collection {
+//     list = append(list, newGradeOverviewResponse(&collection[k]))
+//   }
+//   return list
+// }
+
+// // Render post-processes a GradeOverviewResponse.
+// func (body *GradeOverviewResponse) Render(w http.ResponseWriter, r *http.Request) error {
+//   return nil
+// }
+
+// for the swagger build relying on go.ast we need to duplicate code here
+type sheetInfo struct {
+  ID   int64  `json:"id" example:"42"`
+  Name string `json:"name" example:"sheet 0"`
+}
+
+type userInfo struct {
+  ID            int64  `json:"id" example:"42"`
+  FirstName     string `json:"first_name" example:"max"`
+  LastName      string `json:"last_name" example:"mustermensch"`
+  StudentNumber string `json:"student_number" example:"0815"`
+}
+
+type achievementInfo struct {
+  User   userInfo `json:"user_info" example:""`
+  Points []int    `json:"points" example:"4"`
+}
+
 type GradeOverviewResponse struct {
-  UserID  int64  `json:"user_id" example:"112"`
-  SheetID int64  `json:"sheet_id" example:"1"`
-  Name    string `json:"name" example:"Sheet 8"`
-  Points  int64  `json:"points" example:"4"`
+  Sheets       []sheetInfo       `json:"sheets" example:""`
+  Achievements []achievementInfo `json:"achievements" example:""`
 }
 
 // newGradeOverviewResponse creates a response from a Material model.
-func newGradeOverviewResponse(p *model.OverviewGrade) *GradeOverviewResponse {
-  return &GradeOverviewResponse{
-    UserID:  p.UserID,
-    SheetID: p.SheetID,
-    Name:    p.Name,
-    Points:  p.Points,
-  }
-}
+func newGradeOverviewResponse(collection []model.OverviewGrade, sheets []model.Sheet, role authorize.CourseRole) *GradeOverviewResponse {
+  obj := &GradeOverviewResponse{}
+  // collection is sorted by user_id
 
-// newGradeOverviewListResponse creates a response from a list of Material models.
-func newGradeOverviewListResponse(collection []model.OverviewGrade) []render.Renderer {
-  list := []render.Renderer{}
-  for k := range collection {
-    list = append(list, newGradeOverviewResponse(&collection[k]))
+  // only do this once
+  for _, s := range sheets {
+    obj.Sheets = append(obj.Sheets, sheetInfo{s.ID, s.Name})
   }
-  return list
+
+  if len(collection) > 0 {
+
+    oldUserID := collection[0].UserID
+    currentPoints := []int{}
+    // sptr := 0 // sheet pointer
+    eptr := 0 // entry pointer
+
+    // iterate collection of users
+    // {user, sheet, points}
+    // {user, sheet, points}
+    // This is sparse: Students without submissions for one sheet are not listed.
+    // We need to explicitly list them here with "0" points.
+    for eptr < len(collection) {
+
+      // new student
+      if collection[eptr].UserID != oldUserID {
+        // reset
+        currentPoints = []int{}
+        // sptr = 0
+        oldUserID = collection[eptr].UserID
+      }
+
+      for sptr := 0; sptr < len(sheets); sptr++ {
+
+        if eptr < len(collection) {
+
+          if collection[eptr].SheetID == sheets[sptr].ID {
+            currentPoints = append(currentPoints, collection[eptr].Points)
+
+            // we safely jumpt to next entry
+            if eptr+1 < len(collection) {
+              if collection[eptr].UserID == collection[eptr+1].UserID {
+                eptr++
+              } else {
+                break
+              }
+            }
+
+          } else if collection[eptr].SheetID > sheets[sptr].ID {
+            currentPoints = append(currentPoints, int(0))
+          }
+
+        }
+
+      }
+
+      for i := 0; i < len(obj.Sheets)-len(currentPoints); i++ {
+        currentPoints = append(currentPoints, int(0))
+      }
+
+      if len(currentPoints) > 0 {
+        user := userInfo{
+          ID:            collection[eptr].UserID,
+          FirstName:     collection[eptr].UserFirstName,
+          LastName:      collection[eptr].UserLastName,
+          StudentNumber: collection[eptr].UserStudentNumber,
+        }
+
+        if role == authorize.TUTOR {
+          user.StudentNumber = ""
+        }
+
+        eptr = eptr + 1
+        obj.Achievements = append(obj.Achievements, achievementInfo{user, currentPoints})
+      }
+    }
+
+  }
+  return obj
 }
 
 // Render post-processes a GradeOverviewResponse.

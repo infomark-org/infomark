@@ -54,8 +54,12 @@ type MissingGrade struct {
 }
 
 type OverviewGrade struct {
-	UserID  int64  `db:"user_id"`
+	UserID            int64  `db:"user_id"`
+	UserFirstName     string `db:"user_first_name"`
+	UserLastName      string `db:"user_last_name"`
+	UserStudentNumber string `db:"user_student_number"`
+
 	SheetID int64  `db:"sheet_id"`
 	Name    string `db:"name"`
-	Points  int64  `db:"points"`
+	Points  int    `db:"points"`
 }

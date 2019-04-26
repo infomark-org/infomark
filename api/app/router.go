@@ -274,7 +274,7 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
               r.Route("/grades", func(r chi.Router) {
 
                 r.Get("/", authorize.EndpointRequiresRole(appAPI.Grade.IndexHandler, authorize.TUTOR))
-                r.Get("/overview", authorize.EndpointRequiresRole(appAPI.Grade.IndexHandler, authorize.ADMIN))
+                r.Get("/summary", authorize.EndpointRequiresRole(appAPI.Grade.IndexSummaryHandler, authorize.TUTOR))
                 // does not require a role
                 r.Get("/missing", appAPI.Grade.IndexMissingHandler)
                 r.Route("/{grade_id}", func(r chi.Router) {

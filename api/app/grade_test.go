@@ -29,8 +29,10 @@ import (
 
   "github.com/cgtuebingen/infomark-backend/api/helper"
   "github.com/cgtuebingen/infomark-backend/email"
+  "github.com/cgtuebingen/infomark-backend/model"
   "github.com/franela/goblin"
   "github.com/spf13/viper"
+  null "gopkg.in/guregu/null.v3"
 )
 
 func copyFile(src, dst string) (int64, error) {
@@ -439,6 +441,204 @@ func TestGrade(t *testing.T) {
 
       g.Assert(entry_after.PrivateTestLog).Equal("some new logs")
       g.Assert(entry_after.PrivateTestStatus).Equal(2)
+
+    })
+
+    g.It("Should show correct overview", func() {
+
+      course, err := stores.Course.Get(1)
+      g.Assert(err).Equal(nil)
+
+      _, err = tape.DB.Exec("TRUNCATE TABLE tasks CASCADE;")
+      g.Assert(err).Equal(nil)
+
+      _, err = tape.DB.Exec("TRUNCATE TABLE sheets CASCADE;")
+      g.Assert(err).Equal(nil)
+
+      _, err = tape.DB.Exec("TRUNCATE TABLE task_sheet CASCADE;")
+      g.Assert(err).Equal(nil)
+
+      _, err = tape.DB.Exec("TRUNCATE TABLE sheet_course CASCADE;")
+      g.Assert(err).Equal(nil)
+
+      _, err = tape.DB.Exec("TRUNCATE TABLE grades CASCADE;")
+      g.Assert(err).Equal(nil)
+
+      _, err = tape.DB.Exec("TRUNCATE TABLE submissions CASCADE;")
+      g.Assert(err).Equal(nil)
+
+      tasks, err := stores.Task.GetAll()
+      g.Assert(err).Equal(nil)
+      g.Assert(len(tasks)).Equal(0)
+
+      // create Sheets in database
+      sheet1, err := stores.Sheet.Create(&model.Sheet{
+        Name:      "1",
+        PublishAt: NowUTC(),
+        DueAt:     NowUTC(),
+      }, course.ID)
+      g.Assert(err).Equal(nil)
+
+      sheet2, err := stores.Sheet.Create(&model.Sheet{
+        Name:      "2",
+        PublishAt: NowUTC(),
+        DueAt:     NowUTC(),
+      }, course.ID)
+      g.Assert(err).Equal(nil)
+
+      // fmt.Println("sheet 1", sheet1.ID)
+      // fmt.Println("sheet 2", sheet2.ID)
+
+      // create tasks
+      task1, err := stores.Task.Create(&model.Task{
+        Name:               "1",
+        MaxPoints:          30,
+        PublicDockerImage:  null.StringFrom("ff"),
+        PrivateDockerImage: null.StringFrom("ff"),
+      }, sheet1.ID)
+
+      task2, err := stores.Task.Create(&model.Task{
+        Name:               "2",
+        MaxPoints:          31,
+        PublicDockerImage:  null.StringFrom("ff"),
+        PrivateDockerImage: null.StringFrom("ff"),
+      }, sheet2.ID)
+
+      _ = task1
+      _ = task2
+
+      uid1 := int64(42)
+      uid2 := int64(43)
+      sub1, err := stores.Submission.Create(&model.Submission{UserID: uid1, TaskID: task1.ID})
+      g.Assert(err).Equal(nil)
+
+      // test empty grades
+      response := GradeOverviewResponse{}
+      w := tape.GetWithClaims("/api/v1/courses/1/grades/summary", 1, true)
+      // fmt.Println(w.Body)
+      g.Assert(w.Code).Equal(http.StatusOK)
+      err = json.NewDecoder(w.Body).Decode(&response)
+      g.Assert(err).Equal(nil)
+      g.Assert(len(response.Sheets)).Equal(2)
+      g.Assert(len(response.Achievements)).Equal(0)
+
+      grade1 := &model.Grade{
+        PublicExecutionState:  0,
+        PrivateExecutionState: 0,
+        PublicTestLog:         "empty",
+        PrivateTestLog:        "empty",
+        PublicTestStatus:      0,
+        PrivateTestStatus:     0,
+        AcquiredPoints:        5,
+        Feedback:              "",
+        TutorID:               1,
+        SubmissionID:          sub1.ID,
+      }
+
+      _, err = stores.Grade.Create(grade1)
+      g.Assert(err).Equal(nil)
+
+      p := []model.Grade{}
+      err = tape.DB.Select(&p, "SELECT * FROM grades;")
+      g.Assert(err).Equal(nil)
+      g.Assert(len(p)).Equal(1)
+
+      response = GradeOverviewResponse{}
+      w = tape.GetWithClaims("/api/v1/courses/1/grades/summary", 1, true)
+      // fmt.Println(w.Body)
+      g.Assert(w.Code).Equal(http.StatusOK)
+      err = json.NewDecoder(w.Body).Decode(&response)
+      g.Assert(err).Equal(nil)
+      g.Assert(len(response.Sheets)).Equal(2)
+      g.Assert(len(response.Achievements)).Equal(1)
+      g.Assert(len(response.Achievements[0].Points)).Equal(2)
+      g.Assert(response.Achievements[0].Points[0]).Equal(grade1.AcquiredPoints)
+      g.Assert(response.Achievements[0].Points[1]).Equal(0)
+      g.Assert(response.Achievements[0].User.ID).Equal(int64(42))
+
+      //  ---------------------
+      sub2, err := stores.Submission.Create(&model.Submission{UserID: uid2, TaskID: task2.ID})
+      g.Assert(err).Equal(nil)
+      grade2 := &model.Grade{
+        PublicExecutionState:  0,
+        PrivateExecutionState: 0,
+        PublicTestLog:         "empty",
+        PrivateTestLog:        "empty",
+        PublicTestStatus:      0,
+        PrivateTestStatus:     0,
+        AcquiredPoints:        7,
+        Feedback:              "",
+        TutorID:               1,
+        SubmissionID:          sub2.ID,
+      }
+
+      _, err = stores.Grade.Create(grade2)
+      g.Assert(err).Equal(nil)
+
+      p = []model.Grade{}
+      err = tape.DB.Select(&p, "SELECT * FROM grades;")
+      g.Assert(err).Equal(nil)
+      g.Assert(len(p)).Equal(2)
+
+      response = GradeOverviewResponse{}
+      w = tape.GetWithClaims("/api/v1/courses/1/grades/summary", 1, true)
+      // fmt.Println(w.Body)
+      g.Assert(w.Code).Equal(http.StatusOK)
+      err = json.NewDecoder(w.Body).Decode(&response)
+      g.Assert(err).Equal(nil)
+      g.Assert(len(response.Sheets)).Equal(2)
+      g.Assert(len(response.Achievements)).Equal(2)
+      g.Assert(len(response.Achievements[0].Points)).Equal(2)
+      g.Assert(response.Achievements[0].Points[0]).Equal(grade1.AcquiredPoints)
+      g.Assert(response.Achievements[0].Points[1]).Equal(0)
+      g.Assert(response.Achievements[0].User.ID).Equal(int64(uid1))
+
+      g.Assert(len(response.Achievements[1].Points)).Equal(2)
+      g.Assert(response.Achievements[1].Points[0]).Equal(0)
+      g.Assert(response.Achievements[1].Points[1]).Equal(grade2.AcquiredPoints)
+      g.Assert(response.Achievements[1].User.ID).Equal(uid2)
+
+      //  ---------------------
+      sub3, err := stores.Submission.Create(&model.Submission{UserID: uid2, TaskID: task1.ID})
+      g.Assert(err).Equal(nil)
+      grade3 := &model.Grade{
+        PublicExecutionState:  0,
+        PrivateExecutionState: 0,
+        PublicTestLog:         "empty",
+        PrivateTestLog:        "empty",
+        PublicTestStatus:      0,
+        PrivateTestStatus:     0,
+        AcquiredPoints:        8,
+        Feedback:              "",
+        TutorID:               1,
+        SubmissionID:          sub3.ID,
+      }
+
+      _, err = stores.Grade.Create(grade3)
+      g.Assert(err).Equal(nil)
+
+      p = []model.Grade{}
+      err = tape.DB.Select(&p, "SELECT * FROM grades;")
+      g.Assert(err).Equal(nil)
+      g.Assert(len(p)).Equal(3)
+
+      response = GradeOverviewResponse{}
+      w = tape.GetWithClaims("/api/v1/courses/1/grades/summary", 1, true)
+      // fmt.Println(w.Body)
+      g.Assert(w.Code).Equal(http.StatusOK)
+      err = json.NewDecoder(w.Body).Decode(&response)
+      g.Assert(err).Equal(nil)
+      g.Assert(len(response.Sheets)).Equal(2)
+      g.Assert(len(response.Achievements)).Equal(2)
+      g.Assert(len(response.Achievements[0].Points)).Equal(2)
+      g.Assert(response.Achievements[0].Points[0]).Equal(grade1.AcquiredPoints)
+      g.Assert(response.Achievements[0].Points[1]).Equal(0)
+      g.Assert(response.Achievements[0].User.ID).Equal(int64(uid1))
+
+      g.Assert(len(response.Achievements[1].Points)).Equal(2)
+      g.Assert(response.Achievements[1].Points[0]).Equal(grade3.AcquiredPoints)
+      g.Assert(response.Achievements[1].Points[1]).Equal(grade2.AcquiredPoints)
+      g.Assert(response.Achievements[1].User.ID).Equal(uid2)
 
     })
 
