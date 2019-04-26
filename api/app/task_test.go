@@ -70,8 +70,8 @@ func TestTask(t *testing.T) {
         g.Assert(tasks_expected[k].ID).Equal(tasks_actual[k].ID)
         g.Assert(tasks_expected[k].MaxPoints).Equal(tasks_actual[k].MaxPoints)
         g.Assert(tasks_expected[k].Name).Equal(tasks_actual[k].Name)
-        g.Assert(tasks_expected[k].PublicDockerImage.String).Equal(tasks_actual[k].PublicDockerImage)
-        g.Assert(tasks_expected[k].PrivateDockerImage.String).Equal(tasks_actual[k].PrivateDockerImage)
+        g.Assert(tasks_expected[k].PublicDockerImage.String).Equal(tasks_actual[k].PublicDockerImage.String)
+        g.Assert(tasks_expected[k].PrivateDockerImage.String).Equal(tasks_actual[k].PrivateDockerImage.String)
 
         g.Assert(tasks_expected[k].PublicDockerImage.Valid).Equal(true)
         g.Assert(tasks_expected[k].PrivateDockerImage.Valid).Equal(true)
@@ -93,8 +93,8 @@ func TestTask(t *testing.T) {
       g.Assert(task_actual.ID).Equal(task_expected.ID)
       g.Assert(task_actual.MaxPoints).Equal(task_expected.MaxPoints)
       g.Assert(task_actual.Name).Equal(task_expected.Name)
-      g.Assert(task_actual.PublicDockerImage.String).Equal(task_expected.PublicDockerImage)
-      g.Assert(task_actual.PrivateDockerImage.String).Equal(task_expected.PrivateDockerImage)
+      g.Assert(task_actual.PublicDockerImage.String).Equal(task_expected.PublicDockerImage.String)
+      g.Assert(task_actual.PrivateDockerImage.String).Equal(task_expected.PrivateDockerImage.String)
 
       g.Assert(task_actual.PublicDockerImage.Valid).Equal(true)
       g.Assert(task_actual.PrivateDockerImage.Valid).Equal(true)
