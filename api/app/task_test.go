@@ -125,8 +125,10 @@ func TestTask(t *testing.T) {
       err = json.NewDecoder(w.Body).Decode(&task_return)
       g.Assert(task_return.Name).Equal("new Task")
       g.Assert(task_return.MaxPoints).Equal(88)
-      g.Assert(task_return.PrivateDockerImage).Equal(task_sent.PrivateDockerImage)
-      g.Assert(task_return.PublicDockerImage).Equal(task_sent.PublicDockerImage)
+      g.Assert(task_return.PrivateDockerImage.Valid).Equal(true)
+      g.Assert(task_return.PrivateDockerImage.String).Equal(task_sent.PrivateDockerImage)
+      g.Assert(task_return.PublicDockerImage.Valid).Equal(true)
+      g.Assert(task_return.PublicDockerImage.String).Equal(task_sent.PublicDockerImage)
 
       tasks_after, err := stores.Task.TasksOfSheet(1)
       g.Assert(err).Equal(nil)
