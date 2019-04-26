@@ -233,27 +233,38 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
   ds := service.NewDockerService()
   defer ds.Client.Close()
 
-  stdout, exit, err := ds.Run(msg.DockerImage, submission_path, framework_path, viper.GetInt64("worker_docker_memory_bytes"))
-  if err != nil {
-    DefaultLogger.WithFields(logrus.Fields{
-      "SubmissionID": msg.SubmissionID,
-      "stdout":       stdout,
-      "exitcode":     exit,
-    }).Warn(err)
-    return err
-  }
+  var exit int64
+  var stdout string
 
   var workerResp *shared.SubmissionWorkerResponse
-  if exit == 0 {
-    stdout = cleanDockerOutput(stdout)
-    // 3. push result back to server
-    workerResp = &shared.SubmissionWorkerResponse{
-      Log:    stdout,
-      Status: int(exit),
+  if !msg.DockerImage.Valid {
+    stdout, exit, err = ds.Run(msg.DockerImage.String, submission_path, framework_path, viper.GetInt64("worker_docker_memory_bytes"))
+    if err != nil {
+      DefaultLogger.WithFields(logrus.Fields{
+        "SubmissionID": msg.SubmissionID,
+        "stdout":       stdout,
+        "exitcode":     exit,
+      }).Warn(err)
+      return err
     }
+
+    if exit == 0 {
+      stdout = cleanDockerOutput(stdout)
+      // 3. push result back to server
+      workerResp = &shared.SubmissionWorkerResponse{
+        Log:    stdout,
+        Status: int(exit),
+      }
+    } else {
+      workerResp = &shared.SubmissionWorkerResponse{
+        Log:    "There has been an issue without your upload. The testing-framework failed (no the server).\n",
+        Status: int(exit),
+      }
+    }
+
   } else {
     workerResp = &shared.SubmissionWorkerResponse{
-      Log:    "There has been an issue without your upload. JUnit cannot test it.\n",
+      Log:    "No Dockerfile image was given.\n",
       Status: int(exit),
     }
   }

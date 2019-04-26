@@ -22,6 +22,7 @@ import (
 	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation"
+	null "gopkg.in/guregu/null.v3"
 )
 
 type Task struct {
@@ -29,10 +30,10 @@ type Task struct {
 	CreatedAt time.Time `db:"created_at,omitempty"`
 	UpdatedAt time.Time `db:"updated_at,omitempty"`
 
-	Name               string `db:"name"`
-	MaxPoints          int    `db:"max_points"`
-	PublicDockerImage  string `db:"public_docker_image"`
-	PrivateDockerImage string `db:"private_docker_image"`
+	Name               string      `db:"name"`
+	MaxPoints          int         `db:"max_points"`
+	PublicDockerImage  null.String `db:"public_docker_image"`
+	PrivateDockerImage null.String `db:"private_docker_image"`
 }
 
 type TaskRating struct {

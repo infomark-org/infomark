@@ -18,14 +18,16 @@
 
 package shared
 
+import null "gopkg.in/guregu/null.v3"
+
 type SubmissionAMQPWorkerRequest struct {
-	SubmissionID      int64  `json:"submission_id"`
-	AccessToken       string `json:"access_token"`
-	FrameworkFileURL  string `json:"framework_file_url"`
-	SubmissionFileURL string `json:"submission_file_url"`
-	ResultEndpointURL string `json:"result_endpoint_url"`
-	DockerImage       string `json:"docker_image"`
-	Sha256            string `json:"sha_256"`
+	SubmissionID      int64       `json:"submission_id"`
+	AccessToken       string      `json:"access_token"`
+	FrameworkFileURL  string      `json:"framework_file_url"`
+	SubmissionFileURL string      `json:"submission_file_url"`
+	ResultEndpointURL string      `json:"result_endpoint_url"`
+	DockerImage       null.String `json:"docker_image"`
+	Sha256            string      `json:"sha_256"`
 }
 
 type SubmissionWorkerResponse struct {

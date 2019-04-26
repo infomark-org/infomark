@@ -23,17 +23,18 @@ import (
 
 	"github.com/cgtuebingen/infomark-backend/model"
 	"github.com/go-chi/render"
+	null "gopkg.in/guregu/null.v3"
 )
 
 // .............................................................................
 
 // TaskResponse is the response payload for Task management.
 type TaskResponse struct {
-	ID                 int64  `json:"id" example:"684"`
-	Name               string `json:"name" example:"Task 1"`
-	MaxPoints          int    `json:"max_points" example:"23"`
-	PublicDockerImage  string `json:"public_docker_image" example:"DefaultJavaTestingImage"`
-	PrivateDockerImage string `json:"private_docker_image" example:"DefaultJavaTestingImage"`
+	ID                 int64       `json:"id" example:"684"`
+	Name               string      `json:"name" example:"Task 1"`
+	MaxPoints          int         `json:"max_points" example:"23"`
+	PublicDockerImage  null.String `json:"public_docker_image" example:"DefaultJavaTestingImage"`
+	PrivateDockerImage null.String `json:"private_docker_image" example:"DefaultJavaTestingImage"`
 }
 
 // newTaskResponse creates a response from a Task model.
@@ -65,11 +66,11 @@ func newTaskListResponse(Tasks []model.Task) []render.Renderer {
 // TaskResponse is the response payload for Task management.
 type MissingTaskResponse struct {
 	Task *struct {
-		ID                 int64  `json:"id" example:"684"`
-		Name               string `json:"name" example:"Task 1"`
-		MaxPoints          int    `json:"max_points" example:"23"`
-		PublicDockerImage  string `json:"public_docker_image" example:"DefaultJavaTestingImage"`
-		PrivateDockerImage string `json:"private_docker_image" example:"DefaultJavaTestingImage"`
+		ID                 int64       `json:"id" example:"684"`
+		Name               string      `json:"name" example:"Task 1"`
+		MaxPoints          int         `json:"max_points" example:"23"`
+		PublicDockerImage  null.String `json:"public_docker_image" example:"DefaultJavaTestingImage"`
+		PrivateDockerImage null.String `json:"private_docker_image" example:"DefaultJavaTestingImage"`
 	} `json:"task"`
 	CourseID int64 `json:"course_id" example:"1"`
 	SheetID  int64 `json:"sheet_id" example:"8"`
@@ -79,11 +80,11 @@ type MissingTaskResponse struct {
 func newMissingTaskResponse(p *model.MissingTask) *MissingTaskResponse {
 
 	task := struct {
-		ID                 int64  `json:"id" example:"684"`
-		Name               string `json:"name" example:"Task 1"`
-		MaxPoints          int    `json:"max_points" example:"23"`
-		PublicDockerImage  string `json:"public_docker_image" example:"DefaultJavaTestingImage"`
-		PrivateDockerImage string `json:"private_docker_image" example:"DefaultJavaTestingImage"`
+		ID                 int64       `json:"id" example:"684"`
+		Name               string      `json:"name" example:"Task 1"`
+		MaxPoints          int         `json:"max_points" example:"23"`
+		PublicDockerImage  null.String `json:"public_docker_image" example:"DefaultJavaTestingImage"`
+		PrivateDockerImage null.String `json:"private_docker_image" example:"DefaultJavaTestingImage"`
 	}{
 		p.ID,
 		p.Name,

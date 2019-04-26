@@ -287,12 +287,14 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
   var grade *model.Grade
 
   defaultPublicTestLog := "submission received and will be tested"
-  if task.PublicDockerImage == "" || !helper.NewPublicTestFileHandle(task.ID).Exists() {
+  if !task.PublicDockerImage.Valid || !helper.NewPublicTestFileHandle(task.ID).Exists() {
+    //  .Valid == true iff not null
     defaultPublicTestLog = "no unit tests for this task are available"
   }
 
   defaultPrivateTestLog := "submission received and will be tested"
-  if task.PrivateDockerImage == "" || !helper.NewPrivateTestFileHandle(task.ID).Exists() {
+  if !task.PrivateDockerImage.Valid || !helper.NewPrivateTestFileHandle(task.ID).Exists() {
+    //  .Valid == true iff not null
     defaultPrivateTestLog = "no unit tests for this task are available"
   }
 
@@ -373,7 +375,7 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
     return
   }
 
-  if task.PublicDockerImage != "" && helper.NewPublicTestFileHandle(task.ID).Exists() {
+  if task.PublicDockerImage.Valid && helper.NewPublicTestFileHandle(task.ID).Exists() {
     // enqueue public test
     request := &shared.SubmissionAMQPWorkerRequest{
       SubmissionID: submission.ID,
@@ -408,7 +410,7 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
 
   }
 
-  if task.PrivateDockerImage != "" && helper.NewPrivateTestFileHandle(task.ID).Exists() {
+  if task.PrivateDockerImage.Valid && helper.NewPrivateTestFileHandle(task.ID).Exists() {
     // enqueue private test
     request := &shared.SubmissionAMQPWorkerRequest{
       SubmissionID: submission.ID,
