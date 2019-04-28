@@ -42,14 +42,18 @@ func NewGradeStore(db *sqlx.DB) *GradeStore {
 func (s *GradeStore) Get(id int64) (*model.Grade, error) {
   p := model.Grade{ID: id}
   err := s.db.Get(&p, `
-SELECT g.*, s.user_id,
-u.last_name user_last_name,
-u.first_name user_first_name,
-u.email user_email
-FROM grades g
+SELECT
+  g.*,
+  s.user_id,
+  u.last_name user_last_name,
+  u.first_name user_first_name,
+  u.email user_email
+FROM
+  grades g
 INNER JOIN submissions s ON g.submission_id = s.id
 INNER JOIN users u ON s.user_id = u.id
-WHERE g.id = $1 LIMIT 1;
+WHERE
+  g.id = $1 LIMIT 1
 `, p.ID)
   return &p, err
 }
@@ -64,18 +68,21 @@ func (s *GradeStore) Create(p *model.Grade) (*model.Grade, error) {
 
 func (s *GradeStore) UpdatePrivateTestInfo(gradeID int64, log string, status int) error {
   _, err := s.db.Exec(`
-    UPDATE grades
-    SET private_execution_state=2, private_test_log=$2, private_test_status=$3
-    WHERE id = $1;
+UPDATE grades
+SET
+  private_execution_state=2,
+  private_test_log=$2,
+  private_test_status=$3
+WHERE id = $1
     `, gradeID, log, status)
   return err
 }
 
 func (s *GradeStore) UpdatePublicTestInfo(gradeID int64, log string, status int) error {
   _, err := s.db.Exec(`
-    UPDATE grades
-    SET public_execution_state=2, public_test_log=$2, public_test_status=$3
-    WHERE id = $1;
+UPDATE grades
+SET public_execution_state=2, public_test_log=$2, public_test_status=$3
+WHERE id = $1
     `, gradeID, log, status)
   return err
 }
@@ -89,8 +96,16 @@ func (s *GradeStore) GetForSubmission(id int64) (*model.Grade, error) {
 func (s *GradeStore) GetOverviewGrades(courseID int64, groupID int64) ([]model.OverviewGrade, error) {
   p := []model.OverviewGrade{}
   err := s.db.Select(&p, `
-  SELECT sum(g.acquired_points) points, s.user_id, ts.sheet_id, sh.name, u.first_name user_first_name, u.last_name user_last_name, u.student_number user_student_number
-FROM grades g
+SELECT
+  sum(g.acquired_points) points,
+  s.user_id,
+  ts.sheet_id,
+  sh.name,
+  u.first_name user_first_name,
+  u.last_name user_last_name,
+  u.student_number user_student_number
+FROM
+  grades g
 INNER JOIN submissions s ON g.submission_id = s.id
 INNER JOIN tasks t ON s.task_id = t.id
 INNER JOIn task_sheet ts ON t.id = ts.task_id
@@ -101,13 +116,20 @@ INNER JOIN user_course uc ON s.user_id = uc.user_id
 INNER JOIN user_group ug ON  s.user_id = ug.user_id
 INNER JOIN groups gs ON  ug.group_id = gs.id
 INNER JOIN users u ON  s.user_id = u.id
-WHERE c.ID = $1
-AND uc.role = 0
-AND gs.course_id = $1
-AND uc.course_id = $1
-AND ($2 = 0 OR gs.id = $2)
-GROUP BY s.user_id, ts.sheet_id, sh.name, u.first_name, u.last_name, u.student_number
-ORDER BY s.user_id
+WHERE
+  c.ID = $1
+AND
+  uc.role = 0
+AND
+  gs.course_id = $1
+AND
+  uc.course_id = $1
+AND
+  ($2 = 0 OR gs.id = $2)
+GROUP BY
+  s.user_id, ts.sheet_id, sh.name, u.first_name, u.last_name, u.student_number
+ORDER BY
+  s.user_id
 `, courseID, groupID)
   return p, err
 }
@@ -117,19 +139,28 @@ func (s *GradeStore) GetAllMissingGrades(courseID int64, tutorID int64, groupID 
 
   err := s.db.Select(&p,
     `
-SELECT g.*, ts.task_id, ts.sheet_id, sg.course_id, s.user_id,
-u.last_name user_last_name,
-u.first_name user_first_name,
-u.email user_email
-from grades g
+SELECT
+  g.*,
+  ts.task_id,
+  ts.sheet_id,
+  sg.course_id,
+  s.user_id,
+  u.last_name user_last_name,
+  u.first_name user_first_name,
+  u.email user_email
+FROM
+  grades g
 INNER JOIN submissions s ON s.id = g.submission_id
 INNER JOIN task_sheet ts ON ts.task_id = s.task_id
 INNER JOIN sheet_course sg ON sg.sheet_id = ts.sheet_id
 INNER JOIN users u ON s.user_id = u.id
 INNER JOIN user_group ug ON ug.user_id = u.id
-WHERE g.feedback like '' and g.tutor_id = $1
-AND sg.course_id = $2
-AND ($3 = 0 OR ug.group_id = $3)
+WHERE
+  g.feedback like '' and g.tutor_id = $1
+AND
+  sg.course_id = $2
+AND
+  ($3 = 0 OR ug.group_id = $3)
   `, tutorID, courseID, groupID)
   return p, err
 }
@@ -168,18 +199,30 @@ INNER JOIN task_sheet ts ON ts.task_id = s.task_id
 INNER JOIN sheet_course sc ON sc.sheet_id = ts.sheet_id
 INNER JOIN user_group ug ON ug.user_id = s.user_id
 INNER JOIN users u ON s.user_id = u.id
-WHERE course_id = $1
-AND ug.group_id = $4
-AND ($2 = 0 OR ts.sheet_id = $2)
-AND ($3 = 0 OR s.task_id = $3)
-AND ($5 = 0 OR ug.user_id = $5)
-AND ($6 = 0 OR tutor_id = $6)
-AND feedback LIKE $7
-AND ($8 = -1 OR g.acquired_points = $8)
-AND ($9 = -1 OR g.public_test_status = $9)
-AND ($10 = -1 OR g.private_test_status = $10)
-AND ($11 = -1 OR g.public_execution_state = $11)
-AND ($12 = -1 OR g.private_execution_state = $12)
+WHERE
+  course_id = $1
+AND
+  ug.group_id = $4
+AND
+  ($2 = 0 OR ts.sheet_id = $2)
+AND
+  ($3 = 0 OR s.task_id = $3)
+AND
+  ($5 = 0 OR ug.user_id = $5)
+AND
+  ($6 = 0 OR tutor_id = $6)
+AND
+  feedback LIKE $7
+AND
+  ($8 = -1 OR g.acquired_points = $8)
+AND
+  ($9 = -1 OR g.public_test_status = $9)
+AND
+  ($10 = -1 OR g.private_test_status = $10)
+AND
+  ($11 = -1 OR g.public_execution_state = $11)
+AND
+  ($12 = -1 OR g.private_execution_state = $12)
   `,
     // AND ($4 = 0 OR ug.group_id = $4)
     courseID,                // $1
@@ -203,13 +246,16 @@ func (s *GradeStore) IdentifyCourseOfGrade(gradeID int64) (*model.Course, error)
   course := &model.Course{}
   err := s.db.Get(course,
     `
-SELECT c.*
-FROM grades g
+SELECT
+  c.*
+FROM
+  grades g
 INNER JOIN submissions s ON s.id = g.submission_id
 INNER JOIN task_sheet ts ON ts.task_id = s.task_id
 INNER JOIN sheet_course sc ON sc.sheet_id = ts.sheet_id
 INNER JOIN courses c ON sc.course_id = c.id
-WHERE g.id = $1`,
+WHERE
+  g.id = $1`,
     gradeID)
   if err != nil {
     return nil, err
@@ -223,12 +269,15 @@ func (s *GradeStore) IdentifyTaskOfGrade(gradeID int64) (*model.Task, error) {
   task := &model.Task{}
   err := s.db.Get(task,
     `
-SELECT t.*
-FROM grades g
+SELECT
+  t.*
+FROM
+  grades g
 INNER JOIN submissions s ON s.id = g.submission_id
 INNER JOIN task_sheet ts ON ts.task_id = s.task_id
 INNER JOIN tasks t ON ts.task_id = t.id
-WHERE g.id = $1`,
+WHERE
+  g.id = $1`,
     gradeID)
   if err != nil {
     return nil, err

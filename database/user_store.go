@@ -69,7 +69,15 @@ func (s *UserStore) Delete(userID int64) error {
 
 func (s *UserStore) GetEnrollments(userID int64) ([]model.Enrollment, error) {
   p := []model.Enrollment{}
-  err := s.db.Select(&p, "SELECT course_id, role from user_course WHERE user_id = $1;", userID)
+  err := s.db.Select(&p, `
+SELECT
+  course_id,
+  role
+FROM
+  user_course
+WHERE
+  user_id = $1
+`, userID)
   return p, err
 
 }

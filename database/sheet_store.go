@@ -118,19 +118,22 @@ WHERE sc.sheet_id = $1`,
 func (s *SheetStore) PointsForUser(userID int64, sheetID int64) ([]model.TaskPoints, error) {
   p := []model.TaskPoints{}
 
-  err := s.db.Select(&p, `SELECT
-    t.id task_id, g.acquired_points,  t.max_points
-  FROM
-    grades g
-  INNER JOIN submissions sub ON g.submission_id = sub.id
-  INNER JOIN tasks t ON sub.task_id = t.id
-  INNER JOIN task_sheet ts ON ts.task_id = t.id
-  WHERE
-    sub.user_id = $1
-  AND
-    ts.sheet_id = $2
-  ORDER BY
-    ts.sheet_id`, userID, sheetID,
+  err := s.db.Select(&p, `
+SELECT
+  t.id task_id,
+  g.acquired_points,
+  t.max_points
+FROM
+  grades g
+INNER JOIN submissions sub ON g.submission_id = sub.id
+INNER JOIN tasks t ON sub.task_id = t.id
+INNER JOIN task_sheet ts ON ts.task_id = t.id
+WHERE
+  sub.user_id = $1
+AND
+  ts.sheet_id = $2
+ORDER BY
+  ts.sheet_id`, userID, sheetID,
   )
   return p, err
 

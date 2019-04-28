@@ -55,8 +55,7 @@ func (s *MaterialStore) Create(p *model.Material, courseID int64) (*model.Materi
   // now associate sheet with course
   _, err = s.db.Exec(`
 INSERT INTO
-  material_course
-  (id,material_id,course_id)
+  material_course (id,material_id,course_id)
 VALUES
   (DEFAULT, $1, $2);`,
     newID, courseID)
@@ -79,12 +78,17 @@ func (s *MaterialStore) MaterialsOfCourse(courseID int64, requiredRole int) ([]m
   p := []model.Material{}
 
   err := s.db.Select(&p, `
-SELECT m.*
-FROM materials m
+SELECT
+  m.*
+FROM
+  materials m
 INNER JOIN material_course mc ON m.id = mc.material_id
-WHERE mc.course_id = $1
-AND m.required_role <= $2
-ORDER BY m.lecture_at ASC;`, courseID, requiredRole)
+WHERE
+  mc.course_id = $1
+AND
+  m.required_role <= $2
+ORDER BY
+  m.lecture_at ASC;`, courseID, requiredRole)
   return p, err
 }
 
@@ -93,10 +97,13 @@ func (s *MaterialStore) IdentifyCourseOfMaterial(sheetID int64) (*model.Course, 
   course := &model.Course{}
   err := s.db.Get(course,
     `
-SELECT c.*
-FROM courses c
+SELECT
+  c.*
+FROM
+  courses c
 INNER JOIN material_course mc ON mc.course_id = c.id
-WHERE mc.material_id = $1
+WHERE
+  mc.material_id = $1
 LIMIT 1`,
     sheetID)
   if err != nil {

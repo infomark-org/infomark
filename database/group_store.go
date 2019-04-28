@@ -68,20 +68,20 @@ func (s *GroupStore) GroupsOfCourse(courseID int64) ([]model.GroupWithTutor, err
   p := []model.GroupWithTutor{}
 
   err := s.db.Select(&p, `
-    SELECT
-      g.*,
-u.first_name as tutor_first_name,
-u.last_name as tutor_last_name,
-u.avatar_url as tutor_avatar_url,
-u.email as tutor_email,
-u.language as tutor_language
-    FROM
-      groups g
-    INNER JOIN users u ON g.tutor_id = u.id
-    WHERE
-      course_id = $1
-      ORDER BY
-      g.id ASC`, courseID)
+SELECT
+  g.*,
+  u.first_name as tutor_first_name,
+  u.last_name as tutor_last_name,
+  u.avatar_url as tutor_avatar_url,
+  u.email as tutor_email,
+  u.language as tutor_language
+FROM
+  groups g
+INNER JOIN users u ON g.tutor_id = u.id
+WHERE
+  course_id = $1
+ORDER BY
+  g.id ASC`, courseID)
   return p, err
 }
 
@@ -104,23 +104,23 @@ func (s *GroupStore) GetInCourseWithUser(userID int64, courseID int64) ([]model.
   p := []model.GroupWithTutor{}
 
   err := s.db.Select(&p, `
-    SELECT
-      g.*,
-u.first_name as tutor_first_name,
-u.last_name as tutor_last_name,
-u.avatar_url as tutor_avatar_url,
-u.email as tutor_email,
-u.language as tutor_language
-    FROM
-      groups g
-    INNER JOIN users u ON g.tutor_id = u.id
-    INNER JOIN
-      user_group ug on g.id = ug.group_id
-    WHERE
-      course_id = $2
-    AND ug.user_id = $1
-      ORDER BY
-      g.id ASC`, userID, courseID)
+SELECT
+  g.*,
+  u.first_name as tutor_first_name,
+  u.last_name as tutor_last_name,
+  u.avatar_url as tutor_avatar_url,
+  u.email as tutor_email,
+  u.language as tutor_language
+FROM
+  groups g
+INNER JOIN users u ON g.tutor_id = u.id
+INNER JOIN user_group ug on g.id = ug.group_id
+WHERE
+  course_id = $2
+AND
+  ug.user_id = $1
+ORDER BY
+  g.id ASC`, userID, courseID)
   return p, err
 }
 
@@ -137,29 +137,37 @@ func (s *GroupStore) EnrolledUsers(
 
   // , u.avatar_path
   err := s.db.Select(&p, `
-   SELECT
-      uc.role, u.id, u.first_name, u.last_name, u.email,
-      u.student_number, u.semester, u.subject, u.language, u.avatar_url FROM user_course uc
-    INNER JOIN
-      users u ON uc.user_id = u.id
-    INNER JOIN
-      user_group ug ON ug.user_id = u.id
-    WHERE
-      uc.course_id = $1
-    AND
-      ug.group_id = $2
-    AND
-      uc.role = ANY($3)
-    AND
-      LOWER(u.first_name) LIKE $4
-    AND
-      LOWER(u.last_name) LIKE $5
-    AND
-      LOWER(u.email) LIKE $6
-    AND
-      LOWER(u.subject) LIKE $7
-    AND
-      LOWER(u.language) LIKE $8
+SELECT
+  uc.role,
+  u.id,
+  u.first_name,
+  u.last_name,
+  u.email,
+  u.student_number,
+  u.semester,
+  u.subject,
+  u.language,
+  u.avatar_url
+FROM
+  user_course uc
+INNER JOIN users u ON uc.user_id = u.id
+INNER JOIN user_group ug ON ug.user_id = u.id
+WHERE
+  uc.course_id = $1
+AND
+  ug.group_id = $2
+AND
+  uc.role = ANY($3)
+AND
+  LOWER(u.first_name) LIKE $4
+AND
+  LOWER(u.last_name) LIKE $5
+AND
+  LOWER(u.email) LIKE $6
+AND
+  LOWER(u.subject) LIKE $7
+AND
+  LOWER(u.language) LIKE $8
     `, courseID, groupID, pq.Array(roleFilter),
     filterFirstName, filterLastName, filterEmail,
     filterSubject, filterLanguage,
@@ -170,11 +178,15 @@ func (s *GroupStore) EnrolledUsers(
 func (s *GroupStore) GetGroupEnrollmentOfUserInCourse(userID int64, courseID int64) (*model.GroupEnrollment, error) {
   p := &model.GroupEnrollment{}
   err := s.db.Get(p, `
-    SELECT ug.*
-FROM user_group ug
+SELECT
+  ug.*
+FROM
+  user_group ug
 INNER JOIN groups g ON g.id = ug.group_id
-WHERE ug.user_id = $1
-AND g.course_id = $2`, userID, courseID)
+WHERE
+  ug.user_id = $1
+AND
+  g.course_id = $2`, userID, courseID)
   return p, err
 }
 
@@ -202,21 +214,22 @@ func (s *GroupStore) GetOfTutor(tutorID int64, courseID int64) ([]model.GroupWit
   p := []model.GroupWithTutor{}
 
   err := s.db.Select(&p, `
-    SELECT
-      g.*,
-u.first_name as tutor_first_name,
-u.last_name as tutor_last_name,
-u.avatar_url as tutor_avatar_url,
-u.email as tutor_email,
-u.language as tutor_language
-    FROM
-      groups g
-    INNER JOIN users u ON g.tutor_id = u.id
-    WHERE
-      course_id = $2
-    AND g.tutor_id = $1
-      ORDER BY
-      g.id ASC`, tutorID, courseID)
+SELECT
+  g.*,
+  u.first_name as tutor_first_name,
+  u.last_name as tutor_last_name,
+  u.avatar_url as tutor_avatar_url,
+  u.email as tutor_email,
+  u.language as tutor_language
+FROM
+  groups g
+INNER JOIN users u ON g.tutor_id = u.id
+WHERE
+  course_id = $2
+AND
+  g.tutor_id = $1
+ORDER BY
+  g.id ASC`, tutorID, courseID)
   return p, err
 }
 
@@ -229,8 +242,7 @@ SELECT
   c.*
 FROM
   groups g
-INNER JOIN
-  courses c ON c.id = g.course_ID
+INNER JOIN courses c ON c.id = g.course_ID
 WHERE g.id = $1`,
     groupID)
   if err != nil {
@@ -271,7 +283,9 @@ UPDATE
   group_bids
 SET bid = $3
 WHERE
-  user_id = $1 and group_id = $2`, userID, groupID, bid)
+  user_id = $1
+AND
+  group_id = $2`, userID, groupID, bid)
   if err != nil {
     return 0, err
   }
@@ -284,13 +298,15 @@ func (s *GroupStore) GetBidsForCourseForUser(courseID int64, userID int64) ([]mo
   p := []model.GroupBid{}
 
   err := s.db.Select(&p, `
-SELECT gb.*
+SELECT
+  gb.*
 FROM
-group_bids gb
-INNER JOIN
-  groups g ON gb.group_id = g.id
-WHERE gb.user_id = $2
-AND g.course_id = $1`, courseID, userID)
+  group_bids gb
+INNER JOIN groups g ON gb.group_id = g.id
+WHERE
+  gb.user_id = $2
+AND
+  g.course_id = $1`, courseID, userID)
   return p, err
 
 }
@@ -300,12 +316,13 @@ func (s *GroupStore) GetBidsForCourse(courseID int64) ([]model.GroupBid, error) 
   p := []model.GroupBid{}
 
   err := s.db.Select(&p, `
-SELECT gb.*
+SELECT
+  gb.*
 FROM
-group_bids gb
-INNER JOIN
-  groups g ON gb.group_id = g.id
-AND g.course_id = $1`, courseID)
+  group_bids gb
+INNER JOIN groups g ON gb.group_id = g.id
+AND
+  g.course_id = $1`, courseID)
   return p, err
 
 }

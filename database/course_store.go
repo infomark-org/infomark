@@ -60,7 +60,15 @@ func (s *CourseStore) Update(p *model.Course) error {
 }
 
 func (s *CourseStore) UpdateRole(courseID, userID int64, role int) error {
-  _, err := s.db.Exec("UPDATE user_course SET role = $3 WHERE user_ID = $1 AND course_id = $2", userID, courseID, role)
+  _, err := s.db.Exec(`
+UPDATE
+  user_course
+SET
+  role = $3
+WHERE
+  user_ID = $1
+AND
+  course_id = $2`, userID, courseID, role)
   return err
 }
 
@@ -99,14 +107,22 @@ func (s *CourseStore) Enroll(courseID int64, userID int64, role int64) error {
   if err != nil {
     return err
   }
-  stmt := "INSERT INTO user_course (id, user_id, course_id, role) VALUES (DEFAULT, $1, $2, $3);"
-  _, err = s.db.Exec(stmt, userID, courseID, role)
+  _, err = s.db.Exec(`
+INSERT INTO
+  user_course (id, user_id, course_id, role)
+VALUES (DEFAULT, $1, $2, $3);
+`, userID, courseID, role)
   return err
 }
 
 func (s *CourseStore) Disenroll(courseID int64, userID int64) error {
-  stmt := "DELETE FROM user_course WHERE user_id = $1 AND course_id = $2;"
-  _, err := s.db.Exec(stmt, userID, courseID)
+  _, err := s.db.Exec(`
+DELETE FROM
+  user_course
+WHERE
+  user_id = $1
+AND
+  course_id = $2; `, userID, courseID)
   return err
 }
 
@@ -115,16 +131,23 @@ func (s *CourseStore) GetUserEnrollment(courseID int64, userID int64) (*model.Us
 
   // , u.avatar_path
   err := s.db.Get(&p, `
-    SELECT
-      uc.role, u.id, u.first_name, u.last_name, u.email,
-      u.student_number, u.semester, u.subject, u.language FROM user_course uc
-    INNER JOIN
-      users u ON uc.user_id = u.id
-    WHERE
-      uc.course_id = $1
-    AND
-      u.id = $2
-    `, courseID, userID,
+SELECT
+  uc.role,
+  u.id,
+  u.first_name,
+  u.last_name,
+  u.email,
+  u.student_number,
+  u.semester,
+  u.subject,
+  u.language
+FROM
+  user_course uc
+INNER JOIN users u ON uc.user_id = u.id
+WHERE
+  uc.course_id = $1
+AND
+  u.id = $2`, courseID, userID,
   )
   return &p, err
 }
@@ -138,24 +161,32 @@ func (s *CourseStore) FindEnrolledUsers(
 
   // , u.avatar_path
   err := s.db.Select(&p, `
-    SELECT
-      uc.role, u.id, u.first_name, u.last_name, u.email,
-      u.student_number, u.semester, u.subject, u.language, u.avatar_url FROM user_course uc
-    INNER JOIN
-      users u ON uc.user_id = u.id
-    WHERE
-      uc.course_id = $1
-    AND
-      uc.role = ANY($2)
-    AND
-    (
-      LOWER(u.first_name) LIKE $3
-    OR
-      LOWER(u.last_name) LIKE $3
-    OR
-      LOWER(u.email) LIKE $3
-    )
-    `, courseID, pq.Array(roleFilter),
+SELECT
+  uc.role,
+  u.id,
+  u.first_name,
+  u.last_name,
+  u.email,
+  u.student_number,
+  u.semester,
+  u.subject,
+  u.language,
+  u.avatar_url
+FROM
+  user_course uc
+INNER JOIN users u ON uc.user_id = u.id
+WHERE
+  uc.course_id = $1
+AND
+  uc.role = ANY($2)
+AND
+(
+  LOWER(u.first_name) LIKE $3
+OR
+  LOWER(u.last_name) LIKE $3
+OR
+  LOWER(u.email) LIKE $3
+)`, courseID, pq.Array(roleFilter),
     filterQuery,
   )
   return p, err
@@ -173,26 +204,34 @@ func (s *CourseStore) EnrolledUsers(
 
   // , u.avatar_path
   err := s.db.Select(&p, `
-    SELECT
-      uc.role, u.id, u.first_name, u.last_name, u.email,
-      u.student_number, u.semester, u.subject, u.language, u.avatar_url FROM user_course uc
-    INNER JOIN
-      users u ON uc.user_id = u.id
-    WHERE
-      uc.course_id = $1
-    AND
-      uc.role = ANY($2)
-    AND
-      LOWER(u.first_name) LIKE $3
-    AND
-      LOWER(u.last_name) LIKE $4
-    AND
-      LOWER(u.email) LIKE $5
-    AND
-      LOWER(u.subject) LIKE $6
-    AND
-      LOWER(u.language) LIKE $7
-    `, courseID, pq.Array(roleFilter),
+SELECT
+  uc.role,
+  u.id,
+  u.first_name,
+  u.last_name,
+  u.email,
+  u.student_number,
+  u.semester,
+  u.subject,
+  u.language,
+  u.avatar_url
+FROM
+  user_course uc
+INNER JOIN users u ON uc.user_id = u.id
+WHERE
+  uc.course_id = $1
+AND
+  uc.role = ANY($2)
+AND
+  LOWER(u.first_name) LIKE $3
+AND
+  LOWER(u.last_name) LIKE $4
+AND
+  LOWER(u.email) LIKE $5
+AND
+  LOWER(u.subject) LIKE $6
+AND
+  LOWER(u.language) LIKE $7`, courseID, pq.Array(roleFilter),
     filterFirstName, filterLastName, filterEmail,
     filterSubject, filterLanguage,
   )
@@ -203,25 +242,26 @@ func (s *CourseStore) EnrolledUsers(
 func (s *CourseStore) PointsForUser(userID int64, courseID int64) ([]model.SheetPoints, error) {
   p := []model.SheetPoints{}
 
-  err := s.db.Select(&p, `SELECT
-    SUM(g.acquired_points) acquired_points,
-    SUM(t.max_points) max_points,
-    ts.sheet_id sheet_id
-  FROM
-    grades g
-  INNER JOIN submissions sub ON g.submission_id = sub.id
-  INNER JOIN tasks t ON sub.task_id = t.id
-  INNER JOIN task_sheet ts ON ts.task_id = t.id
-  INNER JOIN sheet_course sc ON sc.sheet_id = ts.sheet_id
-  INNER JOIN courses c ON c.id = sc.course_id
-  WHERE
-    sub.user_id = $1
-  AND
-    c.id = $2
-  GROUP BY
-    ts.sheet_id
-  ORDER BY
-    ts.sheet_id`, userID, courseID,
+  err := s.db.Select(&p, `
+SELECT
+  SUM(g.acquired_points) acquired_points,
+  SUM(t.max_points) max_points,
+  ts.sheet_id sheet_id
+FROM
+  grades g
+INNER JOIN submissions sub ON g.submission_id = sub.id
+INNER JOIN tasks t ON sub.task_id = t.id
+INNER JOIN task_sheet ts ON ts.task_id = t.id
+INNER JOIN sheet_course sc ON sc.sheet_id = ts.sheet_id
+INNER JOIN courses c ON c.id = sc.course_id
+WHERE
+  sub.user_id = $1
+AND
+  c.id = $2
+GROUP BY
+  ts.sheet_id
+ORDER BY
+  ts.sheet_id`, userID, courseID,
   )
   return p, err
 
@@ -230,8 +270,15 @@ func (s *CourseStore) PointsForUser(userID int64, courseID int64) ([]model.Sheet
 func (s *CourseStore) RoleInCourse(userID int64, courseID int64) (authorize.CourseRole, error) {
   var role_int int
 
-  err := s.db.Get(&role_int,
-    `Select role from user_course WHERE user_id = $1 and course_id = $2`,
+  err := s.db.Get(&role_int, `
+SELECT
+  role
+FROM
+  user_course
+WHERE
+  user_id = $1
+AND
+  course_id = $2`,
     userID, courseID,
   )
   if err != nil {

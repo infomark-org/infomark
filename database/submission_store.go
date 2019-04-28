@@ -41,8 +41,16 @@ func (s *SubmissionStore) Get(submissionID int64) (*model.Submission, error) {
 
 func (s *SubmissionStore) GetByUserAndTask(userID int64, taskID int64) (*model.Submission, error) {
   p := model.Submission{}
-  err := s.db.Get(&p,
-    `SELECT * FROM submissions WHERE user_id = $1 AND task_id = $2 LIMIT 1;`,
+  err := s.db.Get(&p, `
+SELECT
+  *
+FROM
+  submissions
+WHERE
+  user_id = $1
+AND
+  task_id = $2
+LIMIT 1;`,
     userID, taskID)
   return &p, err
 }
@@ -60,8 +68,10 @@ func (s *SubmissionStore) GetFiltered(filterCourseID, filterGroupID, filterUserI
   p := []model.Submission{}
   err := s.db.Select(&p,
     `
-SELECT s.*
-FROM submissions s
+SELECT
+  s.*
+FROM
+  submissions s
 INNER JOIN user_group ug ON ug.user_id = s.user_id
 INNER JOIN groups g ON g.id = ug.group_id
 INNEr JOIN task_sheet ts ON ts.task_id = s.task_id

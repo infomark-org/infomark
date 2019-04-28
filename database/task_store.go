@@ -36,10 +36,18 @@ func NewTaskStore(db *sqlx.DB) *TaskStore {
 func (s *TaskStore) GetAllMissingTasksForUser(userID int64) ([]model.MissingTask, error) {
   p := []model.MissingTask{}
   err := s.db.Select(&p, `
-SELECT t.*, ts.sheet_id, sc.course_id from tasks  t
+SELECT
+  t.*,
+  ts.sheet_id,
+  sc.course_id
+FROM
+  tasks  t
 INNER JOIN task_sheet ts ON ts.task_id = t.id
 INNER JOIN sheet_course sc ON sc.sheet_id = ts.sheet_id
-WHERE t.id NOT IN (SELECT task_id FROM submissions s WHERE s.user_id = $1);
+WHERE
+  t.id NOT IN (
+    SELECT task_id FROM submissions s WHERE s.user_id = $1
+  );
     `, userID)
   return p, err
 }
@@ -87,18 +95,22 @@ func (s *TaskStore) TasksOfSheet(sheetID int64) ([]model.Task, error) {
 
   // t.public_test_path, t.private_test_path,
   err := s.db.Select(&p, `
-    SELECT
-      t.id, t.created_at, t.updated_at, t.max_points, t.name,
-      t.public_docker_image, t.private_docker_image
-    FROM task_sheet ts
-    INNER JOIN
-      tasks t ON ts.task_id = t.id
-    INNER JOIN
-      sheets s ON ts.sheet_id = s.id
-    WHERE
-      s.id = $1
-    ORDER BY
-      t.name ASC;`, sheetID)
+SELECT
+  t.id,
+  t.created_at,
+  t.updated_at,
+  t.max_points,
+  t.name,
+  t.public_docker_image,
+  t.private_docker_image
+FROM
+  task_sheet ts
+INNER JOIN tasks t ON ts.task_id = t.id
+INNER JOIN sheets s ON ts.sheet_id = s.id
+WHERE
+  s.id = $1
+ORDER BY
+  t.name ASC;`, sheetID)
   return p, err
 }
 
@@ -111,11 +123,10 @@ SELECT
   c.*
 FROM
   task_sheet ts
-INNER JOIN
-  sheet_course sc ON sc.sheet_id = ts.sheet_id
-INNER JOIN
-  courses c ON c.id = sc.course_ID
-WHERE ts.task_id = $1`,
+INNER JOIN sheet_course sc ON sc.sheet_id = ts.sheet_id
+INNER JOIN courses c ON c.id = sc.course_ID
+WHERE
+  ts.task_id = $1`,
     taskID)
   if err != nil {
     return nil, err
@@ -133,8 +144,7 @@ SELECT
   s.*
 FROM
   task_sheet ts
-INNER JOIN
-  sheets s ON s.id = ts.sheet_id
+INNER JOIN sheets s ON s.id = ts.sheet_id
 WHERE ts.task_id = $1`,
     taskID)
   if err != nil {
@@ -151,7 +161,8 @@ SELECT
   AVG(rating) average_rating
 FROM
   task_ratings tr
-WHERE tr.task_id  = $1`, taskID)
+WHERE
+  tr.task_id  = $1`, taskID)
   return averageRating, err
 }
 
@@ -159,7 +170,15 @@ func (s *TaskStore) GetRatingOfTaskByUser(taskID int64, userID int64) (*model.Ta
 
   p := model.TaskRating{}
   err := s.db.Get(&p, `
-    SELECT * from task_ratings where user_id = $1 and task_id = $2 LIMIT 1`, userID, taskID)
+SELECT
+  *
+FROM
+  task_ratings
+WHERE
+  user_id = $1
+AND
+  task_id = $2
+LIMIT 1`, userID, taskID)
   return &p, err
 }
 
