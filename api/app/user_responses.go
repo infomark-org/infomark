@@ -59,7 +59,6 @@ func newUserResponse(p *model.User) *userResponse {
 
 // newUserListResponse creates a response from a list of user models.
 func newUserListResponse(users []model.User) []render.Renderer {
-	// https://stackoverflow.com/a/36463641/7443104
 	list := []render.Renderer{}
 	for k := range users {
 		list = append(list, newUserResponse(&users[k]))

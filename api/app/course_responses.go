@@ -56,7 +56,6 @@ func (rs *CourseResource) newCourseResponse(p *model.Course) *courseResponse {
 
 // newCourseListResponse creates a response from a list of course models.
 func (rs *CourseResource) newCourseListResponse(courses []model.Course) []render.Renderer {
-	// https://stackoverflow.com/a/36463641/7443104
 	list := []render.Renderer{}
 	for k := range courses {
 		list = append(list, rs.newCourseResponse(&courses[k]))

@@ -102,7 +102,6 @@ func newGradeResponse(p *model.Grade, courseID int64) *GradeResponse {
 
 // newGradeListResponse creates a response from a list of Grade models.
 func newGradeListResponse(Grades []model.Grade, courseID int64) []render.Renderer {
-  // https://stackoverflow.com/a/36463641/7443104
   list := []render.Renderer{}
   for k := range Grades {
     list = append(list, newGradeResponse(&Grades[k], courseID))

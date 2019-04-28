@@ -55,7 +55,6 @@ func (body *TaskResponse) Render(w http.ResponseWriter, r *http.Request) error {
 
 // newTaskListResponse creates a response from a list of Task models.
 func newTaskListResponse(Tasks []model.Task) []render.Renderer {
-	// https://stackoverflow.com/a/36463641/7443104
 	list := []render.Renderer{}
 	for k := range Tasks {
 		list = append(list, newTaskResponse(&Tasks[k]))
@@ -110,7 +109,6 @@ func (body *MissingTaskResponse) Render(w http.ResponseWriter, r *http.Request) 
 
 // newTaskListResponse creates a response from a list of Task models.
 func newMissingTaskListResponse(Tasks []model.MissingTask) []render.Renderer {
-	// https://stackoverflow.com/a/36463641/7443104
 	list := []render.Renderer{}
 	for k := range Tasks {
 		list = append(list, newMissingTaskResponse(&Tasks[k]))

@@ -58,7 +58,6 @@ func newSubmissionResponse(p *model.Submission, courseID int64) *SubmissionRespo
 
 // newSubmissionListResponse creates a response from a list of Submission models.
 func newSubmissionListResponse(Submissions []model.Submission, courseID int64) []render.Renderer {
-	// https://stackoverflow.com/a/36463641/7443104
 	list := []render.Renderer{}
 	for k := range Submissions {
 		list = append(list, newSubmissionResponse(&Submissions[k], courseID))

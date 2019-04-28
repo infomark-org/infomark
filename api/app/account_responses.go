@@ -48,7 +48,6 @@ func (rs *AccountResource) newUserEnrollmentResponse(p *model.Enrollment) *userE
 }
 
 func (rs *AccountResource) newUserEnrollmentsResponse(enrollments []model.Enrollment) []render.Renderer {
-	// https://stackoverflow.com/a/36463641/7443104
 	list := []render.Renderer{}
 	for k := range enrollments {
 		list = append(list, rs.newUserEnrollmentResponse(&enrollments[k]))
