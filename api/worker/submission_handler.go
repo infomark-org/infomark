@@ -238,7 +238,12 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
 
   var workerResp *shared.SubmissionWorkerResponse
   if !msg.DockerImage.Valid {
-    stdout, exit, err = ds.Run(msg.DockerImage.String, submission_path, framework_path, viper.GetInt64("worker_docker_memory_bytes"))
+    stdout, exit, err = ds.Run(
+      msg.DockerImage.String,
+      submission_path,
+      framework_path,
+      viper.GetInt64("worker_docker_memory_bytes"),
+    )
     if err != nil {
       DefaultLogger.WithFields(logrus.Fields{
         "SubmissionID": msg.SubmissionID,
@@ -257,7 +262,10 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
       }
     } else {
       workerResp = &shared.SubmissionWorkerResponse{
-        Log:    "There has been an issue without your upload. The testing-framework failed (no the server).\n",
+        Log: fmt.Sprintf(`
+          There has been an issue during testing your upload (The ID is %v).
+          The testing-framework has failed (not the server).\n`,
+          msg.SubmissionID),
         Status: int(exit),
       }
     }
