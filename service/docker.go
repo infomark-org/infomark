@@ -105,9 +105,9 @@ func (ds *DockerService) Run(
 ) (string, int64, error) {
   // create some context for docker
 
-  fmt.Println("imageName", imageName)
-  fmt.Println("submissionZipFile", submissionZipFile)
-  fmt.Println("frameworkZipFile", frameworkZipFile)
+  // fmt.Println("imageName", imageName)
+  // fmt.Println("submissionZipFile", submissionZipFile)
+  // fmt.Println("frameworkZipFile", frameworkZipFile)
 
   // submissionZipFile := "/home/patwie/git/github.com/cgtuebingen/infomark/infomark-backend/.local/simple_ci_runner/submission.zip"
   // frameworkZipFile := "/home/patwie/git/github.com/cgtuebingen/infomark/infomark-backend/.local/simple_ci_runner/unittest.zip"

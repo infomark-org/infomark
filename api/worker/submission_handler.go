@@ -201,6 +201,8 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
 
   client := &http.Client{}
 
+  // Under circumstances there is no guarantee that the following request will be issues
+  // BEFORE the actual test result.
   // we use a HTTP Request to send the answer
   // r = tape.BuildDataRequest("POST", msg.ResultEndpointURL, tape.ToH(&shared.SubmissionWorkerResponse{
   //   Log:    "submission is currently being tested ...",
@@ -237,42 +239,35 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
   var stdout string
 
   var workerResp *shared.SubmissionWorkerResponse
-  if !msg.DockerImage.Valid {
-    stdout, exit, err = ds.Run(
-      msg.DockerImage.String,
-      submission_path,
-      framework_path,
-      viper.GetInt64("worker_docker_memory_bytes"),
-    )
-    if err != nil {
-      DefaultLogger.WithFields(logrus.Fields{
-        "SubmissionID": msg.SubmissionID,
-        "stdout":       stdout,
-        "exitcode":     exit,
-      }).Warn(err)
-      return err
-    }
 
-    if exit == 0 {
-      stdout = cleanDockerOutput(stdout)
-      // 3. push result back to server
-      workerResp = &shared.SubmissionWorkerResponse{
-        Log:    stdout,
-        Status: int(exit),
-      }
-    } else {
-      workerResp = &shared.SubmissionWorkerResponse{
-        Log: fmt.Sprintf(`
-          There has been an issue during testing your upload (The ID is %v).
-          The testing-framework has failed (not the server).\n`,
-          msg.SubmissionID),
-        Status: int(exit),
-      }
-    }
+  stdout, exit, err = ds.Run(
+    msg.DockerImage,
+    submission_path,
+    framework_path,
+    viper.GetInt64("worker_docker_memory_bytes"),
+  )
+  if err != nil {
+    DefaultLogger.WithFields(logrus.Fields{
+      "SubmissionID": msg.SubmissionID,
+      "stdout":       stdout,
+      "exitcode":     exit,
+    }).Warn(err)
+    return err
+  }
 
+  if exit == 0 {
+    stdout = cleanDockerOutput(stdout)
+    // 3. push result back to server
+    workerResp = &shared.SubmissionWorkerResponse{
+      Log:    stdout,
+      Status: int(exit),
+    }
   } else {
     workerResp = &shared.SubmissionWorkerResponse{
-      Log:    "No Dockerfile image was given.\n",
+      Log: fmt.Sprintf(`
+        There has been an issue during testing your upload (The ID is %v).
+        The testing-framework has failed (not the server).\n`,
+        msg.SubmissionID),
       Status: int(exit),
     }
   }

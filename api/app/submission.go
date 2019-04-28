@@ -377,24 +377,10 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
 
   if task.PublicDockerImage.Valid && helper.NewPublicTestFileHandle(task.ID).Exists() {
     // enqueue public test
-    request := &shared.SubmissionAMQPWorkerRequest{
-      SubmissionID: submission.ID,
-      AccessToken:  accessToken,
-      FrameworkFileURL: fmt.Sprintf("%s/api/v1/courses/%s/tasks/%s/public_file",
-        viper.GetString("url"),
-        strconv.FormatInt(course.ID, 10),
-        strconv.FormatInt(task.ID, 10)),
-      SubmissionFileURL: fmt.Sprintf("%s/api/v1/courses/%s/submissions/%s/file",
-        viper.GetString("url"),
-        strconv.FormatInt(course.ID, 10),
-        strconv.FormatInt(submission.ID, 10)),
-      ResultEndpointURL: fmt.Sprintf("%s/api/v1/courses/%s/grades/%s/public_result",
-        viper.GetString("url"),
-        strconv.FormatInt(course.ID, 10),
-        strconv.FormatInt(grade.ID, 10)),
-      DockerImage: task.PublicDockerImage,
-      Sha256:      sha256,
-    }
+
+    request := shared.NewSubmissionAMQPWorkerRequest(
+      course.ID, task.ID, submission.ID, grade.ID,
+      accessToken, viper.GetString("url"), task.PublicDockerImage.String, sha256, "public")
 
     body, err := json.Marshal(request)
     if err != nil {
@@ -407,29 +393,21 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
       render.Render(w, r, ErrInternalServerErrorWithDetails(err))
       return
     }
-
+  } else {
+    grade.PublicTestLog = "No public dockerimage was specified --> will not run any public test"
+    err = rs.Stores.Grade.Update(grade)
+    if err != nil {
+      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+      return
+    }
   }
 
   if task.PrivateDockerImage.Valid && helper.NewPrivateTestFileHandle(task.ID).Exists() {
     // enqueue private test
-    request := &shared.SubmissionAMQPWorkerRequest{
-      SubmissionID: submission.ID,
-      AccessToken:  accessToken,
-      FrameworkFileURL: fmt.Sprintf("%s/api/v1/courses/%s/tasks/%s/private_file",
-        viper.GetString("url"),
-        strconv.FormatInt(course.ID, 10),
-        strconv.FormatInt(task.ID, 10)),
-      SubmissionFileURL: fmt.Sprintf("%s/api/v1/courses/%s/submissions/%s/file",
-        viper.GetString("url"),
-        strconv.FormatInt(course.ID, 10),
-        strconv.FormatInt(submission.ID, 10)),
-      ResultEndpointURL: fmt.Sprintf("%s/api/v1/courses/%s/grades/%s/private_result",
-        viper.GetString("url"),
-        strconv.FormatInt(course.ID, 10),
-        strconv.FormatInt(grade.ID, 10)),
-      DockerImage: task.PrivateDockerImage,
-      Sha256:      sha256,
-    }
+
+    request := shared.NewSubmissionAMQPWorkerRequest(
+      course.ID, task.ID, submission.ID, grade.ID,
+      accessToken, viper.GetString("url"), task.PrivateDockerImage.String, sha256, "private")
 
     body, err := json.Marshal(request)
     if err != nil {
@@ -438,6 +416,13 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
     }
 
     err = DefaultSubmissionProducer.Publish(body)
+    if err != nil {
+      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+      return
+    }
+  } else {
+    grade.PrivateTestLog = "No private dockerimage was specified --> will not run any private test"
+    err = rs.Stores.Grade.Update(grade)
     if err != nil {
       render.Render(w, r, ErrInternalServerErrorWithDetails(err))
       return

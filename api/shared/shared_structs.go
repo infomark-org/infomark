@@ -18,19 +18,47 @@
 
 package shared
 
-import null "gopkg.in/guregu/null.v3"
+import (
+  "fmt"
+)
 
 type SubmissionAMQPWorkerRequest struct {
-	SubmissionID      int64       `json:"submission_id"`
-	AccessToken       string      `json:"access_token"`
-	FrameworkFileURL  string      `json:"framework_file_url"`
-	SubmissionFileURL string      `json:"submission_file_url"`
-	ResultEndpointURL string      `json:"result_endpoint_url"`
-	DockerImage       null.String `json:"docker_image"`
-	Sha256            string      `json:"sha_256"`
+  SubmissionID      int64  `json:"submission_id"`
+  AccessToken       string `json:"access_token"`
+  FrameworkFileURL  string `json:"framework_file_url"`
+  SubmissionFileURL string `json:"submission_file_url"`
+  ResultEndpointURL string `json:"result_endpoint_url"`
+  DockerImage       string `json:"docker_image"`
+  Sha256            string `json:"sha_256"`
 }
 
 type SubmissionWorkerResponse struct {
-	Log    string `json:"log"`
-	Status int    `json:"status"`
+  Log    string `json:"log"`
+  Status int    `json:"status"`
+}
+
+func NewSubmissionAMQPWorkerRequest(
+  courseID int64, taskID int64, submissionID int64, gradeID int64,
+  accessToken string, url string, dockerimage string, sha256 string, visibility string) *SubmissionAMQPWorkerRequest {
+
+  return &SubmissionAMQPWorkerRequest{
+    SubmissionID: submissionID,
+    AccessToken:  accessToken,
+    FrameworkFileURL: fmt.Sprintf("%s/api/v1/courses/%d/tasks/%d/%s_file",
+      url,
+      courseID,
+      taskID,
+      visibility),
+    SubmissionFileURL: fmt.Sprintf("%s/api/v1/courses/%d/submissions/%d/file",
+      url,
+      courseID,
+      submissionID),
+    ResultEndpointURL: fmt.Sprintf("%s/api/v1/courses/%d/grades/%d/%s_result",
+      url,
+      courseID,
+      gradeID,
+      visibility),
+    DockerImage: dockerimage,
+    Sha256:      sha256,
+  }
 }
