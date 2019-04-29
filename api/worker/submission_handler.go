@@ -57,7 +57,7 @@ func init() {
   }
 
   DefaultLogger = logging.NewLogger()
-  file, err := os.OpenFile("submission_handler.log", os.O_APPEND|os.O_WRONLY, 0666)
+  file, err := os.OpenFile("submission_handler.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
   if err == nil {
     DefaultLogger.Out = file
   } else {

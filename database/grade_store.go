@@ -103,7 +103,8 @@ SELECT
   sh.name,
   u.first_name user_first_name,
   u.last_name user_last_name,
-  u.student_number user_student_number
+  u.student_number user_student_number,
+  u.email user_email
 FROM
   grades g
 INNER JOIN submissions s ON g.submission_id = s.id
@@ -127,7 +128,7 @@ AND
 AND
   ($2 = 0 OR gs.id = $2)
 GROUP BY
-  s.user_id, ts.sheet_id, sh.name, u.first_name, u.last_name, u.student_number
+  s.user_id, ts.sheet_id, sh.name, u.first_name, u.last_name, u.student_number, u.email
 ORDER BY
   s.user_id
 `, courseID, groupID)

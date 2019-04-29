@@ -101,6 +101,9 @@ WHERE
 }
 
 func (s *GroupStore) GetInCourseWithUser(userID int64, courseID int64) ([]model.GroupWithTutor, error) {
+  // This is a list as it is used at the sample places where tutors will get a LIST
+  // of their groups (can be multiple ones). For the sake of simplicity, this
+  // is  a list as well
   p := []model.GroupWithTutor{}
 
   err := s.db.Select(&p, `

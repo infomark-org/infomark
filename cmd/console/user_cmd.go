@@ -61,9 +61,7 @@ OR
  first_name LIKE $1
 OR
  email LIKE $1`, query)
-    if err != nil {
-      panic(err)
-    }
+    failWhenSmallestWhiff(err)
 
     fmt.Printf("found %v users matching %s\n", len(users), query)
     for k, user := range users {

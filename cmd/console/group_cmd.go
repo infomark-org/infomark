@@ -33,8 +33,11 @@ import (
 )
 
 func init() {
-  GroupCmd.AddCommand(CourseReadBids)
-  GroupCmd.AddCommand(CourseParseBidsSolution)
+  GroupCmd.AddCommand(GroupReadBids)
+  GroupCmd.AddCommand(GroupParseBidsSolution)
+  GroupCmd.AddCommand(GroupEnroll)
+  GroupCmd.AddCommand(GroupList)
+  GroupCmd.AddCommand(GroupLocate)
 
 }
 
@@ -43,7 +46,151 @@ var GroupCmd = &cobra.Command{
   Short: "Management of groups",
 }
 
-var CourseReadBids = &cobra.Command{
+type groupSummary struct {
+  Count       int    `db:"count"`
+  GroupID     int    `db:"group_id"`
+  Description string `db:"description"`
+}
+
+var GroupLocate = &cobra.Command{
+  Use:   "locate [courseID] [userID]",
+  Short: "locate a student in a group",
+  Long:  `show the exercise group for a given student`,
+  Args:  cobra.ExactArgs(2),
+  Run: func(cmd *cobra.Command, args []string) {
+    courseID := MustInt64Parameter(args[0], "courseID")
+    userID := MustInt64Parameter(args[1], "userID")
+
+    _, stores := MustConnectAndStores()
+
+    user, err := stores.User.Get(userID)
+    if err != nil {
+      log.Fatalf("user with id %v not found\n", userID)
+    }
+
+    course, err := stores.Course.Get(courseID)
+    if err != nil {
+      log.Fatalf("course with id %v not found\n", courseID)
+    }
+
+    groups, err := stores.Group.GetInCourseWithUser(user.ID, course.ID)
+    failWhenSmallestWhiff(err)
+
+    if len(groups) == 0 {
+      log.Fatalf("user %s %s (%d) is not enrolled as a student in course %s (%d)",
+        user.FirstName, user.LastName, user.ID, course.Name, course.ID)
+    }
+
+    group := groups[0]
+
+    fmt.Printf("found\n")
+    fmt.Printf(" - Group (%d):   %s\n", group.ID, group.Description)
+    fmt.Printf(" - Tutor (%d):   %s %s\n", group.TutorID, group.TutorFirstName, group.TutorLastName)
+    fmt.Printf(" - Student (%d): %s %s \n", user.ID, user.FirstName, user.LastName)
+
+  },
+}
+
+var GroupList = &cobra.Command{
+  Use:   "list [courseID]",
+  Short: "list all groups from a specific course",
+  Long: `shows information about exercise groups with their description and
+number of assigned students`,
+  Args: cobra.ExactArgs(1),
+  Run: func(cmd *cobra.Command, args []string) {
+    courseID := MustInt64Parameter(args[0], "courseID")
+
+    db, _ := MustConnectAndStores()
+
+    groupSummaries := []groupSummary{}
+
+    err := db.Select(&groupSummaries, `
+SELECT
+  count(*), ug.group_id, g.description
+FROM
+  user_group ug
+INNER JOIN groups g ON g.id = ug.group_id
+WHERE
+  g.course_id = $1
+GROUP BY
+  ug.group_id, g.description
+ORDER BY g.description
+    `, courseID)
+    failWhenSmallestWhiff(err)
+
+    fmt.Printf("count   groupID    description\n")
+    for k, v := range groupSummaries {
+      fmt.Printf("%5d  %7d   %s\n", v.Count, v.GroupID, v.Description)
+      if k%5 == 0 {
+        fmt.Println("")
+      }
+    }
+  },
+}
+
+var GroupEnroll = &cobra.Command{
+  Use:   "enroll [groupID] [userID]",
+  Short: "enroll a student to a group",
+  Long: `enroll a student to a group or update enrollment if student is
+already enrolled in another group`,
+  Args: cobra.ExactArgs(2),
+  Run: func(cmd *cobra.Command, args []string) {
+    groupID := MustInt64Parameter(args[0], "groupID")
+    userID := MustInt64Parameter(args[1], "userID")
+
+    // same as POST "/courses/{course_id}/groups/{group_id}/enrollments"
+    // TODO(patwie): good candidate for a remote cli
+
+    _, stores := MustConnectAndStores()
+
+    user, err := stores.User.Get(userID)
+    failWhenSmallestWhiff(err)
+
+    course, err := stores.Group.IdentifyCourseOfGroup(groupID)
+    failWhenSmallestWhiff(err)
+
+    enrollment, err := stores.Group.GetGroupEnrollmentOfUserInCourse(userID, course.ID)
+
+    if err != nil {
+      // does not exists yet
+      enrollment := &model.GroupEnrollment{
+        UserID:  userID,
+        GroupID: groupID,
+      }
+
+      _, err := stores.Group.CreateGroupEnrollmentOfUserInCourse(enrollment)
+      failWhenSmallestWhiff(err)
+
+    } else {
+      group, err := stores.Group.Get(enrollment.GroupID)
+      failWhenSmallestWhiff(err)
+
+      fmt.Printf("user %s %s (id: %v) was    enrolled in group (%v) %s\n",
+        user.FirstName,
+        user.LastName,
+        user.ID,
+        group.ID, group.Description)
+
+      // does exists --> simply change it
+      enrollment.GroupID = groupID
+      err = stores.Group.ChangeGroupEnrollmentOfUserInCourse(enrollment)
+      failWhenSmallestWhiff(err)
+
+    }
+
+    group, err := stores.Group.Get(groupID)
+    failWhenSmallestWhiff(err)
+
+    fmt.Printf("user %s %s (id: %v) is now enrolled in group (%v) %s\n",
+      user.FirstName,
+      user.LastName,
+      user.ID,
+      group.ID, group.Description)
+
+  },
+}
+
+var GroupReadBids = &cobra.Command{
   Use:   "dump-bids [courseID] [file]  [min_per_group] [max_per_group]",
   Short: "export group-bids of all users in a course",
   Long:  `for assignment`,
@@ -63,7 +210,7 @@ var CourseReadBids = &cobra.Command{
     fmt.Printf("bound Group Capacitiy <= %v\n", maxPerGroup)
 
     f, err := os.Create(fmt.Sprintf("%s.dat", args[1]))
-    fail(err)
+    failWhenSmallestWhiff(err)
     defer f.Close()
 
     db, stores := MustConnectAndStores()
@@ -74,7 +221,7 @@ var CourseReadBids = &cobra.Command{
     }
 
     groups, err := stores.Group.GroupsOfCourse(course.ID)
-    fail(err)
+    failWhenSmallestWhiff(err)
 
     fmt.Printf("found %v groups\n", len(groups))
 
@@ -93,7 +240,7 @@ var CourseReadBids = &cobra.Command{
       "%%",
       "%%",
     )
-    fail(err)
+    failWhenSmallestWhiff(err)
 
     fmt.Printf("found %v students\n", len(students))
     fmt.Printf("\n")
@@ -158,7 +305,7 @@ ORDER BY
     // write mod
     //
     fmod, err := os.Create(fmt.Sprintf("%s.mod", args[1]))
-    fail(err)
+    failWhenSmallestWhiff(err)
     defer fmod.Close()
 
     fmod.WriteString(fmt.Sprintf("set student;\n"))
@@ -190,7 +337,7 @@ ORDER BY
     fmt.Println("")
 
     fpar, err := os.Create(fmt.Sprintf("%s.par", args[1]))
-    fail(err)
+    failWhenSmallestWhiff(err)
     fpar.WriteString(fmt.Sprintf("time_limit 50\n"))
     fpar.WriteString(fmt.Sprintf("\n"))
     defer fpar.Close()
@@ -198,7 +345,7 @@ ORDER BY
   },
 }
 
-var CourseParseBidsSolution = &cobra.Command{
+var GroupParseBidsSolution = &cobra.Command{
 
   // ./infomark console submission enqueue 24 10 24 "test_java_submission:v1"
   // cp files/fixtures/unittest.zip files/uploads/tasks/24-public.zip
@@ -226,7 +373,7 @@ var CourseParseBidsSolution = &cobra.Command{
     fmt.Println("work on course", course.ID)
 
     file, err := os.Open(args[1])
-    fail(err)
+    failWhenSmallestWhiff(err)
     defer file.Close()
 
     reader := bufio.NewReader(file)
@@ -245,9 +392,9 @@ var CourseParseBidsSolution = &cobra.Command{
         parts = strings.Split(parts[0], ",")
 
         v, err := strconv.Atoi(parts[0][1:])
-        fail(err)
+        failWhenSmallestWhiff(err)
         w, err := strconv.Atoi(parts[1][1:])
-        fail(err)
+        failWhenSmallestWhiff(err)
 
         assignments = append(assignments, Assignment{GroupID: int64(w), UserID: int64(v)})
         uids = append(uids, int64(v))
@@ -272,7 +419,7 @@ AND
     if err != nil {
       fmt.Println(err)
       tx.Rollback()
-      fail(err)
+      failWhenSmallestWhiff(err)
     }
 
     for _, assignment := range assignments {
@@ -281,7 +428,7 @@ AND
       _, err = tx.Exec("INSERT INTO user_group (id,user_id,group_id) VALUES (DEFAULT,$1,$2);", assignment.UserID, assignment.GroupID)
       if err != nil {
         tx.Rollback()
-        fail(err)
+        failWhenSmallestWhiff(err)
       }
     }
 
@@ -289,7 +436,7 @@ AND
     err = tx.Commit()
     if err != nil {
       tx.Rollback()
-      fail(err)
+      failWhenSmallestWhiff(err)
     }
 
     fmt.Println("Done")

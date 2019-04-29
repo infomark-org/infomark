@@ -53,19 +53,19 @@ var SubmissionEnqueueCmd = &cobra.Command{
     _, stores := MustConnectAndStores()
 
     submission, err := stores.Submission.Get(submissionID)
-    fail(err)
+    failWhenSmallestWhiff(err)
 
     task, err := stores.Task.Get(submission.TaskID)
-    fail(err)
+    failWhenSmallestWhiff(err)
 
     sheet, err := stores.Task.IdentifySheetOfTask(submission.TaskID)
-    fail(err)
+    failWhenSmallestWhiff(err)
 
     course, err := stores.Sheet.IdentifyCourseOfSheet(sheet.ID)
-    fail(err)
+    failWhenSmallestWhiff(err)
 
     grade, err := stores.Grade.GetForSubmission(submission.ID)
-    fail(err)
+    failWhenSmallestWhiff(err)
 
     log.Println("starting producer...")
 
@@ -79,13 +79,13 @@ var SubmissionEnqueueCmd = &cobra.Command{
     }
 
     sha256, err := helper.NewSubmissionFileHandle(submission.ID).Sha256()
-    fail(err)
+    failWhenSmallestWhiff(err)
 
     tokenManager, err := authenticate.NewTokenAuth()
-    fail(err)
+    failWhenSmallestWhiff(err)
     accessToken, err := tokenManager.CreateAccessJWT(
       authenticate.NewAccessClaims(1, true))
-    fail(err)
+    failWhenSmallestWhiff(err)
 
     body_public, err := json.Marshal(shared.NewSubmissionAMQPWorkerRequest(
       course.ID, task.ID, submission.ID, grade.ID,
@@ -120,12 +120,12 @@ var SubmissionRunCmd = &cobra.Command{
     _, stores := MustConnectAndStores()
 
     submission, err := stores.Submission.Get(submissionID)
-    fail(err)
+    failWhenSmallestWhiff(err)
 
     task, err := stores.Task.Get(submission.TaskID)
-    fail(err)
+    failWhenSmallestWhiff(err)
 
-    log.Println("starting docker...")
+    log.Println("try starting docker...")
 
     ds := service.NewDockerService()
     defer ds.Client.Close()

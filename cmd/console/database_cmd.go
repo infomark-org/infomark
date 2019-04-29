@@ -38,7 +38,7 @@ func parseConnectionString(conn string) map[string]string {
     log.Fatal("database_connection-string from config is empty")
   }
   connParts, err := pq.ParseURL(conn)
-  fail(err)
+  failWhenSmallestWhiff(err)
   parts := strings.Split(connParts, " ")
 
   infoMap := make(map[string]string)

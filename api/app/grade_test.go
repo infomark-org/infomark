@@ -509,6 +509,12 @@ func TestGrade(t *testing.T) {
 
       uid1 := int64(42)
       uid2 := int64(43)
+
+      user1, err := stores.User.Get(uid1)
+      g.Assert(err).Equal(nil)
+      user2, err := stores.User.Get(uid2)
+      g.Assert(err).Equal(nil)
+
       sub1, err := stores.Submission.Create(&model.Submission{UserID: uid1, TaskID: task1.ID})
       g.Assert(err).Equal(nil)
 
@@ -554,7 +560,8 @@ func TestGrade(t *testing.T) {
       g.Assert(len(response.Achievements[0].Points)).Equal(2)
       g.Assert(response.Achievements[0].Points[0]).Equal(grade1.AcquiredPoints)
       g.Assert(response.Achievements[0].Points[1]).Equal(0)
-      g.Assert(response.Achievements[0].User.ID).Equal(int64(42))
+      g.Assert(response.Achievements[0].User.ID).Equal(user1.ID)
+      g.Assert(response.Achievements[0].User.Email).Equal(user1.Email)
 
       //  ---------------------
       sub2, err := stores.Submission.Create(&model.Submission{UserID: uid2, TaskID: task2.ID})
@@ -591,12 +598,14 @@ func TestGrade(t *testing.T) {
       g.Assert(len(response.Achievements[0].Points)).Equal(2)
       g.Assert(response.Achievements[0].Points[0]).Equal(grade1.AcquiredPoints)
       g.Assert(response.Achievements[0].Points[1]).Equal(0)
-      g.Assert(response.Achievements[0].User.ID).Equal(int64(uid1))
+      g.Assert(response.Achievements[0].User.ID).Equal(user1.ID)
+      g.Assert(response.Achievements[0].User.Email).Equal(user1.Email)
 
       g.Assert(len(response.Achievements[1].Points)).Equal(2)
       g.Assert(response.Achievements[1].Points[0]).Equal(0)
       g.Assert(response.Achievements[1].Points[1]).Equal(grade2.AcquiredPoints)
-      g.Assert(response.Achievements[1].User.ID).Equal(uid2)
+      g.Assert(response.Achievements[1].User.ID).Equal(user2.ID)
+      g.Assert(response.Achievements[1].User.Email).Equal(user2.Email)
 
       //  ---------------------
       sub3, err := stores.Submission.Create(&model.Submission{UserID: uid2, TaskID: task1.ID})
@@ -633,12 +642,14 @@ func TestGrade(t *testing.T) {
       g.Assert(len(response.Achievements[0].Points)).Equal(2)
       g.Assert(response.Achievements[0].Points[0]).Equal(grade1.AcquiredPoints)
       g.Assert(response.Achievements[0].Points[1]).Equal(0)
-      g.Assert(response.Achievements[0].User.ID).Equal(int64(uid1))
+      g.Assert(response.Achievements[0].User.ID).Equal(user1.ID)
+      g.Assert(response.Achievements[0].User.Email).Equal(user1.Email)
 
       g.Assert(len(response.Achievements[1].Points)).Equal(2)
       g.Assert(response.Achievements[1].Points[0]).Equal(grade3.AcquiredPoints)
       g.Assert(response.Achievements[1].Points[1]).Equal(grade2.AcquiredPoints)
-      g.Assert(response.Achievements[1].User.ID).Equal(uid2)
+      g.Assert(response.Achievements[1].User.ID).Equal(user2.ID)
+      g.Assert(response.Achievements[1].User.Email).Equal(user2.Email)
 
     })
 

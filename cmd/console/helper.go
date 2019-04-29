@@ -27,9 +27,9 @@ import (
   "github.com/spf13/viper"
 )
 
-func fail(err error) {
+func failWhenSmallestWhiff(err error) {
   if err != nil {
-    panic(fail)
+    panic(err)
   }
 }
 
@@ -51,9 +51,7 @@ func ConnectAndStores() (*sqlx.DB, *app.Stores, error) {
 func MustConnectAndStores() (*sqlx.DB, *app.Stores) {
 
   db, stores, err := ConnectAndStores()
-  if err != nil {
-    panic(err)
-  }
+  failWhenSmallestWhiff(err)
   return db, stores
 }
 

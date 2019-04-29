@@ -58,6 +58,7 @@ type OverviewGrade struct {
 	UserFirstName     string `db:"user_first_name"`
 	UserLastName      string `db:"user_last_name"`
 	UserStudentNumber string `db:"user_student_number"`
+	UserEmail         string `db:"user_email"`
 
 	SheetID int64  `db:"sheet_id"`
 	Name    string `db:"name"`
