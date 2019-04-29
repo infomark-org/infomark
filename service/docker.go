@@ -160,6 +160,7 @@ func (ds *DockerService) Run(
   if err != nil {
     return "", exitCode, err
   }
+
   outputReader, err := ds.Client.ContainerLogs(ds.Context, resp.ID, types.ContainerLogsOptions{ShowStdout: true})
   if err != nil {
     return "", 0, err
@@ -167,6 +168,10 @@ func (ds *DockerService) Run(
 
   buf := new(bytes.Buffer)
   buf.ReadFrom(outputReader)
+
+  if err := ds.Client.ContainerRemove(ds.Context, resp.ID, types.ContainerRemoveOptions{}); err != nil {
+    return "", 0, err
+  }
 
   // io.Copy(os.Stdout, outputReader)
   return buf.String(), exitCode, nil
