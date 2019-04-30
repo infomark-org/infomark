@@ -27,6 +27,7 @@ require (
 	github.com/mattn/go-sqlite3 v1.10.0
 	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
 	github.com/pkg/errors v0.8.1 // indirect
+	github.com/prometheus/client_golang v0.9.2
 	github.com/robfig/cron v0.0.0-20180505203441-b41be1df6967
 	github.com/sirupsen/logrus v1.3.0
 	github.com/spf13/afero v1.2.0 // indirect

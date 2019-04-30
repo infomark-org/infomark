@@ -429,6 +429,8 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
     }
   }
 
+  totalSubmissionCounterVec.WithLabelValues(fmt.Sprintf("%d", task.ID)).Inc()
+
   render.Status(r, http.StatusOK)
 }
 

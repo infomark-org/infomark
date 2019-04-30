@@ -50,6 +50,7 @@ func NewCommonResource(stores *Stores) *CommonResource {
 // SUMMARY:  heartbeat of backend
 func (rs *CommonResource) PingHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("pong"))
+	totalFailedLoginsVec.WithLabelValues().Inc()
 }
 
 // PrivacyStatementHandler is public endpoint for

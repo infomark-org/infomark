@@ -19,6 +19,9 @@
 package cmd
 
 import (
+  "log"
+  "os"
+
   "github.com/cgtuebingen/infomark-backend/cmd/console"
   "github.com/spf13/cobra"
 )
@@ -35,5 +38,39 @@ func init() {
   ConsoleCmd.AddCommand(console.SubmissionCmd)
   ConsoleCmd.AddCommand(console.GroupCmd)
   ConsoleCmd.AddCommand(console.DatabaseCmd)
+
+  UtilsCmd.AddCommand(UtilsCompletionCmd)
+  ConsoleCmd.AddCommand(UtilsCmd)
+
   RootCmd.AddCommand(ConsoleCmd)
+}
+
+var UtilsCmd = &cobra.Command{
+  Use:   "utils",
+  Short: "Some helper functions.",
+}
+
+var UtilsCompletionCmd = &cobra.Command{
+  Use:   "completion [shell]",
+  Short: "Output (bash/zsh) shell completion code",
+  Long: `Pipe the stdout to your completion collection, e.g.,
+
+./infomark console utils completion zsh > ~/.my-shell/completions/_infomark
+
+`,
+  // Hidden: true,
+  Run: func(cmd *cobra.Command, args []string) {
+    if len(args) != 1 {
+      log.Fatalln("Expected one argument with the desired shell")
+    }
+
+    switch args[0] {
+    case "bash":
+      RootCmd.GenBashCompletion(os.Stdout)
+    case "zsh":
+      RootCmd.GenZshCompletion(os.Stdout)
+    default:
+      log.Fatalln("Unknown shell %s, only bash and zsh are available\n", args[0])
+    }
+  },
 }

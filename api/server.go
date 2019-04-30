@@ -33,6 +33,7 @@ import (
 	"github.com/cgtuebingen/infomark-backend/email"
 	"github.com/cgtuebingen/infomark-backend/logging"
 	"github.com/jmoiron/sqlx"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/robfig/cron"
 	"github.com/spf13/viper"
 )
@@ -60,7 +61,11 @@ func NewServer() (*Server, error) {
 		return nil, err
 	}
 
-	apiHandler, err := app.New(db, true)
+	handler, err := app.New(db, true)
+
+	// add metric
+	handler.Handle("/metrics", promhttp.Handler())
+
 	if err != nil {
 		return nil, err
 	}
@@ -77,7 +82,7 @@ func NewServer() (*Server, error) {
 
 	srv := http.Server{
 		Addr:           addr,
-		Handler:        apiHandler,
+		Handler:        handler,
 		ReadTimeout:    time.Duration(viper.GetInt64("server_read_timeout_sec")) * time.Second,
 		WriteTimeout:   time.Duration(viper.GetInt64("server_write_timeout_sec")) * time.Second,
 		MaxHeaderBytes: viper.GetInt("server_write_timeout_sec"),

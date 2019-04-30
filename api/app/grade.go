@@ -139,6 +139,26 @@ func (rs *GradeResource) PublicResultEditHandler(w http.ResponseWriter, r *http.
   }
 
   currentGrade := r.Context().Value("grade").(*model.Grade)
+
+  submission, err := rs.Stores.Submission.Get(currentGrade.SubmissionID)
+  if err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
+  if data.Status != 0 {
+    totalDockerFailExitCounterVec.WithLabelValues(
+      fmt.Sprintf("%d", submission.TaskID),
+      "public",
+    ).Inc()
+
+  } else {
+    totalDockerSuccessExitCounterVec.WithLabelValues(
+      fmt.Sprintf("%d", submission.TaskID),
+      "public",
+    ).Inc()
+  }
+
   // currentGrade.PublicTestLog = data.Log
   // currentGrade.PublicTestStatus = data.Status
   // currentGrade.PublicExecutionState = 2
@@ -175,6 +195,26 @@ func (rs *GradeResource) PrivateResultEditHandler(w http.ResponseWriter, r *http
   }
 
   currentGrade := r.Context().Value("grade").(*model.Grade)
+
+  submission, err := rs.Stores.Submission.Get(currentGrade.SubmissionID)
+  if err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
+  if data.Status != 0 {
+    totalDockerFailExitCounterVec.WithLabelValues(
+      fmt.Sprintf("%d", submission.TaskID),
+      "private",
+    ).Inc()
+
+  } else {
+    totalDockerSuccessExitCounterVec.WithLabelValues(
+      fmt.Sprintf("%d", submission.TaskID),
+      "private",
+    ).Inc()
+  }
+
   // currentGrade.PrivateTestLog = data.Log
   // currentGrade.PrivateTestStatus = data.Status
   // currentGrade.PrivateExecutionState = 2

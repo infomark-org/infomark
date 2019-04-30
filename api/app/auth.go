@@ -198,6 +198,7 @@ func (rs *AuthResource) LoginHandler(w http.ResponseWriter, r *http.Request) {
 
   // does the password match?
   if !auth.CheckPasswordHash(data.PlainPassword, potentialUser.EncryptedPassword) {
+    totalFailedLoginsVec.WithLabelValues().Inc()
     render.Render(w, r, ErrBadRequestWithDetails(errors.New("credentials are wrong")))
     return
   }
