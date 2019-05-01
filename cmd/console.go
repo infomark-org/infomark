@@ -19,11 +19,17 @@
 package cmd
 
 import (
+  "fmt"
   "log"
   "os"
+  "path"
+  "path/filepath"
+  "strings"
+  "time"
 
   "github.com/cgtuebingen/infomark-backend/cmd/console"
   "github.com/spf13/cobra"
+  "github.com/spf13/cobra/doc"
 )
 
 var ConsoleCmd = &cobra.Command{
@@ -40,9 +46,12 @@ func init() {
   ConsoleCmd.AddCommand(console.DatabaseCmd)
 
   UtilsCmd.AddCommand(UtilsCompletionCmd)
+  UtilsCmd.AddCommand(UtilsDocCmd)
   ConsoleCmd.AddCommand(UtilsCmd)
 
   RootCmd.AddCommand(ConsoleCmd)
+
+  // doc.GenMarkdownTree(RootCmd, "/tmp")
 }
 
 var UtilsCmd = &cobra.Command{
@@ -71,6 +80,47 @@ var UtilsCompletionCmd = &cobra.Command{
       RootCmd.GenZshCompletion(os.Stdout)
     default:
       log.Fatalln("Unknown shell %s, only bash and zsh are available\n", args[0])
+    }
+  },
+}
+
+var UtilsDocCmd = &cobra.Command{
+  Use:   "doc",
+  Short: "Generates docs for console",
+  // Hidden: true,
+  Run: func(cmd *cobra.Command, args []string) {
+
+    if len(args) != 1 {
+      log.Fatalln("Expected one argument with the destination dir")
+    }
+
+    const fmTemplate = `---
+date: %s
+title: "%s"
+slug: %s
+url: %s
+lastmod: %s
+layout: subpagewithout
+---
+
+`
+
+    filePrepender := func(filename string) string {
+      now := time.Now().Format(time.RFC3339)
+      name := filepath.Base(filename)
+      base := strings.TrimSuffix(name, path.Ext(name))
+      url := "/guides/console/commands/" + strings.ToLower(base) + "/"
+      return fmt.Sprintf(fmTemplate, now, "Console", base, url, now)
+    }
+
+    linkHandler := func(name string) string {
+      base := strings.TrimSuffix(name, path.Ext(name))
+      return "/guides/console/commands/" + strings.ToLower(base) + "/"
+    }
+
+    err := doc.GenMarkdownTreeCustom(RootCmd, args[0], filePrepender, linkHandler)
+    if err != nil {
+      log.Fatal(err)
     }
   },
 }
