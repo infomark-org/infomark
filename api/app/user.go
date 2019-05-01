@@ -26,6 +26,7 @@ import (
   "github.com/cgtuebingen/infomark-backend/api/helper"
   "github.com/cgtuebingen/infomark-backend/auth"
   "github.com/cgtuebingen/infomark-backend/auth/authenticate"
+  "github.com/cgtuebingen/infomark-backend/common"
   "github.com/cgtuebingen/infomark-backend/email"
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/go-chi/chi"
@@ -109,7 +110,7 @@ func (rs *UserResource) GetMeHandler(w http.ResponseWriter, r *http.Request) {
 // SUMMARY:  Get user details
 func (rs *UserResource) GetHandler(w http.ResponseWriter, r *http.Request) {
   // `user` is retrieved via middle-ware
-  user := r.Context().Value("user").(*model.User)
+  user := r.Context().Value(common.CtxKeyUser).(*model.User)
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
 
   // is request identity allowed to get informaition about this user
@@ -138,7 +139,7 @@ func (rs *UserResource) GetHandler(w http.ResponseWriter, r *http.Request) {
 // SUMMARY:  Get user details
 func (rs *UserResource) GetAvatarHandler(w http.ResponseWriter, r *http.Request) {
   // `user` is retrieved via middle-ware
-  user := r.Context().Value("user").(*model.User)
+  user := r.Context().Value(common.CtxKeyUser).(*model.User)
 
   file := helper.NewAvatarFileHandle(user.ID)
 
@@ -224,7 +225,7 @@ func (rs *UserResource) EditHandler(w http.ResponseWriter, r *http.Request) {
     return
   }
 
-  user := r.Context().Value("user").(*model.User)
+  user := r.Context().Value(common.CtxKeyUser).(*model.User)
 
   user.FirstName = data.FirstName
   user.LastName = data.LastName
@@ -266,7 +267,7 @@ func (rs *UserResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 // SUMMARY:  send email to a specific user
 func (rs *UserResource) SendEmailHandler(w http.ResponseWriter, r *http.Request) {
 
-  user := r.Context().Value("user").(*model.User)
+  user := r.Context().Value(common.CtxKeyUser).(*model.User)
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
   accessUser, _ := rs.Stores.User.Get(accessClaims.LoginID)
 
@@ -301,7 +302,7 @@ func (rs *UserResource) SendEmailHandler(w http.ResponseWriter, r *http.Request)
 // RESPONSE: 401,Unauthenticated
 // SUMMARY:  updating a specific user with given id.
 func (rs *UserResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
-  user := r.Context().Value("user").(*model.User)
+  user := r.Context().Value(common.CtxKeyUser).(*model.User)
 
   // update database entry
   if err := rs.Stores.User.Delete(user.ID); err != nil {
@@ -313,33 +314,33 @@ func (rs *UserResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // .............................................................................
-//
+
 // Context middleware is used to load an User object from
 // the URL parameter `userID` passed through as the request. In case
 // the User could not be found, we stop here and return a 404.
 // We do NOT check whether the user is authorized to get this user.
-func (d *UserResource) Context(next http.Handler) http.Handler {
+func (rs *UserResource) Context(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
     // TODO: check permission if inquirer of request is allowed to access this user
     // Should be done via another middleware
-    var user_id int64
+    var userID int64
     var err error
 
     // try to get id from URL
-    if user_id, err = strconv.ParseInt(chi.URLParam(r, "user_id"), 10, 64); err != nil {
+    if userID, err = strconv.ParseInt(chi.URLParam(r, "user_id"), 10, 64); err != nil {
       render.Render(w, r, ErrNotFound)
       return
     }
 
     // find specific user in database
-    user, err := d.Stores.User.Get(user_id)
+    user, err := rs.Stores.User.Get(userID)
     if err != nil {
       render.Render(w, r, ErrNotFound)
       return
     }
 
     // serve next
-    ctx := context.WithValue(r.Context(), ctxKeyUser, user)
+    ctx := context.WithValue(r.Context(), common.CtxKeyUser, user)
     next.ServeHTTP(w, r.WithContext(ctx))
   })
 }

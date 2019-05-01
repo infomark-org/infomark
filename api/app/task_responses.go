@@ -21,6 +21,7 @@ package app
 import (
 	"net/http"
 
+	"github.com/cgtuebingen/infomark-backend/auth/authorize"
 	"github.com/cgtuebingen/infomark-backend/model"
 	"github.com/go-chi/render"
 	null "gopkg.in/guregu/null.v3"
@@ -62,7 +63,7 @@ func newTaskListResponse(Tasks []model.Task) []render.Renderer {
 	return list
 }
 
-// TaskResponse is the response payload for Task management.
+// MissingTaskResponse is the response payload for displaying
 type MissingTaskResponse struct {
 	Task *struct {
 		ID                 int64       `json:"id" example:"684"`
@@ -76,7 +77,15 @@ type MissingTaskResponse struct {
 }
 
 // newTaskResponse creates a response from a Task model.
-func newMissingTaskResponse(p *model.MissingTask) *MissingTaskResponse {
+func newMissingTaskResponse(p *model.MissingTask, givenRole authorize.CourseRole) *MissingTaskResponse {
+
+	publicDockerImage := p.PublicDockerImage
+	privateDockerImage := p.PrivateDockerImage
+
+	if givenRole == authorize.STUDENT {
+		publicDockerImage = null.StringFrom("")
+		privateDockerImage = null.StringFrom("")
+	}
 
 	task := struct {
 		ID                 int64       `json:"id" example:"684"`
@@ -88,8 +97,8 @@ func newMissingTaskResponse(p *model.MissingTask) *MissingTaskResponse {
 		p.ID,
 		p.Name,
 		p.MaxPoints,
-		p.PublicDockerImage,
-		p.PrivateDockerImage,
+		publicDockerImage,
+		privateDockerImage,
 	}
 
 	r := &MissingTaskResponse{
@@ -108,10 +117,10 @@ func (body *MissingTaskResponse) Render(w http.ResponseWriter, r *http.Request) 
 }
 
 // newTaskListResponse creates a response from a list of Task models.
-func newMissingTaskListResponse(Tasks []model.MissingTask) []render.Renderer {
+func newMissingTaskListResponse(Tasks []model.MissingTask, givenRole authorize.CourseRole) []render.Renderer {
 	list := []render.Renderer{}
 	for k := range Tasks {
-		list = append(list, newMissingTaskResponse(&Tasks[k]))
+		list = append(list, newMissingTaskResponse(&Tasks[k], givenRole))
 	}
 	return list
 }

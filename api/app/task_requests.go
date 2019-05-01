@@ -41,14 +41,15 @@ func (body *TaskRequest) Bind(r *http.Request) error {
 	return body.Validate()
 }
 
-func (m *TaskRequest) Validate() error {
-	return validation.ValidateStruct(m,
+// Validate validates a TaskRequest.
+func (body *TaskRequest) Validate() error {
+	return validation.ValidateStruct(body,
 		validation.Field(
-			&m.MaxPoints,
+			&body.MaxPoints,
 			validation.Min(0),
 		),
 		validation.Field(
-			&m.Name,
+			&body.Name,
 			validation.Required,
 		),
 	)

@@ -30,27 +30,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-type key int
-
-// to replace
-//   context.WithValue(ctx, "course", course)
-// and
-//   r.Context().Value("course")
-// TODO(): create a shared context-key package
-const (
-	ctxKeyAccessClaim key = iota // must be 0 to work with the auth-package
-	ctxKeyGroup       key = iota
-	ctxKeyMaterial    key = iota
-	ctxKeyCourse      key = iota
-	ctxKeyCourseRole  key = iota
-	ctxKeyUser        key = iota
-	ctxKeyTask        key = iota
-	ctxKeySubmission  key = iota
-	ctxKeySheet       key = iota
-	ctxKeyGrade       key = iota
-	// ...
-)
-
 // CommonResource specifies user management handler.
 type CommonResource struct {
 	Stores *Stores

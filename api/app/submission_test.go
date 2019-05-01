@@ -319,36 +319,36 @@ func TestSubmission(t *testing.T) {
       w = tape.GetWithClaims("/api/v1/courses/1/submissions", 2, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      submissions_all_actual := []SubmissionResponse{}
-      err := json.NewDecoder(w.Body).Decode(&submissions_all_actual)
+      submissionsAllActual := []SubmissionResponse{}
+      err := json.NewDecoder(w.Body).Decode(&submissionsAllActual)
       g.Assert(err).Equal(nil)
 
       w = tape.GetWithClaims("/api/v1/courses/1/submissions?group_id=4", 2, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      submissions_g4_actual := []SubmissionResponse{}
-      err = json.NewDecoder(w.Body).Decode(&submissions_g4_actual)
+      submissionsG4Actual := []SubmissionResponse{}
+      err = json.NewDecoder(w.Body).Decode(&submissionsG4Actual)
       g.Assert(err).Equal(nil)
 
       w = tape.GetWithClaims("/api/v1/courses/1/submissions?task_id=2", 2, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      submissions_t4_actual := []SubmissionResponse{}
-      err = json.NewDecoder(w.Body).Decode(&submissions_t4_actual)
+      submissionsT4Actual := []SubmissionResponse{}
+      err = json.NewDecoder(w.Body).Decode(&submissionsT4Actual)
       g.Assert(err).Equal(nil)
 
-      for _, el := range submissions_t4_actual {
+      for _, el := range submissionsT4Actual {
         g.Assert(el.TaskID).Equal(int64(2))
       }
 
       w = tape.GetWithClaims("/api/v1/courses/1/submissions?user_id=112", 2, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      submissions_u112_actual := []SubmissionResponse{}
-      err = json.NewDecoder(w.Body).Decode(&submissions_u112_actual)
+      submissionsU112Actual := []SubmissionResponse{}
+      err = json.NewDecoder(w.Body).Decode(&submissionsU112Actual)
       g.Assert(err).Equal(nil)
 
-      for _, el := range submissions_u112_actual {
+      for _, el := range submissionsU112Actual {
         g.Assert(el.UserID).Equal(int64(112))
       }
 

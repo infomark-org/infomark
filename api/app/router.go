@@ -36,8 +36,6 @@ import (
   "github.com/go-chi/cors"
   "github.com/go-chi/render"
   "github.com/jmoiron/sqlx"
-
-  _ "github.com/lib/pq"
   "github.com/spf13/viper"
 )
 

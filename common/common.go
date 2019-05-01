@@ -16,30 +16,25 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package app
+package common
 
-import (
-	"errors"
-	"net/http"
+type key int
+
+// to replace
+//   context.WithValue(ctx, "course", course)
+// and
+//   r.Context().Value(common.CtxKeyCourse)
+// TODO(): create a shared context-key package
+const (
+  CtxKeyAccessClaim key = iota // must be 0 to work with the auth-package
+  CtxKeyGroup       key = iota
+  CtxKeyMaterial    key = iota
+  CtxKeyCourse      key = iota
+  CtxKeyCourseRole  key = iota
+  CtxKeyUser        key = iota
+  CtxKeyTask        key = iota
+  CtxKeySubmission  key = iota
+  CtxKeySheet       key = iota
+  CtxKeyGrade       key = iota
+  // ...
 )
-
-// TaskRatingRequest is the request payload when students give feedback rating
-type TaskRatingRequest struct {
-	Rating int `json:"rating" example:"2"`
-}
-
-// Bind preprocesses a TaskRatingRequest.
-func (body *TaskRatingRequest) Bind(r *http.Request) error {
-
-	if body == nil {
-		return errors.New("missing \"task_rating\" data")
-	}
-
-	return body.Validate()
-
-}
-
-// Validate validates a TaskRatingRequest.
-func (body *TaskRatingRequest) Validate() error {
-	return nil
-}

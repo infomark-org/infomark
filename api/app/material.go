@@ -26,6 +26,7 @@ import (
 
   "github.com/cgtuebingen/infomark-backend/api/helper"
   "github.com/cgtuebingen/infomark-backend/auth/authorize"
+  "github.com/cgtuebingen/infomark-backend/common"
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/go-chi/chi"
   "github.com/go-chi/render"
@@ -61,8 +62,8 @@ func (rs *MaterialResource) IndexHandler(w http.ResponseWriter, r *http.Request)
   var materials []model.Material
   var err error
   // we use middle to detect whether there is a course given
-  course := r.Context().Value("course").(*model.Course)
-  givenRole := r.Context().Value("course_role").(authorize.CourseRole)
+  course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
+  givenRole := r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole)
   materials, err = rs.Stores.Material.MaterialsOfCourse(course.ID, givenRole.ToInt())
 
   if err != nil {
@@ -92,7 +93,7 @@ func (rs *MaterialResource) IndexHandler(w http.ResponseWriter, r *http.Request)
 // Kind means 0: slide, 1: supplementary
 func (rs *MaterialResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
 
-  course := r.Context().Value("course").(*model.Course)
+  course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
 
   // start from empty Request
   data := &MaterialRequest{}
@@ -143,10 +144,10 @@ func (rs *MaterialResource) CreateHandler(w http.ResponseWriter, r *http.Request
 // Kind means 0: slide, 1: supplementary
 func (rs *MaterialResource) GetHandler(w http.ResponseWriter, r *http.Request) {
   // `Material` is retrieved via middle-ware
-  material := r.Context().Value("material").(*model.Material)
-  course := r.Context().Value("course").(*model.Course)
+  material := r.Context().Value(common.CtxKeyMaterial).(*model.Material)
+  course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
 
-  givenRole := r.Context().Value("course_role").(authorize.CourseRole)
+  givenRole := r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole)
   if givenRole == authorize.STUDENT && !PublicYet(material.PublishAt) {
     render.Render(w, r, ErrUnauthorizedWithDetails(fmt.Errorf("Not public yet")))
     return
@@ -190,7 +191,7 @@ func (rs *MaterialResource) EditHandler(w http.ResponseWriter, r *http.Request) 
     return
   }
 
-  material := r.Context().Value("material").(*model.Material)
+  material := r.Context().Value(common.CtxKeyMaterial).(*model.Material)
 
   material.Name = data.Name
   material.Kind = data.Kind
@@ -219,7 +220,7 @@ func (rs *MaterialResource) EditHandler(w http.ResponseWriter, r *http.Request) 
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  delete a specific material
 func (rs *MaterialResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
-  material := r.Context().Value("material").(*model.Material)
+  material := r.Context().Value(common.CtxKeyMaterial).(*model.Material)
 
   // update database entry
   if err := rs.Stores.Material.Delete(material.ID); err != nil {
@@ -243,15 +244,15 @@ func (rs *MaterialResource) DeleteHandler(w http.ResponseWriter, r *http.Request
 // SUMMARY:  get the zip file of a material
 func (rs *MaterialResource) GetFileHandler(w http.ResponseWriter, r *http.Request) {
 
-  material := r.Context().Value("material").(*model.Material)
-  course := r.Context().Value("course").(*model.Course)
+  material := r.Context().Value(common.CtxKeyMaterial).(*model.Material)
+  course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
   hnd := helper.NewMaterialFileHandle(material.ID)
   if !hnd.Exists() {
     render.Render(w, r, ErrNotFound)
     return
   }
 
-  givenRole := r.Context().Value("course_role").(authorize.CourseRole)
+  givenRole := r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole)
   if givenRole == authorize.STUDENT && !PublicYet(material.PublishAt) {
     render.Render(w, r, ErrNotFound)
     return
@@ -278,7 +279,7 @@ func (rs *MaterialResource) GetFileHandler(w http.ResponseWriter, r *http.Reques
 // This endpoint will only support pdf or zip files.
 func (rs *MaterialResource) ChangeFileHandler(w http.ResponseWriter, r *http.Request) {
   // will always be a POST
-  material := r.Context().Value("material").(*model.Material)
+  material := r.Context().Value(common.CtxKeyMaterial).(*model.Material)
 
   var (
     err      error
@@ -308,7 +309,7 @@ func (rs *MaterialResource) ChangeFileHandler(w http.ResponseWriter, r *http.Req
 // We do NOT check whether the Material is authorized to get this Material.
 func (rs *MaterialResource) Context(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-    courseFromURL := r.Context().Value("course").(*model.Course)
+    courseFromURL := r.Context().Value(common.CtxKeyCourse).(*model.Course)
     // Should be done via another middleware
     var materialID int64
     var err error
@@ -327,12 +328,12 @@ func (rs *MaterialResource) Context(next http.Handler) http.Handler {
     }
 
     // public yet?
-    if r.Context().Value("course_role").(authorize.CourseRole) == authorize.STUDENT && !PublicYet(material.PublishAt) {
+    if r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole) == authorize.STUDENT && !PublicYet(material.PublishAt) {
       render.Render(w, r, ErrUnauthorizedWithDetails(fmt.Errorf("material not published yet")))
       return
     }
 
-    ctx := context.WithValue(r.Context(), ctxKeyMaterial, material)
+    ctx := context.WithValue(r.Context(), common.CtxKeyMaterial, material)
 
     // when there is a sheetID in the url, there is NOT a courseID in the url,
     // BUT: when there is a material, there is a course
@@ -348,7 +349,7 @@ func (rs *MaterialResource) Context(next http.Handler) http.Handler {
       return
     }
 
-    ctx = context.WithValue(ctx, ctxKeyCourse, course)
+    ctx = context.WithValue(ctx, common.CtxKeyCourse, course)
 
     // serve next
     next.ServeHTTP(w, r.WithContext(ctx))

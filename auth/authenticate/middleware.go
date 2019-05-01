@@ -25,6 +25,7 @@ import (
   "strconv"
 
   "github.com/cgtuebingen/infomark-backend/auth"
+  "github.com/cgtuebingen/infomark-backend/common"
   "github.com/go-chi/jwtauth"
   "github.com/go-chi/render"
   "github.com/ulule/limiter/v3"
@@ -32,11 +33,6 @@ import (
   // "github.com/ulule/limiter/v3/drivers/store/memory"
   redis "github.com/go-redis/redis"
   sredis "github.com/ulule/limiter/v3/drivers/store/redis"
-)
-
-// same as app/api/commong.go
-const (
-  ctxKeyAccessClaim key = iota // must be 0 to work with the auth-package
 )
 
 // RequiredValidAccessClaimsMiddleware tries to get information about the identity which
@@ -88,7 +84,7 @@ func RequiredValidAccessClaims(next http.Handler) http.Handler {
 
     // nothing given
     // serve next
-    ctx := context.WithValue(r.Context(), ctxKeyAccessClaim, accessClaims)
+    ctx := context.WithValue(r.Context(), common.CtxKeyAccessClaim, accessClaims)
     next.ServeHTTP(w, r.WithContext(ctx))
     return
 

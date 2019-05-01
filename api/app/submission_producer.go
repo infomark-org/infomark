@@ -23,16 +23,20 @@ import (
   "github.com/spf13/viper"
 )
 
+// Producer is interface to pipe the workload over AMPQ to the backend workers
 type Producer interface {
   Publish(body []byte) error
 }
 
+// DefaultSubmissionProducer is the producer which broadcasts all submissions
+// amongst the workers.
 var DefaultSubmissionProducer Producer
 
 // VoidProducer acts like a real producer, but will not trigger any background worker
 // if you do not need these or within tests
 type VoidProducer struct{}
 
+// Publish of VoidProducer does nothing on purpose (used in unit tests).
 func (t *VoidProducer) Publish(body []byte) error { return nil }
 
 func init() {

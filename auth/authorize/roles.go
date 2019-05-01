@@ -23,6 +23,7 @@ import (
 
   "github.com/cgtuebingen/infomark-backend/auth"
   "github.com/cgtuebingen/infomark-backend/auth/authenticate"
+  "github.com/cgtuebingen/infomark-backend/common"
   "github.com/go-chi/render"
 )
 
@@ -72,7 +73,7 @@ func HasAtLeastRole(requiredRole CourseRole, r *http.Request) bool {
     return true
   }
 
-  givenRole, ok := r.Context().Value("course_role").(CourseRole)
+  givenRole, ok := r.Context().Value(common.CtxKeyCourseRole).(CourseRole)
   if !ok {
     return false
   }

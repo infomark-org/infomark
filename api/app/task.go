@@ -27,6 +27,7 @@ import (
   "github.com/cgtuebingen/infomark-backend/api/helper"
   "github.com/cgtuebingen/infomark-backend/auth/authenticate"
   "github.com/cgtuebingen/infomark-backend/auth/authorize"
+  "github.com/cgtuebingen/infomark-backend/common"
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/go-chi/chi"
   "github.com/go-chi/render"
@@ -60,7 +61,7 @@ func (rs *TaskResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
   var tasks []model.Task
   var err error
   // we use middle to detect whether there is a sheet given
-  sheet := r.Context().Value("sheet").(*model.Sheet)
+  sheet := r.Context().Value(common.CtxKeySheet).(*model.Sheet)
   tasks, err = rs.Stores.Task.TasksOfSheet(sheet.ID)
 
   // render JSON reponse
@@ -91,8 +92,10 @@ func (rs *TaskResource) MissingIndexHandler(w http.ResponseWriter, r *http.Reque
     return
   }
 
+  givenRole := r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole)
+
   // render JSON reponse
-  if err = render.RenderList(w, r, newMissingTaskListResponse(tasks)); err != nil {
+  if err = render.RenderList(w, r, newMissingTaskListResponse(tasks, givenRole)); err != nil {
     render.Render(w, r, ErrRender(err))
     return
   }
@@ -112,7 +115,7 @@ func (rs *TaskResource) MissingIndexHandler(w http.ResponseWriter, r *http.Reque
 // SUMMARY:  create a new task
 func (rs *TaskResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
 
-  sheet := r.Context().Value("sheet").(*model.Sheet)
+  sheet := r.Context().Value(common.CtxKeySheet).(*model.Sheet)
 
   // start from empty Request
   data := &TaskRequest{}
@@ -250,11 +253,12 @@ func (rs *TaskResource) GetPublicTestFileHandler(w http.ResponseWriter, r *http.
   if !hnd.Exists() {
     render.Render(w, r, ErrNotFound)
     return
-  } else {
-    if err := hnd.WriteToBody(w); err != nil {
-      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-    }
   }
+
+  if err := hnd.WriteToBody(w); err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+  }
+
 }
 
 // GetPrivateTestFileHandler is public endpoint for
@@ -276,11 +280,12 @@ func (rs *TaskResource) GetPrivateTestFileHandler(w http.ResponseWriter, r *http
   if !hnd.Exists() {
     render.Render(w, r, ErrNotFound)
     return
-  } else {
-    if err := hnd.WriteToBody(w); err != nil {
-      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-    }
   }
+
+  if err := hnd.WriteToBody(w); err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+  }
+
 }
 
 // ChangePublicTestFileHandler is public endpoint for
@@ -343,8 +348,8 @@ func (rs *TaskResource) ChangePrivateTestFileHandler(w http.ResponseWriter, r *h
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  the the public results (grades) for a test and the request identity
 func (rs *TaskResource) GetSubmissionResultHandler(w http.ResponseWriter, r *http.Request) {
-  givenRole := r.Context().Value("course_role").(authorize.CourseRole)
-  course := r.Context().Value("course").(*model.Course)
+  givenRole := r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole)
+  course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
   if givenRole != authorize.STUDENT {
     render.Render(w, r, ErrBadRequest)
     return
@@ -380,13 +385,14 @@ func (rs *TaskResource) GetSubmissionResultHandler(w http.ResponseWriter, r *htt
 }
 
 // .............................................................................
+
 // Context middleware is used to load an Task object from
 // the URL parameter `TaskID` passed through as the request. In case
 // the Task could not be found, we stop here and return a 404.
 // We do NOT check whether the identity is authorized to get this Task.
 func (rs *TaskResource) Context(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-    course_from_url := r.Context().Value("course").(*model.Course)
+    courseFromURL := r.Context().Value(common.CtxKeyCourse).(*model.Course)
 
     var taskID int64
     var err error
@@ -404,7 +410,7 @@ func (rs *TaskResource) Context(next http.Handler) http.Handler {
       return
     }
 
-    ctx := context.WithValue(r.Context(), ctxKeyTask, task)
+    ctx := context.WithValue(r.Context(), common.CtxKeyTask, task)
 
     // find sheet
     sheet, err := rs.Stores.Task.IdentifySheetOfTask(task.ID)
@@ -419,11 +425,11 @@ func (rs *TaskResource) Context(next http.Handler) http.Handler {
         return
       }
     } else {
-      ctx = context.WithValue(ctx, ctxKeySheet, sheet)
+      ctx = context.WithValue(ctx, common.CtxKeySheet, sheet)
     }
 
     // public yet?
-    if r.Context().Value(ctxKeyCourseRole).(authorize.CourseRole) == authorize.STUDENT && !PublicYet(sheet.PublishAt) {
+    if r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole) == authorize.STUDENT && !PublicYet(sheet.PublishAt) {
       render.Render(w, r, ErrBadRequestWithDetails(fmt.Errorf("sheet not published yet")))
       return
     }
@@ -437,12 +443,12 @@ func (rs *TaskResource) Context(next http.Handler) http.Handler {
       return
     }
 
-    if course_from_url.ID != course.ID {
+    if courseFromURL.ID != course.ID {
       render.Render(w, r, ErrNotFound)
       return
     }
 
-    ctx = context.WithValue(ctx, ctxKeyCourse, course)
+    ctx = context.WithValue(ctx, common.CtxKeyCourse, course)
 
     // serve next
     next.ServeHTTP(w, r.WithContext(ctx))
