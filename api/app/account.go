@@ -27,6 +27,7 @@ import (
   "github.com/cgtuebingen/infomark-backend/api/helper"
   "github.com/cgtuebingen/infomark-backend/auth"
   "github.com/cgtuebingen/infomark-backend/auth/authenticate"
+  "github.com/cgtuebingen/infomark-backend/common"
   "github.com/cgtuebingen/infomark-backend/email"
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/go-chi/render"
@@ -148,7 +149,7 @@ func sendConfirmEmailForUser(user *model.User) error {
 // on the confirmation link is required to login again.
 func (rs *AccountResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 
-  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 
   // make a backup of old data
   user, err := rs.Stores.User.Get(accessClaims.LoginID)
@@ -231,7 +232,7 @@ func (rs *AccountResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 // DESCRIPTION:
 // It will contain all information as this can only query the own account
 func (rs *AccountResource) GetHandler(w http.ResponseWriter, r *http.Request) {
-  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
   user, err := rs.Stores.User.Get(accessClaims.LoginID)
   if err != nil {
     render.Render(w, r, ErrNotFound)
@@ -258,7 +259,7 @@ func (rs *AccountResource) GetHandler(w http.ResponseWriter, r *http.Request) {
 // otherwise it will use a default image. We currently support only jpg images.
 func (rs *AccountResource) GetAvatarHandler(w http.ResponseWriter, r *http.Request) {
 
-  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
   file := helper.NewAvatarFileHandle(accessClaims.LoginID)
 
   if !file.Exists() {
@@ -285,7 +286,7 @@ func (rs *AccountResource) GetAvatarHandler(w http.ResponseWriter, r *http.Reque
 // We currently support only jpg, jpeg,png images.
 func (rs *AccountResource) ChangeAvatarHandler(w http.ResponseWriter, r *http.Request) {
 
-  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 
   // get current user
   user, err := rs.Stores.User.Get(accessClaims.LoginID)
@@ -317,7 +318,7 @@ func (rs *AccountResource) ChangeAvatarHandler(w http.ResponseWriter, r *http.Re
 // DESCRIPTION:
 // This is necessary, when a user wants to switch back to a default avatar.
 func (rs *AccountResource) DeleteAvatarHandler(w http.ResponseWriter, r *http.Request) {
-  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 
   // get current user
   user, err := rs.Stores.User.Get(accessClaims.LoginID)
@@ -343,7 +344,7 @@ func (rs *AccountResource) DeleteAvatarHandler(w http.ResponseWriter, r *http.Re
 // SUMMARY:  Retrieve the specific account avatar from the request identity
 // This lists all course enrollments of the request identity including role.
 func (rs *AccountResource) GetEnrollmentsHandler(w http.ResponseWriter, r *http.Request) {
-  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 
   // get enrollments
   enrollments, err := rs.Stores.User.GetEnrollments(accessClaims.LoginID)

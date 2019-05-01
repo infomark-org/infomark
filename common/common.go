@@ -26,15 +26,15 @@ type key int
 //   r.Context().Value(common.CtxKeyCourse)
 // TODO(): create a shared context-key package
 const (
-  CtxKeyAccessClaim key = iota // must be 0 to work with the auth-package
-  CtxKeyGroup       key = iota
-  CtxKeyMaterial    key = iota
-  CtxKeyCourse      key = iota
-  CtxKeyCourseRole  key = iota
-  CtxKeyUser        key = iota
-  CtxKeyTask        key = iota
-  CtxKeySubmission  key = iota
-  CtxKeySheet       key = iota
-  CtxKeyGrade       key = iota
+  CtxKeyAccessClaims key = iota // must be 0 to work with the auth-package
+  CtxKeyGroup        key = iota
+  CtxKeyMaterial     key = iota
+  CtxKeyCourse       key = iota
+  CtxKeyCourseRole   key = iota
+  CtxKeyUser         key = iota
+  CtxKeyTask         key = iota
+  CtxKeySubmission   key = iota
+  CtxKeySheet        key = iota
+  CtxKeyGrade        key = iota
   // ...
 )

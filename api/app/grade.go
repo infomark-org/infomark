@@ -59,7 +59,7 @@ func NewGradeResource(stores *Stores) *GradeResource {
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  edit a grade
 func (rs *GradeResource) EditHandler(w http.ResponseWriter, r *http.Request) {
-  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 
   currentGrade := r.Context().Value(common.CtxKeyGrade).(*model.Grade)
   data := &GradeRequest{}
@@ -358,7 +358,7 @@ func (rs *GradeResource) IndexSummaryHandler(w http.ResponseWriter, r *http.Requ
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  the missing grades for the request identity
 func (rs *GradeResource) IndexMissingHandler(w http.ResponseWriter, r *http.Request) {
-  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
   course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
 
   filterGroupID := helper.Int64FromUrl(r, "group_id", 0)

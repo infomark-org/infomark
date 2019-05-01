@@ -84,7 +84,7 @@ func RequiredValidAccessClaims(next http.Handler) http.Handler {
 
     // nothing given
     // serve next
-    ctx := context.WithValue(r.Context(), common.CtxKeyAccessClaim, accessClaims)
+    ctx := context.WithValue(r.Context(), common.CtxKeyAccessClaims, accessClaims)
     next.ServeHTTP(w, r.WithContext(ctx))
     return
 

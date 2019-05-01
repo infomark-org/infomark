@@ -171,7 +171,7 @@ func (rs *GroupResource) GetMineHandler(w http.ResponseWriter, r *http.Request) 
 
   // TODO(patwie): handle case when user is tutor in group
 
-  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
   course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
   courseRole := r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole)
 
@@ -408,7 +408,7 @@ func (rs *GroupResource) ChangeBidHandler(w http.ResponseWriter, r *http.Request
     return
   }
 
-  accessClaims := r.Context().Value(common.CtxKeyAccessClaim).(*authenticate.AccessClaims)
+  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 
   // start from empty Request
   group := r.Context().Value(common.CtxKeyGroup).(*model.Group)
@@ -466,7 +466,7 @@ func (rs *GroupResource) ChangeBidHandler(w http.ResponseWriter, r *http.Request
 func (rs *GroupResource) SendEmailHandler(w http.ResponseWriter, r *http.Request) {
 
   group := r.Context().Value(common.CtxKeyGroup).(*model.Group)
-  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
   accessUser, _ := rs.Stores.User.Get(accessClaims.LoginID)
 
   data := &EmailRequest{}

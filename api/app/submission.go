@@ -60,9 +60,9 @@ func NewSubmissionResource(stores *Stores) *SubmissionResource {
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  get the zip file containing the submission of the request identity for a given task
 func (rs *SubmissionResource) GetFileHandler(w http.ResponseWriter, r *http.Request) {
-  task := r.Context().Value("task").(*model.Task)
+  task := r.Context().Value(common.CtxKeyTask).(*model.Task)
   // submission := r.Context().Value(common.CtxKeySubmission).(*model.Submission)
-  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
   givenRole := r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole)
 
   submission, err := rs.Stores.Submission.GetByUserAndTask(accessClaims.LoginID, task.ID)
@@ -115,7 +115,7 @@ func (rs *SubmissionResource) GetCollectionHandler(w http.ResponseWriter, r *htt
   }
 
   course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
-  task := r.Context().Value("task").(*model.Task)
+  task := r.Context().Value(common.CtxKeyTask).(*model.Task)
 
   var groupID int64
   var err error
@@ -176,7 +176,7 @@ func (rs *SubmissionResource) GetCollectionFileHandler(w http.ResponseWriter, r 
   }
 
   course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
-  task := r.Context().Value("task").(*model.Task)
+  task := r.Context().Value(common.CtxKeyTask).(*model.Task)
 
   var groupID int64
   var err error
@@ -227,7 +227,7 @@ func (rs *SubmissionResource) GetCollectionFileHandler(w http.ResponseWriter, r 
 func (rs *SubmissionResource) GetFileByIDHandler(w http.ResponseWriter, r *http.Request) {
 
   submission := r.Context().Value(common.CtxKeySubmission).(*model.Submission)
-  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
   givenRole := r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole)
 
   submission, err := rs.Stores.Submission.Get(submission.ID)
@@ -272,9 +272,9 @@ func (rs *SubmissionResource) GetFileByIDHandler(w http.ResponseWriter, r *http.
 // SUMMARY:  changes the zip file of a submission belonging to the request identity
 func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.Request) {
   course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
-  task := r.Context().Value("task").(*model.Task)
+  task := r.Context().Value(common.CtxKeyTask).(*model.Task)
   sheet := r.Context().Value(common.CtxKeySheet).(*model.Sheet)
-  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
   // todo create submission if not exists
 
   if r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole) == authorize.STUDENT && !PublicYet(sheet.PublishAt) {

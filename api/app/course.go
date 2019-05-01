@@ -397,7 +397,7 @@ func (rs *CourseResource) ChangeRole(w http.ResponseWriter, r *http.Request) {
 // SUMMARY:  enroll a user into a course
 func (rs *CourseResource) EnrollHandler(w http.ResponseWriter, r *http.Request) {
   course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
-  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 
   role := int64(0)
   if accessClaims.Root {
@@ -437,7 +437,7 @@ func (rs *CourseResource) EnrollHandler(w http.ResponseWriter, r *http.Request) 
 // SUMMARY:  disenroll a user from a course
 func (rs *CourseResource) DisenrollHandler(w http.ResponseWriter, r *http.Request) {
   course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
-  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 
   givenRole := r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole)
 
@@ -477,7 +477,7 @@ func (rs *CourseResource) SendEmailHandler(w http.ResponseWriter, r *http.Reques
 
   course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
 
-  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
   accessUser, _ := rs.Stores.User.Get(accessClaims.LoginID)
 
   data := &EmailRequest{}
@@ -531,7 +531,7 @@ func (rs *CourseResource) SendEmailHandler(w http.ResponseWriter, r *http.Reques
 // SUMMARY:  get all points for the request identity
 func (rs *CourseResource) PointsHandler(w http.ResponseWriter, r *http.Request) {
   course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
-  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 
   sheetPoints, err := rs.Stores.Course.PointsForUser(accessClaims.LoginID, course.ID)
   if err != nil {
@@ -560,7 +560,7 @@ func (rs *CourseResource) PointsHandler(w http.ResponseWriter, r *http.Request) 
 // SUMMARY:  get all bids for the request identity in a course
 func (rs *CourseResource) BidsHandler(w http.ResponseWriter, r *http.Request) {
   course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
-  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 
   givenRole := r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole)
 
@@ -631,7 +631,7 @@ func (rs *CourseResource) Context(next http.Handler) http.Handler {
 func (rs *CourseResource) RoleContext(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
     course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
-    accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+    accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 
     // find role in the course
     courseRole, err := rs.Stores.Course.RoleInCourse(accessClaims.LoginID, course.ID)

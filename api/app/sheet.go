@@ -270,7 +270,7 @@ func (rs *SheetResource) ChangeFileHandler(w http.ResponseWriter, r *http.Reques
 // SUMMARY:  return all points from a sheet for the request identity
 func (rs *SheetResource) PointsHandler(w http.ResponseWriter, r *http.Request) {
   sheet := r.Context().Value(common.CtxKeySheet).(*model.Sheet)
-  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 
   taskPoints, err := rs.Stores.Sheet.PointsForUser(accessClaims.LoginID, sheet.ID)
   if err != nil {

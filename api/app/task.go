@@ -82,7 +82,7 @@ func (rs *TaskResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 // SUMMARY:  Get all tasks which are not solved by the request identity
 func (rs *TaskResource) MissingIndexHandler(w http.ResponseWriter, r *http.Request) {
 
-  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 
   tasks, err := rs.Stores.Task.GetAllMissingTasksForUser(accessClaims.LoginID)
 
@@ -163,7 +163,7 @@ func (rs *TaskResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
 // SUMMARY:  get a specific task
 func (rs *TaskResource) GetHandler(w http.ResponseWriter, r *http.Request) {
   // `Task` is retrieved via middle-ware
-  task := r.Context().Value("task").(*model.Task)
+  task := r.Context().Value(common.CtxKeyTask).(*model.Task)
 
   // render JSON reponse
   if err := render.Render(w, r, newTaskResponse(task)); err != nil {
@@ -196,7 +196,7 @@ func (rs *TaskResource) EditHandler(w http.ResponseWriter, r *http.Request) {
     return
   }
 
-  task := r.Context().Value("task").(*model.Task)
+  task := r.Context().Value(common.CtxKeyTask).(*model.Task)
   task.Name = data.Name
   task.MaxPoints = data.MaxPoints
   task.PublicDockerImage = null.StringFrom(data.PublicDockerImage)
@@ -223,7 +223,7 @@ func (rs *TaskResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  delete a specific task
 func (rs *TaskResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
-  Task := r.Context().Value("task").(*model.Task)
+  Task := r.Context().Value(common.CtxKeyTask).(*model.Task)
 
   // update database entry
   if err := rs.Stores.Task.Delete(Task.ID); err != nil {
@@ -247,7 +247,7 @@ func (rs *TaskResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 // SUMMARY:  get the zip with the testing framework for the public tests
 func (rs *TaskResource) GetPublicTestFileHandler(w http.ResponseWriter, r *http.Request) {
 
-  task := r.Context().Value("task").(*model.Task)
+  task := r.Context().Value(common.CtxKeyTask).(*model.Task)
   hnd := helper.NewPublicTestFileHandle(task.ID)
 
   if !hnd.Exists() {
@@ -274,7 +274,7 @@ func (rs *TaskResource) GetPublicTestFileHandler(w http.ResponseWriter, r *http.
 // SUMMARY:  get the zip with the testing framework for the private tests
 func (rs *TaskResource) GetPrivateTestFileHandler(w http.ResponseWriter, r *http.Request) {
 
-  task := r.Context().Value("task").(*model.Task)
+  task := r.Context().Value(common.CtxKeyTask).(*model.Task)
   hnd := helper.NewPrivateTestFileHandle(task.ID)
 
   if !hnd.Exists() {
@@ -302,7 +302,7 @@ func (rs *TaskResource) GetPrivateTestFileHandler(w http.ResponseWriter, r *http
 // SUMMARY:  change the zip with the testing framework for the public tests
 func (rs *TaskResource) ChangePublicTestFileHandler(w http.ResponseWriter, r *http.Request) {
   // will always be a POST
-  task := r.Context().Value("task").(*model.Task)
+  task := r.Context().Value(common.CtxKeyTask).(*model.Task)
 
   // the file will be located
   if _, err := helper.NewPublicTestFileHandle(task.ID).WriteToDisk(r, "file_data"); err != nil {
@@ -326,7 +326,7 @@ func (rs *TaskResource) ChangePublicTestFileHandler(w http.ResponseWriter, r *ht
 // SUMMARY:  change the zip with the testing framework for the private tests
 func (rs *TaskResource) ChangePrivateTestFileHandler(w http.ResponseWriter, r *http.Request) {
   // will always be a POST
-  task := r.Context().Value("task").(*model.Task)
+  task := r.Context().Value(common.CtxKeyTask).(*model.Task)
 
   // the file will be located
   if _, err := helper.NewPrivateTestFileHandle(task.ID).WriteToDisk(r, "file_data"); err != nil {
@@ -356,8 +356,8 @@ func (rs *TaskResource) GetSubmissionResultHandler(w http.ResponseWriter, r *htt
   }
 
   // `Task` is retrieved via middle-ware
-  task := r.Context().Value("task").(*model.Task)
-  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  task := r.Context().Value(common.CtxKeyTask).(*model.Task)
+  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 
   submission, err := rs.Stores.Submission.GetByUserAndTask(accessClaims.LoginID, task.ID)
   if err != nil {

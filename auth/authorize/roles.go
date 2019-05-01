@@ -67,7 +67,7 @@ func RequiresAtLeastCourseRole(requiredRole CourseRole) func(next http.Handler) 
 
 func HasAtLeastRole(requiredRole CourseRole, r *http.Request) bool {
   // global root can lever out this check
-  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
   if accessClaims.Root {
     // oh dear, sorry to ask. Please pass this check
     return true

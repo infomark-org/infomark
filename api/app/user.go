@@ -57,7 +57,7 @@ func NewUserResource(stores *Stores) *UserResource {
 // SUMMARY:  Get own user details (requires root)
 func (rs *UserResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 
-  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 
   if !accessClaims.Root {
     render.Render(w, r, ErrUnauthorized)
@@ -84,7 +84,7 @@ func (rs *UserResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 // SUMMARY:  Get own user details
 func (rs *UserResource) GetMeHandler(w http.ResponseWriter, r *http.Request) {
   // `user` is retrieved via middle-ware
-  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
   user, err := rs.Stores.User.Get(accessClaims.LoginID)
 
   if err != nil {
@@ -111,7 +111,7 @@ func (rs *UserResource) GetMeHandler(w http.ResponseWriter, r *http.Request) {
 func (rs *UserResource) GetHandler(w http.ResponseWriter, r *http.Request) {
   // `user` is retrieved via middle-ware
   user := r.Context().Value(common.CtxKeyUser).(*model.User)
-  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 
   // is request identity allowed to get informaition about this user
   if user.ID != accessClaims.LoginID {
@@ -164,7 +164,7 @@ func (rs *UserResource) GetAvatarHandler(w http.ResponseWriter, r *http.Request)
 // SUMMARY:  updating a the user record of the request identity
 func (rs *UserResource) EditMeHandler(w http.ResponseWriter, r *http.Request) {
 
-  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 
   data := &userMeRequest{}
 
@@ -210,7 +210,7 @@ func (rs *UserResource) EditMeHandler(w http.ResponseWriter, r *http.Request) {
 // SUMMARY:  updating a specific user with given id.
 func (rs *UserResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 
-  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 
   if !accessClaims.Root {
     render.Render(w, r, ErrUnauthorized)
@@ -268,7 +268,7 @@ func (rs *UserResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 func (rs *UserResource) SendEmailHandler(w http.ResponseWriter, r *http.Request) {
 
   user := r.Context().Value(common.CtxKeyUser).(*model.User)
-  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
   accessUser, _ := rs.Stores.User.Get(accessClaims.LoginID)
 
   data := &EmailRequest{}

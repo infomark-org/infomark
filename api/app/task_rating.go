@@ -22,6 +22,7 @@ import (
   "net/http"
 
   "github.com/cgtuebingen/infomark-backend/auth/authenticate"
+  "github.com/cgtuebingen/infomark-backend/common"
   "github.com/cgtuebingen/infomark-backend/model"
   "github.com/go-chi/render"
 )
@@ -51,7 +52,7 @@ func NewTaskRatingResource(stores *Stores) *TaskRatingResource {
 // SUMMARY:  get all stats (average rating, own rating, ..) for a task
 func (rs *TaskRatingResource) GetHandler(w http.ResponseWriter, r *http.Request) {
   // `TaskRating` is retrieved via middle-ware
-  task := r.Context().Value("task").(*model.Task)
+  task := r.Context().Value(common.CtxKeyTask).(*model.Task)
 
   // get rating
   averageRating, err := rs.Stores.Task.GetAverageRating(task.ID)
@@ -61,7 +62,7 @@ func (rs *TaskRatingResource) GetHandler(w http.ResponseWriter, r *http.Request)
   }
 
   // get own rating
-  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
   taskRating, err := rs.Stores.Task.GetRatingOfTaskByUser(task.ID, accessClaims.LoginID)
   if err != nil {
     // record not found
@@ -95,8 +96,8 @@ func (rs *TaskRatingResource) GetHandler(w http.ResponseWriter, r *http.Request)
 // SUMMARY:  updates and gets all stats (average rating, own rating, ..) for a task
 func (rs *TaskRatingResource) ChangeHandler(w http.ResponseWriter, r *http.Request) {
   // `TaskRating` is retrieved via middle-ware
-  task := r.Context().Value("task").(*model.Task)
-  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  task := r.Context().Value(common.CtxKeyTask).(*model.Task)
+  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 
   data := &TaskRatingRequest{}
   // parse JSON request into struct
