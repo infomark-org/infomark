@@ -354,7 +354,7 @@ func TestGrade(t *testing.T) {
       err = json.NewDecoder(w.Body).Decode(&gradesActual)
       g.Assert(err).Equal(nil)
 
-      gradesExpected, err := stores.Grade.GetAllMissingGrades(1, 3, 0)
+      gradesExpected, err = stores.Grade.GetAllMissingGrades(1, 3, 0)
       g.Assert(err).Equal(nil)
 
       // see mock.py
