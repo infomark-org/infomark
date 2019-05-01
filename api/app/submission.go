@@ -325,11 +325,13 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
       SubmissionID:          submission.ID,
     }
 
-    _, err = rs.Stores.Grade.Create(grade)
+    // fetch id from grade as we need it
+    grade, err = rs.Stores.Grade.Create(grade)
     if err != nil {
       render.Render(w, r, ErrInternalServerErrorWithDetails(err))
       return
     }
+
   } else {
     // submission exists, we only need to get the grade
     grade, err = rs.Stores.Grade.GetForSubmission(submission.ID)
