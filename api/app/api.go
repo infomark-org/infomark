@@ -53,7 +53,7 @@ type CourseStore interface {
   Enroll(courseID int64, userID int64, role int64) error
   Disenroll(courseID int64, userID int64) error
   EnrolledUsers(
-    courseId int64,
+    courseID int64,
     roleFilter []string,
     filterFirstName string,
     filterLastName string,

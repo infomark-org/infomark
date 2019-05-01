@@ -148,7 +148,7 @@ func (rs *MaterialResource) GetHandler(w http.ResponseWriter, r *http.Request) {
 
   givenRole := r.Context().Value("course_role").(authorize.CourseRole)
   if givenRole == authorize.STUDENT && !PublicYet(material.PublishAt) {
-    render.Render(w, r, ErrUnauthorizedWithDetails(fmt.Errorf("Not public yet.")))
+    render.Render(w, r, ErrUnauthorizedWithDetails(fmt.Errorf("Not public yet")))
     return
   }
 
@@ -301,13 +301,14 @@ func (rs *MaterialResource) ChangeFileHandler(w http.ResponseWriter, r *http.Req
 }
 
 // .............................................................................
+
 // Context middleware is used to load an Material object from
 // the URL parameter `MaterialID` passed through as the request. In case
 // the Material could not be found, we stop here and return a 404.
 // We do NOT check whether the Material is authorized to get this Material.
 func (rs *MaterialResource) Context(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-    course_from_url := r.Context().Value("course").(*model.Course)
+    courseFromURL := r.Context().Value("course").(*model.Course)
     // Should be done via another middleware
     var materialID int64
     var err error
@@ -331,7 +332,7 @@ func (rs *MaterialResource) Context(next http.Handler) http.Handler {
       return
     }
 
-    ctx := context.WithValue(r.Context(), "material", material)
+    ctx := context.WithValue(r.Context(), ctxKeyMaterial, material)
 
     // when there is a sheetID in the url, there is NOT a courseID in the url,
     // BUT: when there is a material, there is a course
@@ -342,12 +343,12 @@ func (rs *MaterialResource) Context(next http.Handler) http.Handler {
       return
     }
 
-    if course_from_url.ID != course.ID {
+    if courseFromURL.ID != course.ID {
       render.Render(w, r, ErrNotFound)
       return
     }
 
-    ctx = context.WithValue(ctx, "course", course)
+    ctx = context.WithValue(ctx, ctxKeyCourse, course)
 
     // serve next
     next.ServeHTTP(w, r.WithContext(ctx))

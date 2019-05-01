@@ -50,11 +50,11 @@ func (body *groupRequest) Bind(r *http.Request) error {
 
 }
 
-func (m *groupRequest) Validate() error {
+func (body *groupRequest) Validate() error {
 
-	err := validation.ValidateStruct(m,
+	err := validation.ValidateStruct(body,
 		validation.Field(
-			&m.Description,
+			&body.Description,
 			validation.Required,
 		),
 	)
@@ -62,9 +62,9 @@ func (m *groupRequest) Validate() error {
 		return err
 	}
 
-	return validation.ValidateStruct(m.Tutor,
+	return validation.ValidateStruct(body.Tutor,
 		validation.Field(
-			&m.Tutor.ID,
+			&body.Tutor.ID,
 			validation.Required,
 		),
 	)
@@ -79,10 +79,10 @@ func (body *groupBidRequest) Bind(r *http.Request) error {
 	return body.Validate()
 }
 
-func (m *groupBidRequest) Validate() error {
-	return validation.ValidateStruct(m,
+func (body *groupBidRequest) Validate() error {
+	return validation.ValidateStruct(body,
 		validation.Field(
-			&m.Bid,
+			&body.Bid,
 			validation.Required,
 			validation.Min(0),
 			validation.Max(10),
@@ -103,10 +103,10 @@ func (body *groupEnrollmentRequest) Bind(r *http.Request) error {
 	return body.Validate()
 }
 
-func (m *groupEnrollmentRequest) Validate() error {
-	return validation.ValidateStruct(m,
+func (body *groupEnrollmentRequest) Validate() error {
+	return validation.ValidateStruct(body,
 		validation.Field(
-			&m.UserID,
+			&body.UserID,
 			validation.Required,
 		),
 	)

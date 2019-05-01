@@ -46,28 +46,28 @@ func (body *MaterialRequest) Bind(r *http.Request) error {
 }
 
 // Validate validates a `Material` object.
-func (m *MaterialRequest) Validate() error {
-	return validation.ValidateStruct(m,
+func (body *MaterialRequest) Validate() error {
+	return validation.ValidateStruct(body,
 		validation.Field(
-			&m.Name,
+			&body.Name,
 			validation.Required,
 		),
 		validation.Field(
-			&m.PublishAt,
+			&body.PublishAt,
 			validation.Required,
 		),
 		validation.Field(
-			&m.LectureAt,
+			&body.LectureAt,
 			validation.Required,
 		),
 		validation.Field(
-			&m.Kind,
+			&body.Kind,
 			// validation.Required,
 			validation.Min(0),
 			validation.Max(1),
 		),
 		validation.Field(
-			&m.RequiredRole,
+			&body.RequiredRole,
 			// validation.Required,
 			validation.Min(0),
 			validation.Max(2),

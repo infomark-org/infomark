@@ -65,21 +65,21 @@ func TestAccount(t *testing.T) {
     })
 
     g.It("Should get all enrollments", func() {
-      enrollments_expected, err := stores.User.GetEnrollments(1)
+      enrollmentsExpected, err := stores.User.GetEnrollments(1)
       g.Assert(err).Equal(nil)
 
       w := tape.GetWithClaims("/api/v1/account/enrollments", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      enrollments_actual := []userEnrollmentResponse{}
-      err = json.NewDecoder(w.Body).Decode(&enrollments_actual)
+      enrollmentsActual := []userEnrollmentResponse{}
+      err = json.NewDecoder(w.Body).Decode(&enrollmentsActual)
       g.Assert(err).Equal(nil)
-      g.Assert(len(enrollments_actual)).Equal(len(enrollments_expected))
+      g.Assert(len(enrollmentsActual)).Equal(len(enrollmentsExpected))
 
-      for j := 0; j < len(enrollments_expected); j++ {
-        g.Assert(enrollments_actual[j].Role).Equal(enrollments_expected[j].Role)
-        g.Assert(enrollments_actual[j].CourseID).Equal(enrollments_expected[j].CourseID)
-        g.Assert(enrollments_actual[j].ID).Equal(int64(0))
+      for j := 0; j < len(enrollmentsExpected); j++ {
+        g.Assert(enrollmentsActual[j].Role).Equal(enrollmentsExpected[j].Role)
+        g.Assert(enrollmentsActual[j].CourseID).Equal(enrollmentsExpected[j].CourseID)
+        g.Assert(enrollmentsActual[j].ID).Equal(int64(0))
       }
     })
 
@@ -99,14 +99,14 @@ func TestAccount(t *testing.T) {
 
     g.It("Should not create accounts with too short password", func() {
 
-      min_len := viper.GetInt("min_password_length")
-      too_short_password := auth.GenerateToken(min_len - 1)
+      minLen := viper.GetInt("min_password_length")
+      tooShortPassword := auth.GenerateToken(minLen - 1)
 
       w := tape.Post("/api/v1/account",
         H{
           "account": H{
             "email":          "foo@test.com",
-            "plain_password": too_short_password,
+            "plain_password": tooShortPassword,
           },
           "user": H{
             "first_name": "Data",
@@ -117,8 +117,8 @@ func TestAccount(t *testing.T) {
 
     g.It("Should create valid accounts", func() {
 
-      min_len := viper.GetInt("min_password_length")
-      ok_password := auth.GenerateToken(min_len)
+      minLen := viper.GetInt("min_password_length")
+      validPassword := auth.GenerateToken(minLen)
 
       request := H{
         "user": H{
@@ -132,31 +132,30 @@ func TestAccount(t *testing.T) {
         },
         "account": H{
           "email":          "max@Mensch.com  ",
-          "plain_password": ok_password,
+          "plain_password": validPassword,
         },
       }
 
       w := tape.Post("/api/v1/account", request)
       g.Assert(w.Code).Equal(http.StatusCreated)
 
-      user_after, err := stores.User.FindByEmail("max@mensch.com")
+      userAfter, err := stores.User.FindByEmail("max@mensch.com")
       g.Assert(err).Equal(nil)
 
-      g.Assert(user_after.FirstName).Equal("Max")
-      g.Assert(user_after.LastName).Equal("Mustermensch")
-      g.Assert(user_after.Email).Equal("max@mensch.com")
-      g.Assert(user_after.StudentNumber).Equal("0815")
-      g.Assert(user_after.Semester).Equal(2)
-      g.Assert(user_after.Subject).Equal("bio2")
-      g.Assert(user_after.Language).Equal("de")
-      g.Assert(user_after.Root).Equal(false)
+      g.Assert(userAfter.FirstName).Equal("Max")
+      g.Assert(userAfter.LastName).Equal("Mustermensch")
+      g.Assert(userAfter.Email).Equal("max@mensch.com")
+      g.Assert(userAfter.StudentNumber).Equal("0815")
+      g.Assert(userAfter.Semester).Equal(2)
+      g.Assert(userAfter.Subject).Equal("bio2")
+      g.Assert(userAfter.Language).Equal("de")
+      g.Assert(userAfter.Root).Equal(false)
 
-      g.Assert(user_after.ConfirmEmailToken.Valid).Equal(true)
-      g.Assert(user_after.ResetPasswordToken.Valid).Equal(false)
-      g.Assert(user_after.AvatarURL.Valid).Equal(false)
+      g.Assert(userAfter.ConfirmEmailToken.Valid).Equal(true)
+      g.Assert(userAfter.ResetPasswordToken.Valid).Equal(false)
+      g.Assert(userAfter.AvatarURL.Valid).Equal(false)
 
-      password_valid := auth.CheckPasswordHash(ok_password, user_after.EncryptedPassword)
-      g.Assert(password_valid).Equal(true)
+      g.Assert(auth.CheckPasswordHash(validPassword, userAfter.EncryptedPassword)).Equal(true)
     })
 
     g.It("Changes should require valid access-claims", func() {
@@ -203,13 +202,13 @@ func TestAccount(t *testing.T) {
       w := tape.PatchWithClaims("/api/v1/account", data, 1, true)
       g.Assert(w.Code).Equal(http.StatusNoContent)
 
-      user_after, err := stores.User.Get(1)
+      userAfter, err := stores.User.Get(1)
       g.Assert(err).Equal(nil)
-      g.Assert(user_after.Email).Equal("foo@uni-tuebingen.de")
+      g.Assert(userAfter.Email).Equal("foo@uni-tuebingen.de")
 
-      password_valid := auth.CheckPasswordHash("new_pass", user_after.EncryptedPassword)
-      g.Assert(password_valid).Equal(true)
-      g.Assert(user_after.ConfirmEmailToken.Valid).Equal(true)
+      isPasswordValid := auth.CheckPasswordHash("new_pass", userAfter.EncryptedPassword)
+      g.Assert(isPasswordValid).Equal(true)
+      g.Assert(userAfter.ConfirmEmailToken.Valid).Equal(true)
     })
 
     g.It("Should only change email when correct old password ", func() {
@@ -224,13 +223,13 @@ func TestAccount(t *testing.T) {
       w := tape.PatchWithClaims("/api/v1/account", data, 1, true)
       g.Assert(w.Code).Equal(http.StatusNoContent)
 
-      user_after, err := stores.User.Get(1)
+      userAfter, err := stores.User.Get(1)
       g.Assert(err).Equal(nil)
-      g.Assert(user_after.Email).Equal("foo@uni-tuebingen.de")
+      g.Assert(userAfter.Email).Equal("foo@uni-tuebingen.de")
 
-      password_valid := auth.CheckPasswordHash("test", user_after.EncryptedPassword)
-      g.Assert(password_valid).Equal(true)
-      g.Assert(user_after.ConfirmEmailToken.Valid).Equal(true)
+      isPasswordValid := auth.CheckPasswordHash("test", userAfter.EncryptedPassword)
+      g.Assert(isPasswordValid).Equal(true)
+      g.Assert(userAfter.ConfirmEmailToken.Valid).Equal(true)
     })
 
     g.It("Should only require valid email when correct old password ", func() {
@@ -258,13 +257,13 @@ func TestAccount(t *testing.T) {
       w := tape.PatchWithClaims("/api/v1/account", data, 1, true)
       g.Assert(w.Code).Equal(http.StatusNoContent)
 
-      user_after, err := stores.User.Get(1)
+      userAfter, err := stores.User.Get(1)
       g.Assert(err).Equal(nil)
-      g.Assert(user_after.Email).Equal("test@uni-tuebingen.de")
+      g.Assert(userAfter.Email).Equal("test@uni-tuebingen.de")
 
-      password_valid := auth.CheckPasswordHash("fooerrr", user_after.EncryptedPassword)
-      g.Assert(password_valid).Equal(true)
-      g.Assert(user_after.ConfirmEmailToken.Valid).Equal(false)
+      isPasswordValid := auth.CheckPasswordHash("fooerrr", userAfter.EncryptedPassword)
+      g.Assert(isPasswordValid).Equal(true)
+      g.Assert(userAfter.ConfirmEmailToken.Valid).Equal(false)
     })
 
     g.It("should change avatar (jpg)", func() {
@@ -277,14 +276,14 @@ func TestAccount(t *testing.T) {
       w := tape.GetWithClaims("/api/v1/account", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      user_return := &userResponse{}
-      err := json.NewDecoder(w.Body).Decode(user_return)
+      userReturned := &userResponse{}
+      err := json.NewDecoder(w.Body).Decode(userReturned)
       g.Assert(err).Equal(nil)
-      g.Assert(user_return.AvatarURL.Valid).Equal(false)
+      g.Assert(userReturned.AvatarURL.Valid).Equal(false)
 
       // upload avatar
-      avatar_filename := fmt.Sprintf("%s/default-avatar.jpg", viper.GetString("fixtures_dir"))
-      w, err = tape.UploadWithClaims("/api/v1/account/avatar", avatar_filename, "image/jpg", 1, true)
+      avatarFilename := fmt.Sprintf("%s/default-avatar.jpg", viper.GetString("fixtures_dir"))
+      w, err = tape.UploadWithClaims("/api/v1/account/avatar", avatarFilename, "image/jpg", 1, true)
       g.Assert(err).Equal(nil)
       g.Assert(w.Code).Equal(http.StatusOK)
       g.Assert(helper.NewAvatarFileHandle(1).Exists()).Equal(true)
@@ -296,9 +295,9 @@ func TestAccount(t *testing.T) {
       // there should be now an avatar
       w = tape.GetWithClaims("/api/v1/account", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
-      err = json.NewDecoder(w.Body).Decode(&user_return)
+      err = json.NewDecoder(w.Body).Decode(&userReturned)
       g.Assert(err).Equal(nil)
-      g.Assert(user_return.AvatarURL.Valid).Equal(true)
+      g.Assert(userReturned.AvatarURL.Valid).Equal(true)
 
       w = tape.GetWithClaims("/api/v1/account/avatar", 1, true)
       g.Assert(err).Equal(nil)
@@ -320,14 +319,14 @@ func TestAccount(t *testing.T) {
       w := tape.GetWithClaims("/api/v1/account", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      user_return := &userResponse{}
-      err := json.NewDecoder(w.Body).Decode(user_return)
+      userReturned := &userResponse{}
+      err := json.NewDecoder(w.Body).Decode(userReturned)
       g.Assert(err).Equal(nil)
-      g.Assert(user_return.AvatarURL.Valid).Equal(false)
+      g.Assert(userReturned.AvatarURL.Valid).Equal(false)
 
       // upload avatar
-      avatar_filename := fmt.Sprintf("%s/default-avatar.png", viper.GetString("fixtures_dir"))
-      w, err = tape.UploadWithClaims("/api/v1/account/avatar", avatar_filename, "image/png", 1, true)
+      avatarFilename := fmt.Sprintf("%s/default-avatar.png", viper.GetString("fixtures_dir"))
+      w, err = tape.UploadWithClaims("/api/v1/account/avatar", avatarFilename, "image/png", 1, true)
       g.Assert(err).Equal(nil)
       g.Assert(w.Code).Equal(http.StatusOK)
       g.Assert(helper.NewAvatarFileHandle(1).Exists()).Equal(true)
@@ -339,9 +338,9 @@ func TestAccount(t *testing.T) {
       // there should be now an avatar
       w = tape.GetWithClaims("/api/v1/account", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
-      err = json.NewDecoder(w.Body).Decode(&user_return)
+      err = json.NewDecoder(w.Body).Decode(&userReturned)
       g.Assert(err).Equal(nil)
-      g.Assert(user_return.AvatarURL.Valid).Equal(true)
+      g.Assert(userReturned.AvatarURL.Valid).Equal(true)
 
       w = tape.GetWithClaims("/api/v1/account/avatar", 1, true)
       g.Assert(err).Equal(nil)
@@ -374,10 +373,10 @@ func TestAccount(t *testing.T) {
       w := tape.GetWithClaims("/api/v1/account", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      user_return := &userResponse{}
-      err = json.NewDecoder(w.Body).Decode(user_return)
+      userReturned := &userResponse{}
+      err = json.NewDecoder(w.Body).Decode(userReturned)
       g.Assert(err).Equal(nil)
-      g.Assert(user_return.AvatarURL.Valid).Equal(false)
+      g.Assert(userReturned.AvatarURL.Valid).Equal(false)
 
       // upload avatar
       w, err = tape.UploadWithClaims("/api/v1/account/avatar", "/tmp/foo.jpg", "image/jpg", 1, true)
@@ -394,8 +393,8 @@ func TestAccount(t *testing.T) {
       g.Assert(helper.NewAvatarFileHandle(1).Exists()).Equal(false)
 
       // upload avatar
-      avatar_filename := fmt.Sprintf("%s/default-avatar.jpg", viper.GetString("fixtures_dir"))
-      w, err := tape.UploadWithClaims("/api/v1/account/avatar", avatar_filename, "image/jpg", 1, false)
+      avatarFilename := fmt.Sprintf("%s/default-avatar.jpg", viper.GetString("fixtures_dir"))
+      w, err := tape.UploadWithClaims("/api/v1/account/avatar", avatarFilename, "image/jpg", 1, false)
       g.Assert(err).Equal(nil)
       g.Assert(w.Code).Equal(http.StatusOK)
       g.Assert(helper.NewAvatarFileHandle(1).Exists()).Equal(true)
@@ -404,10 +403,10 @@ func TestAccount(t *testing.T) {
       w = tape.GetWithClaims("/api/v1/account", 1, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      user_return := &userResponse{}
-      err = json.NewDecoder(w.Body).Decode(user_return)
+      userReturned := &userResponse{}
+      err = json.NewDecoder(w.Body).Decode(userReturned)
       g.Assert(err).Equal(nil)
-      g.Assert(user_return.AvatarURL.Valid).Equal(true)
+      g.Assert(userReturned.AvatarURL.Valid).Equal(true)
 
       // delete
       w = tape.DeleteWithClaims("/api/v1/account/avatar", 1, false)

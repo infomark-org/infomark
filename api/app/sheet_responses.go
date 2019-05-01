@@ -67,12 +67,14 @@ func (rs *SheetResource) newSheetListResponse(givenRole authorize.CourseRole, Sh
 	return list
 }
 
+// TaskPointsResponse returns a performance summary for a task and student
 type TaskPointsResponse struct {
 	AquiredPoints int `json:"acquired_points" example:"58"`
 	MaxPoints     int `json:"max_points" example:"90"`
 	TaskID        int `json:"task_id" example:"2"`
 }
 
+// Render post-processes a TaskPointsResponse.
 func (body *TaskPointsResponse) Render(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }

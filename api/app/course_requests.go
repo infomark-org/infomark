@@ -46,30 +46,30 @@ func (body *courseRequest) Bind(r *http.Request) error {
 
 }
 
-func (m *courseRequest) Validate() error {
-	if m.EndsAt.Sub(m.BeginsAt).Seconds() < 0 {
+func (body *courseRequest) Validate() error {
+	if body.EndsAt.Sub(body.BeginsAt).Seconds() < 0 {
 		return errors.New("ends_at should be later than begins_at")
 	}
 
-	return validation.ValidateStruct(m,
+	return validation.ValidateStruct(body,
 		validation.Field(
-			&m.Name,
+			&body.Name,
 			validation.Required,
 		),
 		validation.Field(
-			&m.Description,
+			&body.Description,
 			validation.Required,
 		),
 		validation.Field(
-			&m.BeginsAt,
+			&body.BeginsAt,
 			validation.Required,
 		),
 		validation.Field(
-			&m.EndsAt,
+			&body.EndsAt,
 			validation.Required,
 		),
 		validation.Field(
-			&m.RequiredPercentage,
+			&body.RequiredPercentage,
 			validation.Min(0),
 		),
 	)

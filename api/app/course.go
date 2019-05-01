@@ -595,6 +595,7 @@ func (rs *CourseResource) BidsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // .............................................................................
+
 // Context middleware is used to load an Course object from
 // the URL parameter `courseID` passed through as the request. In case
 // the Course could not be found, we stop here and return a 404.
@@ -620,14 +621,15 @@ func (rs *CourseResource) Context(next http.Handler) http.Handler {
     }
 
     // serve next
-    ctx := context.WithValue(r.Context(), "course", course)
+    ctx := context.WithValue(r.Context(), ctxKeyCourse, course)
     next.ServeHTTP(w, r.WithContext(ctx))
   })
 }
 
+// RoleContext middleware extracts the role of an identity in a given course
 func (rs *CourseResource) RoleContext(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-    course := r.Context().Value("course").(*model.Course)
+    course := r.Context().Value(ctxKeyCourse).(*model.Course)
     accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
 
     // find role in the course
@@ -642,7 +644,7 @@ func (rs *CourseResource) RoleContext(next http.Handler) http.Handler {
     }
 
     // serve next
-    ctx := context.WithValue(r.Context(), "course_role", courseRole)
+    ctx := context.WithValue(r.Context(), ctxKeyCourseRole, courseRole)
     next.ServeHTTP(w, r.WithContext(ctx))
   })
 }

@@ -34,6 +34,11 @@ import (
   sredis "github.com/ulule/limiter/v3/drivers/store/redis"
 )
 
+// same as app/api/commong.go
+const (
+  ctxKeyAccessClaim key = iota // must be 0 to work with the auth-package
+)
+
 // RequiredValidAccessClaimsMiddleware tries to get information about the identity which
 // issues a request by looking into the authorization header and then into
 // the cookie.
@@ -83,7 +88,7 @@ func RequiredValidAccessClaims(next http.Handler) http.Handler {
 
     // nothing given
     // serve next
-    ctx := context.WithValue(r.Context(), "access_claims", accessClaims)
+    ctx := context.WithValue(r.Context(), ctxKeyAccessClaim, accessClaims)
     next.ServeHTTP(w, r.WithContext(ctx))
     return
 

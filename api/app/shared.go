@@ -18,4 +18,5 @@
 
 package app
 
+// H is a wrapper for convenience
 type H map[string]interface{}

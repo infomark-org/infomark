@@ -80,12 +80,12 @@ func TestAuth(t *testing.T) {
     g.It("Should not login when confirm email token is set", func() {
 
       // tamper confirmation token reset token
-      user_before, err := stores.User.Get(1)
+      userBefore, err := stores.User.Get(1)
       g.Assert(err).Equal(nil)
-      g.Assert(user_before.Email).Equal("test@uni-tuebingen.de")
-      g.Assert(user_before.ConfirmEmailToken.Valid).Equal(false)
-      user_before.ConfirmEmailToken = null.StringFrom("testtoken")
-      stores.User.Update(user_before)
+      g.Assert(userBefore.Email).Equal("test@uni-tuebingen.de")
+      g.Assert(userBefore.ConfirmEmailToken.Valid).Equal(false)
+      userBefore.ConfirmEmailToken = null.StringFrom("testtoken")
+      stores.User.Update(userBefore)
 
       w = tape.Post("/api/v1/auth/sessions",
         H{
@@ -120,10 +120,10 @@ func TestAuth(t *testing.T) {
     g.It("Correct Password-Reset-Token will change password", func() {
 
       // state before
-      user_before, err := stores.User.Get(1)
+      userBefore, err := stores.User.Get(1)
       g.Assert(err).Equal(nil)
-      g.Assert(user_before.Email).Equal("test@uni-tuebingen.de")
-      g.Assert(user_before.ResetPasswordToken.Valid).Equal(false)
+      g.Assert(userBefore.Email).Equal("test@uni-tuebingen.de")
+      g.Assert(userBefore.ResetPasswordToken.Valid).Equal(false)
 
       w = tape.Post("/api/v1/auth/request_password_reset",
         H{
@@ -133,31 +133,31 @@ func TestAuth(t *testing.T) {
       g.Assert(w.Code).Equal(http.StatusOK)
 
       // state after request
-      user_after, err := stores.User.Get(1)
+      userAfter, err := stores.User.Get(1)
       g.Assert(err).Equal(nil)
-      g.Assert(user_after.Email).Equal("test@uni-tuebingen.de")
-      g.Assert(user_after.ResetPasswordToken.Valid).Equal(true)
+      g.Assert(userAfter.Email).Equal("test@uni-tuebingen.de")
+      g.Assert(userAfter.ResetPasswordToken.Valid).Equal(true)
 
       // use token to reset password
       w = tape.Post("/api/v1/auth/update_password",
         H{
-          "reset_password_token": user_after.ResetPasswordToken.String,
+          "reset_password_token": userAfter.ResetPasswordToken.String,
           "plain_password":       "new_password",
           "email":                "test@uni-tuebingen.de",
         },
       )
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      user_after2, err := stores.User.Get(1)
+      userAfter2, err := stores.User.Get(1)
       g.Assert(err).Equal(nil)
-      g.Assert(user_after2.Email).Equal("test@uni-tuebingen.de")
-      g.Assert(user_after2.ResetPasswordToken.Valid).Equal(false)
+      g.Assert(userAfter2.Email).Equal("test@uni-tuebingen.de")
+      g.Assert(userAfter2.ResetPasswordToken.Valid).Equal(false)
 
-      password_valid := auth.CheckPasswordHash("new_password", user_after2.EncryptedPassword)
-      g.Assert(password_valid).Equal(true)
+      isPasswordValid := auth.CheckPasswordHash("new_password", userAfter2.EncryptedPassword)
+      g.Assert(isPasswordValid).Equal(true)
 
-      password_valid = auth.CheckPasswordHash("test", user_after2.EncryptedPassword)
-      g.Assert(password_valid).Equal(false)
+      isPasswordValid = auth.CheckPasswordHash("test", userAfter2.EncryptedPassword)
+      g.Assert(isPasswordValid).Equal(false)
     })
 
     g.It("Invalid Password-Reset-Token is denied", func() {
@@ -170,20 +170,20 @@ func TestAuth(t *testing.T) {
       )
       g.Assert(w.Code).Equal(http.StatusBadRequest)
 
-      user_after, err := stores.User.Get(1)
+      userAfter, err := stores.User.Get(1)
       g.Assert(err).Equal(nil)
-      g.Assert(user_after.Email).Equal("test@uni-tuebingen.de")
+      g.Assert(userAfter.Email).Equal("test@uni-tuebingen.de")
     })
 
     g.It("Invalid Email-Confirmation-Token is denied", func() {
 
       // setup confirmation token
-      user_before, err := stores.User.Get(1)
+      userBefore, err := stores.User.Get(1)
       g.Assert(err).Equal(nil)
-      g.Assert(user_before.Email).Equal("test@uni-tuebingen.de")
-      user_before.ConfirmEmailToken = null.StringFrom("testtoken")
-      stores.User.Update(user_before)
-      g.Assert(user_before.ConfirmEmailToken.Valid).Equal(true)
+      g.Assert(userBefore.Email).Equal("test@uni-tuebingen.de")
+      userBefore.ConfirmEmailToken = null.StringFrom("testtoken")
+      stores.User.Update(userBefore)
+      g.Assert(userBefore.ConfirmEmailToken.Valid).Equal(true)
 
       w = tape.Post("/api/v1/auth/confirm_email",
         H{
@@ -193,20 +193,20 @@ func TestAuth(t *testing.T) {
       )
       g.Assert(w.Code).Equal(http.StatusBadRequest)
 
-      user_after, err := stores.User.Get(1)
+      userAfter, err := stores.User.Get(1)
       g.Assert(err).Equal(nil)
-      g.Assert(user_after.ConfirmEmailToken.Valid).Equal(true)
+      g.Assert(userAfter.ConfirmEmailToken.Valid).Equal(true)
     })
 
     g.It("Correct Email-Confirmation-Token will confirm email", func() {
 
       // setup confirmation token
-      user_before, err := stores.User.Get(1)
+      userBefore, err := stores.User.Get(1)
       g.Assert(err).Equal(nil)
-      g.Assert(user_before.Email).Equal("test@uni-tuebingen.de")
-      user_before.ConfirmEmailToken = null.StringFrom("testtoken")
-      stores.User.Update(user_before)
-      g.Assert(user_before.ConfirmEmailToken.Valid).Equal(true)
+      g.Assert(userBefore.Email).Equal("test@uni-tuebingen.de")
+      userBefore.ConfirmEmailToken = null.StringFrom("testtoken")
+      stores.User.Update(userBefore)
+      g.Assert(userBefore.ConfirmEmailToken.Valid).Equal(true)
 
       w = tape.Post("/api/v1/auth/confirm_email",
         H{
@@ -216,9 +216,9 @@ func TestAuth(t *testing.T) {
       )
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      user_after, err := stores.User.Get(1)
+      userAfter, err := stores.User.Get(1)
       g.Assert(err).Equal(nil)
-      g.Assert(user_after.ConfirmEmailToken.Valid).Equal(false)
+      g.Assert(userAfter.ConfirmEmailToken.Valid).Equal(false)
     })
 
     g.It("Should limit requests per minute to do an login", func() {

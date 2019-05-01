@@ -400,17 +400,17 @@ func (rs *GroupResource) EditGroupEnrollmentHandler(w http.ResponseWriter, r *ht
 // SUMMARY:  change or add the bid for enrolling in a group
 func (rs *GroupResource) ChangeBidHandler(w http.ResponseWriter, r *http.Request) {
 
-  courseRole := r.Context().Value("course_role").(authorize.CourseRole)
+  courseRole := r.Context().Value(ctxKeyCourseRole).(authorize.CourseRole)
 
   if courseRole != authorize.STUDENT {
     render.Render(w, r, ErrBadRequestWithDetails(errors.New("Only students in a course can bid for a group")))
     return
   }
 
-  accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
+  accessClaims := r.Context().Value(ctxKeyAccessClaim).(*authenticate.AccessClaims)
 
   // start from empty Request
-  group := r.Context().Value("group").(*model.Group)
+  group := r.Context().Value(ctxKeyGroup).(*model.Group)
 
   data := &groupBidRequest{}
 
@@ -420,8 +420,8 @@ func (rs *GroupResource) ChangeBidHandler(w http.ResponseWriter, r *http.Request
     return
   }
 
-  _, exists_err := rs.Stores.Group.GetBidOfUserForGroup(accessClaims.LoginID, group.ID)
-  if exists_err == nil {
+  _, existsErr := rs.Stores.Group.GetBidOfUserForGroup(accessClaims.LoginID, group.ID)
+  if existsErr == nil {
     // exists
     // update database entry
     if _, err := rs.Stores.Group.UpdateBidOfUserForGroup(accessClaims.LoginID, group.ID, data.Bid); err != nil {
@@ -497,13 +497,14 @@ func (rs *GroupResource) SendEmailHandler(w http.ResponseWriter, r *http.Request
 }
 
 // .............................................................................
+
 // Context middleware is used to load an group object from
 // the URL parameter `TaskID` passed through as the request. In case
 // the group could not be found, we stop here and return a 404.
 // We do NOT check whether the identity is authorized to get this group.
 func (rs *GroupResource) Context(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-    course_from_url := r.Context().Value("course").(*model.Course)
+    courseFromURL := r.Context().Value(ctxKeyCourse).(*model.Course)
 
     var groupID int64
     var err error
@@ -521,7 +522,7 @@ func (rs *GroupResource) Context(next http.Handler) http.Handler {
       return
     }
 
-    ctx := context.WithValue(r.Context(), "group", group)
+    ctx := context.WithValue(r.Context(), ctxKeyGroup, group)
 
     // when there is a groupID in the url, there is NOT a courseID in the url,
     // BUT: when there is a group, there is a course
@@ -532,12 +533,12 @@ func (rs *GroupResource) Context(next http.Handler) http.Handler {
       return
     }
 
-    if course_from_url.ID != course.ID {
+    if courseFromURL.ID != course.ID {
       render.Render(w, r, ErrNotFound)
       return
     }
 
-    ctx = context.WithValue(ctx, "course", course)
+    ctx = context.WithValue(ctx, ctxKeyCourse, course)
 
     // serve next
     next.ServeHTTP(w, r.WithContext(ctx))

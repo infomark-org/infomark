@@ -58,35 +58,35 @@ func TestGroup(t *testing.T) {
       w := tape.GetWithClaims("/api/v1/courses/1/groups", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      groups_actual := []GroupResponse{}
-      err := json.NewDecoder(w.Body).Decode(&groups_actual)
+      groupsActual := []GroupResponse{}
+      err := json.NewDecoder(w.Body).Decode(&groupsActual)
       g.Assert(err).Equal(nil)
-      g.Assert(len(groups_actual)).Equal(10)
+      g.Assert(len(groupsActual)).Equal(10)
     })
 
     g.It("Should get a specific group", func() {
-      entry_expected, err := stores.Group.Get(1)
+      entryExpected, err := stores.Group.Get(1)
       g.Assert(err).Equal(nil)
 
       w := tape.GetWithClaims("/api/v1/courses/1/groups/1", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      entry_actual := &GroupResponse{}
-      err = json.NewDecoder(w.Body).Decode(entry_actual)
+      entryActual := &GroupResponse{}
+      err = json.NewDecoder(w.Body).Decode(entryActual)
       g.Assert(err).Equal(nil)
 
-      g.Assert(entry_actual.ID).Equal(entry_expected.ID)
-      g.Assert(entry_actual.Tutor.ID).Equal(entry_expected.TutorID)
-      g.Assert(entry_actual.CourseID).Equal(entry_expected.CourseID)
-      g.Assert(entry_actual.Description).Equal(entry_expected.Description)
+      g.Assert(entryActual.ID).Equal(entryExpected.ID)
+      g.Assert(entryActual.Tutor.ID).Equal(entryExpected.TutorID)
+      g.Assert(entryActual.CourseID).Equal(entryExpected.CourseID)
+      g.Assert(entryActual.Description).Equal(entryExpected.Description)
 
-      t, err := stores.User.Get(entry_expected.TutorID)
+      t, err := stores.User.Get(entryExpected.TutorID)
       g.Assert(err).Equal(nil)
-      g.Assert(entry_actual.Tutor.FirstName).Equal(t.FirstName)
-      g.Assert(entry_actual.Tutor.LastName).Equal(t.LastName)
-      g.Assert(entry_actual.Tutor.AvatarURL).Equal(t.AvatarURL)
-      g.Assert(entry_actual.Tutor.Email).Equal(t.Email)
-      g.Assert(entry_actual.Tutor.Language).Equal(t.Language)
+      g.Assert(entryActual.Tutor.FirstName).Equal(t.FirstName)
+      g.Assert(entryActual.Tutor.LastName).Equal(t.LastName)
+      g.Assert(entryActual.Tutor.AvatarURL).Equal(t.AvatarURL)
+      g.Assert(entryActual.Tutor.Email).Equal(t.Email)
+      g.Assert(entryActual.Tutor.Language).Equal(t.Language)
     })
 
     g.It("Creating should require claims", func() {
@@ -99,47 +99,47 @@ func TestGroup(t *testing.T) {
     })
 
     g.It("Should create valid group", func() {
-      entries_before, err := stores.Group.GroupsOfCourse(1)
+      entriesBefore, err := stores.Group.GroupsOfCourse(1)
       g.Assert(err).Equal(nil)
 
       tutorID := int64(1)
 
-      entry_sent := helper.H{
+      entrySent := helper.H{
         "tutor": helper.H{
           "id": tutorID,
         },
         "description": "blah blahe",
       }
 
-      // err = entry_sent.Validate()
+      // err = entrySent.Validate()
       // g.Assert(err).Equal(nil)
 
-      w := tape.PostWithClaims("/api/v1/courses/1/groups", entry_sent, 1, true)
+      w := tape.PostWithClaims("/api/v1/courses/1/groups", entrySent, 1, true)
       g.Assert(w.Code).Equal(http.StatusCreated)
 
-      entry_return := &GroupResponse{}
-      err = json.NewDecoder(w.Body).Decode(&entry_return)
-      g.Assert(entry_return.Tutor.ID).Equal(tutorID)
-      g.Assert(entry_return.CourseID).Equal(int64(1))
-      g.Assert(entry_return.Description).Equal("blah blahe")
+      entryReturn := &GroupResponse{}
+      err = json.NewDecoder(w.Body).Decode(&entryReturn)
+      g.Assert(entryReturn.Tutor.ID).Equal(tutorID)
+      g.Assert(entryReturn.CourseID).Equal(int64(1))
+      g.Assert(entryReturn.Description).Equal("blah blahe")
 
       t, err := stores.User.Get(1)
       g.Assert(err).Equal(nil)
-      g.Assert(entry_return.Tutor.FirstName).Equal(t.FirstName)
-      g.Assert(entry_return.Tutor.LastName).Equal(t.LastName)
-      g.Assert(entry_return.Tutor.AvatarURL).Equal(t.AvatarURL)
-      g.Assert(entry_return.Tutor.Email).Equal(t.Email)
-      g.Assert(entry_return.Tutor.Language).Equal(t.Language)
+      g.Assert(entryReturn.Tutor.FirstName).Equal(t.FirstName)
+      g.Assert(entryReturn.Tutor.LastName).Equal(t.LastName)
+      g.Assert(entryReturn.Tutor.AvatarURL).Equal(t.AvatarURL)
+      g.Assert(entryReturn.Tutor.Email).Equal(t.Email)
+      g.Assert(entryReturn.Tutor.Language).Equal(t.Language)
 
-      entries_after, err := stores.Group.GroupsOfCourse(1)
+      entriesAfter, err := stores.Group.GroupsOfCourse(1)
       g.Assert(err).Equal(nil)
-      g.Assert(len(entries_after)).Equal(len(entries_before) + 1)
+      g.Assert(len(entriesAfter)).Equal(len(entriesBefore) + 1)
     })
 
     g.It("Should update a group", func() {
       // group (id=1) belongs to course(id=1)
       tutorID := int64(9)
-      entry_sent := helper.H{
+      entrySent := helper.H{
         "tutor": helper.H{
           "id": tutorID,
         },
@@ -147,35 +147,35 @@ func TestGroup(t *testing.T) {
       }
 
       // students
-      w := tape.PlayDataWithClaims("PUT", "/api/v1/courses/1/groups/1", entry_sent, 112, false)
+      w := tape.PlayDataWithClaims("PUT", "/api/v1/courses/1/groups/1", entrySent, 112, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // tutors
-      w = tape.PlayDataWithClaims("PUT", "/api/v1/courses/1/groups/1", entry_sent, 2, false)
+      w = tape.PlayDataWithClaims("PUT", "/api/v1/courses/1/groups/1", entrySent, 2, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // admin
-      w = tape.PlayDataWithClaims("PUT", "/api/v1/courses/1/groups/1", entry_sent, 1, false)
+      w = tape.PlayDataWithClaims("PUT", "/api/v1/courses/1/groups/1", entrySent, 1, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      entry_after, err := stores.Group.Get(1)
+      entryAfter, err := stores.Group.Get(1)
       g.Assert(err).Equal(nil)
 
-      g.Assert(entry_after.TutorID).Equal(tutorID)
-      g.Assert(entry_after.CourseID).Equal(int64(1))
+      g.Assert(entryAfter.TutorID).Equal(tutorID)
+      g.Assert(entryAfter.CourseID).Equal(int64(1))
     })
 
     g.It("Should delete when valid access claims", func() {
-      entries_before, err := stores.Group.GetAll()
+      entriesBefore, err := stores.Group.GetAll()
       g.Assert(err).Equal(nil)
 
       w := tape.Delete("/api/v1/courses/1/groups/1")
       g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
       // verify nothing has changes
-      entries_after, err := stores.Group.GetAll()
+      entriesAfter, err := stores.Group.GetAll()
       g.Assert(err).Equal(nil)
-      g.Assert(len(entries_after)).Equal(len(entries_before))
+      g.Assert(len(entriesAfter)).Equal(len(entriesBefore))
 
       // students
       w = tape.DeleteWithClaims("/api/v1/courses/1/groups/1", 112, false)
@@ -190,9 +190,9 @@ func TestGroup(t *testing.T) {
       g.Assert(w.Code).Equal(http.StatusOK)
 
       // verify a sheet less exists
-      entries_after, err = stores.Group.GetAll()
+      entriesAfter, err = stores.Group.GetAll()
       g.Assert(err).Equal(nil)
-      g.Assert(len(entries_after)).Equal(len(entries_before) - 1)
+      g.Assert(len(entriesAfter)).Equal(len(entriesBefore) - 1)
     })
 
     g.It("Should change a bid to a group", func() {
@@ -216,10 +216,10 @@ func TestGroup(t *testing.T) {
 
       w = tape.PostWithClaims("/api/v1/courses/1/groups/1/bids", H{"bid": 4}, userID, false)
       g.Assert(w.Code).Equal(http.StatusCreated)
-      entry_return := &GroupBidResponse{}
-      err := json.NewDecoder(w.Body).Decode(&entry_return)
+      entryReturn := &GroupBidResponse{}
+      err := json.NewDecoder(w.Body).Decode(&entryReturn)
       g.Assert(err).Equal(nil)
-      g.Assert(entry_return.Bid).Equal(4)
+      g.Assert(entryReturn.Bid).Equal(4)
 
     })
 
@@ -233,12 +233,12 @@ func TestGroup(t *testing.T) {
       w = tape.GetWithClaims("/api/v1/courses/1/groups/own", loginID, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      entry_return := []GroupResponse{}
-      err := json.NewDecoder(w.Body).Decode(&entry_return)
+      entryReturn := []GroupResponse{}
+      err := json.NewDecoder(w.Body).Decode(&entryReturn)
       g.Assert(err).Equal(nil)
 
       // we cannot check the other entries
-      g.Assert(entry_return[0].CourseID).Equal(int64(1))
+      g.Assert(entryReturn[0].CourseID).Equal(int64(1))
     })
 
     g.It("Find my group when being a tutor", func() {
@@ -251,21 +251,21 @@ func TestGroup(t *testing.T) {
       w = tape.GetWithClaims("/api/v1/courses/1/groups/own", loginID, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      entry_return := []GroupResponse{}
-      err := json.NewDecoder(w.Body).Decode(&entry_return)
+      entryReturn := []GroupResponse{}
+      err := json.NewDecoder(w.Body).Decode(&entryReturn)
       g.Assert(err).Equal(nil)
 
       // we cannot check the other entries
-      g.Assert(entry_return[0].CourseID).Equal(int64(1))
-      g.Assert(entry_return[0].Tutor.ID).Equal(loginID)
+      g.Assert(entryReturn[0].CourseID).Equal(int64(1))
+      g.Assert(entryReturn[0].Tutor.ID).Equal(loginID)
 
       t, err := stores.User.Get(loginID)
       g.Assert(err).Equal(nil)
-      g.Assert(entry_return[0].Tutor.FirstName).Equal(t.FirstName)
-      g.Assert(entry_return[0].Tutor.LastName).Equal(t.LastName)
-      g.Assert(entry_return[0].Tutor.AvatarURL).Equal(t.AvatarURL)
-      g.Assert(entry_return[0].Tutor.Email).Equal(t.Email)
-      g.Assert(entry_return[0].Tutor.Language).Equal(t.Language)
+      g.Assert(entryReturn[0].Tutor.FirstName).Equal(t.FirstName)
+      g.Assert(entryReturn[0].Tutor.LastName).Equal(t.LastName)
+      g.Assert(entryReturn[0].Tutor.AvatarURL).Equal(t.AvatarURL)
+      g.Assert(entryReturn[0].Tutor.Email).Equal(t.Email)
+      g.Assert(entryReturn[0].Tutor.Language).Equal(t.Language)
 
     })
 
@@ -384,21 +384,21 @@ func TestGroup(t *testing.T) {
     })
 
     g.It("Should be able to filter enrollments (all)", func() {
-      group_active, err := stores.Group.Get(1)
+      groupActive, err := stores.Group.Get(1)
       g.Assert(err).Equal(nil)
 
-      number_enrollments_expected, err := DBGetInt(
+      numberEnrollmentsExpected, err := DBGetInt(
         tape,
         "SELECT count(*) FROM user_group WHERE group_id = $1",
-        group_active.ID,
+        groupActive.ID,
       )
       g.Assert(err).Equal(nil)
 
       w := tape.GetWithClaims("/api/v1/courses/1/groups/1/enrollments", 1, true)
-      enrollments_actual := []enrollmentResponse{}
-      err = json.NewDecoder(w.Body).Decode(&enrollments_actual)
+      enrollmentsActual := []enrollmentResponse{}
+      err = json.NewDecoder(w.Body).Decode(&enrollmentsActual)
       g.Assert(err).Equal(nil)
-      g.Assert(len(enrollments_actual)).Equal(number_enrollments_expected)
+      g.Assert(len(enrollmentsActual)).Equal(numberEnrollmentsExpected)
     })
 
     g.AfterEach(func() {

@@ -379,15 +379,15 @@ func (rs *GradeResource) IndexMissingHandler(w http.ResponseWriter, r *http.Requ
 }
 
 // .............................................................................
+
 // Context middleware is used to load an Grade object from
 // the URL parameter `TaskID` passed through as the request. In case
 // the Grade could not be found, we stop here and return a 404.
 // We do NOT check whether the identity is authorized to get this Grade.
-
 func (rs *GradeResource) Context(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-    course_from_url := r.Context().Value("course").(*model.Course)
+    courseFromURL := r.Context().Value(ctxKeyCourse).(*model.Course)
 
     var gradeID int64
     var err error
@@ -406,7 +406,7 @@ func (rs *GradeResource) Context(next http.Handler) http.Handler {
     }
 
     // serve next
-    ctx := context.WithValue(r.Context(), "grade", grade)
+    ctx := context.WithValue(r.Context(), ctxKeyGrade, grade)
 
     // when there is a gradeID in the url, there is NOT a courseID in the url,
     // BUT: when there is a grade, there is a course
@@ -417,12 +417,12 @@ func (rs *GradeResource) Context(next http.Handler) http.Handler {
       return
     }
 
-    if course_from_url.ID != course.ID {
+    if courseFromURL.ID != course.ID {
       render.Render(w, r, ErrNotFound)
       return
     }
 
-    ctx = context.WithValue(ctx, "course", course)
+    ctx = context.WithValue(ctx, ctxKeyCourse, course)
 
     next.ServeHTTP(w, r.WithContext(ctx))
   })

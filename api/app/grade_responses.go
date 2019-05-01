@@ -109,7 +109,9 @@ func newGradeListResponse(Grades []model.Grade, courseID int64) []render.Rendere
   return list
 }
 
-// GradeResponse is the response payload for Grade management.
+// MissingGradeResponse is the response payload for showing tutors
+// which grades are still in the loop. We expect them to write a feedback
+// for all submissions.
 type MissingGradeResponse struct {
   Grade *struct {
     ID                    int64  `json:"id" example:"1"`
@@ -234,6 +236,8 @@ type achievementInfo struct {
   Points []int    `json:"points" example:"4"`
 }
 
+// GradeOverviewResponse captures the summary for all grades over all sheets
+// for a subset of users.
 type GradeOverviewResponse struct {
   Sheets       []sheetInfo       `json:"sheets" example:""`
   Achievements []achievementInfo `json:"achievements" example:""`

@@ -58,10 +58,10 @@ func TestMaterial(t *testing.T) {
     })
 
     g.It("Should list all materials a course (student)", func() {
-      materials_expected, err := stores.Material.MaterialsOfCourse(1, authorize.STUDENT.ToInt())
+      materialsExpected, err := stores.Material.MaterialsOfCourse(1, authorize.STUDENT.ToInt())
       g.Assert(err).Equal(nil)
 
-      for _, mat := range materials_expected {
+      for _, mat := range materialsExpected {
         mat.PublishAt = NowUTC().Add(-time.Hour)
         stores.Material.Update(&mat)
       }
@@ -73,11 +73,11 @@ func TestMaterial(t *testing.T) {
       w := tape.GetWithClaims("/api/v1/courses/1/materials", user.ID, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      materials_actual := []MaterialResponse{}
-      err = json.NewDecoder(w.Body).Decode(&materials_actual)
+      materialsActual := []MaterialResponse{}
+      err = json.NewDecoder(w.Body).Decode(&materialsActual)
       g.Assert(err).Equal(nil)
 
-      g.Assert(len(materials_actual)).Equal(len(materials_expected))
+      g.Assert(len(materialsActual)).Equal(len(materialsExpected))
     })
 
     g.It("Should list all materials a course (tutor)", func() {
@@ -89,13 +89,13 @@ func TestMaterial(t *testing.T) {
       w := tape.GetWithClaims("/api/v1/courses/1/materials", user.ID, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      materials_actual := []MaterialResponse{}
-      err = json.NewDecoder(w.Body).Decode(&materials_actual)
+      materialsActual := []MaterialResponse{}
+      err = json.NewDecoder(w.Body).Decode(&materialsActual)
       g.Assert(err).Equal(nil)
 
-      materials_expected, err := stores.Material.MaterialsOfCourse(1, authorize.TUTOR.ToInt())
+      materialsExpected, err := stores.Material.MaterialsOfCourse(1, authorize.TUTOR.ToInt())
       g.Assert(err).Equal(nil)
-      g.Assert(len(materials_actual)).Equal(len(materials_expected))
+      g.Assert(len(materialsActual)).Equal(len(materialsExpected))
     })
 
     g.It("Should list all materials a course (admin)", func() {
@@ -107,46 +107,46 @@ func TestMaterial(t *testing.T) {
       w := tape.GetWithClaims("/api/v1/courses/1/materials", user.ID, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      materials_actual := []MaterialResponse{}
-      err = json.NewDecoder(w.Body).Decode(&materials_actual)
+      materialsActual := []MaterialResponse{}
+      err = json.NewDecoder(w.Body).Decode(&materialsActual)
       g.Assert(err).Equal(nil)
 
-      materials_expected, err := stores.Material.MaterialsOfCourse(1, authorize.ADMIN.ToInt())
+      materialsExpected, err := stores.Material.MaterialsOfCourse(1, authorize.ADMIN.ToInt())
       g.Assert(err).Equal(nil)
-      g.Assert(len(materials_actual)).Equal(len(materials_expected))
+      g.Assert(len(materialsActual)).Equal(len(materialsExpected))
     })
 
     g.It("Should get a specific material", func() {
-      material_expected, err := stores.Material.Get(1)
+      materialExpected, err := stores.Material.Get(1)
       g.Assert(err).Equal(nil)
 
       w := tape.GetWithClaims("/api/v1/courses/1/materials/1", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
-      material_actual := &MaterialResponse{}
-      err = json.NewDecoder(w.Body).Decode(material_actual)
+      materialActual := &MaterialResponse{}
+      err = json.NewDecoder(w.Body).Decode(materialActual)
       g.Assert(err).Equal(nil)
 
-      g.Assert(material_actual.ID).Equal(material_expected.ID)
-      g.Assert(material_actual.Name).Equal(material_expected.Name)
-      g.Assert(material_actual.PublishAt.Equal(material_expected.PublishAt)).Equal(true)
-      g.Assert(material_actual.LectureAt.Equal(material_expected.LectureAt)).Equal(true)
+      g.Assert(materialActual.ID).Equal(materialExpected.ID)
+      g.Assert(materialActual.Name).Equal(materialExpected.Name)
+      g.Assert(materialActual.PublishAt.Equal(materialExpected.PublishAt)).Equal(true)
+      g.Assert(materialActual.LectureAt.Equal(materialExpected.LectureAt)).Equal(true)
     })
 
     g.It("Should not get a specific material (unpublish)", func() {
-      material_expected, err := stores.Material.Get(1)
+      materialExpected, err := stores.Material.Get(1)
       g.Assert(err).Equal(nil)
-      material_expected.RequiredRole = 0
-      stores.Material.Update(material_expected)
+      materialExpected.RequiredRole = 0
+      stores.Material.Update(materialExpected)
 
-      material_expected.PublishAt = NowUTC().Add(time.Hour)
-      err = stores.Material.Update(material_expected)
+      materialExpected.PublishAt = NowUTC().Add(time.Hour)
+      err = stores.Material.Update(materialExpected)
       g.Assert(err).Equal(nil)
 
       w := tape.GetWithClaims("/api/v1/courses/1/materials/1", 112, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
-      material_expected.PublishAt = NowUTC().Add(-time.Hour)
-      err = stores.Material.Update(material_expected)
+      materialExpected.PublishAt = NowUTC().Add(-time.Hour)
+      err = stores.Material.Update(materialExpected)
       g.Assert(err).Equal(nil)
 
       w = tape.GetWithClaims("/api/v1/courses/1/materials/1", 112, false)
@@ -156,16 +156,16 @@ func TestMaterial(t *testing.T) {
 
     g.It("Should create valid material for tutors", func() {
 
-      materials_before_student, err := stores.Material.MaterialsOfCourse(1, authorize.STUDENT.ToInt())
+      materialsBeforeStudent, err := stores.Material.MaterialsOfCourse(1, authorize.STUDENT.ToInt())
       g.Assert(err).Equal(nil)
 
-      materials_before_tutor, err := stores.Material.MaterialsOfCourse(1, authorize.TUTOR.ToInt())
+      materialsBeforeTutor, err := stores.Material.MaterialsOfCourse(1, authorize.TUTOR.ToInt())
       g.Assert(err).Equal(nil)
 
-      materials_before_admin, err := stores.Material.MaterialsOfCourse(1, authorize.ADMIN.ToInt())
+      materialsBeforeAdmin, err := stores.Material.MaterialsOfCourse(1, authorize.ADMIN.ToInt())
       g.Assert(err).Equal(nil)
 
-      material_sent := MaterialRequest{
+      materialSent := MaterialRequest{
         Name:         "Material_new",
         Kind:         0,
         RequiredRole: authorize.TUTOR.ToInt(),
@@ -173,53 +173,53 @@ func TestMaterial(t *testing.T) {
         LectureAt:    helper.Time(time.Now()),
       }
 
-      g.Assert(material_sent.Validate()).Equal(nil)
+      g.Assert(materialSent.Validate()).Equal(nil)
 
-      w := tape.Post("/api/v1/courses/1/materials", helper.ToH(material_sent))
+      w := tape.Post("/api/v1/courses/1/materials", helper.ToH(materialSent))
       g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
-      w = tape.PostWithClaims("/api/v1/courses/1/materials", helper.ToH(material_sent), 112, false)
+      w = tape.PostWithClaims("/api/v1/courses/1/materials", helper.ToH(materialSent), 112, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
-      w = tape.PostWithClaims("/api/v1/courses/1/materials", helper.ToH(material_sent), 2, false)
+      w = tape.PostWithClaims("/api/v1/courses/1/materials", helper.ToH(materialSent), 2, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
-      w = tape.PostWithClaims("/api/v1/courses/1/materials", helper.ToH(material_sent), 1, false)
+      w = tape.PostWithClaims("/api/v1/courses/1/materials", helper.ToH(materialSent), 1, false)
       g.Assert(w.Code).Equal(http.StatusCreated)
 
-      materials_after_student, err := stores.Material.MaterialsOfCourse(1, authorize.STUDENT.ToInt())
+      materialsAfterStudent, err := stores.Material.MaterialsOfCourse(1, authorize.STUDENT.ToInt())
       g.Assert(err).Equal(nil)
-      materials_after_tutor, err := stores.Material.MaterialsOfCourse(1, authorize.TUTOR.ToInt())
+      materialsAfterTutor, err := stores.Material.MaterialsOfCourse(1, authorize.TUTOR.ToInt())
       g.Assert(err).Equal(nil)
-      materials_after_admin, err := stores.Material.MaterialsOfCourse(1, authorize.ADMIN.ToInt())
+      materialsAfterAdmin, err := stores.Material.MaterialsOfCourse(1, authorize.ADMIN.ToInt())
       g.Assert(err).Equal(nil)
 
-      material_return := &MaterialResponse{}
-      err = json.NewDecoder(w.Body).Decode(&material_return)
+      materialReturn := &MaterialResponse{}
+      err = json.NewDecoder(w.Body).Decode(&materialReturn)
       g.Assert(err).Equal(nil)
-      g.Assert(material_return.Name).Equal(material_sent.Name)
-      g.Assert(material_return.Kind).Equal(material_sent.Kind)
-      g.Assert(material_return.RequiredRole).Equal(material_sent.RequiredRole)
-      g.Assert(material_return.PublishAt.Equal(material_sent.PublishAt)).Equal(true)
-      g.Assert(material_return.LectureAt.Equal(material_sent.LectureAt)).Equal(true)
+      g.Assert(materialReturn.Name).Equal(materialSent.Name)
+      g.Assert(materialReturn.Kind).Equal(materialSent.Kind)
+      g.Assert(materialReturn.RequiredRole).Equal(materialSent.RequiredRole)
+      g.Assert(materialReturn.PublishAt.Equal(materialSent.PublishAt)).Equal(true)
+      g.Assert(materialReturn.LectureAt.Equal(materialSent.LectureAt)).Equal(true)
 
-      g.Assert(len(materials_after_student)).Equal(len(materials_before_student))
-      g.Assert(len(materials_after_tutor)).Equal(len(materials_before_tutor) + 1)
-      g.Assert(len(materials_after_admin)).Equal(len(materials_before_admin) + 1)
+      g.Assert(len(materialsAfterStudent)).Equal(len(materialsBeforeStudent))
+      g.Assert(len(materialsAfterTutor)).Equal(len(materialsBeforeTutor) + 1)
+      g.Assert(len(materialsAfterAdmin)).Equal(len(materialsBeforeAdmin) + 1)
     })
 
     g.It("Should create valid material for admins", func() {
 
-      materials_before_student, err := stores.Material.MaterialsOfCourse(1, authorize.STUDENT.ToInt())
+      materialsBeforeStudent, err := stores.Material.MaterialsOfCourse(1, authorize.STUDENT.ToInt())
       g.Assert(err).Equal(nil)
 
-      materials_before_tutor, err := stores.Material.MaterialsOfCourse(1, authorize.TUTOR.ToInt())
+      materialsBeforeTutor, err := stores.Material.MaterialsOfCourse(1, authorize.TUTOR.ToInt())
       g.Assert(err).Equal(nil)
 
-      materials_before_admin, err := stores.Material.MaterialsOfCourse(1, authorize.ADMIN.ToInt())
+      materialsBeforeAdmin, err := stores.Material.MaterialsOfCourse(1, authorize.ADMIN.ToInt())
       g.Assert(err).Equal(nil)
 
-      material_sent := MaterialRequest{
+      materialSent := MaterialRequest{
         Name:         "Material_new",
         Kind:         0,
         RequiredRole: authorize.ADMIN.ToInt(),
@@ -227,39 +227,39 @@ func TestMaterial(t *testing.T) {
         LectureAt:    helper.Time(time.Now()),
       }
 
-      g.Assert(material_sent.Validate()).Equal(nil)
+      g.Assert(materialSent.Validate()).Equal(nil)
 
-      w := tape.Post("/api/v1/courses/1/materials", helper.ToH(material_sent))
+      w := tape.Post("/api/v1/courses/1/materials", helper.ToH(materialSent))
       g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
-      w = tape.PostWithClaims("/api/v1/courses/1/materials", helper.ToH(material_sent), 112, false)
+      w = tape.PostWithClaims("/api/v1/courses/1/materials", helper.ToH(materialSent), 112, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
-      w = tape.PostWithClaims("/api/v1/courses/1/materials", helper.ToH(material_sent), 2, false)
+      w = tape.PostWithClaims("/api/v1/courses/1/materials", helper.ToH(materialSent), 2, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
-      w = tape.PostWithClaims("/api/v1/courses/1/materials", helper.ToH(material_sent), 1, false)
+      w = tape.PostWithClaims("/api/v1/courses/1/materials", helper.ToH(materialSent), 1, false)
       g.Assert(w.Code).Equal(http.StatusCreated)
 
-      materials_after_student, err := stores.Material.MaterialsOfCourse(1, authorize.STUDENT.ToInt())
+      materialsAfterStudent, err := stores.Material.MaterialsOfCourse(1, authorize.STUDENT.ToInt())
       g.Assert(err).Equal(nil)
-      materials_after_tutor, err := stores.Material.MaterialsOfCourse(1, authorize.TUTOR.ToInt())
+      materialsAfterTutor, err := stores.Material.MaterialsOfCourse(1, authorize.TUTOR.ToInt())
       g.Assert(err).Equal(nil)
-      materials_after_admin, err := stores.Material.MaterialsOfCourse(1, authorize.ADMIN.ToInt())
+      materialsAfterAdmin, err := stores.Material.MaterialsOfCourse(1, authorize.ADMIN.ToInt())
       g.Assert(err).Equal(nil)
 
-      material_return := &MaterialResponse{}
-      err = json.NewDecoder(w.Body).Decode(&material_return)
+      materialReturn := &MaterialResponse{}
+      err = json.NewDecoder(w.Body).Decode(&materialReturn)
       g.Assert(err).Equal(nil)
-      g.Assert(material_return.Name).Equal(material_sent.Name)
-      g.Assert(material_return.Kind).Equal(material_sent.Kind)
-      g.Assert(material_return.RequiredRole).Equal(material_sent.RequiredRole)
-      g.Assert(material_return.PublishAt.Equal(material_sent.PublishAt)).Equal(true)
-      g.Assert(material_return.LectureAt.Equal(material_sent.LectureAt)).Equal(true)
+      g.Assert(materialReturn.Name).Equal(materialSent.Name)
+      g.Assert(materialReturn.Kind).Equal(materialSent.Kind)
+      g.Assert(materialReturn.RequiredRole).Equal(materialSent.RequiredRole)
+      g.Assert(materialReturn.PublishAt.Equal(materialSent.PublishAt)).Equal(true)
+      g.Assert(materialReturn.LectureAt.Equal(materialSent.LectureAt)).Equal(true)
 
-      g.Assert(len(materials_after_student)).Equal(len(materials_before_student))
-      g.Assert(len(materials_after_tutor)).Equal(len(materials_before_tutor))
-      g.Assert(len(materials_after_admin)).Equal(len(materials_before_admin) + 1)
+      g.Assert(len(materialsAfterStudent)).Equal(len(materialsBeforeStudent))
+      g.Assert(len(materialsAfterTutor)).Equal(len(materialsBeforeTutor))
+      g.Assert(len(materialsAfterAdmin)).Equal(len(materialsBeforeAdmin) + 1)
     })
 
     g.It("Creating a material should require body", func() {
@@ -389,7 +389,7 @@ func TestMaterial(t *testing.T) {
       err = stores.Material.Update(material)
       g.Assert(err).Equal(nil)
 
-      material_sent := MaterialRequest{
+      materialSent := MaterialRequest{
         Name:      "Material_new",
         Kind:      0,
         PublishAt: helper.Time(time.Now()),
@@ -397,23 +397,23 @@ func TestMaterial(t *testing.T) {
       }
 
       // students
-      w := tape.PutWithClaims("/api/v1/courses/1/materials/1", tape.ToH(material_sent), 122, false)
+      w := tape.PutWithClaims("/api/v1/courses/1/materials/1", tape.ToH(materialSent), 122, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // tutors
-      w = tape.PutWithClaims("/api/v1/courses/1/materials/1", tape.ToH(material_sent), 2, false)
+      w = tape.PutWithClaims("/api/v1/courses/1/materials/1", tape.ToH(materialSent), 2, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // admin
-      w = tape.PutWithClaims("/api/v1/courses/1/materials/1", tape.ToH(material_sent), 1, true)
+      w = tape.PutWithClaims("/api/v1/courses/1/materials/1", tape.ToH(materialSent), 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      material_after, err := stores.Material.Get(1)
+      materialAfter, err := stores.Material.Get(1)
       g.Assert(err).Equal(nil)
-      g.Assert(material_after.Name).Equal(material_sent.Name)
-      g.Assert(material_after.Kind).Equal(material_sent.Kind)
-      g.Assert(material_after.PublishAt.Equal(material_sent.PublishAt)).Equal(true)
-      g.Assert(material_after.LectureAt.Equal(material_sent.LectureAt)).Equal(true)
+      g.Assert(materialAfter.Name).Equal(materialSent.Name)
+      g.Assert(materialAfter.Kind).Equal(materialSent.Kind)
+      g.Assert(materialAfter.PublishAt.Equal(materialSent.PublishAt)).Equal(true)
+      g.Assert(materialAfter.LectureAt.Equal(materialSent.LectureAt)).Equal(true)
     })
 
     g.It("Should delete when valid access claims", func() {
@@ -425,7 +425,7 @@ func TestMaterial(t *testing.T) {
       err = stores.Material.Update(material)
       g.Assert(err).Equal(nil)
 
-      entries_before, err := stores.Material.GetAll()
+      entriesBefore, err := stores.Material.GetAll()
       g.Assert(err).Equal(nil)
 
       w := tape.Delete("/api/v1/courses/1/materials/1")
@@ -440,18 +440,18 @@ func TestMaterial(t *testing.T) {
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // verify nothing has changes
-      entries_after, err := stores.Material.GetAll()
+      entriesAfter, err := stores.Material.GetAll()
       g.Assert(err).Equal(nil)
-      g.Assert(len(entries_after)).Equal(len(entries_before))
+      g.Assert(len(entriesAfter)).Equal(len(entriesBefore))
 
       // admin
       w = tape.DeleteWithClaims("/api/v1/courses/1/materials/1", 1, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       // verify a sheet less exists
-      entries_after, err = stores.Material.GetAll()
+      entriesAfter, err = stores.Material.GetAll()
       g.Assert(err).Equal(nil)
-      g.Assert(len(entries_after)).Equal(len(entries_before) - 1)
+      g.Assert(len(entriesAfter)).Equal(len(entriesBefore) - 1)
     })
 
     g.It("Should delete when valid access claims and not published", func() {
@@ -463,7 +463,7 @@ func TestMaterial(t *testing.T) {
       err = stores.Material.Update(material)
       g.Assert(err).Equal(nil)
 
-      entries_before, err := stores.Material.GetAll()
+      entriesBefore, err := stores.Material.GetAll()
       g.Assert(err).Equal(nil)
 
       // admin
@@ -471,9 +471,9 @@ func TestMaterial(t *testing.T) {
       g.Assert(w.Code).Equal(http.StatusOK)
 
       // verify a sheet less exists
-      entries_after, err := stores.Material.GetAll()
+      entriesAfter, err := stores.Material.GetAll()
       g.Assert(err).Equal(nil)
-      g.Assert(len(entries_after)).Equal(len(entries_before) - 1)
+      g.Assert(len(entriesAfter)).Equal(len(entriesBefore) - 1)
     })
 
     g.It("Permission test", func() {

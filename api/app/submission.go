@@ -83,12 +83,13 @@ func (rs *SubmissionResource) GetFileHandler(w http.ResponseWriter, r *http.Requ
   if !hnd.Exists() {
     render.Render(w, r, ErrNotFound)
     return
-  } else {
-    if err := hnd.WriteToBody(w); err != nil {
-      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-      return
-    }
   }
+
+  if err := hnd.WriteToBody(w); err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
 }
 
 // GetCollectionHandler is public endpoint for
@@ -203,15 +204,15 @@ func (rs *SubmissionResource) GetCollectionFileHandler(w http.ResponseWriter, r 
   if !hnd.Exists() {
     render.Render(w, r, ErrNotFound)
     return
-  } else {
-    if err := hnd.WriteToBody(w); err != nil {
-      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-      return
-    }
+  }
+
+  if err := hnd.WriteToBody(w); err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
   }
 }
 
-// GetFileByIdHandler is public endpoint for
+// GetFileByIDHandler is public endpoint for
 // URL: /courses/{course_id}/submissions/{submission_id}/file
 // URLPARAM: course_id,integer
 // URLPARAM: submission_id,integer
@@ -222,7 +223,7 @@ func (rs *SubmissionResource) GetCollectionFileHandler(w http.ResponseWriter, r 
 // RESPONSE: 401,Unauthenticated
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  get the zip file of a specific submission
-func (rs *SubmissionResource) GetFileByIdHandler(w http.ResponseWriter, r *http.Request) {
+func (rs *SubmissionResource) GetFileByIDHandler(w http.ResponseWriter, r *http.Request) {
 
   submission := r.Context().Value("submission").(*model.Submission)
   accessClaims := r.Context().Value("access_claims").(*authenticate.AccessClaims)
@@ -247,12 +248,13 @@ func (rs *SubmissionResource) GetFileByIdHandler(w http.ResponseWriter, r *http.
   if !hnd.Exists() {
     render.Render(w, r, ErrNotFound)
     return
-  } else {
-    if err := hnd.WriteToBody(w); err != nil {
-      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-      return
-    }
   }
+
+  if err := hnd.WriteToBody(w); err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+    return
+  }
+
 }
 
 // UploadFileHandler is public endpoint for
@@ -473,6 +475,7 @@ func (rs *SubmissionResource) IndexHandler(w http.ResponseWriter, r *http.Reques
 }
 
 // .............................................................................
+
 // Context middleware is used to load an Submission object from
 // the URL parameter `TaskID` passed through as the request. In case
 // the Submission could not be found, we stop here and return a 404.
@@ -497,7 +500,7 @@ func (rs *SubmissionResource) Context(next http.Handler) http.Handler {
       return
     }
 
-    ctx := context.WithValue(r.Context(), "submission", submission)
+    ctx := context.WithValue(r.Context(), ctxKeySubmission, submission)
 
     // when there is a submissionID in the url, there is NOT a taskID in the url,
     // BUT: when there is a Submission, there is a task
@@ -511,7 +514,7 @@ func (rs *SubmissionResource) Context(next http.Handler) http.Handler {
       return
     }
 
-    ctx = context.WithValue(ctx, "task", task)
+    ctx = context.WithValue(ctx, ctxKeyTask, task)
 
     // find sheet
     sheet, err := rs.Stores.Task.IdentifySheetOfTask(task.ID)
@@ -526,7 +529,7 @@ func (rs *SubmissionResource) Context(next http.Handler) http.Handler {
         return
       }
     } else {
-      ctx = context.WithValue(ctx, "sheet", sheet)
+      ctx = context.WithValue(ctx, ctxKeySheet, sheet)
     }
 
     // find course
@@ -536,7 +539,7 @@ func (rs *SubmissionResource) Context(next http.Handler) http.Handler {
       return
     }
 
-    ctx = context.WithValue(ctx, "course", course)
+    ctx = context.WithValue(ctx, ctxKeyCourse, course)
 
     // serve next
     next.ServeHTTP(w, r.WithContext(ctx))

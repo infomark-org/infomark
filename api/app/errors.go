@@ -52,6 +52,7 @@ func ErrRender(err error) render.Renderer {
   }
 }
 
+// ErrBadRequestWithDetails returns status 400 with a text
 func ErrBadRequestWithDetails(err error) *ErrResponse {
   return &ErrResponse{
     Err:            err,
@@ -61,6 +62,7 @@ func ErrBadRequestWithDetails(err error) *ErrResponse {
   }
 }
 
+// ErrInternalServerErrorWithDetails returns status 500 with a text
 func ErrInternalServerErrorWithDetails(err error) *ErrResponse {
   return &ErrResponse{
     Err:            err,
@@ -70,6 +72,7 @@ func ErrInternalServerErrorWithDetails(err error) *ErrResponse {
   }
 }
 
+// ErrTimeoutWithDetails returns status 504 with a text
 func ErrTimeoutWithDetails(err error) *ErrResponse {
   return &ErrResponse{
     Err:            err,
@@ -79,6 +82,8 @@ func ErrTimeoutWithDetails(err error) *ErrResponse {
   }
 }
 
+// ErrUnauthorizedWithDetails returns status 403 with a text
+// e.g. "User doesn't have enough privilege"
 func ErrUnauthorizedWithDetails(err error) *ErrResponse {
   return &ErrResponse{
     Err:            err,

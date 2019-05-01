@@ -63,12 +63,14 @@ func (rs *CourseResource) newCourseListResponse(courses []model.Course) []render
 	return list
 }
 
+// SheetPointsResponse is reponse for performance on a specific exercise sheet
 type SheetPointsResponse struct {
 	AquiredPoints int `json:"acquired_points" example:"58"`
 	MaxPoints     int `json:"max_points" example:"90"`
 	SheetID       int `json:"sheet_id" example:"2"`
 }
 
+// Render postprocesses a SheetPointsResponse before marshalling to JSON.
 func (body *SheetPointsResponse) Render(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
@@ -99,7 +101,7 @@ type groupBidsResponse struct {
 	Bid     int   `json:"bid" example:"6" minval:"0" maxval:"10"`
 }
 
-// Render post-processes a groupBidsResponse.
+// Render postprocesses a groupBidsResponse before marshalling to JSON.
 func (body *groupBidsResponse) Render(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }

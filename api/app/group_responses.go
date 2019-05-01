@@ -113,6 +113,7 @@ func (body *GroupResponse) Render(w http.ResponseWriter, r *http.Request) error 
 	return nil
 }
 
+// GroupBidResponse returns the preference of a user to a exercise group
 type GroupBidResponse struct {
 	Bid int `json:"bid" example:"4" minval:"0" maxval:"10"`
 }

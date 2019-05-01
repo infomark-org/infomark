@@ -30,6 +30,27 @@ import (
 	"github.com/spf13/viper"
 )
 
+type key int
+
+// to replace
+//   context.WithValue(ctx, "course", course)
+// and
+//   r.Context().Value("course")
+// TODO(): create a shared context-key package
+const (
+	ctxKeyAccessClaim key = iota // must be 0 to work with the auth-package
+	ctxKeyGroup       key = iota
+	ctxKeyMaterial    key = iota
+	ctxKeyCourse      key = iota
+	ctxKeyCourseRole  key = iota
+	ctxKeyUser        key = iota
+	ctxKeyTask        key = iota
+	ctxKeySubmission  key = iota
+	ctxKeySheet       key = iota
+	ctxKeyGrade       key = iota
+	// ...
+)
+
 // CommonResource specifies user management handler.
 type CommonResource struct {
 	Stores *Stores
@@ -75,9 +96,10 @@ func (rs *CommonResource) PrivacyStatementHandler(w http.ResponseWriter, r *http
 
 }
 
+// EnsurePrivacyInEnrollments removes some data from the request to ensure that not everyone has access to personal data
 func EnsurePrivacyInEnrollments(enrolledUsers []model.UserCourse, givenRole authorize.CourseRole) []model.UserCourse {
 	if givenRole == authorize.STUDENT {
-		for k, _ := range enrolledUsers {
+		for k := range enrolledUsers {
 
 			if enrolledUsers[k].Role == 0 {
 				enrolledUsers[k].Email = ""
@@ -87,7 +109,7 @@ func EnsurePrivacyInEnrollments(enrolledUsers []model.UserCourse, givenRole auth
 	}
 
 	if givenRole != authorize.ADMIN {
-		for k, _ := range enrolledUsers {
+		for k := range enrolledUsers {
 
 			enrolledUsers[k].StudentNumber = ""
 			enrolledUsers[k].Semester = 0
@@ -98,14 +120,17 @@ func EnsurePrivacyInEnrollments(enrolledUsers []model.UserCourse, givenRole auth
 	return enrolledUsers
 }
 
+// PublicYet tests if a given time is now or in the past
 func PublicYet(t time.Time) bool {
 	return NowUTC().Sub(t) > 0
 }
 
+// OverTime tests if the deadline is missed (alias for publicyet)
 func OverTime(t time.Time) bool {
 	return NowUTC().Sub(t) > 0
 }
 
+// NowUTC returns the current server time
 func NowUTC() time.Time {
 	loc, _ := time.LoadLocation("UTC")
 	return time.Now().In(loc)

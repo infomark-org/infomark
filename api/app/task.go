@@ -404,7 +404,7 @@ func (rs *TaskResource) Context(next http.Handler) http.Handler {
       return
     }
 
-    ctx := context.WithValue(r.Context(), "task", task)
+    ctx := context.WithValue(r.Context(), ctxKeyTask, task)
 
     // find sheet
     sheet, err := rs.Stores.Task.IdentifySheetOfTask(task.ID)
@@ -419,11 +419,11 @@ func (rs *TaskResource) Context(next http.Handler) http.Handler {
         return
       }
     } else {
-      ctx = context.WithValue(ctx, "sheet", sheet)
+      ctx = context.WithValue(ctx, ctxKeySheet, sheet)
     }
 
     // public yet?
-    if r.Context().Value("course_role").(authorize.CourseRole) == authorize.STUDENT && !PublicYet(sheet.PublishAt) {
+    if r.Context().Value(ctxKeyCourseRole).(authorize.CourseRole) == authorize.STUDENT && !PublicYet(sheet.PublishAt) {
       render.Render(w, r, ErrBadRequestWithDetails(fmt.Errorf("sheet not published yet")))
       return
     }
@@ -442,7 +442,7 @@ func (rs *TaskResource) Context(next http.Handler) http.Handler {
       return
     }
 
-    ctx = context.WithValue(ctx, "course", course)
+    ctx = context.WithValue(ctx, ctxKeyCourse, course)
 
     // serve next
     next.ServeHTTP(w, r.WithContext(ctx))

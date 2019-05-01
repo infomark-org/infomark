@@ -225,11 +225,12 @@ func (rs *SheetResource) GetFileHandler(w http.ResponseWriter, r *http.Request) 
   if !hnd.Exists() {
     render.Render(w, r, ErrNotFound)
     return
-  } else {
-    if err := hnd.WriteToBodyWithName(fmt.Sprintf("%s-%s.zip", course.Name, sheet.Name), w); err != nil {
-      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-    }
   }
+
+  if err := hnd.WriteToBodyWithName(fmt.Sprintf("%s-%s.zip", course.Name, sheet.Name), w); err != nil {
+    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+  }
+
 }
 
 // ChangeFileHandler is public endpoint for
@@ -286,25 +287,26 @@ func (rs *SheetResource) PointsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // .............................................................................
+
 // Context middleware is used to load an Sheet object from
 // the URL parameter `SheetID` passed through as the request. In case
 // the Sheet could not be found, we stop here and return a 404.
 // We do NOT check whether the Sheet is authorized to get this Sheet.
 func (rs *SheetResource) Context(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-    course_from_url := r.Context().Value("course").(*model.Course)
+    courseFromURL := r.Context().Value("course").(*model.Course)
 
-    var Sheet_id int64
+    var sheetID int64
     var err error
 
     // try to get id from URL
-    if Sheet_id, err = strconv.ParseInt(chi.URLParam(r, "sheet_id"), 10, 64); err != nil {
+    if sheetID, err = strconv.ParseInt(chi.URLParam(r, "sheet_id"), 10, 64); err != nil {
       render.Render(w, r, ErrNotFound)
       return
     }
 
     // find specific Sheet in database
-    sheet, err := rs.Stores.Sheet.Get(Sheet_id)
+    sheet, err := rs.Stores.Sheet.Get(sheetID)
     if err != nil {
       render.Render(w, r, ErrNotFound)
       return
@@ -316,7 +318,7 @@ func (rs *SheetResource) Context(next http.Handler) http.Handler {
       return
     }
 
-    ctx := context.WithValue(r.Context(), "sheet", sheet)
+    ctx := context.WithValue(r.Context(), ctxKeySheet, sheet)
 
     // when there is a sheetID in the url, there is NOT a courseID in the url,
     // BUT: when there is a sheet, there is a course
@@ -327,12 +329,12 @@ func (rs *SheetResource) Context(next http.Handler) http.Handler {
       return
     }
 
-    if course_from_url.ID != course.ID {
+    if courseFromURL.ID != course.ID {
       render.Render(w, r, ErrNotFound)
       return
     }
 
-    ctx = context.WithValue(ctx, "course", course)
+    ctx = context.WithValue(ctx, ctxKeyCourse, course)
 
     // serve next
     next.ServeHTTP(w, r.WithContext(ctx))

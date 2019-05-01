@@ -36,10 +36,12 @@ import (
   "github.com/go-chi/cors"
   "github.com/go-chi/render"
   "github.com/jmoiron/sqlx"
+
   _ "github.com/lib/pq"
   "github.com/spf13/viper"
 )
 
+// LimitedDecoder limits the amount of data a client can send in a JSON data request.
 // The golang fork-join multi-threading allows no easy way to cancel started request
 // Therefore we limit the amount of data which is read by the server whenever
 // we need to parse a JSON request.
@@ -61,7 +63,7 @@ func init() {
   render.Decode = LimitedDecoder
 }
 
-// Version writes the current API version to the headers.
+// VersionMiddleware writes the current API version to the headers.
 func VersionMiddleware(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
     w.Header().Set("X-INFOMARK-VERSION", "0.0.1")
@@ -69,7 +71,7 @@ func VersionMiddleware(next http.Handler) http.Handler {
   })
 }
 
-// Secure writes required access headers to all requests.
+// SecureMiddleware writes required access headers to all requests.
 func SecureMiddleware(next http.Handler) http.Handler {
   return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
     w.Header().Set("X-Frame-Options", "DENY")
@@ -79,7 +81,7 @@ func SecureMiddleware(next http.Handler) http.Handler {
     if r.UserAgent() == "" {
       render.Render(w, r, ErrBadRequestWithDetails(
         fmt.Errorf(`Request forbidden by administrative rules.
-Please make sure your request has a User-Agent header.`)))
+Please make sure your request has a User-Agent header`)))
       return
     }
 
@@ -322,7 +324,7 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
                 r.Route("/{submission_id}", func(r chi.Router) {
                   r.Use(appAPI.Submission.Context)
                   r.Use(appAPI.Course.RoleContext)
-                  r.Get("/file", appAPI.Submission.GetFileByIdHandler)
+                  r.Get("/file", appAPI.Submission.GetFileByIDHandler)
                 })
               })
 

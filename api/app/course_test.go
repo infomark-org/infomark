@@ -75,10 +75,10 @@ func TestCourse(t *testing.T) {
       w := tape.GetWithClaims("/api/v1/courses", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      courses_actual := []model.Course{}
-      err := json.NewDecoder(w.Body).Decode(&courses_actual)
+      coursesActual := []model.Course{}
+      err := json.NewDecoder(w.Body).Decode(&coursesActual)
       g.Assert(err).Equal(nil)
-      g.Assert(len(courses_actual)).Equal(2)
+      g.Assert(len(coursesActual)).Equal(2)
     })
 
     g.It("Should get a specific course", func() {
@@ -86,136 +86,136 @@ func TestCourse(t *testing.T) {
       w := tape.GetWithClaims("/api/v1/courses/1", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      course_actual := &courseResponse{}
-      err := json.NewDecoder(w.Body).Decode(course_actual)
+      courseActual := &courseResponse{}
+      err := json.NewDecoder(w.Body).Decode(courseActual)
       g.Assert(err).Equal(nil)
 
-      course_expected, err := stores.Course.Get(1)
+      courseExpected, err := stores.Course.Get(1)
       g.Assert(err).Equal(nil)
 
-      g.Assert(course_actual.ID).Equal(course_expected.ID)
-      g.Assert(course_actual.Name).Equal(course_expected.Name)
-      g.Assert(course_actual.Description).Equal(course_expected.Description)
-      g.Assert(course_actual.BeginsAt.Equal(course_expected.BeginsAt)).Equal(true)
-      g.Assert(course_actual.EndsAt.Equal(course_expected.EndsAt)).Equal(true)
-      g.Assert(course_actual.RequiredPercentage).Equal(course_expected.RequiredPercentage)
+      g.Assert(courseActual.ID).Equal(courseExpected.ID)
+      g.Assert(courseActual.Name).Equal(courseExpected.Name)
+      g.Assert(courseActual.Description).Equal(courseExpected.Description)
+      g.Assert(courseActual.BeginsAt.Equal(courseExpected.BeginsAt)).Equal(true)
+      g.Assert(courseActual.EndsAt.Equal(courseExpected.EndsAt)).Equal(true)
+      g.Assert(courseActual.RequiredPercentage).Equal(courseExpected.RequiredPercentage)
     })
 
     g.It("Should be able to filter enrollments (all)", func() {
-      course_active, err := stores.Course.Get(1)
+      courseActive, err := stores.Course.Get(1)
       g.Assert(err).Equal(nil)
 
-      number_enrollments_expected, err := DBGetInt(
+      numberEnrollmentsExpected, err := DBGetInt(
         tape,
         "SELECT count(*) FROM user_course WHERE course_id = $1",
-        course_active.ID,
+        courseActive.ID,
       )
       g.Assert(err).Equal(nil)
 
       w := tape.GetWithClaims("/api/v1/courses/1/enrollments", 1, true)
-      enrollments_actual := []enrollmentResponse{}
-      err = json.NewDecoder(w.Body).Decode(&enrollments_actual)
+      enrollmentsActual := []enrollmentResponse{}
+      err = json.NewDecoder(w.Body).Decode(&enrollmentsActual)
       g.Assert(err).Equal(nil)
-      g.Assert(len(enrollments_actual)).Equal(number_enrollments_expected)
+      g.Assert(len(enrollmentsActual)).Equal(numberEnrollmentsExpected)
     })
 
     g.It("Should be able to filter enrollments (students only)", func() {
-      course_active, err := stores.Course.Get(1)
+      courseActive, err := stores.Course.Get(1)
       g.Assert(err).Equal(nil)
 
-      number_enrollments_expected, err := DBGetInt(
+      numberEnrollmentsExpected, err := DBGetInt(
         tape,
         "SELECT count(*) FROM user_course WHERE course_id = $1 and role = 0",
-        course_active.ID,
+        courseActive.ID,
       )
       g.Assert(err).Equal(nil)
 
       w := tape.GetWithClaims("/api/v1/courses/1/enrollments?roles=0", 1, true)
-      enrollments_actual := []enrollmentResponse{}
-      err = json.NewDecoder(w.Body).Decode(&enrollments_actual)
+      enrollmentsActual := []enrollmentResponse{}
+      err = json.NewDecoder(w.Body).Decode(&enrollmentsActual)
       g.Assert(err).Equal(nil)
-      g.Assert(len(enrollments_actual)).Equal(number_enrollments_expected)
+      g.Assert(len(enrollmentsActual)).Equal(numberEnrollmentsExpected)
     })
 
     g.It("Should be able to query enrollments (tutor+admin only)", func() {
-      course_active, err := stores.Course.Get(1)
+      courseActive, err := stores.Course.Get(1)
       g.Assert(err).Equal(nil)
 
-      enrollments_expected, err := stores.Course.FindEnrolledUsers(course_active.ID,
+      enrollmentsExpected, err := stores.Course.FindEnrolledUsers(courseActive.ID,
         []string{"0", "1", "2"}, "%chi%",
       )
 
       w := tape.GetWithClaims("/api/v1/courses/1/enrollments?q=chi", 1, false)
-      enrollments_actual := []enrollmentResponse{}
-      err = json.NewDecoder(w.Body).Decode(&enrollments_actual)
+      enrollmentsActual := []enrollmentResponse{}
+      err = json.NewDecoder(w.Body).Decode(&enrollmentsActual)
       g.Assert(err).Equal(nil)
-      g.Assert(len(enrollments_actual)).Equal(len(enrollments_expected))
+      g.Assert(len(enrollmentsActual)).Equal(len(enrollmentsExpected))
     })
 
     g.It("Should be able to filter enrollments (tutors only)", func() {
-      course_active, err := stores.Course.Get(1)
+      courseActive, err := stores.Course.Get(1)
       g.Assert(err).Equal(nil)
 
-      number_enrollments_expected, err := DBGetInt(
+      numberEnrollmentsExpected, err := DBGetInt(
         tape,
         "SELECT count(*) FROM user_course WHERE course_id = $1 and role = 1",
-        course_active.ID,
+        courseActive.ID,
       )
       g.Assert(err).Equal(nil)
 
       w := tape.GetWithClaims("/api/v1/courses/1/enrollments?roles=1", 1, false)
-      enrollments_actual := []enrollmentResponse{}
-      err = json.NewDecoder(w.Body).Decode(&enrollments_actual)
+      enrollmentsActual := []enrollmentResponse{}
+      err = json.NewDecoder(w.Body).Decode(&enrollmentsActual)
       g.Assert(err).Equal(nil)
-      g.Assert(len(enrollments_actual)).Equal(number_enrollments_expected)
+      g.Assert(len(enrollmentsActual)).Equal(numberEnrollmentsExpected)
     })
 
     g.It("Should be able to filter enrollments (students+tutors only)", func() {
-      course_active, err := stores.Course.Get(1)
+      courseActive, err := stores.Course.Get(1)
       g.Assert(err).Equal(nil)
 
-      number_enrollments_expected, err := DBGetInt(
+      numberEnrollmentsExpected, err := DBGetInt(
         tape,
         "SELECT count(*) FROM user_course WHERE course_id = $1 and role IN (0,1)",
-        course_active.ID,
+        courseActive.ID,
       )
       g.Assert(err).Equal(nil)
 
       w := tape.GetWithClaims("/api/v1/courses/1/enrollments?roles=0,1", 1, false)
-      enrollments_actual := []enrollmentResponse{}
-      err = json.NewDecoder(w.Body).Decode(&enrollments_actual)
+      enrollmentsActual := []enrollmentResponse{}
+      err = json.NewDecoder(w.Body).Decode(&enrollmentsActual)
       g.Assert(err).Equal(nil)
-      g.Assert(len(enrollments_actual)).Equal(number_enrollments_expected)
+      g.Assert(len(enrollmentsActual)).Equal(numberEnrollmentsExpected)
     })
 
     g.It("Should be able to filter enrollments (but receive only tutors + admins), when role=student", func() {
-      course_active, err := stores.Course.Get(1)
+      courseActive, err := stores.Course.Get(1)
       g.Assert(err).Equal(nil)
 
-      number_enrollments_expected, err := DBGetInt(
+      numberEnrollmentsExpected, err := DBGetInt(
         tape,
         "SELECT count(*) FROM user_course WHERE course_id = $1 and role IN (1, 2)",
-        course_active.ID,
+        courseActive.ID,
       )
       g.Assert(err).Equal(nil)
 
       // 112 is a student
       w := tape.GetWithClaims("/api/v1/courses/1/enrollments?roles=0", 112, false)
-      enrollments_actual := []enrollmentResponse{}
-      err = json.NewDecoder(w.Body).Decode(&enrollments_actual)
+      enrollmentsActual := []enrollmentResponse{}
+      err = json.NewDecoder(w.Body).Decode(&enrollmentsActual)
       g.Assert(err).Equal(nil)
-      g.Assert(len(enrollments_actual)).Equal(number_enrollments_expected)
+      g.Assert(len(enrollmentsActual)).Equal(numberEnrollmentsExpected)
     })
 
     g.It("Should be able to filter enrollments (but not see field protected by privacy), when role=tutor,student", func() {
       // 112 is a student
       userID := int64(112)
       w := tape.GetWithClaims("/api/v1/courses/1/enrollments?roles=0", userID, false)
-      enrollments_actual := []enrollmentResponse{}
-      err := json.NewDecoder(w.Body).Decode(&enrollments_actual)
+      enrollmentsActual := []enrollmentResponse{}
+      err := json.NewDecoder(w.Body).Decode(&enrollmentsActual)
       g.Assert(err).Equal(nil)
 
-      for _, el := range enrollments_actual {
+      for _, el := range enrollmentsActual {
         g.Assert(el.User.StudentNumber).Equal("")
       }
     })
@@ -232,10 +232,10 @@ func TestCourse(t *testing.T) {
 
     g.It("Should create valid course", func() {
 
-      courses_before, err := stores.Course.GetAll()
+      coursesBefore, err := stores.Course.GetAll()
       g.Assert(err).Equal(nil)
 
-      entry_sent := courseRequest{
+      entrySent := courseRequest{
         Name:               "Info2_new",
         Description:        "Lorem Ipsum_new",
         BeginsAt:           helper.Time(time.Now()),
@@ -243,45 +243,45 @@ func TestCourse(t *testing.T) {
         RequiredPercentage: 43,
       }
 
-      g.Assert(entry_sent.Validate()).Equal(nil)
+      g.Assert(entrySent.Validate()).Equal(nil)
 
       // students
-      w := tape.PlayDataWithClaims("POST", "/api/v1/courses", tape.ToH(entry_sent), 112, false)
+      w := tape.PlayDataWithClaims("POST", "/api/v1/courses", tape.ToH(entrySent), 112, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // tutors
-      w = tape.PlayDataWithClaims("POST", "/api/v1/courses", tape.ToH(entry_sent), 2, false)
+      w = tape.PlayDataWithClaims("POST", "/api/v1/courses", tape.ToH(entrySent), 2, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // admin in course (cannot be admin, course does not exists yet)
-      w = tape.PlayDataWithClaims("POST", "/api/v1/courses", tape.ToH(entry_sent), 1, false)
+      w = tape.PlayDataWithClaims("POST", "/api/v1/courses", tape.ToH(entrySent), 1, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // admin
-      w = tape.PlayDataWithClaims("POST", "/api/v1/courses", tape.ToH(entry_sent), 1, true)
+      w = tape.PlayDataWithClaims("POST", "/api/v1/courses", tape.ToH(entrySent), 1, true)
       g.Assert(w.Code).Equal(http.StatusCreated)
 
       // verify body
-      course_return := &courseResponse{}
-      err = json.NewDecoder(w.Body).Decode(&course_return)
-      g.Assert(course_return.Name).Equal(entry_sent.Name)
-      g.Assert(course_return.Description).Equal(entry_sent.Description)
-      g.Assert(course_return.BeginsAt.Equal(entry_sent.BeginsAt)).Equal(true)
-      g.Assert(course_return.EndsAt.Equal(entry_sent.EndsAt)).Equal(true)
-      g.Assert(course_return.RequiredPercentage).Equal(entry_sent.RequiredPercentage)
+      courseReturn := &courseResponse{}
+      err = json.NewDecoder(w.Body).Decode(&courseReturn)
+      g.Assert(courseReturn.Name).Equal(entrySent.Name)
+      g.Assert(courseReturn.Description).Equal(entrySent.Description)
+      g.Assert(courseReturn.BeginsAt.Equal(entrySent.BeginsAt)).Equal(true)
+      g.Assert(courseReturn.EndsAt.Equal(entrySent.EndsAt)).Equal(true)
+      g.Assert(courseReturn.RequiredPercentage).Equal(entrySent.RequiredPercentage)
 
       // verify database
-      course_new, err := stores.Course.Get(course_return.ID)
+      courseNew, err := stores.Course.Get(courseReturn.ID)
       g.Assert(err).Equal(nil)
-      g.Assert(course_return.Name).Equal(course_new.Name)
-      g.Assert(course_return.Description).Equal(course_new.Description)
-      g.Assert(course_return.BeginsAt.Equal(course_new.BeginsAt)).Equal(true)
-      g.Assert(course_return.EndsAt.Equal(course_new.EndsAt)).Equal(true)
-      g.Assert(course_return.RequiredPercentage).Equal(course_new.RequiredPercentage)
+      g.Assert(courseReturn.Name).Equal(courseNew.Name)
+      g.Assert(courseReturn.Description).Equal(courseNew.Description)
+      g.Assert(courseReturn.BeginsAt.Equal(courseNew.BeginsAt)).Equal(true)
+      g.Assert(courseReturn.EndsAt.Equal(courseNew.EndsAt)).Equal(true)
+      g.Assert(courseReturn.RequiredPercentage).Equal(courseNew.RequiredPercentage)
 
-      courses_after, err := stores.Course.GetAll()
+      coursesAfter, err := stores.Course.GetAll()
       g.Assert(err).Equal(nil)
-      g.Assert(len(courses_after)).Equal(len(courses_before) + 1)
+      g.Assert(len(coursesAfter)).Equal(len(coursesBefore) + 1)
     })
 
     g.It("Should send email to all enrolled users", func() {
@@ -299,7 +299,7 @@ func TestCourse(t *testing.T) {
 
     g.It("Should perform updates", func() {
 
-      entry_sent := courseRequest{
+      entrySent := courseRequest{
         Name:               "Info2_update",
         Description:        "Lorem Ipsum_update",
         BeginsAt:           helper.Time(time.Now()),
@@ -307,41 +307,41 @@ func TestCourse(t *testing.T) {
         RequiredPercentage: 99,
       }
 
-      g.Assert(entry_sent.Validate()).Equal(nil)
+      g.Assert(entrySent.Validate()).Equal(nil)
 
       // students
-      w := tape.PlayDataWithClaims("PUT", "/api/v1/courses/1", tape.ToH(entry_sent), 112, false)
+      w := tape.PlayDataWithClaims("PUT", "/api/v1/courses/1", tape.ToH(entrySent), 112, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // tutors
-      w = tape.PlayDataWithClaims("PUT", "/api/v1/courses/1", tape.ToH(entry_sent), 2, false)
+      w = tape.PlayDataWithClaims("PUT", "/api/v1/courses/1", tape.ToH(entrySent), 2, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // admin
-      w = tape.PlayDataWithClaims("PUT", "/api/v1/courses/1", tape.ToH(entry_sent), 1, false)
+      w = tape.PlayDataWithClaims("PUT", "/api/v1/courses/1", tape.ToH(entrySent), 1, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      entry_after, err := stores.Course.Get(1)
+      entryAfter, err := stores.Course.Get(1)
       g.Assert(err).Equal(nil)
 
-      g.Assert(entry_after.Name).Equal(entry_sent.Name)
-      g.Assert(entry_after.Description).Equal(entry_sent.Description)
-      g.Assert(entry_after.BeginsAt.Equal(entry_sent.BeginsAt)).Equal(true)
-      g.Assert(entry_after.EndsAt.Equal(entry_sent.EndsAt)).Equal(true)
-      g.Assert(entry_after.RequiredPercentage).Equal(entry_sent.RequiredPercentage)
+      g.Assert(entryAfter.Name).Equal(entrySent.Name)
+      g.Assert(entryAfter.Description).Equal(entrySent.Description)
+      g.Assert(entryAfter.BeginsAt.Equal(entrySent.BeginsAt)).Equal(true)
+      g.Assert(entryAfter.EndsAt.Equal(entrySent.EndsAt)).Equal(true)
+      g.Assert(entryAfter.RequiredPercentage).Equal(entrySent.RequiredPercentage)
     })
 
     g.It("Should delete when valid access claims", func() {
-      entries_before, err := stores.Course.GetAll()
+      entriesBefore, err := stores.Course.GetAll()
       g.Assert(err).Equal(nil)
 
       w := tape.Delete("/api/v1/courses/1")
       g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
       // verify nothing has changes
-      entries_after, err := stores.Course.GetAll()
+      entriesAfter, err := stores.Course.GetAll()
       g.Assert(err).Equal(nil)
-      g.Assert(len(entries_after)).Equal(len(entries_before))
+      g.Assert(len(entriesAfter)).Equal(len(entriesBefore))
 
       // students
       w = tape.PlayWithClaims("DELETE", "/api/v1/courses/1", 112, false)
@@ -356,9 +356,9 @@ func TestCourse(t *testing.T) {
       g.Assert(w.Code).Equal(http.StatusOK)
 
       // verify a course less exists
-      entries_after, err = stores.Course.GetAll()
+      entriesAfter, err = stores.Course.GetAll()
       g.Assert(err).Equal(nil)
-      g.Assert(len(entries_after)).Equal(len(entries_before) - 1)
+      g.Assert(len(entriesAfter)).Equal(len(entriesBefore) - 1)
     })
 
     g.It("Non-Global root enroll as students", func() {
@@ -401,7 +401,7 @@ func TestCourse(t *testing.T) {
 
       courseID := int64(1)
 
-      number_enrollments_before, err := DBGetInt(
+      numberEnrollmentsBefore, err := DBGetInt(
         tape,
         "SELECT count(*) FROM user_course WHERE course_id = $1 and role = 0",
         courseID,
@@ -411,13 +411,13 @@ func TestCourse(t *testing.T) {
       w := tape.DeleteWithClaims("/api/v1/courses/1/enrollments", 112, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      number_enrollments_after, err := DBGetInt(
+      numberEnrollmentsAfter, err := DBGetInt(
         tape,
         "SELECT count(*) FROM user_course WHERE course_id = $1 and role = 0",
         courseID,
       )
       g.Assert(err).Equal(nil)
-      g.Assert(number_enrollments_after).Equal(number_enrollments_before - 1)
+      g.Assert(numberEnrollmentsAfter).Equal(numberEnrollmentsBefore - 1)
 
     })
 
@@ -425,7 +425,7 @@ func TestCourse(t *testing.T) {
 
       courseID := int64(1)
 
-      number_enrollments_before, err := DBGetInt(
+      numberEnrollmentsBefore, err := DBGetInt(
         tape,
         "SELECT count(*) FROM user_course WHERE course_id = $1 and role = 0",
         courseID,
@@ -436,13 +436,13 @@ func TestCourse(t *testing.T) {
       w := tape.DeleteWithClaims("/api/v1/courses/1/enrollments/113", 1, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      number_enrollments_after, err := DBGetInt(
+      numberEnrollmentsAfter, err := DBGetInt(
         tape,
         "SELECT count(*) FROM user_course WHERE course_id = $1 and role = 0",
         courseID,
       )
       g.Assert(err).Equal(nil)
-      g.Assert(number_enrollments_after).Equal(number_enrollments_before - 1)
+      g.Assert(numberEnrollmentsAfter).Equal(numberEnrollmentsBefore - 1)
 
     })
 
@@ -450,7 +450,7 @@ func TestCourse(t *testing.T) {
 
       courseID := int64(1)
 
-      number_enrollments_before, err := DBGetInt(
+      numberEnrollmentsBefore, err := DBGetInt(
         tape,
         "SELECT count(*) FROM user_course WHERE course_id = $1 and role = 0",
         courseID,
@@ -461,13 +461,13 @@ func TestCourse(t *testing.T) {
       w := tape.DeleteWithClaims("/api/v1/courses/1/enrollments/2", 1, false)
       g.Assert(w.Code).Equal(http.StatusBadRequest)
 
-      number_enrollments_after, err := DBGetInt(
+      numberEnrollmentsAfter, err := DBGetInt(
         tape,
         "SELECT count(*) FROM user_course WHERE course_id = $1 and role = 0",
         courseID,
       )
       g.Assert(err).Equal(nil)
-      g.Assert(number_enrollments_after).Equal(number_enrollments_before)
+      g.Assert(numberEnrollmentsAfter).Equal(numberEnrollmentsBefore)
 
     })
 
@@ -475,7 +475,7 @@ func TestCourse(t *testing.T) {
       courseID := int64(1)
       userID := int64(2)
 
-      number_enrollments_before, err := DBGetInt(
+      numberEnrollmentsBefore, err := DBGetInt(
         tape,
         "SELECT count(*) FROM user_course WHERE course_id = $1 and role = 0",
         courseID,
@@ -485,13 +485,13 @@ func TestCourse(t *testing.T) {
       w := tape.DeleteWithClaims("/api/v1/courses/1/enrollments", userID, false)
       g.Assert(w.Code).Equal(http.StatusBadRequest)
 
-      number_enrollments_after, err := DBGetInt(
+      numberEnrollmentsAfter, err := DBGetInt(
         tape,
         "SELECT count(*) FROM user_course WHERE course_id = $1 and role = 0",
         courseID,
       )
       g.Assert(err).Equal(nil)
-      g.Assert(number_enrollments_after).Equal(number_enrollments_before)
+      g.Assert(numberEnrollmentsAfter).Equal(numberEnrollmentsBefore)
     })
 
     g.It("should see bids in course", func() {

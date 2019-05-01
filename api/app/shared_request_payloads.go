@@ -24,7 +24,7 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation"
 )
 
-// userRequest is the request payload for user management.
+// EmailRequest is the request payload containing email information.
 type EmailRequest struct {
 	Subject string `json:"subject" example:"Switch to another day"`
 	Body    string `json:"body" example:"Xmax will be from now on on 26th of Nov."`

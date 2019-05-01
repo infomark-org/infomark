@@ -43,25 +43,26 @@ func (body *SheetRequest) Bind(r *http.Request) error {
 	return body.Validate()
 }
 
-func (m *SheetRequest) Validate() error {
+// Validate validates a SheetRequest
+func (body *SheetRequest) Validate() error {
 
-	err := validation.ValidateStruct(m,
+	err := validation.ValidateStruct(body,
 		validation.Field(
-			&m.PublishAt,
+			&body.PublishAt,
 			validation.Required,
 		),
 		validation.Field(
-			&m.DueAt,
+			&body.DueAt,
 			validation.Required,
 		),
 		validation.Field(
-			&m.Name,
+			&body.Name,
 			validation.Required,
 		),
 	)
 
 	if err == nil {
-		if m.DueAt.Sub(m.PublishAt).Seconds() < 0 {
+		if body.DueAt.Sub(body.PublishAt).Seconds() < 0 {
 			return errors.New("due_at should be later than publish_at")
 		}
 	}

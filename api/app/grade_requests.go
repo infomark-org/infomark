@@ -38,23 +38,26 @@ func (body *GradeRequest) Bind(r *http.Request) error {
 	return body.Validate()
 }
 
-func (m *GradeRequest) Validate() error {
-	return validation.ValidateStruct(m,
+// Validate validates an incoming GradeRequest.
+func (body *GradeRequest) Validate() error {
+	return validation.ValidateStruct(body,
 		// validation.Field(
-		// 	&m.SubmissionID,
+		// 	&body.SubmissionID,
 		// 	validation.Required,
 		// ),
 		validation.Field(
-			&m.AcquiredPoints,
+			&body.AcquiredPoints,
 			validation.Min(0),
 		),
 		validation.Field(
-			&m.Feedback,
+			&body.Feedback,
 			validation.Required,
 		),
 	)
 }
 
+// GradeFromWorkerRequest represents the request a backendwork will sent
+// after completion.
 type GradeFromWorkerRequest struct {
 	Log    string `json:"log" example:"failed in line ..."`
 	Status int    `json:"status" example:"1"`
@@ -65,10 +68,11 @@ func (body *GradeFromWorkerRequest) Bind(r *http.Request) error {
 	return body.Validate()
 }
 
-func (m *GradeFromWorkerRequest) Validate() error {
-	return validation.ValidateStruct(m,
+// Validate validates an incoming GradeFromWorkerRequest.
+func (body *GradeFromWorkerRequest) Validate() error {
+	return validation.ValidateStruct(body,
 		validation.Field(
-			&m.Log,
+			&body.Log,
 			validation.Required,
 		),
 	)

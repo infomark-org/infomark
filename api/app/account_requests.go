@@ -48,44 +48,44 @@ type createUserAccountRequest struct {
 	} `json:"account" required:"true"`
 }
 
-func (m *createUserAccountRequest) Validate() error {
+func (body *createUserAccountRequest) Validate() error {
 
-	m.User.FirstName = strings.TrimSpace(m.User.FirstName)
-	m.User.LastName = strings.TrimSpace(m.User.LastName)
+	body.User.FirstName = strings.TrimSpace(body.User.FirstName)
+	body.User.LastName = strings.TrimSpace(body.User.LastName)
 
-	m.User.Email = strings.TrimSpace(m.User.Email)
-	m.User.Email = strings.ToLower(m.User.Email)
+	body.User.Email = strings.TrimSpace(body.User.Email)
+	body.User.Email = strings.ToLower(body.User.Email)
 
-	return validation.ValidateStruct(m.User,
+	return validation.ValidateStruct(body.User,
 		validation.Field(
-			&m.User.FirstName,
+			&body.User.FirstName,
 			validation.Required,
 		),
 		validation.Field(
-			&m.User.LastName,
+			&body.User.LastName,
 			validation.Required,
 		),
 		validation.Field(
-			&m.User.Email,
+			&body.User.Email,
 			validation.Required,
 			is.Email,
 		),
 		validation.Field(
-			&m.User.StudentNumber,
+			&body.User.StudentNumber,
 			validation.Required,
 		),
 		validation.Field(
-			&m.User.Semester,
+			&body.User.Semester,
 			validation.Required,
 			validation.Min(1),
 		),
 		validation.Field(
-			&m.User.Subject,
+			&body.User.Subject,
 			validation.Required,
 		),
 
 		validation.Field(
-			&m.User.Language,
+			&body.User.Language,
 			validation.Required,
 			validation.Length(2, 2),
 		),

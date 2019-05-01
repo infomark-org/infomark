@@ -61,27 +61,27 @@ func TestSheet(t *testing.T) {
       w := tape.GetWithClaims("/api/v1/courses/1/sheets", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      sheets_actual := []SheetResponse{}
-      err := json.NewDecoder(w.Body).Decode(&sheets_actual)
+      sheetsActual := []SheetResponse{}
+      err := json.NewDecoder(w.Body).Decode(&sheetsActual)
       g.Assert(err).Equal(nil)
-      g.Assert(len(sheets_actual)).Equal(10)
+      g.Assert(len(sheetsActual)).Equal(10)
     })
 
     g.It("Should get a specific sheet", func() {
-      sheet_expected, err := stores.Sheet.Get(1)
+      sheetExpected, err := stores.Sheet.Get(1)
       g.Assert(err).Equal(nil)
 
       w := tape.GetWithClaims("/api/v1/courses/1/sheets/1", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      sheet_actual := &SheetResponse{}
-      err = json.NewDecoder(w.Body).Decode(sheet_actual)
+      sheetActual := &SheetResponse{}
+      err = json.NewDecoder(w.Body).Decode(sheetActual)
       g.Assert(err).Equal(nil)
 
-      g.Assert(sheet_actual.ID).Equal(sheet_expected.ID)
-      g.Assert(sheet_actual.Name).Equal(sheet_expected.Name)
-      g.Assert(sheet_actual.PublishAt.Equal(sheet_expected.PublishAt)).Equal(true)
-      g.Assert(sheet_actual.DueAt.Equal(sheet_expected.DueAt)).Equal(true)
+      g.Assert(sheetActual.ID).Equal(sheetExpected.ID)
+      g.Assert(sheetActual.Name).Equal(sheetExpected.Name)
+      g.Assert(sheetActual.PublishAt.Equal(sheetExpected.PublishAt)).Equal(true)
+      g.Assert(sheetActual.DueAt.Equal(sheetExpected.DueAt)).Equal(true)
     })
 
     g.It("Creating a sheet should require access claims", func() {
@@ -117,38 +117,38 @@ func TestSheet(t *testing.T) {
     })
 
     g.It("Should create valid sheet", func() {
-      sheets_before, err := stores.Sheet.SheetsOfCourse(1)
+      sheetsBefore, err := stores.Sheet.SheetsOfCourse(1)
       g.Assert(err).Equal(nil)
 
-      sheet_sent := SheetRequest{
+      sheetSent := SheetRequest{
         Name:      "Sheet_new",
         PublishAt: helper.Time(time.Now()),
         DueAt:     helper.Time(time.Now()),
       }
 
       // students
-      w := tape.PlayDataWithClaims("POST", "/api/v1/courses/1/sheets", tape.ToH(sheet_sent), 112, false)
+      w := tape.PlayDataWithClaims("POST", "/api/v1/courses/1/sheets", tape.ToH(sheetSent), 112, false)
       g.Assert(err).Equal(nil)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // tutors
-      w = tape.PlayDataWithClaims("POST", "/api/v1/courses/1/sheets", tape.ToH(sheet_sent), 2, false)
+      w = tape.PlayDataWithClaims("POST", "/api/v1/courses/1/sheets", tape.ToH(sheetSent), 2, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // admin
-      w = tape.PlayDataWithClaims("POST", "/api/v1/courses/1/sheets", tape.ToH(sheet_sent), 1, false)
+      w = tape.PlayDataWithClaims("POST", "/api/v1/courses/1/sheets", tape.ToH(sheetSent), 1, false)
       g.Assert(w.Code).Equal(http.StatusCreated)
 
-      sheet_return := &SheetResponse{}
-      err = json.NewDecoder(w.Body).Decode(&sheet_return)
+      sheetReturn := &SheetResponse{}
+      err = json.NewDecoder(w.Body).Decode(&sheetReturn)
       g.Assert(err).Equal(nil)
-      g.Assert(sheet_return.Name).Equal("Sheet_new")
-      g.Assert(sheet_return.PublishAt.Equal(sheet_sent.PublishAt)).Equal(true)
-      g.Assert(sheet_return.DueAt.Equal(sheet_sent.DueAt)).Equal(true)
+      g.Assert(sheetReturn.Name).Equal("Sheet_new")
+      g.Assert(sheetReturn.PublishAt.Equal(sheetSent.PublishAt)).Equal(true)
+      g.Assert(sheetReturn.DueAt.Equal(sheetSent.DueAt)).Equal(true)
 
-      sheets_after, err := stores.Sheet.SheetsOfCourse(1)
+      sheetsAfter, err := stores.Sheet.SheetsOfCourse(1)
       g.Assert(err).Equal(nil)
-      g.Assert(len(sheets_after)).Equal(len(sheets_before) + 1)
+      g.Assert(len(sheetsAfter)).Equal(len(sheetsBefore) + 1)
     })
 
     g.It("Should skip non-existent sheet file", func() {
@@ -192,33 +192,33 @@ func TestSheet(t *testing.T) {
 
     g.It("Should perform updates", func() {
 
-      sheet_sent := SheetRequest{
+      sheetSent := SheetRequest{
         Name:      "Sheet_update",
         PublishAt: helper.Time(time.Now()),
         DueAt:     helper.Time(time.Now()),
       }
 
       // students
-      w := tape.PutWithClaims("/api/v1/courses/1/sheets/1", tape.ToH(sheet_sent), 122, false)
+      w := tape.PutWithClaims("/api/v1/courses/1/sheets/1", tape.ToH(sheetSent), 122, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // tutors
-      w = tape.PutWithClaims("/api/v1/courses/1/sheets/1", tape.ToH(sheet_sent), 2, false)
+      w = tape.PutWithClaims("/api/v1/courses/1/sheets/1", tape.ToH(sheetSent), 2, false)
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // admin
-      w = tape.PutWithClaims("/api/v1/courses/1/sheets/1", tape.ToH(sheet_sent), 1, true)
+      w = tape.PutWithClaims("/api/v1/courses/1/sheets/1", tape.ToH(sheetSent), 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      sheet_after, err := stores.Sheet.Get(1)
+      sheetAfter, err := stores.Sheet.Get(1)
       g.Assert(err).Equal(nil)
-      g.Assert(sheet_after.Name).Equal("Sheet_update")
-      g.Assert(sheet_after.PublishAt.Equal(sheet_sent.PublishAt)).Equal(true)
-      g.Assert(sheet_after.DueAt.Equal(sheet_sent.DueAt)).Equal(true)
+      g.Assert(sheetAfter.Name).Equal("Sheet_update")
+      g.Assert(sheetAfter.PublishAt.Equal(sheetSent.PublishAt)).Equal(true)
+      g.Assert(sheetAfter.DueAt.Equal(sheetSent.DueAt)).Equal(true)
     })
 
     g.It("Should delete when valid access claims", func() {
-      entries_before, err := stores.Sheet.GetAll()
+      entriesBefore, err := stores.Sheet.GetAll()
       g.Assert(err).Equal(nil)
 
       w := tape.Delete("/api/v1/courses/1/sheets/1")
@@ -233,18 +233,18 @@ func TestSheet(t *testing.T) {
       g.Assert(w.Code).Equal(http.StatusForbidden)
 
       // verify nothing has changes
-      entries_after, err := stores.Sheet.GetAll()
+      entriesAfter, err := stores.Sheet.GetAll()
       g.Assert(err).Equal(nil)
-      g.Assert(len(entries_after)).Equal(len(entries_before))
+      g.Assert(len(entriesAfter)).Equal(len(entriesBefore))
 
       // admin
       w = tape.DeleteWithClaims("/api/v1/courses/1/sheets/1", 1, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
       // verify a sheet less exists
-      entries_after, err = stores.Sheet.GetAll()
+      entriesAfter, err = stores.Sheet.GetAll()
       g.Assert(err).Equal(nil)
-      g.Assert(len(entries_after)).Equal(len(entries_before) - 1)
+      g.Assert(len(entriesAfter)).Equal(len(entriesBefore) - 1)
     })
 
     g.It("Should see points for a sheet", func() {

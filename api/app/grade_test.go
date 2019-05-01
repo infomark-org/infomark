@@ -90,36 +90,36 @@ func TestGrade(t *testing.T) {
       w := tape.GetWithClaims("/api/v1/courses/1/grades/1", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      grade_actual := &GradeResponse{}
-      err := json.NewDecoder(w.Body).Decode(grade_actual)
+      gradeActual := &GradeResponse{}
+      err := json.NewDecoder(w.Body).Decode(gradeActual)
       g.Assert(err).Equal(nil)
 
-      hnd := helper.NewSubmissionFileHandle(grade_actual.SubmissionID)
+      hnd := helper.NewSubmissionFileHandle(gradeActual.SubmissionID)
       g.Assert(hnd.Exists()).Equal(false)
-      grade_expected, err := stores.Grade.Get(1)
+      gradeExpected, err := stores.Grade.Get(1)
       g.Assert(err).Equal(nil)
 
-      g.Assert(grade_actual.ID).Equal(grade_expected.ID)
-      g.Assert(grade_actual.PublicExecutionState).Equal(grade_expected.PublicExecutionState)
-      g.Assert(grade_actual.PrivateExecutionState).Equal(grade_expected.PrivateExecutionState)
-      g.Assert(grade_actual.PublicTestLog).Equal(grade_expected.PublicTestLog)
-      g.Assert(grade_actual.PrivateTestLog).Equal(grade_expected.PrivateTestLog)
-      g.Assert(grade_actual.PublicTestStatus).Equal(grade_expected.PublicTestStatus)
-      g.Assert(grade_actual.PrivateTestStatus).Equal(grade_expected.PrivateTestStatus)
-      g.Assert(grade_actual.AcquiredPoints).Equal(grade_expected.AcquiredPoints)
-      g.Assert(grade_actual.Feedback).Equal(grade_expected.Feedback)
-      g.Assert(grade_actual.TutorID).Equal(grade_expected.TutorID)
-      g.Assert(grade_actual.User.ID).Equal(grade_expected.UserID)
-      g.Assert(grade_actual.User.FirstName).Equal(grade_expected.UserFirstName)
-      g.Assert(grade_actual.User.LastName).Equal(grade_expected.UserLastName)
-      g.Assert(grade_actual.User.Email).Equal(grade_expected.UserEmail)
-      g.Assert(grade_actual.SubmissionID).Equal(grade_expected.SubmissionID)
-      g.Assert(grade_actual.FileURL).Equal("")
+      g.Assert(gradeActual.ID).Equal(gradeExpected.ID)
+      g.Assert(gradeActual.PublicExecutionState).Equal(gradeExpected.PublicExecutionState)
+      g.Assert(gradeActual.PrivateExecutionState).Equal(gradeExpected.PrivateExecutionState)
+      g.Assert(gradeActual.PublicTestLog).Equal(gradeExpected.PublicTestLog)
+      g.Assert(gradeActual.PrivateTestLog).Equal(gradeExpected.PrivateTestLog)
+      g.Assert(gradeActual.PublicTestStatus).Equal(gradeExpected.PublicTestStatus)
+      g.Assert(gradeActual.PrivateTestStatus).Equal(gradeExpected.PrivateTestStatus)
+      g.Assert(gradeActual.AcquiredPoints).Equal(gradeExpected.AcquiredPoints)
+      g.Assert(gradeActual.Feedback).Equal(gradeExpected.Feedback)
+      g.Assert(gradeActual.TutorID).Equal(gradeExpected.TutorID)
+      g.Assert(gradeActual.User.ID).Equal(gradeExpected.UserID)
+      g.Assert(gradeActual.User.FirstName).Equal(gradeExpected.UserFirstName)
+      g.Assert(gradeActual.User.LastName).Equal(gradeExpected.UserLastName)
+      g.Assert(gradeActual.User.Email).Equal(gradeExpected.UserEmail)
+      g.Assert(gradeActual.SubmissionID).Equal(gradeExpected.SubmissionID)
+      g.Assert(gradeActual.FileURL).Equal("")
 
       defer hnd.Delete()
       // now file exists
       src := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
-      dest := fmt.Sprintf("%s/submissions/%s.zip", viper.GetString("uploads_dir"), strconv.FormatInt(grade_actual.SubmissionID, 10))
+      dest := fmt.Sprintf("%s/submissions/%s.zip", viper.GetString("uploads_dir"), strconv.FormatInt(gradeActual.SubmissionID, 10))
       copyFile(src, dest)
 
       g.Assert(hnd.Exists()).Equal(true)
@@ -127,70 +127,70 @@ func TestGrade(t *testing.T) {
       w = tape.GetWithClaims("/api/v1/courses/1/grades/1", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      err = json.NewDecoder(w.Body).Decode(grade_actual)
+      err = json.NewDecoder(w.Body).Decode(gradeActual)
       g.Assert(err).Equal(nil)
 
-      g.Assert(grade_actual.ID).Equal(grade_expected.ID)
-      g.Assert(grade_actual.PublicExecutionState).Equal(grade_expected.PublicExecutionState)
-      g.Assert(grade_actual.PrivateExecutionState).Equal(grade_expected.PrivateExecutionState)
-      g.Assert(grade_actual.PublicTestLog).Equal(grade_expected.PublicTestLog)
-      g.Assert(grade_actual.PrivateTestLog).Equal(grade_expected.PrivateTestLog)
-      g.Assert(grade_actual.PublicTestStatus).Equal(grade_expected.PublicTestStatus)
-      g.Assert(grade_actual.PrivateTestStatus).Equal(grade_expected.PrivateTestStatus)
-      g.Assert(grade_actual.AcquiredPoints).Equal(grade_expected.AcquiredPoints)
-      g.Assert(grade_actual.Feedback).Equal(grade_expected.Feedback)
-      g.Assert(grade_actual.TutorID).Equal(grade_expected.TutorID)
-      g.Assert(grade_actual.User.ID).Equal(grade_expected.UserID)
-      g.Assert(grade_actual.User.FirstName).Equal(grade_expected.UserFirstName)
-      g.Assert(grade_actual.User.LastName).Equal(grade_expected.UserLastName)
-      g.Assert(grade_actual.User.Email).Equal(grade_expected.UserEmail)
-      g.Assert(grade_actual.SubmissionID).Equal(grade_expected.SubmissionID)
+      g.Assert(gradeActual.ID).Equal(gradeExpected.ID)
+      g.Assert(gradeActual.PublicExecutionState).Equal(gradeExpected.PublicExecutionState)
+      g.Assert(gradeActual.PrivateExecutionState).Equal(gradeExpected.PrivateExecutionState)
+      g.Assert(gradeActual.PublicTestLog).Equal(gradeExpected.PublicTestLog)
+      g.Assert(gradeActual.PrivateTestLog).Equal(gradeExpected.PrivateTestLog)
+      g.Assert(gradeActual.PublicTestStatus).Equal(gradeExpected.PublicTestStatus)
+      g.Assert(gradeActual.PrivateTestStatus).Equal(gradeExpected.PrivateTestStatus)
+      g.Assert(gradeActual.AcquiredPoints).Equal(gradeExpected.AcquiredPoints)
+      g.Assert(gradeActual.Feedback).Equal(gradeExpected.Feedback)
+      g.Assert(gradeActual.TutorID).Equal(gradeExpected.TutorID)
+      g.Assert(gradeActual.User.ID).Equal(gradeExpected.UserID)
+      g.Assert(gradeActual.User.FirstName).Equal(gradeExpected.UserFirstName)
+      g.Assert(gradeActual.User.LastName).Equal(gradeExpected.UserLastName)
+      g.Assert(gradeActual.User.Email).Equal(gradeExpected.UserEmail)
+      g.Assert(gradeActual.SubmissionID).Equal(gradeExpected.SubmissionID)
 
       url := viper.GetString("url")
 
-      g.Assert(grade_actual.FileURL).Equal(fmt.Sprintf("%s/api/v1/courses/1/submissions/1/file", url))
+      g.Assert(gradeActual.FileURL).Equal(fmt.Sprintf("%s/api/v1/courses/1/submissions/1/file", url))
 
     })
 
     g.It("Should list all grades of a group", func() {
       url := "/api/v1/courses/1/grades?group_id=1"
 
-      grades_expected, err := stores.Grade.GetFiltered(1, 0, 0, 1, 0, 0, "%%", -1, 0, 0, -1, -1)
+      gradesExpected, err := stores.Grade.GetFiltered(1, 0, 0, 1, 0, 0, "%%", -1, 0, 0, -1, -1)
       g.Assert(err).Equal(nil)
 
       w := tape.GetWithClaims(url, 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      grades_actual := []GradeResponse{}
-      err = json.NewDecoder(w.Body).Decode(&grades_actual)
+      gradesActual := []GradeResponse{}
+      err = json.NewDecoder(w.Body).Decode(&gradesActual)
       g.Assert(err).Equal(nil)
-      g.Assert(len(grades_actual)).Equal(len(grades_expected))
+      g.Assert(len(gradesActual)).Equal(len(gradesExpected))
     })
 
     g.It("Should list all grades of a group with some filters", func() {
 
       w := tape.GetWithClaims("/api/v1/courses/1/grades?group_id=1&public_test_status=0", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
-      grades_actual := []GradeResponse{}
-      err := json.NewDecoder(w.Body).Decode(&grades_actual)
+      gradesActual := []GradeResponse{}
+      err := json.NewDecoder(w.Body).Decode(&gradesActual)
       g.Assert(err).Equal(nil)
-      for _, el := range grades_actual {
+      for _, el := range gradesActual {
         g.Assert(el.PublicTestStatus).Equal(0)
       }
 
       w = tape.GetWithClaims("/api/v1/courses/1/grades?group_id=1&private_test_status=0", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
-      err = json.NewDecoder(w.Body).Decode(&grades_actual)
+      err = json.NewDecoder(w.Body).Decode(&gradesActual)
       g.Assert(err).Equal(nil)
-      for _, el := range grades_actual {
+      for _, el := range gradesActual {
         g.Assert(el.PrivateTestStatus).Equal(0)
       }
 
       w = tape.GetWithClaims("/api/v1/courses/1/grades?group_id=1&tutor_id=3", 1, true)
       g.Assert(w.Code).Equal(http.StatusOK)
-      err = json.NewDecoder(w.Body).Decode(&grades_actual)
+      err = json.NewDecoder(w.Body).Decode(&gradesActual)
       g.Assert(err).Equal(nil)
-      for _, el := range grades_actual {
+      for _, el := range gradesActual {
         g.Assert(el.TutorID).Equal(int64(3))
       }
     })
@@ -217,12 +217,12 @@ func TestGrade(t *testing.T) {
       w = tape.PutWithClaims("/api/v1/courses/1/grades/1", data, 3, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      entry_after, err := stores.Grade.Get(1)
+      entryAfter, err := stores.Grade.Get(1)
       g.Assert(err).Equal(nil)
 
-      g.Assert(entry_after.Feedback).Equal("Lorem Ipsum_update")
-      g.Assert(entry_after.AcquiredPoints).Equal(3)
-      g.Assert(entry_after.TutorID).Equal(int64(3))
+      g.Assert(entryAfter.Feedback).Equal("Lorem Ipsum_update")
+      g.Assert(entryAfter.AcquiredPoints).Equal(3)
+      g.Assert(entryAfter.TutorID).Equal(int64(3))
     })
 
     g.It("Should perform updates when zero points", func() {
@@ -247,12 +247,12 @@ func TestGrade(t *testing.T) {
       w = tape.PutWithClaims("/api/v1/courses/1/grades/1", data, 3, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      entry_after, err := stores.Grade.Get(1)
+      entryAfter, err := stores.Grade.Get(1)
       g.Assert(err).Equal(nil)
 
-      g.Assert(entry_after.Feedback).Equal("Lorem Ipsum_update")
-      g.Assert(entry_after.AcquiredPoints).Equal(0)
-      g.Assert(entry_after.TutorID).Equal(int64(3))
+      g.Assert(entryAfter.Feedback).Equal("Lorem Ipsum_update")
+      g.Assert(entryAfter.AcquiredPoints).Equal(0)
+      g.Assert(entryAfter.TutorID).Equal(int64(3))
     })
 
     g.Xit("Should not perform updates when missing points", func() {
@@ -284,7 +284,7 @@ func TestGrade(t *testing.T) {
       task, err := stores.Grade.IdentifyTaskOfGrade(1)
       g.Assert(err).Equal(nil)
 
-      entry_before, err := stores.Grade.Get(1)
+      entryBefore, err := stores.Grade.Get(1)
       g.Assert(err).Equal(nil)
 
       data := H{
@@ -307,43 +307,43 @@ func TestGrade(t *testing.T) {
       w = tape.PutWithClaims("/api/v1/courses/1/grades/1", data, 3, false)
       g.Assert(w.Code).Equal(http.StatusBadRequest)
 
-      entry_after, err := stores.Grade.Get(1)
+      entryAfter, err := stores.Grade.Get(1)
       g.Assert(err).Equal(nil)
 
-      g.Assert(entry_after.Feedback).Equal(entry_before.Feedback)
-      g.Assert(entry_after.AcquiredPoints).Equal(entry_before.AcquiredPoints)
-      g.Assert(entry_after.TutorID).Equal(entry_before.TutorID)
+      g.Assert(entryAfter.Feedback).Equal(entryBefore.Feedback)
+      g.Assert(entryAfter.AcquiredPoints).Equal(entryBefore.AcquiredPoints)
+      g.Assert(entryAfter.TutorID).Equal(entryBefore.TutorID)
     })
 
     g.It("Should list missing grades", func() {
-      grades_actual := []MissingGradeResponse{}
+      gradesActual := []MissingGradeResponse{}
       // students have no missing data
       // but we do not know if a user is student in a course
       w := tape.GetWithClaims("/api/v1/courses/1/grades/missing", 112, false)
       g.Assert(w.Code).Equal(http.StatusOK)
-      err := json.NewDecoder(w.Body).Decode(&grades_actual)
+      err := json.NewDecoder(w.Body).Decode(&gradesActual)
       g.Assert(err).Equal(nil)
-      g.Assert(len(grades_actual)).Equal(0)
+      g.Assert(len(gradesActual)).Equal(0)
 
       // admin (mock creates feed back for all submissions)
       w = tape.GetWithClaims("/api/v1/courses/1/grades/missing", 1, false)
       g.Assert(w.Code).Equal(http.StatusOK)
-      err = json.NewDecoder(w.Body).Decode(&grades_actual)
+      err = json.NewDecoder(w.Body).Decode(&gradesActual)
       g.Assert(err).Equal(nil)
 
-      expected_grades, err := stores.Grade.GetAllMissingGrades(1, 1, 0)
+      gradesExpected, err := stores.Grade.GetAllMissingGrades(1, 1, 0)
       g.Assert(err).Equal(nil)
-      g.Assert(len(grades_actual)).Equal(len(expected_grades))
+      g.Assert(len(gradesActual)).Equal(len(gradesExpected))
 
       // tutors (mock creates feed back for all submissions)
       w = tape.GetWithClaims("/api/v1/courses/1/grades/missing", 3, false)
       g.Assert(w.Code).Equal(http.StatusOK)
-      err = json.NewDecoder(w.Body).Decode(&grades_actual)
+      err = json.NewDecoder(w.Body).Decode(&gradesActual)
       g.Assert(err).Equal(nil)
 
-      expected_grades, err = stores.Grade.GetAllMissingGrades(1, 3, 0)
+      gradesExpected, err = stores.Grade.GetAllMissingGrades(1, 3, 0)
       g.Assert(err).Equal(nil)
-      g.Assert(len(grades_actual)).Equal(len(expected_grades))
+      g.Assert(len(gradesActual)).Equal(len(gradesExpected))
 
       _, err = tape.DB.Exec("UPDATE grades SET feedback='' WHERE tutor_id = 3 ")
       g.Assert(err).Equal(nil)
@@ -351,32 +351,32 @@ func TestGrade(t *testing.T) {
       // tutors (mock creates feed back for all submissions)
       w = tape.GetWithClaims("/api/v1/courses/1/grades/missing", 3, false)
       g.Assert(w.Code).Equal(http.StatusOK)
-      err = json.NewDecoder(w.Body).Decode(&grades_actual)
+      err = json.NewDecoder(w.Body).Decode(&gradesActual)
       g.Assert(err).Equal(nil)
 
-      grades_expected, err := stores.Grade.GetAllMissingGrades(1, 3, 0)
+      gradesExpected, err := stores.Grade.GetAllMissingGrades(1, 3, 0)
       g.Assert(err).Equal(nil)
 
       // see mock.py
-      g.Assert(len(grades_actual)).Equal(len(grades_expected))
-      for k, el := range grades_actual {
-        g.Assert(el.Grade.ID).Equal(grades_expected[k].Grade.ID)
-        g.Assert(el.Grade.PublicExecutionState).Equal(grades_expected[k].Grade.PublicExecutionState)
-        g.Assert(el.Grade.PrivateExecutionState).Equal(grades_expected[k].Grade.PrivateExecutionState)
-        g.Assert(el.Grade.PublicTestLog).Equal(grades_expected[k].Grade.PublicTestLog)
-        g.Assert(el.Grade.PrivateTestLog).Equal(grades_expected[k].Grade.PrivateTestLog)
-        g.Assert(el.Grade.PublicTestStatus).Equal(grades_expected[k].Grade.PublicTestStatus)
-        g.Assert(el.Grade.PrivateTestStatus).Equal(grades_expected[k].Grade.PrivateTestStatus)
-        g.Assert(el.Grade.AcquiredPoints).Equal(grades_expected[k].Grade.AcquiredPoints)
-        g.Assert(el.Grade.PrivateTestLog).Equal(grades_expected[k].Grade.PrivateTestLog)
+      g.Assert(len(gradesActual)).Equal(len(gradesExpected))
+      for k, el := range gradesActual {
+        g.Assert(el.Grade.ID).Equal(gradesExpected[k].Grade.ID)
+        g.Assert(el.Grade.PublicExecutionState).Equal(gradesExpected[k].Grade.PublicExecutionState)
+        g.Assert(el.Grade.PrivateExecutionState).Equal(gradesExpected[k].Grade.PrivateExecutionState)
+        g.Assert(el.Grade.PublicTestLog).Equal(gradesExpected[k].Grade.PublicTestLog)
+        g.Assert(el.Grade.PrivateTestLog).Equal(gradesExpected[k].Grade.PrivateTestLog)
+        g.Assert(el.Grade.PublicTestStatus).Equal(gradesExpected[k].Grade.PublicTestStatus)
+        g.Assert(el.Grade.PrivateTestStatus).Equal(gradesExpected[k].Grade.PrivateTestStatus)
+        g.Assert(el.Grade.AcquiredPoints).Equal(gradesExpected[k].Grade.AcquiredPoints)
+        g.Assert(el.Grade.PrivateTestLog).Equal(gradesExpected[k].Grade.PrivateTestLog)
         g.Assert(el.Grade.Feedback).Equal("")
         g.Assert(el.Grade.TutorID).Equal(int64(3))
-        g.Assert(el.Grade.SubmissionID).Equal(grades_expected[k].Grade.SubmissionID)
+        g.Assert(el.Grade.SubmissionID).Equal(gradesExpected[k].Grade.SubmissionID)
 
-        g.Assert(el.Grade.User.ID).Equal(grades_expected[k].Grade.UserID)
-        g.Assert(el.Grade.User.FirstName).Equal(grades_expected[k].Grade.UserFirstName)
-        g.Assert(el.Grade.User.LastName).Equal(grades_expected[k].Grade.UserLastName)
-        g.Assert(el.Grade.User.Email).Equal(grades_expected[k].Grade.UserEmail)
+        g.Assert(el.Grade.User.ID).Equal(gradesExpected[k].Grade.UserID)
+        g.Assert(el.Grade.User.FirstName).Equal(gradesExpected[k].Grade.UserFirstName)
+        g.Assert(el.Grade.User.LastName).Equal(gradesExpected[k].Grade.UserLastName)
+        g.Assert(el.Grade.User.Email).Equal(gradesExpected[k].Grade.UserEmail)
       }
     })
 
@@ -404,11 +404,11 @@ func TestGrade(t *testing.T) {
       w = tape.PostWithClaims(url, data, 1, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      entry_after, err := stores.Grade.Get(1)
+      entryAfter, err := stores.Grade.Get(1)
       g.Assert(err).Equal(nil)
 
-      g.Assert(entry_after.PublicTestLog).Equal("some new logs")
-      g.Assert(entry_after.PublicTestStatus).Equal(2)
+      g.Assert(entryAfter.PublicTestLog).Equal("some new logs")
+      g.Assert(entryAfter.PublicTestStatus).Equal(2)
 
     })
 
@@ -436,11 +436,11 @@ func TestGrade(t *testing.T) {
       w = tape.PostWithClaims(url, data, 1, false)
       g.Assert(w.Code).Equal(http.StatusOK)
 
-      entry_after, err := stores.Grade.Get(1)
+      entryAfter, err := stores.Grade.Get(1)
       g.Assert(err).Equal(nil)
 
-      g.Assert(entry_after.PrivateTestLog).Equal("some new logs")
-      g.Assert(entry_after.PrivateTestStatus).Equal(2)
+      g.Assert(entryAfter.PrivateTestLog).Equal("some new logs")
+      g.Assert(entryAfter.PrivateTestStatus).Equal(2)
 
     })
 

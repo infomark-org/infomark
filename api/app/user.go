@@ -313,6 +313,7 @@ func (rs *UserResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // .............................................................................
+//
 // Context middleware is used to load an User object from
 // the URL parameter `userID` passed through as the request. In case
 // the User could not be found, we stop here and return a 404.
@@ -338,7 +339,7 @@ func (d *UserResource) Context(next http.Handler) http.Handler {
     }
 
     // serve next
-    ctx := context.WithValue(r.Context(), "user", user)
+    ctx := context.WithValue(r.Context(), ctxKeyUser, user)
     next.ServeHTTP(w, r.WithContext(ctx))
   })
 }
