@@ -29,6 +29,7 @@ import (
   "github.com/jmoiron/sqlx"
 )
 
+// SubmissionFileZipper links all ressource to zip submissions
 type SubmissionFileZipper struct {
   Stores    *app.Stores
   DB        *sqlx.DB
@@ -39,15 +40,17 @@ type SubmissionFileZipper struct {
 // INNER JOIN user_group ug ON ug.user_id = s.user_id
 // INNER JOIN users u ON u.id  = s.user_id
 // WHERE  ug.group_id = 1
-
 // LIMIT 10
 
+// StudentSubmission is a view from the database used to identify which
+// submissions should be included in the final zip file
 type StudentSubmission struct {
   ID               int64  `db:"id"`
   StudentFirstName string `db:"first_name"`
   StudentLastName  string `db:"last_name"`
 }
 
+// FetchStudentSubmissions queries the database to gather all submissions for a given group and task
 func FetchStudentSubmissions(db *sqlx.DB, groupID int64, taskID int64) ([]StudentSubmission, error) {
   p := []StudentSubmission{}
   err := db.Select(&p, `
@@ -59,6 +62,7 @@ func FetchStudentSubmissions(db *sqlx.DB, groupID int64, taskID int64) ([]Studen
   return p, err
 }
 
+// Run executes a job to zip all submissions for each group and task
 func (job *SubmissionFileZipper) Run() {
   // for each sheet
   // if ended
@@ -72,13 +76,13 @@ func (job *SubmissionFileZipper) Run() {
   for _, sheet := range sheets {
     if app.OverTime(sheet.DueAt) {
       // fmt.Println("work on ", sheet.ID)
-      sheet_lock_path := fmt.Sprintf("%s/infomark-sheet%d.lock", job.Directory, sheet.ID)
+      sheetLockPath := fmt.Sprintf("%s/infomark-sheet%d.lock", job.Directory, sheet.ID)
 
-      fmt.Printf("test lock file '%s'\n", sheet_lock_path)
+      fmt.Printf("test lock file '%s'\n", sheetLockPath)
 
-      if !helper.FileExists(sheet_lock_path) {
+      if !helper.FileExists(sheetLockPath) {
         fmt.Println(" --> create", sheet.ID)
-        helper.FileTouch(sheet_lock_path)
+        helper.FileTouch(sheetLockPath)
 
         courseID := int64(0)
         job.DB.Get(&courseID, "SELECT course_id FROM sheet_course WHERE sheet_id = $1;", sheet.ID)
@@ -90,19 +94,19 @@ func (job *SubmissionFileZipper) Run() {
           fmt.Println("  work on task ", task.ID)
 
           for _, group := range groups {
-            archiv_lock_path := fmt.Sprintf("%s/collection-course%d-sheet%d-task%d-group%d.lock", job.Directory, courseID, sheet.ID, task.ID, group.ID)
+            archivLockPath := fmt.Sprintf("%s/collection-course%d-sheet%d-task%d-group%d.lock", job.Directory, courseID, sheet.ID, task.ID, group.ID)
             // archiv_zip_path := fmt.Sprintf("%s/infomark-course%d-sheet%d-task%d-group%d.zip", job.Directory, courseID, sheet.ID, task.ID, group.ID)
 
-            archiv_zip := helper.NewSubmissionsCollectionFileHandle(courseID, sheet.ID, task.ID, group.ID)
+            archivZip := helper.NewSubmissionsCollectionFileHandle(courseID, sheet.ID, task.ID, group.ID)
 
-            if !helper.FileExists(archiv_lock_path) && !archiv_zip.Exists() {
+            if !helper.FileExists(archivLockPath) && !archivZip.Exists() {
 
               // we gonna zip all submissions from students in group x for task y
-              helper.FileTouch(archiv_lock_path)
+              helper.FileTouch(archivLockPath)
 
               submissions, _ := FetchStudentSubmissions(job.DB, group.ID, task.ID)
 
-              newZipFile, err := os.Create(archiv_zip.Path())
+              newZipFile, err := os.Create(archivZip.Path())
               if err != nil {
                 return
               }
@@ -114,15 +118,15 @@ func (job *SubmissionFileZipper) Run() {
               for _, submission := range submissions {
                 // fmt.Println(submission)
 
-                submission_hnd := helper.NewSubmissionFileHandle(submission.ID)
+                submissionHnd := helper.NewSubmissionFileHandle(submission.ID)
 
                 // student did upload a zip file
-                if submission_hnd.Exists() {
+                if submissionHnd.Exists() {
                   // see https://stackoverflow.com/a/53802396/7443104
-                  // fmt.Println("add sbmission ", submission.ID, " to ", archiv_zip)
+                  // fmt.Println("add sbmission ", submission.ID, " to ", archivZip)
 
                   // refer to the zip file
-                  zipfile, err := os.Open(submission_hnd.Path())
+                  zipfile, err := os.Open(submissionHnd.Path())
                   if err != nil {
                     return
                   }

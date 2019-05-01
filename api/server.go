@@ -40,7 +40,7 @@ import (
 
 // Server provides an http.Server.
 type Server struct {
-	Http *http.Server
+	HTTP *http.Server
 	Cron *cron.Cron
 }
 
@@ -95,7 +95,7 @@ func NewServer() (*Server, error) {
 		Directory: viper.GetString("generated_files_dir"),
 	})
 
-	return &Server{Http: &srv, Cron: c}, nil
+	return &Server{HTTP: &srv, Cron: c}, nil
 }
 
 // Start runs ListenAndServe on the http.Server with graceful shutdown.
@@ -103,11 +103,11 @@ func (srv *Server) Start() {
 
 	log.Println("starting server...")
 	go func() {
-		if err := srv.Http.ListenAndServe(); err != http.ErrServerClosed {
+		if err := srv.HTTP.ListenAndServe(); err != http.ErrServerClosed {
 			panic(err)
 		}
 	}()
-	log.Printf("Listening on %s\n", srv.Http.Addr)
+	log.Printf("Listening on %s\n", srv.HTTP.Addr)
 
 	log.Println("starting background email sender...")
 	go email.BackgroundSend(email.OutgoingEmailsChannel)
@@ -127,7 +127,7 @@ func (srv *Server) Start() {
 	close(email.OutgoingEmailsChannel)
 	log.Println("Background email sender gracefully stopped")
 
-	if err := srv.Http.Shutdown(context.Background()); err != nil {
+	if err := srv.HTTP.Shutdown(context.Background()); err != nil {
 		panic(err)
 	}
 	log.Println("Server gracefully stopped")

@@ -36,8 +36,10 @@ import (
 // FaileCarrier is a unified way to handle uploads and downloads of different
 // files.
 
+// FileCategory represents the categorie any upload is associated with
 type FileCategory int32
 
+// all categories
 const (
   AvatarCategory                FileCategory = 0
   SheetCategory                 FileCategory = 1
@@ -48,6 +50,8 @@ const (
   SubmissionsCollectionCategory FileCategory = 6
 )
 
+// FileManager contains all operations we need to handle files
+// within HTTP
 type FileManager interface {
   WriteToBody(w http.ResponseWriter) error
   WriteToDisk(req multipart.File) error
@@ -118,7 +122,7 @@ func NewMaterialFileHandle(ID int64) *FileHandle {
   }
 }
 
-// NewSubmissionFileHandle will handle homework/exercise submissiosn (zip files).
+// NewSubmissionFileHandle will handle homework/exercise submissions (zip files).
 func NewSubmissionFileHandle(ID int64) *FileHandle {
   return &FileHandle{
     Category:   SubmissionCategory,
@@ -128,7 +132,7 @@ func NewSubmissionFileHandle(ID int64) *FileHandle {
   }
 }
 
-// NewSubmissionFileHandle will handle homework/exercise submissiosn (zip files).
+// NewSubmissionsCollectionFileHandle will handle a collection of submissions.
 func NewSubmissionsCollectionFileHandle(courseID int64, sheetID int64, taskID int64, groupID int64) *FileHandle {
   return &FileHandle{
     Category:   SubmissionsCollectionCategory,
@@ -139,7 +143,7 @@ func NewSubmissionsCollectionFileHandle(courseID int64, sheetID int64, taskID in
   }
 }
 
-// Path returns a path without checking if it exists.
+// Sha256 computes the checksum and return it as a string
 func (f *FileHandle) Sha256() (string, error) {
 
   hnd, err := os.Open(f.Path())
@@ -157,6 +161,7 @@ func (f *FileHandle) Sha256() (string, error) {
 
 }
 
+// Path return the path to a file using the config
 func (f *FileHandle) Path() string {
   switch f.Category {
   case AvatarCategory:
@@ -197,7 +202,7 @@ func (f *FileHandle) Path() string {
   return ""
 }
 
-// Exists checks if a file really exists.
+// FileExists checks if a file really exists.
 func FileExists(path string) bool {
   if _, err := os.Stat(path); os.IsNotExist(err) {
     return false
@@ -254,16 +259,20 @@ func (f *FileHandle) GetContentType() (string, error) {
   return contentType, nil
 }
 
+// DummyWriter is a writer which does nothing (use when writing to disk)
 type DummyWriter struct{}
 
+// Header returns empty header
 func (h DummyWriter) Header() http.Header {
   return make(map[string][]string)
 }
 
+// Write does nothing
 func (h DummyWriter) Write([]byte) (int, error) {
   return 0, nil
 }
 
+// WriteHeader does nothing
 func (h DummyWriter) WriteHeader(statusCode int) {}
 
 // WriteToBody will write a file from disk to the http reponse (download process)
@@ -276,8 +285,8 @@ func (f *FileHandle) WriteToBody(w http.ResponseWriter) error {
   }
   defer file.Close()
 
-  path_split := strings.Split(f.Path(), "/")
-  publicFilename := fmt.Sprintf("%s-%s", path_split[len(path_split)-2], path_split[len(path_split)-1])
+  pathSplit := strings.Split(f.Path(), "/")
+  publicFilename := fmt.Sprintf("%s-%s", pathSplit[len(pathSplit)-2], pathSplit[len(pathSplit)-1])
 
   w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"infomark-%s\"", publicFilename))
 
@@ -297,6 +306,7 @@ func (f *FileHandle) WriteToBody(w http.ResponseWriter) error {
   return nil
 }
 
+// WriteToBodyWithName reads a file from disk a writes it in the HTTP response (download)
 func (f *FileHandle) WriteToBodyWithName(publicFilename string, w http.ResponseWriter) error {
 
   // check if file exists
@@ -324,7 +334,7 @@ func (f *FileHandle) WriteToBodyWithName(publicFilename string, w http.ResponseW
   return nil
 }
 
-// Check if file is zip file based on magic number
+// IsZipFile checks if file is zip file based on magic number
 func IsZipFile(buf []byte) bool {
   return len(buf) > 3 &&
     buf[0] == 0x50 && buf[1] == 0x4B &&
@@ -332,14 +342,14 @@ func IsZipFile(buf []byte) bool {
     (buf[3] == 0x4 || buf[3] == 0x6 || buf[3] == 0x8)
 }
 
-// Check if file is pdf file based on magic number
+// IsPdfFile checks if file is pdf file based on magic number
 func IsPdfFile(buf []byte) bool {
   return len(buf) > 3 &&
     buf[0] == 0x25 && buf[1] == 0x50 &&
     buf[2] == 0x44 && buf[3] == 0x46
 }
 
-// Check if file is jpg file based on magic number
+// IsJpegFile checks if file is jpg file based on magic number
 func IsJpegFile(buf []byte) bool {
   return len(buf) > 2 &&
     buf[0] == 0xFF &&
@@ -347,7 +357,7 @@ func IsJpegFile(buf []byte) bool {
     buf[2] == 0xFF
 }
 
-// Check if file is png file based on magic number
+// IsPngFile checks if file is png file based on magic number
 func IsPngFile(buf []byte) bool {
   return len(buf) > 3 &&
     buf[0] == 0x89 && buf[1] == 0x50 &&
@@ -379,49 +389,49 @@ func (f *FileHandle) WriteToDisk(r *http.Request, fieldName string) (string, err
   path := f.Path()
 
   // Extract magic number from file
-  file_magic := make([]byte, 4)
-  if n, err := file.Read(file_magic); err != nil || n != 4 {
-    return "", errors.New("Unable to extract 4 Bytes for magic number determination.")
+  fileMagic := make([]byte, 4)
+  if n, err := file.Read(fileMagic); err != nil || n != 4 {
+    return "", errors.New("Unable to extract 4 Bytes for magic number determination")
   }
   if n, err := file.Seek(0, io.SeekStart); n != 0 || err != nil {
-    return "", errors.New("Fail to seek to beginning of file.")
+    return "", errors.New("Fail to seek to beginning of file")
   }
 
   switch f.Category {
   case AvatarCategory:
-    path_to_delete := fmt.Sprintf("%s/avatars/%s.png", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
-    FileDelete(path_to_delete)
-    path_to_delete = fmt.Sprintf("%s/avatars/%s.jpg", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
-    FileDelete(path_to_delete)
-    if IsJpegFile(file_magic) {
+    pathToDelete := fmt.Sprintf("%s/avatars/%s.png", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
+    FileDelete(pathToDelete)
+    pathToDelete = fmt.Sprintf("%s/avatars/%s.jpg", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
+    FileDelete(pathToDelete)
+    if IsJpegFile(fileMagic) {
       path = fmt.Sprintf("%s/avatars/%s.jpg", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
-    } else if IsPngFile(file_magic) {
+    } else if IsPngFile(fileMagic) {
       path = fmt.Sprintf("%s/avatars/%s.png", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
     } else {
-      return "", errors.New("We support JPG/JPEG/PNG files only.")
+      return "", errors.New("We support JPG/JPEG/PNG files only")
     }
 
   case SheetCategory,
     PublicTestCategory,
     PrivateTestCategory,
     SubmissionCategory:
-    if !IsZipFile(file_magic) {
-      return "", errors.New("We support ZIP files only. But the given file is no Zip file!")
+    if !IsZipFile(fileMagic) {
+      return "", errors.New("We support ZIP files only. But the given file is no Zip file")
     }
   case MaterialCategory:
     // delete both possible files
     // ids are unique. Hence we only delete the file associated with the id
-    path_to_delete := fmt.Sprintf("%s/materials/%s.zip", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
-    FileDelete(path_to_delete)
-    path_to_delete = fmt.Sprintf("%s/materials/%s.pdf", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
-    FileDelete(path_to_delete)
+    pathToDelete := fmt.Sprintf("%s/materials/%s.zip", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
+    FileDelete(pathToDelete)
+    pathToDelete = fmt.Sprintf("%s/materials/%s.pdf", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
+    FileDelete(pathToDelete)
 
-    if IsPdfFile(file_magic) {
+    if IsPdfFile(fileMagic) {
       path = fmt.Sprintf("%s/materials/%s.pdf", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
-    } else if IsZipFile(file_magic) {
+    } else if IsZipFile(fileMagic) {
       path = fmt.Sprintf("%s/materials/%s.zip", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
     } else {
-      return "", errors.New("Only PDF and ZIP files are allowed.")
+      return "", errors.New("Only PDF and ZIP files are allowed")
     }
   }
 

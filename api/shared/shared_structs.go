@@ -22,6 +22,7 @@ import (
   "fmt"
 )
 
+// SubmissionAMQPWorkerRequest is the message which is handed over to the background workers
 type SubmissionAMQPWorkerRequest struct {
   SubmissionID      int64  `json:"submission_id"`
   AccessToken       string `json:"access_token"`
@@ -32,11 +33,13 @@ type SubmissionAMQPWorkerRequest struct {
   Sha256            string `json:"sha_256"`
 }
 
+// SubmissionWorkerResponse is the message handed from the workers to the server
 type SubmissionWorkerResponse struct {
   Log    string `json:"log"`
   Status int    `json:"status"`
 }
 
+// NewSubmissionAMQPWorkerRequest creates a new message for the workers
 func NewSubmissionAMQPWorkerRequest(
   courseID int64, taskID int64, submissionID int64, gradeID int64,
   accessToken string, url string, dockerimage string, sha256 string, visibility string) *SubmissionAMQPWorkerRequest {

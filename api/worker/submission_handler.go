@@ -37,14 +37,21 @@ import (
   "github.com/spf13/viper"
 )
 
+// SubmissionHandler is any handler capable to work on submissions
 type SubmissionHandler interface {
   Handle(body []byte) error
 }
 
+// DummySubmissionHandler is doing nothing (for testing)
 type DummySubmissionHandler struct{}
+
+// RealSubmissionHandler is starting docker to test submissions
 type RealSubmissionHandler struct{}
 
+// DefaultSubmissionHandler is the default submission handler
 var DefaultSubmissionHandler SubmissionHandler
+
+// DefaultLogger is the logger writing worker-logs to file
 var DefaultLogger *logrus.Logger
 
 func init() {
@@ -68,6 +75,7 @@ func init() {
 
 }
 
+// Handle reads message and does nothing
 func (h *DummySubmissionHandler) Handle(workerBody []byte) error {
   // decode incoming message from AMQP
   msg := &shared.SubmissionAMQPWorkerRequest{}
@@ -148,11 +156,11 @@ func cleanDockerOutput(stdout string) string {
     rsl = strings.Split(rsl[1], logEnd)
     return rsl[0]
 
-  } else {
-    return stdout
   }
+  return stdout
 }
 
+// Handle reads message and test submission using docker
 func (h *RealSubmissionHandler) Handle(body []byte) error {
   // HandleSubmission is responsible to
   // 1. parse request
@@ -177,27 +185,27 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
     DefaultLogger.Printf("error: %v\n", err)
     return err
   }
-  submission_path := fmt.Sprintf("%s/%s-submission.zip", viper.GetString("worker_workdir"), uuid)
-  framework_path := fmt.Sprintf("%s/%s-framework.zip", viper.GetString("worker_workdir"), uuid)
+  submissionPath := fmt.Sprintf("%s/%s-submission.zip", viper.GetString("worker_workdir"), uuid)
+  frameworkPath := fmt.Sprintf("%s/%s-framework.zip", viper.GetString("worker_workdir"), uuid)
 
   // 2. fetch submission file from server
   r, err := http.NewRequest("GET", msg.SubmissionFileURL, nil)
   r.Header.Add("Authorization", "Bearer "+msg.AccessToken)
-  if err := downloadFile(r, submission_path); err != nil {
+  if err := downloadFile(r, submissionPath); err != nil {
     DefaultLogger.Printf("error: %v\n", err)
     return err
   }
 
-  defer helper.FileDelete(submission_path)
+  defer helper.FileDelete(submissionPath)
 
   // 3. fetch framework file from server
   r, err = http.NewRequest("GET", msg.FrameworkFileURL, nil)
   r.Header.Add("Authorization", "Bearer "+msg.AccessToken)
-  if err := downloadFile(r, framework_path); err != nil {
+  if err := downloadFile(r, frameworkPath); err != nil {
     DefaultLogger.Printf("error: %v\n", err)
     return err
   }
-  defer helper.FileDelete(framework_path)
+  defer helper.FileDelete(frameworkPath)
 
   client := &http.Client{}
 
@@ -221,7 +229,7 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
   // }
 
   // 4. verify checksums to avoid race conditions
-  if err := verifySha256(submission_path, msg.Sha256); err != nil {
+  if err := verifySha256(submissionPath, msg.Sha256); err != nil {
     DefaultLogger.WithFields(logrus.Fields{
       "SubmissionID":      msg.SubmissionID,
       "SubmissionFileURL": msg.SubmissionFileURL,
@@ -242,8 +250,8 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
 
   stdout, exit, err = ds.Run(
     msg.DockerImage,
-    submission_path,
-    framework_path,
+    submissionPath,
+    frameworkPath,
     viper.GetInt64("worker_docker_memory_bytes"),
   )
   if err != nil {

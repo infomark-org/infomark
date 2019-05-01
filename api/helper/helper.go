@@ -30,7 +30,7 @@ import (
 
 	txdb "github.com/DATA-DOG/go-txdb"
 	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq"
+	_ "github.com/lib/pq" // need for Postgres
 	"github.com/spf13/viper"
 )
 
@@ -47,61 +47,55 @@ func StringArrayToIntArray(values []string) ([]int, error) {
 	return out, nil
 }
 
-// StringArrayFromUrl will read an URL parameter like /api/?some_strings=foo,bar
-func StringArrayFromUrl(r *http.Request, name string, standard []string) []string {
+// StringArrayFromURL will read an URL parameter like /api/?some_strings=foo,bar
+func StringArrayFromURL(r *http.Request, name string, standard []string) []string {
 	rolesFromURL, ok := r.URL.Query()[name]
 	if ok {
 		return strings.Split(rolesFromURL[0], ",")
-	} else {
-		return standard
 	}
+	return standard
 }
 
-// StringFromUrl will read an URL parameter like /api/?some_string=foo
-func StringFromUrl(r *http.Request, name string, standard string) string {
+// StringFromURL will read an URL parameter like /api/?some_string=foo
+func StringFromURL(r *http.Request, name string, standard string) string {
 	rolesFromURL, ok := r.URL.Query()[name]
 	if ok {
 		if len(rolesFromURL[0]) > 0 {
 			return rolesFromURL[0]
-		} else {
-			return standard
 		}
-	} else {
 		return standard
 	}
+	return standard
 }
 
-// IntFromUrl will read an URL parameter like /api/?some_int=3
-func IntFromUrl(r *http.Request, name string, standard int) int {
-	str := StringFromUrl(r, name, "uglyhardcoded")
+// IntFromURL will read an URL parameter like /api/?some_int=3
+func IntFromURL(r *http.Request, name string, standard int) int {
+	str := StringFromURL(r, name, "uglyhardcoded")
 	if str == "uglyhardcoded" {
 		return standard
-	} else {
-		i, err := strconv.Atoi(str)
-		if err != nil {
-			return standard
-		} else {
-			return i
-		}
 	}
+
+	i, err := strconv.Atoi(str)
+	if err != nil {
+		return standard
+	}
+	return i
 }
 
-// Int64FromUrl will read an URL parameter like /api/?some_int=3
-func Int64FromUrl(r *http.Request, name string, standard int64) int64 {
-	str := StringFromUrl(r, name, "uglyhardcoded")
+// Int64FromURL will read an URL parameter like /api/?some_int=3
+func Int64FromURL(r *http.Request, name string, standard int64) int64 {
+	str := StringFromURL(r, name, "uglyhardcoded")
 	if str == "uglyhardcoded" {
 		return standard
-	} else {
-		i, err := strconv.Atoi(str)
-		if err != nil {
-			return standard
-		} else {
-			return int64(i)
-		}
 	}
+	i, err := strconv.Atoi(str)
+	if err != nil {
+		return standard
+	}
+	return int64(i)
 }
 
-// similar to gin.H as a neat alias
+// H is a neat alias
 type H map[string]interface{}
 
 // ToH converts any object into an typeless object (used by unit tests).

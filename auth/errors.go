@@ -49,7 +49,7 @@ func (e *ErrResponse) Render(w http.ResponseWriter, r *http.Request) error {
   return nil
 }
 
-// ErrUnauthenticated renders status 401 Unauthorized with custom error message.
+// ErrUnauthenticatedWithDetails renders status 401 Unauthorized with custom error message.
 // The request has no credentials at all.
 func ErrUnauthenticatedWithDetails(err error) render.Renderer {
   // StatusUnauthorized                  = 401 // RFC 7235, 3.1
@@ -61,7 +61,7 @@ func ErrUnauthenticatedWithDetails(err error) render.Renderer {
   }
 }
 
-// ErrUnauthorized renders status 403 Unauthorized with custom error message.
+// ErrUnauthorizedWithDetails renders status 403 Unauthorized with custom error message.
 // The request is issued with credential, but these are invalid or not sufficient
 // to gain access to a ressource.
 func ErrUnauthorizedWithDetails(err error) render.Renderer {
@@ -75,9 +75,10 @@ func ErrUnauthorizedWithDetails(err error) render.Renderer {
 }
 
 var (
+  // ErrUnauthenticated means no credentials are given
   ErrUnauthenticated = &ErrResponse{HTTPStatusCode: http.StatusUnauthorized, StatusText: http.StatusText(http.StatusUnauthorized)}
 
-  // ErrForbidden returns status 403 Forbidden for unauthorized request.
+  // ErrUnauthorized returns status 403 Forbidden for unauthorized request.
   // e.g. "User doesn't have enough privilege"
   ErrUnauthorized = &ErrResponse{HTTPStatusCode: http.StatusForbidden, StatusText: http.StatusText(http.StatusForbidden)}
 )

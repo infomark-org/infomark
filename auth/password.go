@@ -26,15 +26,15 @@ import (
 )
 
 // HashPassword uses bcrypt to securely hash a plain password
-func HashPassword(plain_password string) (string, error) {
-	bytes, err := bcrypt.GenerateFromPassword([]byte(plain_password), bcrypt.DefaultCost)
+func HashPassword(plainPassword string) (string, error) {
+	bytes, err := bcrypt.GenerateFromPassword([]byte(plainPassword), bcrypt.DefaultCost)
 	return string(bytes), err
 }
 
-// CheckPasswordHash tests whether a given plain_password matches the securely
+// CheckPasswordHash tests whether a given plainPassword matches the securely
 // hashed one.
-func CheckPasswordHash(plain_password, hash string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(plain_password))
+func CheckPasswordHash(plainPassword, hash string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(plainPassword))
 	return err == nil
 }
 

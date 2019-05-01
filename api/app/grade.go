@@ -258,23 +258,23 @@ func (rs *GradeResource) PrivateResultEditHandler(w http.ResponseWriter, r *http
 func (rs *GradeResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
   course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
 
-  filterSheetID := helper.Int64FromUrl(r, "sheet_id", 0)
-  filterTaskID := helper.Int64FromUrl(r, "task_id", 0)
-  filterGroupID := helper.Int64FromUrl(r, "group_id", 0)
+  filterSheetID := helper.Int64FromURL(r, "sheet_id", 0)
+  filterTaskID := helper.Int64FromURL(r, "task_id", 0)
+  filterGroupID := helper.Int64FromURL(r, "group_id", 0)
 
   if filterGroupID == 0 {
     render.Render(w, r, ErrBadRequestWithDetails(errors.New("group_id is missing")))
     return
   }
 
-  filterUserID := helper.Int64FromUrl(r, "user_id", 0)
-  filterTutorID := helper.Int64FromUrl(r, "tutor_id", 0)
-  filterFeedback := helper.StringFromUrl(r, "feedback", "%%")
-  filterAcquiredPoints := helper.IntFromUrl(r, "acquired_points", -1)
-  filterPublicTestStatus := helper.IntFromUrl(r, "public_test_status", 0)
-  filterPrivateTestStatus := helper.IntFromUrl(r, "private_test_status", 0)
-  filterPublicExecutationState := helper.IntFromUrl(r, "public_execution_state", -1)
-  filterPrivateExecutationState := helper.IntFromUrl(r, "private_execution_state", -1)
+  filterUserID := helper.Int64FromURL(r, "user_id", 0)
+  filterTutorID := helper.Int64FromURL(r, "tutor_id", 0)
+  filterFeedback := helper.StringFromURL(r, "feedback", "%%")
+  filterAcquiredPoints := helper.IntFromURL(r, "acquired_points", -1)
+  filterPublicTestStatus := helper.IntFromURL(r, "public_test_status", 0)
+  filterPrivateTestStatus := helper.IntFromURL(r, "private_test_status", 0)
+  filterPublicExecutationState := helper.IntFromURL(r, "public_execution_state", -1)
+  filterPrivateExecutationState := helper.IntFromURL(r, "private_execution_state", -1)
 
   submissions, err := rs.Stores.Grade.GetFiltered(
     course.ID,
@@ -320,7 +320,7 @@ func (rs *GradeResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 // {"sheets":[{"id":179,"name":"1"},{"id":180,"name":"2"}],"achievements":[{"user_info":{"id":42,"first_name":"Sören","last_name":"Haase","student_number":"1161"},"points":[5,0]},{"user_info":{"id":43,"first_name":"Resi","last_name":"Naser","student_number":"1000"},"points":[8,7]}]}
 func (rs *GradeResource) IndexSummaryHandler(w http.ResponseWriter, r *http.Request) {
   course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
-  filterGroupID := helper.Int64FromUrl(r, "group_id", 0)
+  filterGroupID := helper.Int64FromURL(r, "group_id", 0)
 
   givenRole := r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole)
 
@@ -361,7 +361,7 @@ func (rs *GradeResource) IndexMissingHandler(w http.ResponseWriter, r *http.Requ
   accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
   course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
 
-  filterGroupID := helper.Int64FromUrl(r, "group_id", 0)
+  filterGroupID := helper.Int64FromURL(r, "group_id", 0)
 
   grades, err := rs.Stores.Grade.GetAllMissingGrades(course.ID, accessClaims.LoginID, filterGroupID)
   if err != nil {

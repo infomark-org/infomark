@@ -227,15 +227,15 @@ func (rs *CourseResource) IndexEnrollmentsHandler(w http.ResponseWriter, r *http
   // /courses/1/enrollments?roles=0,1
   course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
 
-  filterQuery := helper.StringFromUrl(r, "q", "")
+  filterQuery := helper.StringFromURL(r, "q", "")
 
   // extract filters
-  filterRoles := helper.StringArrayFromUrl(r, "roles", []string{"0", "1", "2"})
-  filterFirstName := helper.StringFromUrl(r, "first_name", "%%")
-  filterLastName := helper.StringFromUrl(r, "last_name", "%%")
-  filterEmail := helper.StringFromUrl(r, "email", "%%")
-  filterSubject := helper.StringFromUrl(r, "subject", "%%")
-  filterLanguage := helper.StringFromUrl(r, "language", "%%")
+  filterRoles := helper.StringArrayFromURL(r, "roles", []string{"0", "1", "2"})
+  filterFirstName := helper.StringFromURL(r, "first_name", "%%")
+  filterLastName := helper.StringFromURL(r, "last_name", "%%")
+  filterEmail := helper.StringFromURL(r, "email", "%%")
+  filterSubject := helper.StringFromURL(r, "subject", "%%")
+  filterLanguage := helper.StringFromURL(r, "language", "%%")
 
   givenRole := r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole)
 
@@ -489,7 +489,7 @@ func (rs *CourseResource) SendEmailHandler(w http.ResponseWriter, r *http.Reques
   }
 
   // extract filters
-  filterRoles := helper.StringArrayFromUrl(r, "roles", []string{"0", "1", "2"})
+  filterRoles := helper.StringArrayFromURL(r, "roles", []string{"0", "1", "2"})
   filterFirstName := "%%"
   filterLastName := "%%"
   filterEmail := "%%"
