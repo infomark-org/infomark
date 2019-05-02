@@ -38,6 +38,7 @@ func init() {
   GroupCmd.AddCommand(GroupEnroll)
   GroupCmd.AddCommand(GroupList)
   GroupCmd.AddCommand(GroupLocate)
+  GroupCmd.AddCommand(GroupUserBids)
 
 }
 
@@ -186,6 +187,61 @@ already enrolled in another group`,
       user.LastName,
       user.ID,
       group.ID, group.Description)
+
+  },
+}
+
+type userBidSummary struct {
+  Bid         int    `db:"bid"`
+  GroupID     int    `db:"group_id"`
+  Description string `db:"description"`
+}
+
+var GroupUserBids = &cobra.Command{
+  Use:   "bids [courseID] [userID]",
+  Short: "list all bids of a user",
+  Args:  cobra.ExactArgs(2),
+  Run: func(cmd *cobra.Command, args []string) {
+    courseID := MustInt64Parameter(args[0], "courseID")
+    userID := MustInt64Parameter(args[1], "userID")
+
+    // same as POST "/courses/{course_id}/groups/{group_id}/enrollments"
+    // TODO(patwie): good candidate for a remote cli
+
+    db, stores := MustConnectAndStores()
+
+    user, err := stores.User.Get(userID)
+    if err != nil {
+      log.Fatalf("user with id %v not found\n", userID)
+    }
+
+    course, err := stores.Course.Get(courseID)
+    if err != nil {
+      log.Fatalf("course with id %v not found\n", courseID)
+    }
+
+    userBidSummaries := []userBidSummary{}
+
+    err = db.Select(&userBidSummaries, `
+SELECT
+  bid, group_id, description
+FROM
+  group_bids gb
+INNER JOIN groups g ON gb.group_id = g.id
+WHERE
+  gb.user_id = $1
+AND
+  g.course_id = $2
+    `, user.ID, course.ID)
+    failWhenSmallestWhiff(err)
+
+    fmt.Printf("  bid   groupID    description\n")
+    for k, v := range userBidSummaries {
+      fmt.Printf("%5d  %7d   %s\n", v.Bid, v.GroupID, v.Description)
+      if k%5 == 0 && k > 0 {
+        fmt.Println("")
+      }
+    }
 
   },
 }
