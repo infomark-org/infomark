@@ -33,10 +33,10 @@ var SessionManager = createSessionManager()
 // http-only cookie. This is the prefered way when using a SPA.
 func createSessionManager() *scs.Manager {
 	sessionManager := scs.NewCookieManager(viper.GetString("auth_session_secret"))
-	sessionManager.Lifetime(24 * time.Hour)      // Set the maximum session lifetime to 1 hour.
-	sessionManager.IdleTimeout(20 * time.Minute) // Set the maximum session lifetime without actions.
-	sessionManager.Persist(true)                 // Persist the session after a user has closed their browser.
-	sessionManager.Secure(false)                 // Set the Secure flag on the session cookie.
+	sessionManager.Lifetime(24 * time.Hour)                    // Set the maximum session lifetime to 1 hour.
+	sessionManager.IdleTimeout(20 * time.Minute)               // Set the maximum session lifetime without actions.
+	sessionManager.Persist(true)                               // Persist the session after a user has closed their browser.
+	sessionManager.Secure(viper.GetBool("auth_secure_cookie")) // Set the Secure flag on the session cookie.
 	return sessionManager
 }
 

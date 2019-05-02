@@ -28,6 +28,7 @@ import (
   "github.com/cgtuebingen/infomark-backend/common"
   "github.com/go-chi/jwtauth"
   "github.com/go-chi/render"
+  "github.com/spf13/viper"
   "github.com/ulule/limiter/v3"
 
   // "github.com/ulule/limiter/v3/drivers/store/memory"
@@ -43,43 +44,48 @@ func RequiredValidAccessClaims(next http.Handler) http.Handler {
 
     accessClaims := &AccessClaims{}
 
-    // first we test the JWT autorization
-    if HasHeaderToken(r) {
+    if viper.GetInt64("debug_user_id") == 0 {
+      // first we test the JWT autorization
+      if HasHeaderToken(r) {
 
-      // parse token from from header
-      tokenStr := jwtauth.TokenFromHeader(r)
+        // parse token from from header
+        tokenStr := jwtauth.TokenFromHeader(r)
 
-      // ok, there is a access token in the header
-      err := accessClaims.ParseAccessClaimsFromToken(tokenStr)
-      if err != nil {
-        // fmt.Println(err)
-        render.Render(w, r, auth.ErrUnauthorized)
-        return
-      }
-
-    } else {
-      // fmt.Println("no token, try session")
-      if HasSessionToken(r) {
-        // fmt.Println("found session")
-
-        // session data is stored in cookie
-        err := accessClaims.ParseRefreshClaimsFromSession(r)
+        // ok, there is a access token in the header
+        err := accessClaims.ParseAccessClaimsFromToken(tokenStr)
         if err != nil {
           // fmt.Println(err)
           render.Render(w, r, auth.ErrUnauthorized)
           return
         }
 
-        // session is valid --> we will extend the session
-        w = accessClaims.UpdateSession(w, r)
       } else {
-        // fmt.Println("NO session found")
+        // fmt.Println("no token, try session")
+        if HasSessionToken(r) {
+          // fmt.Println("found session")
 
-        render.Render(w, r, auth.ErrUnauthenticated)
-        return
+          // session data is stored in cookie
+          err := accessClaims.ParseRefreshClaimsFromSession(r)
+          if err != nil {
+            // fmt.Println(err)
+            render.Render(w, r, auth.ErrUnauthorized)
+            return
+          }
+
+          // session is valid --> we will extend the session
+          w = accessClaims.UpdateSession(w, r)
+        } else {
+          // fmt.Println("NO session found")
+
+          render.Render(w, r, auth.ErrUnauthenticated)
+          return
+
+        }
 
       }
-
+    } else {
+      accessClaims.LoginID = viper.GetInt64("debug_user_id")
+      accessClaims.Root = true
     }
 
     // nothing given
@@ -191,48 +197,3 @@ func RateLimitMiddleware(prefix string, limit string, redisURL string) func(h ht
     })
   }
 }
-
-// func main() {
-
-//   // Launch a simple chi server.
-//   r := chi.NewRouter()
-//   r.Get("/", switcher)
-
-//   r.Group(func(r chi.r) {
-//     r.Use(RateLimitMiddleware("ss"))
-//     r.Get("/", index)
-//   })
-
-//   r.Group(func(r chi.r) {
-//     r.Get("/switcher", switcher)
-//   })
-
-//   fmt.Println("Server is running on port 7777...")
-//   log.Fatal(http.ListenAndServe(":7777", r))
-// }
-
-// func index(w http.ResponseWriter, r *http.Request) {
-//   w.Header().Set("Content-Type", "application/json; charset=utf-8")
-//   w.Write([]byte(`{"message": "ok"}`))
-// }
-
-// func switcher(w http.ResponseWriter, r *http.Request) {
-
-//   s, err := chi.URLParam(r, "switch")
-
-//   ll, _ := NewLoginLimiter("hh")
-//   keyFunc := NewLoginLimiterKeyFromIP(r)
-
-//   if s == "true" {
-//     ll.Reset(r, keyFunc)
-//   }
-
-//   context, err := ll.Get(r, keyFunc)
-//   if context.Reached {
-//     http.Error(w, "Limit exceeded", http.StatusTooManyRequests)
-//     return
-//   }
-
-//   w.Header().Set("Content-Type", "application/json; charset=utf-8")
-//   w.Write([]byte(`{"message": "ok"}`))
-// }

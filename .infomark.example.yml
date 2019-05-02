@@ -20,6 +20,8 @@ auth_jwt_access_expiry: 15m
 auth_jwt_refresh_expiry: 10h
 auth_session_secret: u46IpCV9y5Vlur8YvODJEhgOY8m9JVE4sdfdfsdf
 auth_total_requests_per_minute: 600
+# when using https
+auth_secure_cookie: false
 
 # database
 database_connection: postgres://user:pass@localhost:5433/db?sslmode=disable&connect_timeout=1
@@ -48,6 +50,8 @@ server_max_header_bytes: 1048576      # default is 1MB = 1048576 bytes
 max_request_json_bytes: 2097152       # 2 * 1024 * 1024 = 2097152
 max_request_avatar_bytes: 1048576     # 1 * 1024 * 1024 = 1048576
 max_request_submission_bytes: 4194304 # 4 * 1024 * 1024 = 4194304
+
+debug_user_id: 0
 
 # worker
 # ------------------------------------------------------------------------------

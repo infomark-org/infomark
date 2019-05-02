@@ -23,6 +23,7 @@ auth_jwt_refresh_expiry: 10h
 auth_session_secret: u46IpCV9y5Vlur8YvODJEhgOY8m9JVE4sdfdfsdf
 min_password_length: 7
 auth_total_requests_per_minute: 10
+auth_secure_cookie: false
 
 # database
 database_connection: host=database user=postgres dbname=infomark password=postgres sslmode=disable
@@ -53,6 +54,8 @@ max_request_json_bytes: 2097152
 max_request_avatar_bytes: 1048576
 # 4 * 1024 * 1024 = 4194304
 max_request_submission_bytes: 4194304
+
+debug_user_id: 0
 
 # worker
 # ------------------------------------------------------------------------------
