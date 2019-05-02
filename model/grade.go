@@ -25,6 +25,8 @@ import (
 // -- 0: pending, 1: running, 2: finished
 // -- 0 means ok, 1 failed (just like return codes)
 
+// Grade is a database view representing a all information used for grading
+// programming assignments solutions
 type Grade struct {
 	ID        int64     `db:"id"`
 	CreatedAt time.Time `db:"created_at,omitempty"`
@@ -46,6 +48,8 @@ type Grade struct {
 	UserEmail             string `db:"user_email,readonly"`
 }
 
+// MissingGrade is a database view containing all grades which are finished
+// yet. We expects TAs to give at least a feedback.
 type MissingGrade struct {
 	Grade
 	CourseID int64 `db:"course_id"`
@@ -53,6 +57,8 @@ type MissingGrade struct {
 	TaskID   int64 `db:"task_id"`
 }
 
+// OverviewGrade is a database view containing informations for grades from
+// a query (for a summary view).
 type OverviewGrade struct {
 	UserID            int64  `db:"user_id"`
 	UserFirstName     string `db:"user_first_name"`

@@ -25,6 +25,7 @@ import (
   "github.com/streadway/amqp"
 )
 
+// Producer is an object which can emit a AMPQ messages
 type Producer struct {
   Config *Config
 
@@ -33,6 +34,7 @@ type Producer struct {
   done    chan error
 }
 
+// NewProducer creates a new producer which can emit AMPQ messages
 func NewProducer(cfg *Config) (*Producer, error) {
 
   producer := &Producer{
@@ -46,6 +48,7 @@ func NewProducer(cfg *Config) (*Producer, error) {
   return producer, nil
 }
 
+// Publish emits an AMPQ message
 func (c *Producer) Publish(body []byte) error {
 
   // This function dials, connects, declares, publishes, and tears down,

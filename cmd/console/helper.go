@@ -55,20 +55,20 @@ func MustConnectAndStores() (*sqlx.DB, *app.Stores) {
   return db, stores
 }
 
-func MustInt64Parameter(arg_str string, name string) int64 {
-  arg_int, err := strconv.Atoi(arg_str)
+func MustInt64Parameter(argStr string, name string) int64 {
+  argInt, err := strconv.Atoi(argStr)
   if err != nil {
-    log.Fatalf("cannot convert %s '%s' to int64\n", name, arg_str)
+    log.Fatalf("cannot convert %s '%s' to int64\n", name, argStr)
     return int64(0)
   }
-  return int64(arg_int)
+  return int64(argInt)
 }
 
-func MustIntParameter(arg_str string, name string) int {
-  arg_int, err := strconv.Atoi(arg_str)
+func MustIntParameter(argStr string, name string) int {
+  argInt, err := strconv.Atoi(argStr)
   if err != nil {
-    log.Fatalf("cannot convert %s '%s' to int\n", name, arg_str)
+    log.Fatalf("cannot convert %s '%s' to int\n", name, argStr)
     return int(0)
   }
-  return int(arg_int)
+  return int(argInt)
 }

@@ -29,6 +29,7 @@ import (
   "github.com/docker/docker/client"
 )
 
+// DockerService contains all settings to talk to the docker api
 type DockerService struct {
   // the context docker is relate to
   Context context.Context
@@ -36,6 +37,7 @@ type DockerService struct {
   Client *client.Client
 }
 
+// NewDockerService creates a new docker client
 func NewDockerService() *DockerService {
   ctx := context.Background()
   cli, err := client.NewEnvClient()
@@ -49,6 +51,7 @@ func NewDockerService() *DockerService {
   }
 }
 
+// ListContainers lists all docker containers
 func (ds *DockerService) ListContainers() {
 
   containers, err := ds.Client.ContainerList(ds.Context, types.ContainerListOptions{})
@@ -62,6 +65,7 @@ func (ds *DockerService) ListContainers() {
   }
 }
 
+// ListImages lists all docker images
 func (ds *DockerService) ListImages() {
 
   images, err := ds.Client.ImageList(ds.Context, types.ImageListOptions{})
@@ -81,6 +85,7 @@ func (ds *DockerService) ListImages() {
   }
 }
 
+// Pull pulls a docker image
 func (ds *DockerService) Pull(image string) (string, error) {
   // image example: "docker.io/library/alpine"
   outputReader, err := ds.Client.ImagePull(ds.Context, image, types.ImagePullOptions{})
@@ -96,7 +101,7 @@ func (ds *DockerService) Pull(image string) (string, error) {
 
 }
 
-// Run executes a docker conter and waits for the output
+// Run executes a docker container and waits for the output
 func (ds *DockerService) Run(
   imageName string,
   submissionZipFile string,

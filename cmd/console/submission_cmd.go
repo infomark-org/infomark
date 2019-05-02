@@ -87,14 +87,14 @@ var SubmissionEnqueueCmd = &cobra.Command{
       authenticate.NewAccessClaims(1, true))
     failWhenSmallestWhiff(err)
 
-    body_public, err := json.Marshal(shared.NewSubmissionAMQPWorkerRequest(
+    bodyPublic, err := json.Marshal(shared.NewSubmissionAMQPWorkerRequest(
       course.ID, task.ID, submission.ID, grade.ID,
       accessToken, viper.GetString("url"), task.PublicDockerImage.String, sha256, "public"))
     if err != nil {
       log.Fatalf("json.Marshal: %s", err)
     }
 
-    body_private, err := json.Marshal(shared.NewSubmissionAMQPWorkerRequest(
+    bodyPrivate, err := json.Marshal(shared.NewSubmissionAMQPWorkerRequest(
       course.ID, task.ID, submission.ID, grade.ID,
       accessToken, viper.GetString("url"), task.PrivateDockerImage.String, sha256, "private"))
     if err != nil {
@@ -102,8 +102,8 @@ var SubmissionEnqueueCmd = &cobra.Command{
     }
 
     producer, _ := service.NewProducer(cfg)
-    producer.Publish(body_public)
-    producer.Publish(body_private)
+    producer.Publish(bodyPublic)
+    producer.Publish(bodyPrivate)
 
   },
 }
@@ -133,22 +133,22 @@ var SubmissionRunCmd = &cobra.Command{
     var exit int64
     var stdout string
 
-    submission_hnd := helper.NewSubmissionFileHandle(submission.ID)
-    if !submission_hnd.Exists() {
-      log.Fatalf("submission file %s for id %v is missing", submission_hnd.Path(), submission.ID)
+    submissionHnd := helper.NewSubmissionFileHandle(submission.ID)
+    if !submissionHnd.Exists() {
+      log.Fatalf("submission file %s for id %v is missing", submissionHnd.Path(), submission.ID)
     }
 
     // run public test
     if task.PublicDockerImage.Valid {
-      framework_hnd := helper.NewPublicTestFileHandle(task.ID)
-      if framework_hnd.Exists() {
+      frameworkHnd := helper.NewPublicTestFileHandle(task.ID)
+      if frameworkHnd.Exists() {
 
         log.Printf("use docker image \"%v\"\n", task.PublicDockerImage.String)
-        log.Printf("use framework file \"%v\"\n", framework_hnd.Path())
+        log.Printf("use framework file \"%v\"\n", frameworkHnd.Path())
         stdout, exit, err = ds.Run(
           task.PublicDockerImage.String,
-          submission_hnd.Path(),
-          framework_hnd.Path(),
+          submissionHnd.Path(),
+          frameworkHnd.Path(),
           viper.GetInt64("worker_docker_memory_bytes"),
         )
         if err != nil {
@@ -170,15 +170,15 @@ var SubmissionRunCmd = &cobra.Command{
 
     // run private test
     if task.PrivateDockerImage.Valid {
-      framework_hnd := helper.NewPrivateTestFileHandle(task.ID)
-      if framework_hnd.Exists() {
+      frameworkHnd := helper.NewPrivateTestFileHandle(task.ID)
+      if frameworkHnd.Exists() {
 
         log.Printf("use docker image \"%v\"\n", task.PrivateDockerImage.String)
-        log.Printf("use framework file \"%v\"\n", framework_hnd.Path())
+        log.Printf("use framework file \"%v\"\n", frameworkHnd.Path())
         stdout, exit, err = ds.Run(
           task.PrivateDockerImage.String,
-          submission_hnd.Path(),
-          framework_hnd.Path(),
+          submissionHnd.Path(),
+          frameworkHnd.Path(),
           viper.GetInt64("worker_docker_memory_bytes"),
         )
         if err != nil {

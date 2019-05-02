@@ -25,6 +25,7 @@ import (
 	null "gopkg.in/guregu/null.v3"
 )
 
+// Task is part of an exercise sheet
 type Task struct {
 	ID        int64     `db:"id"`
 	CreatedAt time.Time `db:"created_at,omitempty"`
@@ -36,6 +37,7 @@ type Task struct {
 	PrivateDockerImage null.String `db:"private_docker_image"`
 }
 
+// TaskRating contains the feedback of students to a task.
 type TaskRating struct {
 	ID int64 `db:"id"`
 
@@ -44,18 +46,20 @@ type TaskRating struct {
 	Rating int   `db:"rating"`
 }
 
-func (m *TaskRating) Validate() error {
-	return validation.ValidateStruct(m,
+// Validate validates a TaskRating before interacting with a database
+// TODO(): should be part of the request
+func (body *TaskRating) Validate() error {
+	return validation.ValidateStruct(body,
 		validation.Field(
-			&m.UserID,
+			&body.UserID,
 			validation.Required,
 		),
 		validation.Field(
-			&m.TaskID,
+			&body.TaskID,
 			validation.Required,
 		),
 		validation.Field(
-			&m.Rating,
+			&body.Rating,
 			validation.Required,
 			validation.Min(1),
 			validation.Max(5),
@@ -63,17 +67,21 @@ func (m *TaskRating) Validate() error {
 	)
 }
 
+// TaskPoints is a performance summary of a student for a given task
 type TaskPoints struct {
 	AquiredPoints int `db:"acquired_points"`
 	MaxPoints     int `db:"max_points"`
 	TaskID        int `db:"task_id"`
 }
 
-func (d *TaskPoints) Validate() error {
+// Validate validates TaskPoints
+func (body *TaskPoints) Validate() error {
 	// just a join and read only
 	return nil
 }
 
+// MissingTask is an item in the list of tasks a user has not uploaded any solution
+// (this is used by the dashboard)
 type MissingTask struct {
 	*Task
 

@@ -29,6 +29,7 @@ import (
 	"github.com/spf13/viper"
 )
 
+// Email contains all information to use sendmail
 type Email struct {
 	From    string
 	To      string
@@ -36,8 +37,10 @@ type Email struct {
 	Body    string
 }
 
+// OutgoingEmailsChannel is a light-weight go-routine to send emails
 var OutgoingEmailsChannel chan *Email
 
+// NewEmail creates a new email structure
 func NewEmail(toEmail string, subject string, body string) *Email {
 	email := &Email{
 		From:    viper.GetString("email_from"),
@@ -48,6 +51,7 @@ func NewEmail(toEmail string, subject string, body string) *Email {
 	return email
 }
 
+// NewEmailFromUser creates a new email structure and appends the sender information
 func NewEmailFromUser(toEmail string, subject string, body string, user *model.User) *Email {
 	email := &Email{
 		From:    viper.GetString("email_from"),
@@ -58,6 +62,7 @@ func NewEmailFromUser(toEmail string, subject string, body string, user *model.U
 	return email
 }
 
+// NewEmailFromTemplate creates a new email structure filling a template file
 func NewEmailFromTemplate(toEmail string, subject string, file string, data map[string]string) (*Email, error) {
 	body, err := LoadAndFillTemplate(file, data)
 	if err != nil {
@@ -66,6 +71,7 @@ func NewEmailFromTemplate(toEmail string, subject string, file string, data map[
 	return NewEmail(toEmail, subject, body), nil
 }
 
+// Emailer any object that can send
 type Emailer interface {
 	Send(e *Email) error
 	// LoadTemplate(file string, data map[string]string) error
@@ -82,22 +88,32 @@ type TerminalMailer struct{}
 // VoidMailer does nothing (to keep the unit test outputs clean)
 type VoidMailer struct{}
 
+// NewSendMailer creates an object that will send emails over sendmail
 func NewSendMailer() *SendMailer {
-	sendmail_binary := viper.GetString("sendmail_binary")
-	return &SendMailer{Binary: sendmail_binary}
+	sendmailBinary := viper.GetString("sendmail_binary")
+	return &SendMailer{Binary: sendmailBinary}
 }
 
+// NewTerminalMailer creates an object that printout the email in the terminal
 func NewTerminalMailer() *TerminalMailer {
 	return &TerminalMailer{}
 }
 
+// NewVoidMailer creates an object that drops any email
 func NewVoidMailer() *VoidMailer {
 	return &VoidMailer{}
 }
 
+// SendMail is ready-to-use instance for sendmail
 var SendMail = NewSendMailer()
+
+// TerminalMail is ready-to-use instance for displaying emails in the terminal
 var TerminalMail = NewTerminalMailer()
+
+// VoidMail is ready-to-use instance for dropping outgoing emails
 var VoidMail = NewVoidMailer()
+
+// DefaultMail is the default instance used by infomark
 var DefaultMail Emailer
 
 func init() {
@@ -105,17 +121,19 @@ func init() {
 	OutgoingEmailsChannel = make(chan *Email, 300)
 }
 
+// Send will drop any outgoing email
 func (sm *VoidMailer) Send(e *Email) error {
 	return nil
 }
 
+// BackgroundSend will send emails enqueued in a channel
 func BackgroundSend(emails <-chan *Email) {
 	for email := range emails {
 		DefaultMail.Send(email)
 	}
 }
 
-// TerminalMailer prints everything to stdout.
+// Send prints everything to stdout.
 func (sm *TerminalMailer) Send(e *Email) error {
 	fmt.Printf("From: %s\n", e.From)
 	fmt.Printf("To: %s\n", e.To)
@@ -125,7 +143,7 @@ func (sm *TerminalMailer) Send(e *Email) error {
 	return nil
 }
 
-// SendMailer uses `sendmail` to deliver emails.
+// Send uses `sendmail` to deliver emails.
 func (sm *SendMailer) Send(e *Email) error {
 
 	cmd := exec.Command(sm.Binary, "-t")
@@ -163,9 +181,8 @@ func (sm *SendMailer) Send(e *Email) error {
 
 // LoadAndFillTemplate loads a template and fills out the placeholders.
 func LoadAndFillTemplate(file string, data map[string]string) (string, error) {
-	root_dir := viper.GetString("email_templates_dir")
-	// fmt.Println(root_dir)
-	t, err := template.ParseFiles(fmt.Sprintf("%s/%s", root_dir, file))
+	rootDir := viper.GetString("email_templates_dir")
+	t, err := template.ParseFiles(fmt.Sprintf("%s/%s", rootDir, file))
 	if err != nil {
 		return "", err
 	}

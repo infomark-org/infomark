@@ -18,6 +18,7 @@
 
 package model
 
+// GroupBid is a database view of a bid by a student for a specific exercise group
 type GroupBid struct {
 	ID int64 `db:"id"`
 

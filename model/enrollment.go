@@ -20,15 +20,14 @@ package model
 
 import null "gopkg.in/guregu/null.v3"
 
-// "time"
-// validation "github.com/go-ozzo/ozzo-validation"
-
+// Enrollment represents a an enrollment-type of a given user
 type Enrollment struct {
 	ID       int64 `db:"id"`
 	CourseID int64 `db:"course_id"`
 	Role     int64 `db:"role"`
 }
 
+// UserCourse gives enrollment information for multiple users
 type UserCourse struct {
 	UserID int64 `db:"id"`
 	ID     int64 `db:"id"`

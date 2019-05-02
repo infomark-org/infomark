@@ -32,6 +32,7 @@ import (
   "github.com/spf13/cobra/doc"
 )
 
+// ConsoleCmd starts the infomark console
 var ConsoleCmd = &cobra.Command{
   Use:   "console",
   Short: "infomark console commands",

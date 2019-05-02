@@ -22,6 +22,8 @@ import (
 	"time"
 )
 
+// Submission is an database entity linking an upload by a student to an exercise
+// task.
 type Submission struct {
 	ID        int64     `db:"id"`
 	CreatedAt time.Time `db:"created_at,omitempty"`

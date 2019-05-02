@@ -24,6 +24,7 @@ import (
   null "gopkg.in/guregu/null.v3"
 )
 
+// Group is a database view for a group entity
 type Group struct {
   ID        int64     `db:"id"`
   CreatedAt time.Time `db:"created_at,omitempty"`
@@ -34,6 +35,8 @@ type Group struct {
   Description string `db:"description"`
 }
 
+// GroupEnrollment is a database view for an enrollment of a student into a group.
+// Note, Tutors (a person who manage a group) is not enrolled in the group.
 type GroupEnrollment struct {
   ID int64 `db:"id"`
 
@@ -41,6 +44,7 @@ type GroupEnrollment struct {
   GroupID int64 `db:"group_id"`
 }
 
+// GroupWithTutor is a database view of a group including tutor information
 type GroupWithTutor struct {
   Group
 

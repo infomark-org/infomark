@@ -225,12 +225,12 @@ var GroupReadBids = &cobra.Command{
 
     fmt.Printf("found %v groups\n", len(groups))
 
-    group_id_array := []int64{}
+    groupIDArray := []int64{}
     for _, group := range groups {
-      group_id_array = append(group_id_array, group.ID)
+      groupIDArray = append(groupIDArray, group.ID)
     }
     // collect all user-ids to anonymize output
-    gids := strings.Trim(strings.Replace(fmt.Sprint(group_id_array), " ", " g", -1), "[]")
+    gids := strings.Trim(strings.Replace(fmt.Sprint(groupIDArray), " ", " g", -1), "[]")
 
     students, err := stores.Course.EnrolledUsers(course.ID,
       []string{"0"},
@@ -274,7 +274,7 @@ WHERE
 AND
   group_id = ANY($2)
 ORDER BY
-  group_id ASC`, student.ID, pq.Array(group_id_array))
+  group_id ASC`, student.ID, pq.Array(groupIDArray))
       if err != nil {
         panic(err)
       }

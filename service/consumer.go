@@ -25,6 +25,7 @@ import (
   "github.com/streadway/amqp"
 )
 
+// Consumer is an object which can act on AMPQ messages
 type Consumer struct {
   Config *Config
 
@@ -35,6 +36,7 @@ type Consumer struct {
   handleFunc func(body []byte) error
 }
 
+// NewConsumer creates new consumer which can act on AMPQ messages
 func NewConsumer(cfg *Config, handleFunc func(body []byte) error) (*Consumer, error) {
 
   consumer := &Consumer{
@@ -49,6 +51,7 @@ func NewConsumer(cfg *Config, handleFunc func(body []byte) error) (*Consumer, er
   return consumer, nil
 }
 
+// Setup connects a consumer to the AMPQ queue from the config
 func (c *Consumer) Setup() (<-chan amqp.Delivery, error) {
 
   fmt.Println("-- Connection", c.Config.Connection)
@@ -128,6 +131,8 @@ func (c *Consumer) Setup() (<-chan amqp.Delivery, error) {
   return deliveries, nil
 
 }
+
+// Shutdown will gracefully stop a consumer
 func (c *Consumer) Shutdown() error {
   // will close() the deliveries channel
   if err := c.channel.Cancel(c.Config.Tag, true); err != nil {
@@ -143,6 +148,8 @@ func (c *Consumer) Shutdown() error {
   // wait for handle() to exit
   return <-c.done
 }
+
+// HandleLoop is the message loop of a consumer
 func (c *Consumer) HandleLoop(deliveries <-chan amqp.Delivery) {
   for d := range deliveries {
 

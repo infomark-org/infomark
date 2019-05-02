@@ -271,8 +271,8 @@ func (rs *GradeResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
   filterTutorID := helper.Int64FromURL(r, "tutor_id", 0)
   filterFeedback := helper.StringFromURL(r, "feedback", "%%")
   filterAcquiredPoints := helper.IntFromURL(r, "acquired_points", -1)
-  filterPublicTestStatus := helper.IntFromURL(r, "public_test_status", 0)
-  filterPrivateTestStatus := helper.IntFromURL(r, "private_test_status", 0)
+  filterPublicTestStatus := helper.IntFromURL(r, "public_test_status", -1)
+  filterPrivateTestStatus := helper.IntFromURL(r, "private_test_status", -1)
   filterPublicExecutationState := helper.IntFromURL(r, "public_execution_state", -1)
   filterPrivateExecutationState := helper.IntFromURL(r, "private_execution_state", -1)
 

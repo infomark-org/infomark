@@ -155,7 +155,7 @@ func TestGrade(t *testing.T) {
     g.It("Should list all grades of a group", func() {
       url := "/api/v1/courses/1/grades?group_id=1"
 
-      gradesExpected, err := stores.Grade.GetFiltered(1, 0, 0, 1, 0, 0, "%%", -1, 0, 0, -1, -1)
+      gradesExpected, err := stores.Grade.GetFiltered(1, 0, 0, 1, 0, 0, "%%", -1, -1, -1, -1, -1)
       g.Assert(err).Equal(nil)
 
       w := tape.GetWithClaims(url, 1, true)

@@ -36,10 +36,13 @@ import (
   "github.com/go-chi/chi"
 )
 
+// Tape can send requests to router endpoints. This is used by unit tests to
+// check the endpoints
 type Tape struct {
   Router *chi.Mux
 }
 
+// NewTape creates a new Tape
 func NewTape() *Tape {
   return &Tape{}
 }
@@ -91,21 +94,22 @@ func CreateFileRequestBody(path, contentType string) (*bytes.Buffer, string, err
 
 }
 
+// BuildDataRequest creates a request
 func BuildDataRequest(method, url string, data map[string]interface{}) *http.Request {
 
-  var payload_json *bytes.Buffer
+  var payloadJson *bytes.Buffer
 
   if data != nil {
     dat, err := json.Marshal(data)
     if err != nil {
       panic(err)
     }
-    payload_json = bytes.NewBuffer(dat)
+    payloadJson = bytes.NewBuffer(dat)
   } else {
-    payload_json = nil
+    payloadJson = nil
   }
 
-  r, err := http.NewRequest(method, url, payload_json)
+  r, err := http.NewRequest(method, url, payloadJson)
   if err != nil {
     panic(err)
   }
@@ -130,12 +134,14 @@ func BuildDataRequest(method, url string, data map[string]interface{}) *http.Req
 //   return t.PlayRequest(r)
 // }
 
+// PlayRequest will send the request to the router and fetch the response
 func (t *Tape) PlayRequest(r *http.Request) *httptest.ResponseRecorder {
   w := httptest.NewRecorder()
   t.Router.ServeHTTP(w, r)
   return w
 }
 
+// ToH is a convenience wrapper create a json for any object
 func ToH(z interface{}) map[string]interface{} {
   data, _ := json.Marshal(z)
   var msgMapTemplate interface{}
@@ -143,33 +149,39 @@ func ToH(z interface{}) map[string]interface{} {
   return msgMapTemplate.(map[string]interface{})
 }
 
+// Get creates, sends a GET request and fetches the response
 func (t *Tape) Get(url string) *httptest.ResponseRecorder {
   h := make(map[string]interface{})
   r := BuildDataRequest("GET", url, h)
   return t.PlayRequest(r)
 }
 
+// Post creates, sends a POST request and fetches the response
 func (t *Tape) Post(url string, data map[string]interface{}) *httptest.ResponseRecorder {
   r := BuildDataRequest("POST", url, data)
   return t.PlayRequest(r)
 }
 
+// Put creates, sends a PUT request and fetches the response
 func (t *Tape) Put(url string, data map[string]interface{}) *httptest.ResponseRecorder {
   r := BuildDataRequest("PUT", url, data)
   return t.PlayRequest(r)
 }
 
+// Patch creates, sends a PATCH request and fetches the response
 func (t *Tape) Patch(url string, data map[string]interface{}) *httptest.ResponseRecorder {
   r := BuildDataRequest("PATCH", url, data)
   return t.PlayRequest(r)
 }
 
+// Delete creates, sends a DELETE request and fetches the response
 func (t *Tape) Delete(url string) *httptest.ResponseRecorder {
   h := make(map[string]interface{})
   r := BuildDataRequest("DELETE", url, h)
   return t.PlayRequest(r)
 }
 
+// FormatRequest pretty-formats a request and returns it as a string
 func (t *Tape) FormatRequest(r *http.Request) string {
   // Create return string
   var request []string

@@ -22,7 +22,8 @@ import (
 	"time"
 )
 
-// User holds specific application settings linked to an entity, who can login.
+// Course holds specific application settings linked to an entity, which
+// represents a course
 type Course struct {
 	ID        int64     `db:"id"`
 	CreatedAt time.Time `db:"created_at,omitempty"`

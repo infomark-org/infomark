@@ -46,6 +46,7 @@ type User struct {
 	Root               bool        `db:"root"`
 }
 
+// FullName is a wrapper for returning the fullname of a user
 func (m *User) FullName() string {
 	return fmt.Sprintf("%s %s", m.FirstName, m.LastName)
 }

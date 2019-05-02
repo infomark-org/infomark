@@ -20,12 +20,14 @@ package service
 
 import "github.com/streadway/amqp"
 
+// Worker is a description for an object getting messages over AMPQ
 type Worker interface {
 	Setup() error
 	Shutdown() error
 	HandleLoop(deliveries <-chan amqp.Delivery)
 }
 
+// Config contains the settings for AMPQ
 type Config struct {
 	Tag          string
 	Connection   string

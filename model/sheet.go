@@ -22,6 +22,8 @@ import (
 	"time"
 )
 
+// Sheet is a database entity representing an entire exercise sheet consisting
+// of tasks.
 type Sheet struct {
 	ID        int64     `db:"id"`
 	CreatedAt time.Time `db:"created_at,omitempty"`
@@ -32,6 +34,7 @@ type Sheet struct {
 	DueAt     time.Time `db:"due_at"`
 }
 
+// SheetPoints contains the performance of a specific student
 type SheetPoints struct {
 	AquiredPoints int `db:"acquired_points"`
 	MaxPoints     int `db:"max_points"`
