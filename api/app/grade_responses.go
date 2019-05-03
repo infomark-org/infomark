@@ -249,79 +249,59 @@ func newGradeOverviewResponse(collection []model.OverviewGrade, sheets []model.S
   // collection is sorted by user_id
 
   // only do this once
-  for _, s := range sheets {
+  sheet2pos := make(map[int64]int)
+  for k, s := range sheets {
     obj.Sheets = append(obj.Sheets, sheetInfo{s.ID, s.Name})
+    sheet2pos[s.ID] = k
   }
 
   if len(collection) > 0 {
-
-    oldUserID := collection[0].UserID
-    currentPoints := []int{}
-    // sptr := 0 // sheet pointer
-    eptr := 0 // entry pointer
+    oldUser := userInfo{
+      ID:            collection[0].UserID,
+      FirstName:     collection[0].UserFirstName,
+      LastName:      collection[0].UserLastName,
+      StudentNumber: collection[0].UserStudentNumber,
+      Email:         collection[0].UserEmail,
+    }
+    currentPoints := make([]int, len(sheets))
 
     // iterate collection of users
     // {user, sheet, points}
     // {user, sheet, points}
     // This is sparse: Students without submissions for one sheet are not listed.
     // We need to explicitly list them here with "0" points.
-    for eptr < len(collection) {
+    for _, entry := range collection {
 
-      // new student
-      if collection[eptr].UserID != oldUserID {
-        // reset
-        currentPoints = []int{}
-        // sptr = 0
-        oldUserID = collection[eptr].UserID
-      }
-
-      for sptr := 0; sptr < len(sheets); sptr++ {
-
-        if eptr < len(collection) {
-
-          if collection[eptr].SheetID == sheets[sptr].ID {
-            currentPoints = append(currentPoints, collection[eptr].Points)
-
-            // we safely jumpt to next entry
-            if eptr+1 < len(collection) {
-              if collection[eptr].UserID == collection[eptr+1].UserID {
-                eptr++
-              } else {
-                break
-              }
-            }
-
-          } else if collection[eptr].SheetID > sheets[sptr].ID {
-            currentPoints = append(currentPoints, int(0))
-          }
-
-        }
-
-      }
-
-      for i := 0; i < len(obj.Sheets)-len(currentPoints); i++ {
-        currentPoints = append(currentPoints, int(0))
-      }
-
-      if len(currentPoints) > 0 {
-        user := userInfo{
-          ID:            collection[eptr].UserID,
-          FirstName:     collection[eptr].UserFirstName,
-          LastName:      collection[eptr].UserLastName,
-          StudentNumber: collection[eptr].UserStudentNumber,
-          Email:         collection[eptr].UserEmail,
-        }
+      // other student
+      if entry.UserID != oldUser.ID {
 
         if role == authorize.TUTOR {
-          user.StudentNumber = ""
+          oldUser.StudentNumber = ""
         }
 
-        eptr = eptr + 1
-        obj.Achievements = append(obj.Achievements, achievementInfo{user, currentPoints})
+        obj.Achievements = append(obj.Achievements, achievementInfo{oldUser, currentPoints})
+
+        // reset points
+        currentPoints = make([]int, len(sheets))
+
+        oldUser = userInfo{
+          ID:            entry.UserID,
+          FirstName:     entry.UserFirstName,
+          LastName:      entry.UserLastName,
+          StudentNumber: entry.UserStudentNumber,
+          Email:         entry.UserEmail,
+        }
       }
+
+      currentPoints[sheet2pos[entry.SheetID]] = entry.Points
     }
 
+    // add the last student
+    if len(collection) > 0 {
+      obj.Achievements = append(obj.Achievements, achievementInfo{oldUser, currentPoints})
+    }
   }
+
   return obj
 }
 
