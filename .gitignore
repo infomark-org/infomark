@@ -52,3 +52,5 @@ api.yaml
 
 
 *.tar.gz
+docker-compose.yml
+
