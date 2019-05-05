@@ -319,9 +319,10 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
 	r.Header.Add("Authorization", "Bearer "+msg.AccessToken)
 
 	DefaultLogger.WithFields(logrus.Fields{
-		"submissionID": msg.SubmissionID,
-		"exitcode":     exit,
-		"image":        msg.DockerImage,
+		"submissionID":      msg.SubmissionID,
+		"exitcode":          exit,
+		"image":             msg.DockerImage,
+		"resultEndpointURL": msg.ResultEndpointURL,
 	}).Info("send result to backend")
 
 	// run request
@@ -329,12 +330,13 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
 	resp, err := client.Do(r)
 	if err != nil {
 		DefaultLogger.WithFields(logrus.Fields{
-			"action":       "send result to backend",
-			"submissionID": msg.SubmissionID,
-			"stdout":       stdout,
-			"exitcode":     exit,
-			"resp":         resp,
-			"image":        msg.DockerImage,
+			"action":            "send result to backend",
+			"submissionID":      msg.SubmissionID,
+			"ResultEndpointURL": msg.ResultEndpointURL,
+			"stdout":            stdout,
+			"exitcode":          exit,
+			"resp":              resp,
+			"image":             msg.DockerImage,
 		}).Warn(err)
 
 		return err
