@@ -19,19 +19,19 @@
 package database
 
 import (
-  "github.com/cgtuebingen/infomark-backend/model"
-  "github.com/cgtuebingen/infomark-backend/symbol"
-  "github.com/jmoiron/sqlx"
+	"github.com/cgtuebingen/infomark-backend/model"
+	"github.com/cgtuebingen/infomark-backend/symbol"
+	"github.com/jmoiron/sqlx"
 )
 
 type GradeStore struct {
-  db *sqlx.DB
+	db *sqlx.DB
 }
 
 func NewGradeStore(db *sqlx.DB) *GradeStore {
-  return &GradeStore{
-    db: db,
-  }
+	return &GradeStore{
+		db: db,
+	}
 }
 
 // func (s *GradeStore) Get(id int64) (*model.Grade, error) {
@@ -41,8 +41,8 @@ func NewGradeStore(db *sqlx.DB) *GradeStore {
 // }
 
 func (s *GradeStore) Get(id int64) (*model.Grade, error) {
-  p := model.Grade{ID: id}
-  err := s.db.Get(&p, `
+	p := model.Grade{ID: id}
+	err := s.db.Get(&p, `
 SELECT
   g.*,
   s.user_id,
@@ -56,19 +56,19 @@ INNER JOIN users u ON s.user_id = u.id
 WHERE
   g.id = $1 LIMIT 1
 `, p.ID)
-  return &p, err
+	return &p, err
 }
 
 func (s *GradeStore) Create(p *model.Grade) (*model.Grade, error) {
-  newID, err := Insert(s.db, "grades", p)
-  if err != nil {
-    return nil, err
-  }
-  return s.Get(newID)
+	newID, err := Insert(s.db, "grades", p)
+	if err != nil {
+		return nil, err
+	}
+	return s.Get(newID)
 }
 
-func (s *GradeStore) UpdatePrivateTestInfo(gradeID int64, log string, status int) error {
-  _, err := s.db.Exec(`
+func (s *GradeStore) UpdatePrivateTestInfo(gradeID int64, log string, status symbol.TestingResult) error {
+	_, err := s.db.Exec(`
 UPDATE grades
 SET
   private_execution_state=$4,
@@ -77,11 +77,11 @@ SET
 WHERE
   id = $1
     `, gradeID, log, status, symbol.TestingStateFinished)
-  return err
+	return err
 }
 
-func (s *GradeStore) UpdatePublicTestInfo(gradeID int64, log string, status int) error {
-  _, err := s.db.Exec(`
+func (s *GradeStore) UpdatePublicTestInfo(gradeID int64, log string, status symbol.TestingResult) error {
+	_, err := s.db.Exec(`
 UPDATE grades
 SET
   public_execution_state=$4,
@@ -90,18 +90,18 @@ SET
 WHERE
   id = $1
     `, gradeID, log, status, symbol.TestingStateFinished)
-  return err
+	return err
 }
 
 func (s *GradeStore) GetForSubmission(id int64) (*model.Grade, error) {
-  p := model.Grade{}
-  err := s.db.Get(&p, "SELECT * FROM grades WHERE submission_id = $1 LIMIT 1;", id)
-  return &p, err
+	p := model.Grade{}
+	err := s.db.Get(&p, "SELECT * FROM grades WHERE submission_id = $1 LIMIT 1;", id)
+	return &p, err
 }
 
 func (s *GradeStore) GetOverviewGrades(courseID int64, groupID int64) ([]model.OverviewGrade, error) {
-  p := []model.OverviewGrade{}
-  err := s.db.Select(&p, `
+	p := []model.OverviewGrade{}
+	err := s.db.Select(&p, `
 SELECT
   sum(g.acquired_points) points,
   s.user_id,
@@ -138,14 +138,14 @@ GROUP BY
 ORDER BY
   s.user_id
 `, courseID, groupID)
-  return p, err
+	return p, err
 }
 
 func (s *GradeStore) GetAllMissingGrades(courseID int64, tutorID int64, groupID int64) ([]model.MissingGrade, error) {
-  p := []model.MissingGrade{}
+	p := []model.MissingGrade{}
 
-  err := s.db.Select(&p,
-    `
+	err := s.db.Select(&p,
+		`
 SELECT
   g.*,
   ts.task_id,
@@ -169,31 +169,31 @@ AND
 AND
   ($3 = 0 OR ug.group_id = $3)
   `, tutorID, courseID, groupID)
-  return p, err
+	return p, err
 }
 
 func (s *GradeStore) Update(p *model.Grade) error {
-  return Update(s.db, "grades", p.ID, p)
+	return Update(s.db, "grades", p.ID, p)
 }
 
 func (s *GradeStore) GetFiltered(
-  courseID int64,
-  sheetID int64,
-  taskID int64,
-  groupID int64,
-  userID int64,
-  tutorID int64,
-  feedback string,
-  acquiredPoints int,
-  publicTestStatus int,
-  privateTestStatus int,
-  publicExecutationState int,
-  privateExecutationState int,
+	courseID int64,
+	sheetID int64,
+	taskID int64,
+	groupID int64,
+	userID int64,
+	tutorID int64,
+	feedback string,
+	acquiredPoints int,
+	publicTestStatus int,
+	privateTestStatus int,
+	publicExecutationState int,
+	privateExecutationState int,
 ) ([]model.Grade, error) {
 
-  p := []model.Grade{}
-  err := s.db.Select(&p,
-    `
+	p := []model.Grade{}
+	err := s.db.Select(&p,
+		`
 SELECT
   g.*, s.user_id,
   u.last_name user_last_name,
@@ -231,28 +231,28 @@ AND
 AND
   ($12 = -1 OR g.private_execution_state = $12)
   `,
-    // AND ($4 = 0 OR ug.group_id = $4)
-    courseID,                // $1
-    sheetID,                 // $2
-    taskID,                  // $3
-    groupID,                 // $4
-    userID,                  // $5
-    tutorID,                 // $6
-    feedback,                // $7
-    acquiredPoints,          // $8
-    publicTestStatus,        // $9
-    privateTestStatus,       // $10
-    publicExecutationState,  // $11
-    privateExecutationState, // $12
-  )
-  return p, err
+		// AND ($4 = 0 OR ug.group_id = $4)
+		courseID,                // $1
+		sheetID,                 // $2
+		taskID,                  // $3
+		groupID,                 // $4
+		userID,                  // $5
+		tutorID,                 // $6
+		feedback,                // $7
+		acquiredPoints,          // $8
+		publicTestStatus,        // $9
+		privateTestStatus,       // $10
+		publicExecutationState,  // $11
+		privateExecutationState, // $12
+	)
+	return p, err
 }
 
 func (s *GradeStore) IdentifyCourseOfGrade(gradeID int64) (*model.Course, error) {
 
-  course := &model.Course{}
-  err := s.db.Get(course,
-    `
+	course := &model.Course{}
+	err := s.db.Get(course,
+		`
 SELECT
   c.*
 FROM
@@ -263,19 +263,19 @@ INNER JOIN sheet_course sc ON sc.sheet_id = ts.sheet_id
 INNER JOIN courses c ON sc.course_id = c.id
 WHERE
   g.id = $1`,
-    gradeID)
-  if err != nil {
-    return nil, err
-  }
+		gradeID)
+	if err != nil {
+		return nil, err
+	}
 
-  return course, err
+	return course, err
 }
 
 func (s *GradeStore) IdentifyTaskOfGrade(gradeID int64) (*model.Task, error) {
 
-  task := &model.Task{}
-  err := s.db.Get(task,
-    `
+	task := &model.Task{}
+	err := s.db.Get(task,
+		`
 SELECT
   t.*
 FROM
@@ -285,10 +285,10 @@ INNER JOIN task_sheet ts ON ts.task_id = s.task_id
 INNER JOIN tasks t ON ts.task_id = t.id
 WHERE
   g.id = $1`,
-    gradeID)
-  if err != nil {
-    return nil, err
-  }
+		gradeID)
+	if err != nil {
+		return nil, err
+	}
 
-  return task, err
+	return task, err
 }

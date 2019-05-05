@@ -28,9 +28,9 @@ import (
 	"github.com/cgtuebingen/infomark-backend/api/helper"
 	"github.com/cgtuebingen/infomark-backend/auth/authenticate"
 	"github.com/cgtuebingen/infomark-backend/auth/authorize"
-	"github.com/cgtuebingen/infomark-backend/symbol"
 	"github.com/cgtuebingen/infomark-backend/email"
 	"github.com/cgtuebingen/infomark-backend/model"
+	"github.com/cgtuebingen/infomark-backend/symbol"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 )
@@ -66,7 +66,7 @@ func (rs *GroupResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 	var groups []model.GroupWithTutor
 	var err error
 
-	course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
+	course := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
 	groups, err = rs.Stores.Group.GroupsOfCourse(course.ID)
 	if err != nil {
 		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
@@ -101,7 +101,7 @@ func (rs *GroupResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
+	course := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
 
 	group := &model.Group{}
 	group.TutorID = data.Tutor.ID
@@ -144,7 +144,7 @@ func (rs *GroupResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
 // SUMMARY:  get a specific group
 func (rs *GroupResource) GetHandler(w http.ResponseWriter, r *http.Request) {
 	// `Task` is retrieved via middle-ware
-	group := r.Context().Value(common.CtxKeyGroup).(*model.Group)
+	group := r.Context().Value(symbol.CtxKeyGroup).(*model.Group)
 
 	tutor, err := rs.Stores.User.Get(group.TutorID)
 	if err != nil {
@@ -175,9 +175,9 @@ func (rs *GroupResource) GetMineHandler(w http.ResponseWriter, r *http.Request) 
 
 	// TODO(patwie): handle case when user is tutor in group
 
-	accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
-	course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
-	courseRole := r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole)
+	accessClaims := r.Context().Value(symbol.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+	course := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
+	courseRole := r.Context().Value(symbol.CtxKeyCourseRole).(authorize.CourseRole)
 
 	var (
 		groups []model.GroupWithTutor
@@ -245,7 +245,7 @@ func (rs *GroupResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	group := r.Context().Value(common.CtxKeyGroup).(*model.Group)
+	group := r.Context().Value(symbol.CtxKeyGroup).(*model.Group)
 	group.TutorID = data.Tutor.ID
 	group.Description = data.Description
 
@@ -270,7 +270,7 @@ func (rs *GroupResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  delete a specific group
 func (rs *GroupResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
-	group := r.Context().Value(common.CtxKeyGroup).(*model.Group)
+	group := r.Context().Value(symbol.CtxKeyGroup).(*model.Group)
 
 	// update database entry
 	if err := rs.Stores.Group.Delete(group.ID); err != nil {
@@ -300,8 +300,8 @@ func (rs *GroupResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 // SUMMARY:  list all courses
 func (rs *GroupResource) IndexEnrollmentsHandler(w http.ResponseWriter, r *http.Request) {
 	// /courses/1/enrollments?roles=0,1
-	group := r.Context().Value(common.CtxKeyGroup).(*model.Group)
-	course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
+	group := r.Context().Value(symbol.CtxKeyGroup).(*model.Group)
+	course := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
 
 	// extract filters
 	filterRoles := helper.StringArrayFromURL(r, "roles", []string{"0", "1", "2"})
@@ -311,7 +311,7 @@ func (rs *GroupResource) IndexEnrollmentsHandler(w http.ResponseWriter, r *http.
 	filterSubject := helper.StringFromURL(r, "subject", "%%")
 	filterLanguage := helper.StringFromURL(r, "language", "%%")
 
-	givenRole := r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole)
+	givenRole := r.Context().Value(symbol.CtxKeyCourseRole).(authorize.CourseRole)
 
 	if givenRole == authorize.STUDENT {
 		// students cannot query other students
@@ -360,8 +360,8 @@ func (rs *GroupResource) EditGroupEnrollmentHandler(w http.ResponseWriter, r *ht
 		return
 	}
 
-	group := r.Context().Value(common.CtxKeyGroup).(*model.Group)
-	course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
+	group := r.Context().Value(symbol.CtxKeyGroup).(*model.Group)
+	course := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
 
 	enrollment, err := rs.Stores.Group.GetGroupEnrollmentOfUserInCourse(data.UserID, course.ID)
 
@@ -405,17 +405,17 @@ func (rs *GroupResource) EditGroupEnrollmentHandler(w http.ResponseWriter, r *ht
 // SUMMARY:  change or add the bid for enrolling in a group
 func (rs *GroupResource) ChangeBidHandler(w http.ResponseWriter, r *http.Request) {
 
-	courseRole := r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole)
+	courseRole := r.Context().Value(symbol.CtxKeyCourseRole).(authorize.CourseRole)
 
 	if courseRole != authorize.STUDENT {
 		render.Render(w, r, ErrBadRequestWithDetails(errors.New("Only students in a course can bid for a group")))
 		return
 	}
 
-	accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+	accessClaims := r.Context().Value(symbol.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 
 	// start from empty Request
-	group := r.Context().Value(common.CtxKeyGroup).(*model.Group)
+	group := r.Context().Value(symbol.CtxKeyGroup).(*model.Group)
 
 	data := &groupBidRequest{}
 
@@ -469,8 +469,8 @@ func (rs *GroupResource) ChangeBidHandler(w http.ResponseWriter, r *http.Request
 // SUMMARY:  send email to entire group
 func (rs *GroupResource) SendEmailHandler(w http.ResponseWriter, r *http.Request) {
 
-	group := r.Context().Value(common.CtxKeyGroup).(*model.Group)
-	accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+	group := r.Context().Value(symbol.CtxKeyGroup).(*model.Group)
+	accessClaims := r.Context().Value(symbol.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 	accessUser, _ := rs.Stores.User.Get(accessClaims.LoginID)
 
 	data := &EmailRequest{}
@@ -509,7 +509,7 @@ func (rs *GroupResource) SendEmailHandler(w http.ResponseWriter, r *http.Request
 // We do NOT check whether the identity is authorized to get this group.
 func (rs *GroupResource) Context(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		courseFromURL := r.Context().Value(common.CtxKeyCourse).(*model.Course)
+		courseFromURL := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
 
 		var groupID int64
 		var err error
@@ -527,7 +527,7 @@ func (rs *GroupResource) Context(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), common.CtxKeyGroup, group)
+		ctx := context.WithValue(r.Context(), symbol.CtxKeyGroup, group)
 
 		// when there is a groupID in the url, there is NOT a courseID in the url,
 		// BUT: when there is a group, there is a course
@@ -543,7 +543,7 @@ func (rs *GroupResource) Context(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx = context.WithValue(ctx, common.CtxKeyCourse, course)
+		ctx = context.WithValue(ctx, symbol.CtxKeyCourse, course)
 
 		// serve next
 		next.ServeHTTP(w, r.WithContext(ctx))

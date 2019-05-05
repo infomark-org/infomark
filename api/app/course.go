@@ -28,9 +28,9 @@ import (
 	"github.com/cgtuebingen/infomark-backend/api/helper"
 	"github.com/cgtuebingen/infomark-backend/auth/authenticate"
 	"github.com/cgtuebingen/infomark-backend/auth/authorize"
-	"github.com/cgtuebingen/infomark-backend/symbol"
 	"github.com/cgtuebingen/infomark-backend/email"
 	"github.com/cgtuebingen/infomark-backend/model"
+	"github.com/cgtuebingen/infomark-backend/symbol"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 )
@@ -127,7 +127,7 @@ func (rs *CourseResource) CreateHandler(w http.ResponseWriter, r *http.Request) 
 // SUMMARY:  get a specific course
 func (rs *CourseResource) GetHandler(w http.ResponseWriter, r *http.Request) {
 	// `course` is retrieved via middle-ware
-	course, ok := r.Context().Value(common.CtxKeyCourse).(*model.Course)
+	course, ok := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
 	if !ok {
 		render.Render(w, r, ErrInternalServerErrorWithDetails(errors.New("course context is missing")))
 		return
@@ -163,7 +163,7 @@ func (rs *CourseResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
+	course := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
 	course.Name = data.Name
 	course.Description = data.Description
 	course.BeginsAt = data.BeginsAt
@@ -191,7 +191,7 @@ func (rs *CourseResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  delete a specific course
 func (rs *CourseResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
-	course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
+	course := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
 
 	// Warning: There is more to do! Currently we just dis-enroll all students,
 	// remove all sheets and delete the course it self FROM THE DATABASE.
@@ -229,7 +229,7 @@ func (rs *CourseResource) DeleteHandler(w http.ResponseWriter, r *http.Request) 
 // do need to be wrapped by '%' to indicated end and start of a string.
 func (rs *CourseResource) IndexEnrollmentsHandler(w http.ResponseWriter, r *http.Request) {
 	// /courses/1/enrollments?roles=0,1
-	course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
+	course := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
 
 	filterQuery := helper.StringFromURL(r, "q", "")
 
@@ -241,7 +241,7 @@ func (rs *CourseResource) IndexEnrollmentsHandler(w http.ResponseWriter, r *http
 	filterSubject := helper.StringFromURL(r, "subject", "%%")
 	filterLanguage := helper.StringFromURL(r, "language", "%%")
 
-	givenRole := r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole)
+	givenRole := r.Context().Value(symbol.CtxKeyCourseRole).(authorize.CourseRole)
 
 	if givenRole == authorize.STUDENT {
 		// students cannot query other students
@@ -295,8 +295,8 @@ func (rs *CourseResource) IndexEnrollmentsHandler(w http.ResponseWriter, r *http
 // SUMMARY:  give enrollment of a specific user in a specific course
 func (rs *CourseResource) GetUserEnrollmentHandler(w http.ResponseWriter, r *http.Request) {
 	// /courses/1/enrollments?roles=0,1
-	course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
-	user := r.Context().Value(common.CtxKeyUser).(*model.User)
+	course := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
+	user := r.Context().Value(symbol.CtxKeyUser).(*model.User)
 
 	// find role in the course
 
@@ -330,8 +330,8 @@ func (rs *CourseResource) GetUserEnrollmentHandler(w http.ResponseWriter, r *htt
 // SUMMARY:  give enrollment of a specific user in a specific course
 func (rs *CourseResource) DeleteUserEnrollmentHandler(w http.ResponseWriter, r *http.Request) {
 	// /courses/1/enrollments?roles=0,1
-	course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
-	user := r.Context().Value(common.CtxKeyUser).(*model.User)
+	course := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
+	user := r.Context().Value(symbol.CtxKeyUser).(*model.User)
 
 	// find role in the course
 
@@ -369,8 +369,8 @@ func (rs *CourseResource) DeleteUserEnrollmentHandler(w http.ResponseWriter, r *
 func (rs *CourseResource) ChangeRole(w http.ResponseWriter, r *http.Request) {
 	// /courses/1/enrollments?roles=0,1
 
-	course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
-	user := r.Context().Value(common.CtxKeyUser).(*model.User)
+	course := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
+	user := r.Context().Value(symbol.CtxKeyUser).(*model.User)
 
 	data := &changeRoleInCourseRequest{}
 	// parse JSON request into struct
@@ -400,8 +400,8 @@ func (rs *CourseResource) ChangeRole(w http.ResponseWriter, r *http.Request) {
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  enroll a user into a course
 func (rs *CourseResource) EnrollHandler(w http.ResponseWriter, r *http.Request) {
-	course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
-	accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+	course := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
+	accessClaims := r.Context().Value(symbol.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 
 	role := int64(0)
 	if accessClaims.Root {
@@ -440,10 +440,10 @@ func (rs *CourseResource) EnrollHandler(w http.ResponseWriter, r *http.Request) 
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  disenroll a user from a course
 func (rs *CourseResource) DisenrollHandler(w http.ResponseWriter, r *http.Request) {
-	course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
-	accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+	course := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
+	accessClaims := r.Context().Value(symbol.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 
-	givenRole := r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole)
+	givenRole := r.Context().Value(symbol.CtxKeyCourseRole).(authorize.CourseRole)
 
 	if givenRole == authorize.TUTOR {
 		render.Render(w, r, ErrBadRequestWithDetails(errors.New("tutors cannot disenroll from a course")))
@@ -479,9 +479,9 @@ func (rs *CourseResource) DisenrollHandler(w http.ResponseWriter, r *http.Reques
 // SUMMARY:  send email to entire course filtered
 func (rs *CourseResource) SendEmailHandler(w http.ResponseWriter, r *http.Request) {
 
-	course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
+	course := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
 
-	accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+	accessClaims := r.Context().Value(symbol.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 	accessUser, _ := rs.Stores.User.Get(accessClaims.LoginID)
 
 	data := &EmailRequest{}
@@ -534,8 +534,8 @@ func (rs *CourseResource) SendEmailHandler(w http.ResponseWriter, r *http.Reques
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  get all points for the request identity
 func (rs *CourseResource) PointsHandler(w http.ResponseWriter, r *http.Request) {
-	course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
-	accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+	course := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
+	accessClaims := r.Context().Value(symbol.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 
 	sheetPoints, err := rs.Stores.Course.PointsForUser(accessClaims.LoginID, course.ID)
 	if err != nil {
@@ -563,10 +563,10 @@ func (rs *CourseResource) PointsHandler(w http.ResponseWriter, r *http.Request) 
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  get all bids for the request identity in a course
 func (rs *CourseResource) BidsHandler(w http.ResponseWriter, r *http.Request) {
-	course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
-	accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+	course := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
+	accessClaims := r.Context().Value(symbol.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 
-	givenRole := r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole)
+	givenRole := r.Context().Value(symbol.CtxKeyCourseRole).(authorize.CourseRole)
 
 	var bids []model.GroupBid
 	var err error
@@ -626,7 +626,7 @@ func (rs *CourseResource) Context(next http.Handler) http.Handler {
 		}
 
 		// serve next
-		ctx := context.WithValue(r.Context(), common.CtxKeyCourse, course)
+		ctx := context.WithValue(r.Context(), symbol.CtxKeyCourse, course)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
@@ -634,8 +634,8 @@ func (rs *CourseResource) Context(next http.Handler) http.Handler {
 // RoleContext middleware extracts the role of an identity in a given course
 func (rs *CourseResource) RoleContext(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
-		accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+		course := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
+		accessClaims := r.Context().Value(symbol.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 
 		// find role in the course
 		courseRole, err := rs.Stores.Course.RoleInCourse(accessClaims.LoginID, course.ID)
@@ -649,7 +649,7 @@ func (rs *CourseResource) RoleContext(next http.Handler) http.Handler {
 		}
 
 		// serve next
-		ctx := context.WithValue(r.Context(), common.CtxKeyCourseRole, courseRole)
+		ctx := context.WithValue(r.Context(), symbol.CtxKeyCourseRole, courseRole)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

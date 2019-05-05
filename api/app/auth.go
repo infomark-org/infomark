@@ -25,8 +25,8 @@ import (
 
 	"github.com/cgtuebingen/infomark-backend/auth"
 	"github.com/cgtuebingen/infomark-backend/auth/authenticate"
-	"github.com/cgtuebingen/infomark-backend/symbol"
 	"github.com/cgtuebingen/infomark-backend/email"
+	"github.com/cgtuebingen/infomark-backend/symbol"
 	"github.com/go-chi/jwtauth"
 	"github.com/go-chi/render"
 	"github.com/spf13/viper"
@@ -242,7 +242,7 @@ func (rs *AuthResource) LoginHandler(w http.ResponseWriter, r *http.Request) {
 // RESPONSE: 401,Unauthenticated
 // SUMMARY:  Destroy a session
 func (rs *AuthResource) LogoutHandler(w http.ResponseWriter, r *http.Request) {
-	accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+	accessClaims := r.Context().Value(symbol.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 	accessClaims.DestroyInSession(w, r)
 }
 

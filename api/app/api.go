@@ -22,6 +22,7 @@ import (
 	"github.com/cgtuebingen/infomark-backend/auth/authorize"
 	"github.com/cgtuebingen/infomark-backend/database"
 	"github.com/cgtuebingen/infomark-backend/model"
+	"github.com/cgtuebingen/infomark-backend/symbol"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -167,8 +168,8 @@ type GradeStore interface {
 	GetAllMissingGrades(courseID int64, tutorID int64, groupID int64) ([]model.MissingGrade, error)
 	Create(p *model.Grade) (*model.Grade, error)
 
-	UpdatePrivateTestInfo(gradeID int64, log string, status int) error
-	UpdatePublicTestInfo(gradeID int64, log string, status int) error
+	UpdatePrivateTestInfo(gradeID int64, log string, status symbol.TestingResult) error
+	UpdatePublicTestInfo(gradeID int64, log string, status symbol.TestingResult) error
 	IdentifyTaskOfGrade(gradeID int64) (*model.Task, error)
 	GetOverviewGrades(courseID int64, groupID int64) ([]model.OverviewGrade, error)
 }

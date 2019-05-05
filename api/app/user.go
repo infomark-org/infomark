@@ -26,9 +26,9 @@ import (
 	"github.com/cgtuebingen/infomark-backend/api/helper"
 	"github.com/cgtuebingen/infomark-backend/auth"
 	"github.com/cgtuebingen/infomark-backend/auth/authenticate"
-	"github.com/cgtuebingen/infomark-backend/symbol"
 	"github.com/cgtuebingen/infomark-backend/email"
 	"github.com/cgtuebingen/infomark-backend/model"
+	"github.com/cgtuebingen/infomark-backend/symbol"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 )
@@ -57,7 +57,7 @@ func NewUserResource(stores *Stores) *UserResource {
 // SUMMARY:  Get own user details (requires root)
 func (rs *UserResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 
-	accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+	accessClaims := r.Context().Value(symbol.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 
 	if !accessClaims.Root {
 		render.Render(w, r, ErrUnauthorized)
@@ -88,7 +88,7 @@ func (rs *UserResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 // SUMMARY:  Get own user details
 func (rs *UserResource) GetMeHandler(w http.ResponseWriter, r *http.Request) {
 	// `user` is retrieved via middle-ware
-	accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+	accessClaims := r.Context().Value(symbol.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 	user, err := rs.Stores.User.Get(accessClaims.LoginID)
 
 	if err != nil {
@@ -114,8 +114,8 @@ func (rs *UserResource) GetMeHandler(w http.ResponseWriter, r *http.Request) {
 // SUMMARY:  Get user details
 func (rs *UserResource) GetHandler(w http.ResponseWriter, r *http.Request) {
 	// `user` is retrieved via middle-ware
-	user := r.Context().Value(common.CtxKeyUser).(*model.User)
-	accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+	user := r.Context().Value(symbol.CtxKeyUser).(*model.User)
+	accessClaims := r.Context().Value(symbol.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 
 	// is request identity allowed to get informaition about this user
 	if user.ID != accessClaims.LoginID {
@@ -143,7 +143,7 @@ func (rs *UserResource) GetHandler(w http.ResponseWriter, r *http.Request) {
 // SUMMARY:  Get user details
 func (rs *UserResource) GetAvatarHandler(w http.ResponseWriter, r *http.Request) {
 	// `user` is retrieved via middle-ware
-	user := r.Context().Value(common.CtxKeyUser).(*model.User)
+	user := r.Context().Value(symbol.CtxKeyUser).(*model.User)
 
 	file := helper.NewAvatarFileHandle(user.ID)
 
@@ -168,7 +168,7 @@ func (rs *UserResource) GetAvatarHandler(w http.ResponseWriter, r *http.Request)
 // SUMMARY:  updating a the user record of the request identity
 func (rs *UserResource) EditMeHandler(w http.ResponseWriter, r *http.Request) {
 
-	accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+	accessClaims := r.Context().Value(symbol.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 
 	data := &userMeRequest{}
 
@@ -214,7 +214,7 @@ func (rs *UserResource) EditMeHandler(w http.ResponseWriter, r *http.Request) {
 // SUMMARY:  updating a specific user with given id.
 func (rs *UserResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 
-	accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+	accessClaims := r.Context().Value(symbol.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 
 	if !accessClaims.Root {
 		render.Render(w, r, ErrUnauthorized)
@@ -229,7 +229,7 @@ func (rs *UserResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user := r.Context().Value(common.CtxKeyUser).(*model.User)
+	user := r.Context().Value(symbol.CtxKeyUser).(*model.User)
 
 	user.FirstName = data.FirstName
 	user.LastName = data.LastName
@@ -271,8 +271,8 @@ func (rs *UserResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 // SUMMARY:  send email to a specific user
 func (rs *UserResource) SendEmailHandler(w http.ResponseWriter, r *http.Request) {
 
-	user := r.Context().Value(common.CtxKeyUser).(*model.User)
-	accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+	user := r.Context().Value(symbol.CtxKeyUser).(*model.User)
+	accessClaims := r.Context().Value(symbol.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 	accessUser, _ := rs.Stores.User.Get(accessClaims.LoginID)
 
 	data := &EmailRequest{}
@@ -306,7 +306,7 @@ func (rs *UserResource) SendEmailHandler(w http.ResponseWriter, r *http.Request)
 // RESPONSE: 401,Unauthenticated
 // SUMMARY:  updating a specific user with given id.
 func (rs *UserResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
-	user := r.Context().Value(common.CtxKeyUser).(*model.User)
+	user := r.Context().Value(symbol.CtxKeyUser).(*model.User)
 
 	// update database entry
 	if err := rs.Stores.User.Delete(user.ID); err != nil {
@@ -344,7 +344,7 @@ func (rs *UserResource) Context(next http.Handler) http.Handler {
 		}
 
 		// serve next
-		ctx := context.WithValue(r.Context(), common.CtxKeyUser, user)
+		ctx := context.WithValue(r.Context(), symbol.CtxKeyUser, user)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

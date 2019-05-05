@@ -28,8 +28,8 @@ import (
 	"github.com/cgtuebingen/infomark-backend/api/helper"
 	"github.com/cgtuebingen/infomark-backend/auth/authenticate"
 	"github.com/cgtuebingen/infomark-backend/auth/authorize"
-	"github.com/cgtuebingen/infomark-backend/symbol"
 	"github.com/cgtuebingen/infomark-backend/model"
+	"github.com/cgtuebingen/infomark-backend/symbol"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 )
@@ -59,9 +59,9 @@ func NewGradeResource(stores *Stores) *GradeResource {
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  edit a grade
 func (rs *GradeResource) EditHandler(w http.ResponseWriter, r *http.Request) {
-	accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+	accessClaims := r.Context().Value(symbol.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 
-	currentGrade := r.Context().Value(common.CtxKeyGrade).(*model.Grade)
+	currentGrade := r.Context().Value(symbol.CtxKeyGrade).(*model.Grade)
 	data := &GradeRequest{}
 	// parse JSON request into struct
 	if err := render.Bind(r, data); err != nil {
@@ -106,8 +106,8 @@ func (rs *GradeResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  get a grade
 func (rs *GradeResource) GetByIDHandler(w http.ResponseWriter, r *http.Request) {
-	course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
-	currentGrade := r.Context().Value(common.CtxKeyGrade).(*model.Grade)
+	course := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
+	currentGrade := r.Context().Value(symbol.CtxKeyGrade).(*model.Grade)
 
 	// return Material information of created entry
 	if err := render.Render(w, r, newGradeResponse(currentGrade, course.ID)); err != nil {
@@ -139,7 +139,7 @@ func (rs *GradeResource) PublicResultEditHandler(w http.ResponseWriter, r *http.
 		return
 	}
 
-	currentGrade := r.Context().Value(common.CtxKeyGrade).(*model.Grade)
+	currentGrade := r.Context().Value(symbol.CtxKeyGrade).(*model.Grade)
 
 	submission, err := rs.Stores.Submission.Get(currentGrade.SubmissionID)
 	if err != nil {
@@ -147,7 +147,7 @@ func (rs *GradeResource) PublicResultEditHandler(w http.ResponseWriter, r *http.
 		return
 	}
 
-	if data.Status != 0 {
+	if data.Status != symbol.TestingResultSuccess {
 		totalDockerFailExitCounterVec.WithLabelValues(
 			fmt.Sprintf("%d", submission.TaskID),
 			"public",
@@ -195,7 +195,7 @@ func (rs *GradeResource) PrivateResultEditHandler(w http.ResponseWriter, r *http
 		return
 	}
 
-	currentGrade := r.Context().Value(common.CtxKeyGrade).(*model.Grade)
+	currentGrade := r.Context().Value(symbol.CtxKeyGrade).(*model.Grade)
 
 	submission, err := rs.Stores.Submission.Get(currentGrade.SubmissionID)
 	if err != nil {
@@ -203,7 +203,7 @@ func (rs *GradeResource) PrivateResultEditHandler(w http.ResponseWriter, r *http
 		return
 	}
 
-	if data.Status != 0 {
+	if data.Status != symbol.TestingResultSuccess {
 		totalDockerFailExitCounterVec.WithLabelValues(
 			fmt.Sprintf("%d", submission.TaskID),
 			"private",
@@ -256,7 +256,7 @@ func (rs *GradeResource) PrivateResultEditHandler(w http.ResponseWriter, r *http
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  Query grades in a course
 func (rs *GradeResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
-	course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
+	course := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
 
 	filterSheetID := helper.Int64FromURL(r, "sheet_id", 0)
 	filterTaskID := helper.Int64FromURL(r, "task_id", 0)
@@ -319,10 +319,10 @@ func (rs *GradeResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 // DESCRIPTION:
 // {"sheets":[{"id":179,"name":"1"},{"id":180,"name":"2"}],"achievements":[{"user_info":{"id":42,"first_name":"Sören","last_name":"Haase","student_number":"1161"},"points":[5,0]},{"user_info":{"id":43,"first_name":"Resi","last_name":"Naser","student_number":"1000"},"points":[8,7]}]}
 func (rs *GradeResource) IndexSummaryHandler(w http.ResponseWriter, r *http.Request) {
-	course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
+	course := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
 	filterGroupID := helper.Int64FromURL(r, "group_id", 0)
 
-	givenRole := r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole)
+	givenRole := r.Context().Value(symbol.CtxKeyCourseRole).(authorize.CourseRole)
 
 	grades, err := rs.Stores.Grade.GetOverviewGrades(course.ID, filterGroupID)
 	if err != nil {
@@ -358,8 +358,8 @@ func (rs *GradeResource) IndexSummaryHandler(w http.ResponseWriter, r *http.Requ
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  the missing grades for the request identity
 func (rs *GradeResource) IndexMissingHandler(w http.ResponseWriter, r *http.Request) {
-	accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
-	course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
+	accessClaims := r.Context().Value(symbol.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+	course := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
 
 	filterGroupID := helper.Int64FromURL(r, "group_id", 0)
 
@@ -388,7 +388,7 @@ func (rs *GradeResource) IndexMissingHandler(w http.ResponseWriter, r *http.Requ
 func (rs *GradeResource) Context(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		courseFromURL := r.Context().Value(common.CtxKeyCourse).(*model.Course)
+		courseFromURL := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
 
 		var gradeID int64
 		var err error
@@ -407,7 +407,7 @@ func (rs *GradeResource) Context(next http.Handler) http.Handler {
 		}
 
 		// serve next
-		ctx := context.WithValue(r.Context(), common.CtxKeyGrade, grade)
+		ctx := context.WithValue(r.Context(), symbol.CtxKeyGrade, grade)
 
 		// when there is a gradeID in the url, there is NOT a courseID in the url,
 		// BUT: when there is a grade, there is a course
@@ -423,7 +423,7 @@ func (rs *GradeResource) Context(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx = context.WithValue(ctx, common.CtxKeyCourse, course)
+		ctx = context.WithValue(ctx, symbol.CtxKeyCourse, course)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

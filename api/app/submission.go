@@ -29,8 +29,8 @@ import (
 	"github.com/cgtuebingen/infomark-backend/api/shared"
 	"github.com/cgtuebingen/infomark-backend/auth/authenticate"
 	"github.com/cgtuebingen/infomark-backend/auth/authorize"
-	"github.com/cgtuebingen/infomark-backend/symbol"
 	"github.com/cgtuebingen/infomark-backend/model"
+	"github.com/cgtuebingen/infomark-backend/symbol"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 	"github.com/spf13/viper"
@@ -60,10 +60,10 @@ func NewSubmissionResource(stores *Stores) *SubmissionResource {
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  get the zip file containing the submission of the request identity for a given task
 func (rs *SubmissionResource) GetFileHandler(w http.ResponseWriter, r *http.Request) {
-	task := r.Context().Value(common.CtxKeyTask).(*model.Task)
-	// submission := r.Context().Value(common.CtxKeySubmission).(*model.Submission)
-	accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
-	givenRole := r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole)
+	task := r.Context().Value(symbol.CtxKeyTask).(*model.Task)
+	// submission := r.Context().Value(symbol.CtxKeySubmission).(*model.Submission)
+	accessClaims := r.Context().Value(symbol.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+	givenRole := r.Context().Value(symbol.CtxKeyCourseRole).(authorize.CourseRole)
 
 	submission, err := rs.Stores.Submission.GetByUserAndTask(accessClaims.LoginID, task.ID)
 	if err != nil {
@@ -107,15 +107,15 @@ func (rs *SubmissionResource) GetFileHandler(w http.ResponseWriter, r *http.Requ
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  get the path to the zip file containing all submissions for a given task and a given group if exists
 func (rs *SubmissionResource) GetCollectionHandler(w http.ResponseWriter, r *http.Request) {
-	givenRole := r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole)
+	givenRole := r.Context().Value(symbol.CtxKeyCourseRole).(authorize.CourseRole)
 
 	if givenRole == authorize.STUDENT {
 		render.Render(w, r, ErrUnauthorized)
 		return
 	}
 
-	course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
-	task := r.Context().Value(common.CtxKeyTask).(*model.Task)
+	course := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
+	task := r.Context().Value(symbol.CtxKeyTask).(*model.Task)
 
 	var groupID int64
 	var err error
@@ -168,15 +168,15 @@ func (rs *SubmissionResource) GetCollectionHandler(w http.ResponseWriter, r *htt
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  get the zip file containing all submissions for a given task and a given group
 func (rs *SubmissionResource) GetCollectionFileHandler(w http.ResponseWriter, r *http.Request) {
-	givenRole := r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole)
+	givenRole := r.Context().Value(symbol.CtxKeyCourseRole).(authorize.CourseRole)
 
 	if givenRole == authorize.STUDENT {
 		render.Render(w, r, ErrUnauthorized)
 		return
 	}
 
-	course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
-	task := r.Context().Value(common.CtxKeyTask).(*model.Task)
+	course := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
+	task := r.Context().Value(symbol.CtxKeyTask).(*model.Task)
 
 	var groupID int64
 	var err error
@@ -226,9 +226,9 @@ func (rs *SubmissionResource) GetCollectionFileHandler(w http.ResponseWriter, r 
 // SUMMARY:  get the zip file of a specific submission
 func (rs *SubmissionResource) GetFileByIDHandler(w http.ResponseWriter, r *http.Request) {
 
-	submission := r.Context().Value(common.CtxKeySubmission).(*model.Submission)
-	accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
-	givenRole := r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole)
+	submission := r.Context().Value(symbol.CtxKeySubmission).(*model.Submission)
+	accessClaims := r.Context().Value(symbol.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+	givenRole := r.Context().Value(symbol.CtxKeyCourseRole).(authorize.CourseRole)
 
 	submission, err := rs.Stores.Submission.Get(submission.ID)
 	if err != nil {
@@ -271,18 +271,18 @@ func (rs *SubmissionResource) GetFileByIDHandler(w http.ResponseWriter, r *http.
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  changes the zip file of a submission belonging to the request identity
 func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.Request) {
-	course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
-	task := r.Context().Value(common.CtxKeyTask).(*model.Task)
-	sheet := r.Context().Value(common.CtxKeySheet).(*model.Sheet)
-	accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+	course := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
+	task := r.Context().Value(symbol.CtxKeyTask).(*model.Task)
+	sheet := r.Context().Value(symbol.CtxKeySheet).(*model.Sheet)
+	accessClaims := r.Context().Value(symbol.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 	// todo create submission if not exists
 
-	if r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole) == authorize.STUDENT && !PublicYet(sheet.PublishAt) {
+	if r.Context().Value(symbol.CtxKeyCourseRole).(authorize.CourseRole) == authorize.STUDENT && !PublicYet(sheet.PublishAt) {
 		render.Render(w, r, ErrBadRequestWithDetails(fmt.Errorf("sheet not published yet")))
 		return
 	}
 
-	if r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole) == authorize.STUDENT && OverTime(sheet.DueAt) {
+	if r.Context().Value(symbol.CtxKeyCourseRole).(authorize.CourseRole) == authorize.STUDENT && OverTime(sheet.DueAt) {
 		render.Render(w, r, ErrBadRequestWithDetails(fmt.Errorf("too late deadline was %v but now it is %v", sheet.DueAt, NowUTC())))
 		return
 	}
@@ -454,7 +454,7 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  Query submissions in a course
 func (rs *SubmissionResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
-	course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
+	course := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
 
 	filterGroupID := helper.Int64FromURL(r, "group_id", 0)
 	filterUserID := helper.Int64FromURL(r, "user_id", 0)
@@ -485,7 +485,7 @@ func (rs *SubmissionResource) IndexHandler(w http.ResponseWriter, r *http.Reques
 // We do NOT check whether the identity is authorized to get this Submission.
 func (rs *SubmissionResource) Context(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// course_from_url := r.Context().Value(common.CtxKeyCourse).(*model.Course)
+		// course_from_url := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
 
 		var submissionID int64
 		var err error
@@ -503,7 +503,7 @@ func (rs *SubmissionResource) Context(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), common.CtxKeySubmission, submission)
+		ctx := context.WithValue(r.Context(), symbol.CtxKeySubmission, submission)
 
 		// when there is a submissionID in the url, there is NOT a taskID in the url,
 		// BUT: when there is a Submission, there is a task
@@ -517,7 +517,7 @@ func (rs *SubmissionResource) Context(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx = context.WithValue(ctx, common.CtxKeyTask, task)
+		ctx = context.WithValue(ctx, symbol.CtxKeyTask, task)
 
 		// find sheet
 		sheet, err := rs.Stores.Task.IdentifySheetOfTask(task.ID)
@@ -532,7 +532,7 @@ func (rs *SubmissionResource) Context(next http.Handler) http.Handler {
 				return
 			}
 		} else {
-			ctx = context.WithValue(ctx, common.CtxKeySheet, sheet)
+			ctx = context.WithValue(ctx, symbol.CtxKeySheet, sheet)
 		}
 
 		// find course
@@ -542,7 +542,7 @@ func (rs *SubmissionResource) Context(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx = context.WithValue(ctx, common.CtxKeyCourse, course)
+		ctx = context.WithValue(ctx, symbol.CtxKeyCourse, course)
 
 		// serve next
 		next.ServeHTTP(w, r.WithContext(ctx))
