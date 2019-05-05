@@ -19,30 +19,30 @@
 package app
 
 import (
-  "context"
-  "net/http"
-  "strconv"
+	"context"
+	"net/http"
+	"strconv"
 
-  "github.com/cgtuebingen/infomark-backend/api/helper"
-  "github.com/cgtuebingen/infomark-backend/auth"
-  "github.com/cgtuebingen/infomark-backend/auth/authenticate"
-  "github.com/cgtuebingen/infomark-backend/common"
-  "github.com/cgtuebingen/infomark-backend/email"
-  "github.com/cgtuebingen/infomark-backend/model"
-  "github.com/go-chi/chi"
-  "github.com/go-chi/render"
+	"github.com/cgtuebingen/infomark-backend/api/helper"
+	"github.com/cgtuebingen/infomark-backend/auth"
+	"github.com/cgtuebingen/infomark-backend/auth/authenticate"
+	"github.com/cgtuebingen/infomark-backend/common"
+	"github.com/cgtuebingen/infomark-backend/email"
+	"github.com/cgtuebingen/infomark-backend/model"
+	"github.com/go-chi/chi"
+	"github.com/go-chi/render"
 )
 
 // UserResource specifies user management handler.
 type UserResource struct {
-  Stores *Stores
+	Stores *Stores
 }
 
 // NewUserResource create and returns a UserResource.
 func NewUserResource(stores *Stores) *UserResource {
-  return &UserResource{
-    Stores: stores,
-  }
+	return &UserResource{
+		Stores: stores,
+	}
 }
 
 // .............................................................................
@@ -57,21 +57,21 @@ func NewUserResource(stores *Stores) *UserResource {
 // SUMMARY:  Get own user details (requires root)
 func (rs *UserResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 
-  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+	accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 
-  if !accessClaims.Root {
-    render.Render(w, r, ErrUnauthorized)
-    return
-  }
+	if !accessClaims.Root {
+		render.Render(w, r, ErrUnauthorized)
+		return
+	}
 
-  // fetch collection of users from database
-  users, err := rs.Stores.User.GetAll()
+	// fetch collection of users from database
+	users, err := rs.Stores.User.GetAll()
 
-  // render JSON reponse
-  if err = render.RenderList(w, r, newUserListResponse(users)); err != nil {
-    render.Render(w, r, ErrRender(err))
-    return
-  }
+	// render JSON reponse
+	if err = render.RenderList(w, r, newUserListResponse(users)); err != nil {
+		render.Render(w, r, ErrRender(err))
+		return
+	}
 }
 
 // GetMeHandler is public endpoint for
@@ -83,20 +83,20 @@ func (rs *UserResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 // RESPONSE: 401,Unauthenticated
 // SUMMARY:  Get own user details
 func (rs *UserResource) GetMeHandler(w http.ResponseWriter, r *http.Request) {
-  // `user` is retrieved via middle-ware
-  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
-  user, err := rs.Stores.User.Get(accessClaims.LoginID)
+	// `user` is retrieved via middle-ware
+	accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+	user, err := rs.Stores.User.Get(accessClaims.LoginID)
 
-  if err != nil {
-    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-    return
-  }
+	if err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
 
-  // render JSON reponse
-  if err := render.Render(w, r, newUserResponse(user)); err != nil {
-    render.Render(w, r, ErrRender(err))
-    return
-  }
+	// render JSON reponse
+	if err := render.Render(w, r, newUserResponse(user)); err != nil {
+		render.Render(w, r, ErrRender(err))
+		return
+	}
 }
 
 // GetHandler is public endpoint for
@@ -109,23 +109,23 @@ func (rs *UserResource) GetMeHandler(w http.ResponseWriter, r *http.Request) {
 // RESPONSE: 401,Unauthenticated
 // SUMMARY:  Get user details
 func (rs *UserResource) GetHandler(w http.ResponseWriter, r *http.Request) {
-  // `user` is retrieved via middle-ware
-  user := r.Context().Value(common.CtxKeyUser).(*model.User)
-  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+	// `user` is retrieved via middle-ware
+	user := r.Context().Value(common.CtxKeyUser).(*model.User)
+	accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 
-  // is request identity allowed to get informaition about this user
-  if user.ID != accessClaims.LoginID {
-    if !accessClaims.Root {
-      render.Render(w, r, ErrUnauthorized)
-      return
-    }
-  }
+	// is request identity allowed to get informaition about this user
+	if user.ID != accessClaims.LoginID {
+		if !accessClaims.Root {
+			render.Render(w, r, ErrUnauthorized)
+			return
+		}
+	}
 
-  // render JSON reponse
-  if err := render.Render(w, r, newUserResponse(user)); err != nil {
-    render.Render(w, r, ErrRender(err))
-    return
-  }
+	// render JSON reponse
+	if err := render.Render(w, r, newUserResponse(user)); err != nil {
+		render.Render(w, r, ErrRender(err))
+		return
+	}
 }
 
 // GetAvatarHandler is public endpoint for
@@ -138,19 +138,19 @@ func (rs *UserResource) GetHandler(w http.ResponseWriter, r *http.Request) {
 // RESPONSE: 401,Unauthenticated
 // SUMMARY:  Get user details
 func (rs *UserResource) GetAvatarHandler(w http.ResponseWriter, r *http.Request) {
-  // `user` is retrieved via middle-ware
-  user := r.Context().Value(common.CtxKeyUser).(*model.User)
+	// `user` is retrieved via middle-ware
+	user := r.Context().Value(common.CtxKeyUser).(*model.User)
 
-  file := helper.NewAvatarFileHandle(user.ID)
+	file := helper.NewAvatarFileHandle(user.ID)
 
-  if !file.Exists() {
-    render.Render(w, r, ErrNotFound)
-    return
-  }
+	if !file.Exists() {
+		render.Render(w, r, ErrNotFound)
+		return
+	}
 
-  if err := file.WriteToBody(w); err != nil {
-    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-  }
+	if err := file.WriteToBody(w); err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+	}
 }
 
 // EditMeHandler is public endpoint for
@@ -164,38 +164,38 @@ func (rs *UserResource) GetAvatarHandler(w http.ResponseWriter, r *http.Request)
 // SUMMARY:  updating a the user record of the request identity
 func (rs *UserResource) EditMeHandler(w http.ResponseWriter, r *http.Request) {
 
-  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+	accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 
-  data := &userMeRequest{}
+	data := &userMeRequest{}
 
-  // parse JSON request into struct
-  if err := render.Bind(r, data); err != nil {
-    render.Render(w, r, ErrBadRequestWithDetails(err))
-    return
-  }
+	// parse JSON request into struct
+	if err := render.Bind(r, data); err != nil {
+		render.Render(w, r, ErrBadRequestWithDetails(err))
+		return
+	}
 
-  // user is not allowed to change all entries, we use the database entry as a starting point
-  user, err := rs.Stores.User.Get(accessClaims.LoginID)
-  if err != nil {
-    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-    return
-  }
+	// user is not allowed to change all entries, we use the database entry as a starting point
+	user, err := rs.Stores.User.Get(accessClaims.LoginID)
+	if err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
 
-  user.FirstName = data.FirstName
-  user.LastName = data.LastName
-  // no email update here
-  user.StudentNumber = data.StudentNumber
-  user.Semester = data.Semester
-  user.Subject = data.Subject
-  user.Language = data.Language
+	user.FirstName = data.FirstName
+	user.LastName = data.LastName
+	// no email update here
+	user.StudentNumber = data.StudentNumber
+	user.Semester = data.Semester
+	user.Subject = data.Subject
+	user.Language = data.Language
 
-  // update database entry
-  if err := rs.Stores.User.Update(user); err != nil {
-    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-    return
-  }
+	// update database entry
+	if err := rs.Stores.User.Update(user); err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
 
-  render.Status(r, http.StatusNoContent)
+	render.Status(r, http.StatusNoContent)
 }
 
 // EditHandler is public endpoint for
@@ -210,48 +210,48 @@ func (rs *UserResource) EditMeHandler(w http.ResponseWriter, r *http.Request) {
 // SUMMARY:  updating a specific user with given id.
 func (rs *UserResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 
-  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+	accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 
-  if !accessClaims.Root {
-    render.Render(w, r, ErrUnauthorized)
-    return
-  }
+	if !accessClaims.Root {
+		render.Render(w, r, ErrUnauthorized)
+		return
+	}
 
-  data := &userRequest{}
+	data := &userRequest{}
 
-  // parse JSON request into struct
-  if err := render.Bind(r, data); err != nil {
-    render.Render(w, r, ErrBadRequestWithDetails(err))
-    return
-  }
+	// parse JSON request into struct
+	if err := render.Bind(r, data); err != nil {
+		render.Render(w, r, ErrBadRequestWithDetails(err))
+		return
+	}
 
-  user := r.Context().Value(common.CtxKeyUser).(*model.User)
+	user := r.Context().Value(common.CtxKeyUser).(*model.User)
 
-  user.FirstName = data.FirstName
-  user.LastName = data.LastName
-  user.Email = data.Email
-  user.StudentNumber = data.StudentNumber
-  user.Semester = data.Semester
-  user.Subject = data.Subject
-  user.Language = data.Language
+	user.FirstName = data.FirstName
+	user.LastName = data.LastName
+	user.Email = data.Email
+	user.StudentNumber = data.StudentNumber
+	user.Semester = data.Semester
+	user.Subject = data.Subject
+	user.Language = data.Language
 
-  // all identities allowed to this endpoint are allowed to change the password
-  if data.PlainPassword != "" {
-    var err error
-    user.EncryptedPassword, err = auth.HashPassword(data.PlainPassword)
-    if err != nil {
-      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-      return
-    }
-  }
+	// all identities allowed to this endpoint are allowed to change the password
+	if data.PlainPassword != "" {
+		var err error
+		user.EncryptedPassword, err = auth.HashPassword(data.PlainPassword)
+		if err != nil {
+			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+			return
+		}
+	}
 
-  // update database entry
-  if err := rs.Stores.User.Update(user); err != nil {
-    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-    return
-  }
+	// update database entry
+	if err := rs.Stores.User.Update(user); err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
 
-  render.Status(r, http.StatusNoContent)
+	render.Status(r, http.StatusNoContent)
 }
 
 // SendEmailHandler is public endpoint for
@@ -267,27 +267,27 @@ func (rs *UserResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 // SUMMARY:  send email to a specific user
 func (rs *UserResource) SendEmailHandler(w http.ResponseWriter, r *http.Request) {
 
-  user := r.Context().Value(common.CtxKeyUser).(*model.User)
-  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
-  accessUser, _ := rs.Stores.User.Get(accessClaims.LoginID)
+	user := r.Context().Value(common.CtxKeyUser).(*model.User)
+	accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+	accessUser, _ := rs.Stores.User.Get(accessClaims.LoginID)
 
-  data := &EmailRequest{}
+	data := &EmailRequest{}
 
-  // parse JSON request into struct
-  if err := render.Bind(r, data); err != nil {
-    render.Render(w, r, ErrBadRequestWithDetails(err))
-    return
-  }
+	// parse JSON request into struct
+	if err := render.Bind(r, data); err != nil {
+		render.Render(w, r, ErrBadRequestWithDetails(err))
+		return
+	}
 
-  // add sender identity
-  msg := email.NewEmailFromUser(
-    user.Email,
-    data.Subject,
-    data.Body,
-    accessUser,
-  )
+	// add sender identity
+	msg := email.NewEmailFromUser(
+		user.Email,
+		data.Subject,
+		data.Body,
+		accessUser,
+	)
 
-  email.OutgoingEmailsChannel <- msg
+	email.OutgoingEmailsChannel <- msg
 
 }
 
@@ -302,15 +302,15 @@ func (rs *UserResource) SendEmailHandler(w http.ResponseWriter, r *http.Request)
 // RESPONSE: 401,Unauthenticated
 // SUMMARY:  updating a specific user with given id.
 func (rs *UserResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
-  user := r.Context().Value(common.CtxKeyUser).(*model.User)
+	user := r.Context().Value(common.CtxKeyUser).(*model.User)
 
-  // update database entry
-  if err := rs.Stores.User.Delete(user.ID); err != nil {
-    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-    return
-  }
+	// update database entry
+	if err := rs.Stores.User.Delete(user.ID); err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
 
-  render.Status(r, http.StatusNoContent)
+	render.Status(r, http.StatusNoContent)
 }
 
 // .............................................................................
@@ -320,27 +320,27 @@ func (rs *UserResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 // the User could not be found, we stop here and return a 404.
 // We do NOT check whether the user is authorized to get this user.
 func (rs *UserResource) Context(next http.Handler) http.Handler {
-  return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-    // TODO: check permission if inquirer of request is allowed to access this user
-    // Should be done via another middleware
-    var userID int64
-    var err error
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// TODO: check permission if inquirer of request is allowed to access this user
+		// Should be done via another middleware
+		var userID int64
+		var err error
 
-    // try to get id from URL
-    if userID, err = strconv.ParseInt(chi.URLParam(r, "user_id"), 10, 64); err != nil {
-      render.Render(w, r, ErrNotFound)
-      return
-    }
+		// try to get id from URL
+		if userID, err = strconv.ParseInt(chi.URLParam(r, "user_id"), 10, 64); err != nil {
+			render.Render(w, r, ErrNotFound)
+			return
+		}
 
-    // find specific user in database
-    user, err := rs.Stores.User.Get(userID)
-    if err != nil {
-      render.Render(w, r, ErrNotFound)
-      return
-    }
+		// find specific user in database
+		user, err := rs.Stores.User.Get(userID)
+		if err != nil {
+			render.Render(w, r, ErrNotFound)
+			return
+		}
 
-    // serve next
-    ctx := context.WithValue(r.Context(), common.CtxKeyUser, user)
-    next.ServeHTTP(w, r.WithContext(ctx))
-  })
+		// serve next
+		ctx := context.WithValue(r.Context(), common.CtxKeyUser, user)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }

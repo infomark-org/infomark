@@ -19,56 +19,56 @@
 package console
 
 import (
-  "log"
-  "strconv"
+	"log"
+	"strconv"
 
-  "github.com/cgtuebingen/infomark-backend/api/app"
-  "github.com/jmoiron/sqlx"
-  "github.com/spf13/viper"
+	"github.com/cgtuebingen/infomark-backend/api/app"
+	"github.com/jmoiron/sqlx"
+	"github.com/spf13/viper"
 )
 
 func failWhenSmallestWhiff(err error) {
-  if err != nil {
-    panic(err)
-  }
+	if err != nil {
+		panic(err)
+	}
 }
 
 func ConnectAndStores() (*sqlx.DB, *app.Stores, error) {
 
-  db, err := sqlx.Connect("postgres", viper.GetString("database_connection"))
-  if err != nil {
-    return nil, nil, err
-  }
+	db, err := sqlx.Connect("postgres", viper.GetString("database_connection"))
+	if err != nil {
+		return nil, nil, err
+	}
 
-  if err := db.Ping(); err != nil {
-    return nil, nil, err
-  }
+	if err := db.Ping(); err != nil {
+		return nil, nil, err
+	}
 
-  stores := app.NewStores(db)
-  return db, stores, nil
+	stores := app.NewStores(db)
+	return db, stores, nil
 }
 
 func MustConnectAndStores() (*sqlx.DB, *app.Stores) {
 
-  db, stores, err := ConnectAndStores()
-  failWhenSmallestWhiff(err)
-  return db, stores
+	db, stores, err := ConnectAndStores()
+	failWhenSmallestWhiff(err)
+	return db, stores
 }
 
 func MustInt64Parameter(argStr string, name string) int64 {
-  argInt, err := strconv.Atoi(argStr)
-  if err != nil {
-    log.Fatalf("cannot convert %s '%s' to int64\n", name, argStr)
-    return int64(0)
-  }
-  return int64(argInt)
+	argInt, err := strconv.Atoi(argStr)
+	if err != nil {
+		log.Fatalf("cannot convert %s '%s' to int64\n", name, argStr)
+		return int64(0)
+	}
+	return int64(argInt)
 }
 
 func MustIntParameter(argStr string, name string) int {
-  argInt, err := strconv.Atoi(argStr)
-  if err != nil {
-    log.Fatalf("cannot convert %s '%s' to int\n", name, argStr)
-    return int(0)
-  }
-  return int(argInt)
+	argInt, err := strconv.Atoi(argStr)
+	if err != nil {
+		log.Fatalf("cannot convert %s '%s' to int\n", name, argStr)
+		return int(0)
+	}
+	return int(argInt)
 }

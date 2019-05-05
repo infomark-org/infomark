@@ -19,27 +19,27 @@
 package background
 
 import (
-  "crypto/sha256"
-  "encoding/json"
-  "fmt"
-  "io"
-  "net/http"
-  "os"
-  "strings"
-  "time"
+	"crypto/sha256"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"os"
+	"strings"
+	"time"
 
-  "github.com/cgtuebingen/infomark-backend/api/helper"
-  "github.com/cgtuebingen/infomark-backend/api/shared"
-  "github.com/cgtuebingen/infomark-backend/service"
-  "github.com/cgtuebingen/infomark-backend/tape"
-  "github.com/google/uuid"
-  "github.com/sirupsen/logrus"
-  "github.com/spf13/viper"
+	"github.com/cgtuebingen/infomark-backend/api/helper"
+	"github.com/cgtuebingen/infomark-backend/api/shared"
+	"github.com/cgtuebingen/infomark-backend/service"
+	"github.com/cgtuebingen/infomark-backend/tape"
+	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 )
 
 // SubmissionHandler is any handler capable to work on submissions
 type SubmissionHandler interface {
-  Handle(body []byte) error
+	Handle(body []byte) error
 }
 
 // DummySubmissionHandler is doing nothing (for testing)
@@ -55,258 +55,258 @@ var DefaultSubmissionHandler SubmissionHandler
 var DefaultLogger *logrus.Logger
 
 func init() {
-  // fmt.Println(viper.GetString("rabbitmq_connection"))
-  // fmt.Println("worker_void", viper.GetBool("worker_void"))
-  if viper.GetBool("worker_void") {
-    DefaultSubmissionHandler = &DummySubmissionHandler{}
-  } else {
-    DefaultSubmissionHandler = &RealSubmissionHandler{}
-  }
+	// fmt.Println(viper.GetString("rabbitmq_connection"))
+	// fmt.Println("worker_void", viper.GetBool("worker_void"))
+	if viper.GetBool("worker_void") {
+		DefaultSubmissionHandler = &DummySubmissionHandler{}
+	} else {
+		DefaultSubmissionHandler = &RealSubmissionHandler{}
+	}
 
-  DefaultLogger = logrus.StandardLogger()
-  file, err := os.OpenFile("submission_handler.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
-  if err == nil {
-    DefaultLogger.Out = file
-  } else {
-    fmt.Println(err)
-    DefaultLogger.Info("Failed to log to file, using default stderr")
-  }
-  // defer file.Close()
+	DefaultLogger = logrus.StandardLogger()
+	file, err := os.OpenFile("submission_handler.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+	if err == nil {
+		DefaultLogger.Out = file
+	} else {
+		fmt.Println(err)
+		DefaultLogger.Info("Failed to log to file, using default stderr")
+	}
+	// defer file.Close()
 
 }
 
 // Handle reads message and does nothing
 func (h *DummySubmissionHandler) Handle(workerBody []byte) error {
-  // decode incoming message from AMQP
-  msg := &shared.SubmissionAMQPWorkerRequest{}
-  err := json.Unmarshal(workerBody, msg)
+	// decode incoming message from AMQP
+	msg := &shared.SubmissionAMQPWorkerRequest{}
+	err := json.Unmarshal(workerBody, msg)
 
-  if err != nil {
-    DefaultLogger.WithFields(logrus.Fields{
-      "SubmissionID":      msg.SubmissionID,
-      "AccessToken":       msg.AccessToken,
-      "SubmissionFileURL": msg.SubmissionFileURL,
-      "FrameworkFileURL":  msg.FrameworkFileURL,
-      "ResultEndpointURL": msg.ResultEndpointURL,
-      "Sha256":            msg.Sha256,
-    }).Warn(err)
-    return err
-  }
+	if err != nil {
+		DefaultLogger.WithFields(logrus.Fields{
+			"SubmissionID":      msg.SubmissionID,
+			"AccessToken":       msg.AccessToken,
+			"SubmissionFileURL": msg.SubmissionFileURL,
+			"FrameworkFileURL":  msg.FrameworkFileURL,
+			"ResultEndpointURL": msg.ResultEndpointURL,
+			"Sha256":            msg.Sha256,
+		}).Warn(err)
+		return err
+	}
 
-  fmt.Println("--> void")
+	fmt.Println("--> void")
 
-  return nil
+	return nil
 }
 
 func verifySha256(filePath string, expectedChecksum string) error {
-  f, err := os.Open(filePath)
-  if err != nil {
-    DefaultLogger.Printf("error: %v\n", err)
-    return err
-  }
-  defer f.Close()
+	f, err := os.Open(filePath)
+	if err != nil {
+		DefaultLogger.Printf("error: %v\n", err)
+		return err
+	}
+	defer f.Close()
 
-  h := sha256.New()
-  if _, err := io.Copy(h, f); err != nil {
-    DefaultLogger.Printf("error: %v\n", err)
-    return err
-  }
+	h := sha256.New()
+	if _, err := io.Copy(h, f); err != nil {
+		DefaultLogger.Printf("error: %v\n", err)
+		return err
+	}
 
-  actualChecksum := fmt.Sprintf("%x", h.Sum(nil))
+	actualChecksum := fmt.Sprintf("%x", h.Sum(nil))
 
-  if actualChecksum != expectedChecksum {
-    return fmt.Errorf("Sha256 missmatch, actual %s vs. expected %s for file %s",
-      actualChecksum,
-      expectedChecksum,
-      filePath,
-    )
-  }
+	if actualChecksum != expectedChecksum {
+		return fmt.Errorf("Sha256 missmatch, actual %s vs. expected %s for file %s",
+			actualChecksum,
+			expectedChecksum,
+			filePath,
+		)
+	}
 
-  return nil
+	return nil
 }
 
 func newHTTPClientSingleRequest() *http.Client {
-  return &http.Client{
-    Transport: &http.Transport{
-      TLSHandshakeTimeout: 30 * time.Second,
-      DisableKeepAlives:   true,
-    },
-    Timeout: 1 * time.Minute,
-  }
+	return &http.Client{
+		Transport: &http.Transport{
+			TLSHandshakeTimeout: 30 * time.Second,
+			DisableKeepAlives:   true,
+		},
+		Timeout: 1 * time.Minute,
+	}
 }
 
 func downloadFile(r *http.Request, dst string) error {
-  client := newHTTPClientSingleRequest()
+	client := newHTTPClientSingleRequest()
 
-  w, err := client.Do(r)
-  if err != nil {
-    DefaultLogger.Printf("error: %v\n", err)
-    return err
-  }
-  defer w.Body.Close()
+	w, err := client.Do(r)
+	if err != nil {
+		DefaultLogger.Printf("error: %v\n", err)
+		return err
+	}
+	defer w.Body.Close()
 
-  out, err := os.Create(dst)
-  if err != nil {
-    DefaultLogger.Printf("error: %v\n", err)
-    return err
-  }
-  defer out.Close()
+	out, err := os.Create(dst)
+	if err != nil {
+		DefaultLogger.Printf("error: %v\n", err)
+		return err
+	}
+	defer out.Close()
 
-  _, err = io.Copy(out, w.Body)
-  return err
+	_, err = io.Copy(out, w.Body)
+	return err
 }
 
 func cleanDockerOutput(stdout string) string {
-  logStart := "--- BEGIN --- INFOMARK -- WORKER"
-  logEnd := "--- END --- INFOMARK -- WORKER"
+	logStart := "--- BEGIN --- INFOMARK -- WORKER"
+	logEnd := "--- END --- INFOMARK -- WORKER"
 
-  rsl := strings.Split(stdout, logStart)
+	rsl := strings.Split(stdout, logStart)
 
-  if len(rsl) > 1 {
-    rsl = strings.Split(rsl[1], logEnd)
-    return rsl[0]
+	if len(rsl) > 1 {
+		rsl = strings.Split(rsl[1], logEnd)
+		return rsl[0]
 
-  }
-  return stdout
+	}
+	return stdout
 }
 
 // Handle reads message and test submission using docker
 func (h *RealSubmissionHandler) Handle(body []byte) error {
-  // HandleSubmission is responsible to
-  // 1. parse request
-  msg := &shared.SubmissionAMQPWorkerRequest{}
-  err := json.Unmarshal(body, msg)
-  if err != nil {
-    DefaultLogger.Printf("error: %v\n", err)
-    return err
-  }
+	// HandleSubmission is responsible to
+	// 1. parse request
+	msg := &shared.SubmissionAMQPWorkerRequest{}
+	err := json.Unmarshal(body, msg)
+	if err != nil {
+		DefaultLogger.Printf("error: %v\n", err)
+		return err
+	}
 
-  // DefaultLogger.WithFields(logrus.Fields{
-  //   "SubmissionID":      msg.SubmissionID,
-  //   "AccessToken":       msg.AccessToken,
-  //   "SubmissionFileURL": msg.SubmissionFileURL,
-  //   "FrameworkFileURL":  msg.FrameworkFileURL,
-  //   "ResultEndpointURL": msg.ResultEndpointURL,
-  //   "Sha256":            msg.Sha256,
-  // }).Info("handle")
+	// DefaultLogger.WithFields(logrus.Fields{
+	//   "SubmissionID":      msg.SubmissionID,
+	//   "AccessToken":       msg.AccessToken,
+	//   "SubmissionFileURL": msg.SubmissionFileURL,
+	//   "FrameworkFileURL":  msg.FrameworkFileURL,
+	//   "ResultEndpointURL": msg.ResultEndpointURL,
+	//   "Sha256":            msg.Sha256,
+	// }).Info("handle")
 
-  uuid, err := uuid.NewRandom()
-  if err != nil {
-    DefaultLogger.Printf("error: %v\n", err)
-    return err
-  }
-  submissionPath := fmt.Sprintf("%s/%s-submission.zip", viper.GetString("worker_workdir"), uuid)
-  frameworkPath := fmt.Sprintf("%s/%s-framework.zip", viper.GetString("worker_workdir"), uuid)
+	uuid, err := uuid.NewRandom()
+	if err != nil {
+		DefaultLogger.Printf("error: %v\n", err)
+		return err
+	}
+	submissionPath := fmt.Sprintf("%s/%s-submission.zip", viper.GetString("worker_workdir"), uuid)
+	frameworkPath := fmt.Sprintf("%s/%s-framework.zip", viper.GetString("worker_workdir"), uuid)
 
-  // 2. fetch submission file from server
-  r, err := http.NewRequest("GET", msg.SubmissionFileURL, nil)
-  r.Header.Add("Authorization", "Bearer "+msg.AccessToken)
-  if err := downloadFile(r, submissionPath); err != nil {
-    DefaultLogger.Printf("error: %v\n", err)
-    return err
-  }
+	// 2. fetch submission file from server
+	r, err := http.NewRequest("GET", msg.SubmissionFileURL, nil)
+	r.Header.Add("Authorization", "Bearer "+msg.AccessToken)
+	if err := downloadFile(r, submissionPath); err != nil {
+		DefaultLogger.Printf("error: %v\n", err)
+		return err
+	}
 
-  defer helper.FileDelete(submissionPath)
+	defer helper.FileDelete(submissionPath)
 
-  // 3. fetch framework file from server
-  r, err = http.NewRequest("GET", msg.FrameworkFileURL, nil)
-  r.Header.Add("Authorization", "Bearer "+msg.AccessToken)
-  if err := downloadFile(r, frameworkPath); err != nil {
-    DefaultLogger.Printf("error: %v\n", err)
-    return err
-  }
-  defer helper.FileDelete(frameworkPath)
+	// 3. fetch framework file from server
+	r, err = http.NewRequest("GET", msg.FrameworkFileURL, nil)
+	r.Header.Add("Authorization", "Bearer "+msg.AccessToken)
+	if err := downloadFile(r, frameworkPath); err != nil {
+		DefaultLogger.Printf("error: %v\n", err)
+		return err
+	}
+	defer helper.FileDelete(frameworkPath)
 
-  // Under circumstances there is no guarantee that the following request will be issues
-  // BEFORE the actual test result.
-  // we use a HTTP Request to send the answer
-  // r = tape.BuildDataRequest("POST", msg.ResultEndpointURL, tape.ToH(&shared.SubmissionWorkerResponse{
-  //   Log:    "submission is currently being tested ...",
-  //   Status: 1,
-  // }))
-  // r.Header.Add("Authorization", "Bearer "+msg.AccessToken)
-  // resp, err := client.Do(r)
-  // if err != nil {
-  //   DefaultLogger.WithFields(logrus.Fields{
-  //     "action":       "send result to backend",
-  //     "SubmissionID": msg.SubmissionID,
-  //     "resp":         resp,
-  //   }).Warn(err)
+	// Under circumstances there is no guarantee that the following request will be issues
+	// BEFORE the actual test result.
+	// we use a HTTP Request to send the answer
+	// r = tape.BuildDataRequest("POST", msg.ResultEndpointURL, tape.ToH(&shared.SubmissionWorkerResponse{
+	//   Log:    "submission is currently being tested ...",
+	//   Status: 1,
+	// }))
+	// r.Header.Add("Authorization", "Bearer "+msg.AccessToken)
+	// resp, err := client.Do(r)
+	// if err != nil {
+	//   DefaultLogger.WithFields(logrus.Fields{
+	//     "action":       "send result to backend",
+	//     "SubmissionID": msg.SubmissionID,
+	//     "resp":         resp,
+	//   }).Warn(err)
 
-  //   return err
-  // }
+	//   return err
+	// }
 
-  // 4. verify checksums to avoid race conditions
-  if err := verifySha256(submissionPath, msg.Sha256); err != nil {
-    DefaultLogger.WithFields(logrus.Fields{
-      "SubmissionID":      msg.SubmissionID,
-      "SubmissionFileURL": msg.SubmissionFileURL,
-      "FrameworkFileURL":  msg.FrameworkFileURL,
-      "Sha256":            msg.Sha256,
-    }).Warn(err)
-    return err
-  }
+	// 4. verify checksums to avoid race conditions
+	if err := verifySha256(submissionPath, msg.Sha256); err != nil {
+		DefaultLogger.WithFields(logrus.Fields{
+			"SubmissionID":      msg.SubmissionID,
+			"SubmissionFileURL": msg.SubmissionFileURL,
+			"FrameworkFileURL":  msg.FrameworkFileURL,
+			"Sha256":            msg.Sha256,
+		}).Warn(err)
+		return err
+	}
 
-  // 5. run docker test
-  ds := service.NewDockerService()
-  defer ds.Client.Close()
+	// 5. run docker test
+	ds := service.NewDockerService()
+	defer ds.Client.Close()
 
-  var exit int64
-  var stdout string
+	var exit int64
+	var stdout string
 
-  var workerResp *shared.SubmissionWorkerResponse
+	var workerResp *shared.SubmissionWorkerResponse
 
-  stdout, exit, err = ds.Run(
-    msg.DockerImage,
-    submissionPath,
-    frameworkPath,
-    viper.GetInt64("worker_docker_memory_bytes"),
-  )
-  if err != nil {
-    DefaultLogger.WithFields(logrus.Fields{
-      "SubmissionID": msg.SubmissionID,
-      "stdout":       stdout,
-      "exitcode":     exit,
-    }).Warn(err)
-    return err
-  }
+	stdout, exit, err = ds.Run(
+		msg.DockerImage,
+		submissionPath,
+		frameworkPath,
+		viper.GetInt64("worker_docker_memory_bytes"),
+	)
+	if err != nil {
+		DefaultLogger.WithFields(logrus.Fields{
+			"SubmissionID": msg.SubmissionID,
+			"stdout":       stdout,
+			"exitcode":     exit,
+		}).Warn(err)
+		return err
+	}
 
-  if exit == 0 {
-    stdout = cleanDockerOutput(stdout)
-    // 3. push result back to server
-    workerResp = &shared.SubmissionWorkerResponse{
-      Log:    stdout,
-      Status: int(exit),
-    }
-  } else {
-    workerResp = &shared.SubmissionWorkerResponse{
-      Log: fmt.Sprintf(`
+	if exit == 0 {
+		stdout = cleanDockerOutput(stdout)
+		// 3. push result back to server
+		workerResp = &shared.SubmissionWorkerResponse{
+			Log:    stdout,
+			Status: int(exit),
+		}
+	} else {
+		workerResp = &shared.SubmissionWorkerResponse{
+			Log: fmt.Sprintf(`
         There has been an issue during testing your upload (The ID is %v).
         The testing-framework has failed (not the server).\n`,
-        msg.SubmissionID),
-      Status: int(exit),
-    }
-  }
+				msg.SubmissionID),
+			Status: int(exit),
+		}
+	}
 
-  // we use a HTTP Request to send the answer
-  r = tape.BuildDataRequest("POST", msg.ResultEndpointURL, tape.ToH(workerResp))
-  r.Header.Add("Authorization", "Bearer "+msg.AccessToken)
+	// we use a HTTP Request to send the answer
+	r = tape.BuildDataRequest("POST", msg.ResultEndpointURL, tape.ToH(workerResp))
+	r.Header.Add("Authorization", "Bearer "+msg.AccessToken)
 
-  // run request
-  client := newHTTPClientSingleRequest()
-  resp, err := client.Do(r)
-  if err != nil {
-    DefaultLogger.WithFields(logrus.Fields{
-      "action":       "send result to backend",
-      "SubmissionID": msg.SubmissionID,
-      "stdout":       stdout,
-      "exitcode":     exit,
-      "resp":         resp,
-    }).Warn(err)
+	// run request
+	client := newHTTPClientSingleRequest()
+	resp, err := client.Do(r)
+	if err != nil {
+		DefaultLogger.WithFields(logrus.Fields{
+			"action":       "send result to backend",
+			"SubmissionID": msg.SubmissionID,
+			"stdout":       stdout,
+			"exitcode":     exit,
+			"resp":         resp,
+		}).Warn(err)
 
-    return err
-  }
-  defer resp.Body.Close()
+		return err
+	}
+	defer resp.Body.Close()
 
-  return nil
+	return nil
 }

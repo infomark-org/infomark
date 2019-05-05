@@ -19,66 +19,66 @@
 package auth
 
 import (
-  "errors"
-  "net/http"
+	"errors"
+	"net/http"
 
-  "github.com/go-chi/render"
+	"github.com/go-chi/render"
 )
 
 // The list of jwt token errors presented to the end user.
 var (
-  ErrTokenUnauthorized   = errors.New("token unauthorized")
-  ErrTokenExpired        = errors.New("token expired")
-  ErrInvalidAccessToken  = errors.New("invalid access token")
-  ErrInvalidRefreshToken = errors.New("invalid refresh token")
+	ErrTokenUnauthorized   = errors.New("token unauthorized")
+	ErrTokenExpired        = errors.New("token expired")
+	ErrInvalidAccessToken  = errors.New("invalid access token")
+	ErrInvalidRefreshToken = errors.New("invalid refresh token")
 )
 
 // ErrResponse renderer type for handling all sorts of errors.
 type ErrResponse struct {
-  Err            error `json:"-"` // low-level runtime error
-  HTTPStatusCode int   `json:"-"` // http response status code
+	Err            error `json:"-"` // low-level runtime error
+	HTTPStatusCode int   `json:"-"` // http response status code
 
-  StatusText string `json:"status"`          // user-level status message
-  AppCode    int64  `json:"code,omitempty"`  // application-specific error code
-  ErrorText  string `json:"error,omitempty"` // application-level error message, for debugging
+	StatusText string `json:"status"`          // user-level status message
+	AppCode    int64  `json:"code,omitempty"`  // application-specific error code
+	ErrorText  string `json:"error,omitempty"` // application-level error message, for debugging
 }
 
 // Render sets the application-specific error code in AppCode.
 func (e *ErrResponse) Render(w http.ResponseWriter, r *http.Request) error {
-  render.Status(r, e.HTTPStatusCode)
-  return nil
+	render.Status(r, e.HTTPStatusCode)
+	return nil
 }
 
 // ErrUnauthenticatedWithDetails renders status 401 Unauthorized with custom error message.
 // The request has no credentials at all.
 func ErrUnauthenticatedWithDetails(err error) render.Renderer {
-  // StatusUnauthorized                  = 401 // RFC 7235, 3.1
-  return &ErrResponse{
-    Err:            err,
-    HTTPStatusCode: http.StatusUnauthorized,
-    StatusText:     http.StatusText(http.StatusUnauthorized),
-    ErrorText:      err.Error(),
-  }
+	// StatusUnauthorized                  = 401 // RFC 7235, 3.1
+	return &ErrResponse{
+		Err:            err,
+		HTTPStatusCode: http.StatusUnauthorized,
+		StatusText:     http.StatusText(http.StatusUnauthorized),
+		ErrorText:      err.Error(),
+	}
 }
 
 // ErrUnauthorizedWithDetails renders status 403 Unauthorized with custom error message.
 // The request is issued with credential, but these are invalid or not sufficient
 // to gain access to a ressource.
 func ErrUnauthorizedWithDetails(err error) render.Renderer {
-  // StatusForbidden                     = 403 // RFC 7231, 6.5.3
-  return &ErrResponse{
-    Err:            err,
-    HTTPStatusCode: http.StatusUnauthorized,
-    StatusText:     http.StatusText(http.StatusUnauthorized),
-    ErrorText:      err.Error(),
-  }
+	// StatusForbidden                     = 403 // RFC 7231, 6.5.3
+	return &ErrResponse{
+		Err:            err,
+		HTTPStatusCode: http.StatusUnauthorized,
+		StatusText:     http.StatusText(http.StatusUnauthorized),
+		ErrorText:      err.Error(),
+	}
 }
 
 var (
-  // ErrUnauthenticated means no credentials are given
-  ErrUnauthenticated = &ErrResponse{HTTPStatusCode: http.StatusUnauthorized, StatusText: http.StatusText(http.StatusUnauthorized)}
+	// ErrUnauthenticated means no credentials are given
+	ErrUnauthenticated = &ErrResponse{HTTPStatusCode: http.StatusUnauthorized, StatusText: http.StatusText(http.StatusUnauthorized)}
 
-  // ErrUnauthorized returns status 403 Forbidden for unauthorized request.
-  // e.g. "User doesn't have enough privilege"
-  ErrUnauthorized = &ErrResponse{HTTPStatusCode: http.StatusForbidden, StatusText: http.StatusText(http.StatusForbidden)}
+	// ErrUnauthorized returns status 403 Forbidden for unauthorized request.
+	// e.g. "User doesn't have enough privilege"
+	ErrUnauthorized = &ErrResponse{HTTPStatusCode: http.StatusForbidden, StatusText: http.StatusText(http.StatusForbidden)}
 )

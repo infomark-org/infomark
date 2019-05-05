@@ -19,49 +19,49 @@
 package app
 
 import (
-  "net/http"
-  "testing"
-  "time"
+	"net/http"
+	"testing"
+	"time"
 
-  "github.com/franela/goblin"
+	"github.com/franela/goblin"
 )
 
 func TestCommon(t *testing.T) {
-  g := goblin.Goblin(t)
+	g := goblin.Goblin(t)
 
-  tape := NewTape()
+	tape := NewTape()
 
-  g.Describe("Common", func() {
+	g.Describe("Common", func() {
 
-    g.BeforeEach(func() {
-      tape.BeforeEach()
-    })
+		g.BeforeEach(func() {
+			tape.BeforeEach()
+		})
 
-    g.It("Should pong", func() {
-      w := tape.Get("/api/v1/ping")
-      g.Assert(w.Code).Equal(http.StatusOK)
-      g.Assert(w.Body.String()).Equal("pong")
+		g.It("Should pong", func() {
+			w := tape.Get("/api/v1/ping")
+			g.Assert(w.Code).Equal(http.StatusOK)
+			g.Assert(w.Body.String()).Equal("pong")
 
-    })
+		})
 
-    g.It("Too late is too late", func() {
+		g.It("Too late is too late", func() {
 
-      now := NowUTC()
-      before := now.Add(-time.Hour)
-      after := now.Add(time.Hour)
+			now := NowUTC()
+			before := now.Add(-time.Hour)
+			after := now.Add(time.Hour)
 
-      g.Assert(OverTime(before)).Equal(true) // is over time
-      g.Assert(OverTime(after)).Equal(false) // is ok
+			g.Assert(OverTime(before)).Equal(true) // is over time
+			g.Assert(OverTime(after)).Equal(false) // is ok
 
-      // is public
-      g.Assert(PublicYet(after)).Equal(false)
-      g.Assert(PublicYet(before)).Equal(true)
+			// is public
+			g.Assert(PublicYet(after)).Equal(false)
+			g.Assert(PublicYet(before)).Equal(true)
 
-    })
+		})
 
-    g.AfterEach(func() {
-      tape.AfterEach()
-    })
-  })
+		g.AfterEach(func() {
+			tape.AfterEach()
+		})
+	})
 
 }

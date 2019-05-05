@@ -19,102 +19,102 @@
 package app
 
 import (
-  "encoding/json"
-  "net/http"
-  "testing"
+	"encoding/json"
+	"net/http"
+	"testing"
 
-  "github.com/cgtuebingen/infomark-backend/database"
-  "github.com/cgtuebingen/infomark-backend/email"
-  "github.com/franela/goblin"
+	"github.com/cgtuebingen/infomark-backend/database"
+	"github.com/cgtuebingen/infomark-backend/email"
+	"github.com/franela/goblin"
 )
 
 func TestTaskRating(t *testing.T) {
-  g := goblin.Goblin(t)
-  email.DefaultMail = email.VoidMail
+	g := goblin.Goblin(t)
+	email.DefaultMail = email.VoidMail
 
-  tape := &Tape{}
+	tape := &Tape{}
 
-  var stores *Stores
+	var stores *Stores
 
-  g.Describe("TaskRating", func() {
+	g.Describe("TaskRating", func() {
 
-    g.BeforeEach(func() {
-      tape.BeforeEach()
-      stores = NewStores(tape.DB)
-    })
+		g.BeforeEach(func() {
+			tape.BeforeEach()
+			stores = NewStores(tape.DB)
+		})
 
-    g.It("Should get own rating", func() {
-      userID := int64(112)
-      taskID := int64(1)
+		g.It("Should get own rating", func() {
+			userID := int64(112)
+			taskID := int64(1)
 
-      givenRating, err := stores.Task.GetRatingOfTaskByUser(taskID, userID)
-      g.Assert(err).Equal(nil)
+			givenRating, err := stores.Task.GetRatingOfTaskByUser(taskID, userID)
+			g.Assert(err).Equal(nil)
 
-      w := tape.GetWithClaims("/api/v1/courses/1/tasks/1/ratings", userID, false)
-      g.Assert(w.Code).Equal(http.StatusOK)
+			w := tape.GetWithClaims("/api/v1/courses/1/tasks/1/ratings", userID, false)
+			g.Assert(w.Code).Equal(http.StatusOK)
 
-      taskRatingActual := &TaskRatingResponse{}
-      err = json.NewDecoder(w.Body).Decode(taskRatingActual)
-      g.Assert(err).Equal(nil)
+			taskRatingActual := &TaskRatingResponse{}
+			err = json.NewDecoder(w.Body).Decode(taskRatingActual)
+			g.Assert(err).Equal(nil)
 
-      g.Assert(taskRatingActual.OwnRating).Equal(givenRating.Rating)
-      g.Assert(taskRatingActual.TaskID).Equal(taskID)
+			g.Assert(taskRatingActual.OwnRating).Equal(givenRating.Rating)
+			g.Assert(taskRatingActual.TaskID).Equal(taskID)
 
-      // update rating (mock had rating 2)
-      w = tape.PostWithClaims("/api/v1/courses/1/tasks/1/ratings", H{"rating": 4}, userID, false)
-      g.Assert(w.Code).Equal(http.StatusOK)
+			// update rating (mock had rating 2)
+			w = tape.PostWithClaims("/api/v1/courses/1/tasks/1/ratings", H{"rating": 4}, userID, false)
+			g.Assert(w.Code).Equal(http.StatusOK)
 
-      // new query
-      w = tape.GetWithClaims("/api/v1/courses/1/tasks/1/ratings", userID, false)
-      g.Assert(w.Code).Equal(http.StatusOK)
+			// new query
+			w = tape.GetWithClaims("/api/v1/courses/1/tasks/1/ratings", userID, false)
+			g.Assert(w.Code).Equal(http.StatusOK)
 
-      taskRatingActual2 := &TaskRatingResponse{}
-      err = json.NewDecoder(w.Body).Decode(taskRatingActual2)
-      g.Assert(err).Equal(nil)
+			taskRatingActual2 := &TaskRatingResponse{}
+			err = json.NewDecoder(w.Body).Decode(taskRatingActual2)
+			g.Assert(err).Equal(nil)
 
-      g.Assert(taskRatingActual2.OwnRating).Equal(4)
-      g.Assert(taskRatingActual2.TaskID).Equal(taskID)
-    })
+			g.Assert(taskRatingActual2.OwnRating).Equal(4)
+			g.Assert(taskRatingActual2.TaskID).Equal(taskID)
+		})
 
-    g.It("Should create own rating", func() {
-      userID := int64(112)
-      taskID := int64(1)
+		g.It("Should create own rating", func() {
+			userID := int64(112)
+			taskID := int64(1)
 
-      // delete and create (see mock.py)
-      prevRatingModel, err := stores.Task.GetRatingOfTaskByUser(taskID, userID)
-      g.Assert(err).Equal(nil)
-      database.Delete(tape.DB, "task_ratings", prevRatingModel.ID)
+			// delete and create (see mock.py)
+			prevRatingModel, err := stores.Task.GetRatingOfTaskByUser(taskID, userID)
+			g.Assert(err).Equal(nil)
+			database.Delete(tape.DB, "task_ratings", prevRatingModel.ID)
 
-      w := tape.GetWithClaims("/api/v1/courses/1/tasks/1/ratings", userID, false)
-      g.Assert(w.Code).Equal(http.StatusOK)
+			w := tape.GetWithClaims("/api/v1/courses/1/tasks/1/ratings", userID, false)
+			g.Assert(w.Code).Equal(http.StatusOK)
 
-      taskRatingActual3 := &TaskRatingResponse{}
-      err = json.NewDecoder(w.Body).Decode(taskRatingActual3)
-      g.Assert(err).Equal(nil)
+			taskRatingActual3 := &TaskRatingResponse{}
+			err = json.NewDecoder(w.Body).Decode(taskRatingActual3)
+			g.Assert(err).Equal(nil)
 
-      g.Assert(taskRatingActual3.OwnRating).Equal(0)
-      g.Assert(taskRatingActual3.TaskID).Equal(taskID)
+			g.Assert(taskRatingActual3.OwnRating).Equal(0)
+			g.Assert(taskRatingActual3.TaskID).Equal(taskID)
 
-      // update rating (mock had rating 2)
-      w = tape.PostWithClaims("/api/v1/courses/1/tasks/1/ratings", H{"rating": 4}, userID, false)
-      g.Assert(w.Code).Equal(http.StatusCreated)
+			// update rating (mock had rating 2)
+			w = tape.PostWithClaims("/api/v1/courses/1/tasks/1/ratings", H{"rating": 4}, userID, false)
+			g.Assert(w.Code).Equal(http.StatusCreated)
 
-      // new query
-      w = tape.GetWithClaims("/api/v1/courses/1/tasks/1/ratings", userID, false)
-      g.Assert(w.Code).Equal(http.StatusOK)
+			// new query
+			w = tape.GetWithClaims("/api/v1/courses/1/tasks/1/ratings", userID, false)
+			g.Assert(w.Code).Equal(http.StatusOK)
 
-      taskRatingActual2 := &TaskRatingResponse{}
-      err = json.NewDecoder(w.Body).Decode(taskRatingActual2)
-      g.Assert(err).Equal(nil)
+			taskRatingActual2 := &TaskRatingResponse{}
+			err = json.NewDecoder(w.Body).Decode(taskRatingActual2)
+			g.Assert(err).Equal(nil)
 
-      g.Assert(taskRatingActual2.OwnRating).Equal(4)
-      g.Assert(taskRatingActual2.TaskID).Equal(taskID)
-    })
+			g.Assert(taskRatingActual2.OwnRating).Equal(4)
+			g.Assert(taskRatingActual2.TaskID).Equal(taskID)
+		})
 
-    g.AfterEach(func() {
-      tape.AfterEach()
-    })
+		g.AfterEach(func() {
+			tape.AfterEach()
+		})
 
-  })
+	})
 
 }

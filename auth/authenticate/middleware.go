@@ -19,181 +19,181 @@
 package authenticate
 
 import (
-  "context"
-  "fmt"
-  "net/http"
-  "strconv"
+	"context"
+	"fmt"
+	"net/http"
+	"strconv"
 
-  "github.com/cgtuebingen/infomark-backend/auth"
-  "github.com/cgtuebingen/infomark-backend/common"
-  "github.com/go-chi/jwtauth"
-  "github.com/go-chi/render"
-  "github.com/spf13/viper"
-  "github.com/ulule/limiter/v3"
+	"github.com/cgtuebingen/infomark-backend/auth"
+	"github.com/cgtuebingen/infomark-backend/common"
+	"github.com/go-chi/jwtauth"
+	"github.com/go-chi/render"
+	"github.com/spf13/viper"
+	"github.com/ulule/limiter/v3"
 
-  // "github.com/ulule/limiter/v3/drivers/store/memory"
-  redis "github.com/go-redis/redis"
-  sredis "github.com/ulule/limiter/v3/drivers/store/redis"
+	// "github.com/ulule/limiter/v3/drivers/store/memory"
+	redis "github.com/go-redis/redis"
+	sredis "github.com/ulule/limiter/v3/drivers/store/redis"
 )
 
 // RequiredValidAccessClaimsMiddleware tries to get information about the identity which
 // issues a request by looking into the authorization header and then into
 // the cookie.
 func RequiredValidAccessClaims(next http.Handler) http.Handler {
-  return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-    accessClaims := &AccessClaims{}
+		accessClaims := &AccessClaims{}
 
-    if viper.GetInt64("debug_user_id") == 0 {
-      // first we test the JWT autorization
-      if HasHeaderToken(r) {
+		if viper.GetInt64("debug_user_id") == 0 {
+			// first we test the JWT autorization
+			if HasHeaderToken(r) {
 
-        // parse token from from header
-        tokenStr := jwtauth.TokenFromHeader(r)
+				// parse token from from header
+				tokenStr := jwtauth.TokenFromHeader(r)
 
-        // ok, there is a access token in the header
-        err := accessClaims.ParseAccessClaimsFromToken(tokenStr)
-        if err != nil {
-          // fmt.Println(err)
-          render.Render(w, r, auth.ErrUnauthorized)
-          return
-        }
+				// ok, there is a access token in the header
+				err := accessClaims.ParseAccessClaimsFromToken(tokenStr)
+				if err != nil {
+					// fmt.Println(err)
+					render.Render(w, r, auth.ErrUnauthorized)
+					return
+				}
 
-      } else {
-        // fmt.Println("no token, try session")
-        if HasSessionToken(r) {
-          // fmt.Println("found session")
+			} else {
+				// fmt.Println("no token, try session")
+				if HasSessionToken(r) {
+					// fmt.Println("found session")
 
-          // session data is stored in cookie
-          err := accessClaims.ParseRefreshClaimsFromSession(r)
-          if err != nil {
-            // fmt.Println(err)
-            render.Render(w, r, auth.ErrUnauthorized)
-            return
-          }
+					// session data is stored in cookie
+					err := accessClaims.ParseRefreshClaimsFromSession(r)
+					if err != nil {
+						// fmt.Println(err)
+						render.Render(w, r, auth.ErrUnauthorized)
+						return
+					}
 
-          // session is valid --> we will extend the session
-          w = accessClaims.UpdateSession(w, r)
-        } else {
-          // fmt.Println("NO session found")
+					// session is valid --> we will extend the session
+					w = accessClaims.UpdateSession(w, r)
+				} else {
+					// fmt.Println("NO session found")
 
-          render.Render(w, r, auth.ErrUnauthenticated)
-          return
+					render.Render(w, r, auth.ErrUnauthenticated)
+					return
 
-        }
+				}
 
-      }
-    } else {
-      accessClaims.LoginID = viper.GetInt64("debug_user_id")
-      accessClaims.Root = true
-    }
+			}
+		} else {
+			accessClaims.LoginID = viper.GetInt64("debug_user_id")
+			accessClaims.Root = true
+		}
 
-    // nothing given
-    // serve next
-    ctx := context.WithValue(r.Context(), common.CtxKeyAccessClaims, accessClaims)
-    next.ServeHTTP(w, r.WithContext(ctx))
-    return
+		// nothing given
+		// serve next
+		ctx := context.WithValue(r.Context(), common.CtxKeyAccessClaims, accessClaims)
+		next.ServeHTTP(w, r.WithContext(ctx))
+		return
 
-  })
+	})
 }
 
 type LoginLimiterKey interface {
-  Key() string
+	Key() string
 }
 
 type LoginLimiter struct {
-  Store  *limiter.Store
-  Rate   *limiter.Rate
-  Prefix string
+	Store  *limiter.Store
+	Rate   *limiter.Rate
+	Prefix string
 }
 
 type LoginLimiterKeyFromIP struct {
-  R *http.Request
+	R *http.Request
 }
 
 func NewLoginLimiterKeyFromIP(r *http.Request) *LoginLimiterKeyFromIP {
-  return &LoginLimiterKeyFromIP{R: r}
+	return &LoginLimiterKeyFromIP{R: r}
 }
 
 func (obj *LoginLimiterKeyFromIP) Key() string {
 
-  options := limiter.Options{
-    IPv4Mask:           limiter.DefaultIPv4Mask,
-    IPv6Mask:           limiter.DefaultIPv6Mask,
-    TrustForwardHeader: true,
-  }
+	options := limiter.Options{
+		IPv4Mask:           limiter.DefaultIPv4Mask,
+		IPv6Mask:           limiter.DefaultIPv6Mask,
+		TrustForwardHeader: true,
+	}
 
-  return limiter.GetIP(obj.R, options).String()
+	return limiter.GetIP(obj.R, options).String()
 }
 
 func NewLoginLimiter(prefix string, limit string, redisURL string) (*LoginLimiter, error) {
-  // Define a limit rate to 4 requests per hour.
-  rate, err := limiter.NewRateFromFormatted(limit)
-  if err != nil {
-    return nil, err
-  }
+	// Define a limit rate to 4 requests per hour.
+	rate, err := limiter.NewRateFromFormatted(limit)
+	if err != nil {
+		return nil, err
+	}
 
-  // Create a redis client.
-  option, err := redis.ParseURL(redisURL)
-  if err != nil {
-    return nil, err
-  }
-  client := redis.NewClient(option)
+	// Create a redis client.
+	option, err := redis.ParseURL(redisURL)
+	if err != nil {
+		return nil, err
+	}
+	client := redis.NewClient(option)
 
-  // Create a store with the redis client.
-  store, err := sredis.NewStoreWithOptions(client, limiter.StoreOptions{
-    Prefix:   prefix,
-    MaxRetry: 3,
-  })
+	// Create a store with the redis client.
+	store, err := sredis.NewStoreWithOptions(client, limiter.StoreOptions{
+		Prefix:   prefix,
+		MaxRetry: 3,
+	})
 
-  // store := memory.NewStore()
+	// store := memory.NewStore()
 
-  return &LoginLimiter{Store: &store, Rate: &rate, Prefix: prefix}, nil
+	return &LoginLimiter{Store: &store, Rate: &rate, Prefix: prefix}, nil
 }
 
 func (ll *LoginLimiter) Get(r *http.Request, KeyFunc LoginLimiterKey) (limiter.Context, error) {
 
-  return limiter.Store.Get(
-    *ll.Store,
-    r.Context(),
-    fmt.Sprintf("%s-%s", KeyFunc.Key(), ll.Prefix),
-    *ll.Rate,
-  )
+	return limiter.Store.Get(
+		*ll.Store,
+		r.Context(),
+		fmt.Sprintf("%s-%s", KeyFunc.Key(), ll.Prefix),
+		*ll.Rate,
+	)
 
 }
 
 func (ll *LoginLimiter) WriteHeaders(w http.ResponseWriter, context limiter.Context) {
-  w.Header().Add("X-RateLimit-Limit", strconv.FormatInt(context.Limit, 10))
-  w.Header().Add("X-RateLimit-Remaining", strconv.FormatInt(context.Remaining, 10))
-  w.Header().Add("X-RateLimit-Reset", strconv.FormatInt(context.Reset, 10))
+	w.Header().Add("X-RateLimit-Limit", strconv.FormatInt(context.Limit, 10))
+	w.Header().Add("X-RateLimit-Remaining", strconv.FormatInt(context.Remaining, 10))
+	w.Header().Add("X-RateLimit-Reset", strconv.FormatInt(context.Reset, 10))
 }
 
 func RateLimitMiddleware(prefix string, limit string, redisURL string) func(h http.Handler) http.Handler {
-  return func(h http.Handler) http.Handler {
-    ll, err := NewLoginLimiter(prefix, limit, redisURL)
+	return func(h http.Handler) http.Handler {
+		ll, err := NewLoginLimiter(prefix, limit, redisURL)
 
-    if err != nil {
-      panic(err)
-    }
+		if err != nil {
+			panic(err)
+		}
 
-    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-      keyFunc := NewLoginLimiterKeyFromIP(r)
+			keyFunc := NewLoginLimiterKeyFromIP(r)
 
-      context, err := ll.Get(r, keyFunc)
-      if err != nil {
-        panic(err)
-        return
-      }
+			context, err := ll.Get(r, keyFunc)
+			if err != nil {
+				panic(err)
+				return
+			}
 
-      ll.WriteHeaders(w, context)
+			ll.WriteHeaders(w, context)
 
-      if context.Reached {
-        http.Error(w, "Limit exceeded", http.StatusTooManyRequests)
-        return
-      }
+			if context.Reached {
+				http.Error(w, "Limit exceeded", http.StatusTooManyRequests)
+				return
+			}
 
-      h.ServeHTTP(w, r)
-    })
-  }
+			h.ServeHTTP(w, r)
+		})
+	}
 }

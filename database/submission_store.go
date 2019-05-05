@@ -19,29 +19,29 @@
 package database
 
 import (
-  "github.com/cgtuebingen/infomark-backend/model"
-  "github.com/jmoiron/sqlx"
+	"github.com/cgtuebingen/infomark-backend/model"
+	"github.com/jmoiron/sqlx"
 )
 
 type SubmissionStore struct {
-  db *sqlx.DB
+	db *sqlx.DB
 }
 
 func NewSubmissionStore(db *sqlx.DB) *SubmissionStore {
-  return &SubmissionStore{
-    db: db,
-  }
+	return &SubmissionStore{
+		db: db,
+	}
 }
 
 func (s *SubmissionStore) Get(submissionID int64) (*model.Submission, error) {
-  p := model.Submission{ID: submissionID}
-  err := s.db.Get(&p, `SELECT * FROM submissions WHERE id = $1 LIMIT 1;`, p.ID)
-  return &p, err
+	p := model.Submission{ID: submissionID}
+	err := s.db.Get(&p, `SELECT * FROM submissions WHERE id = $1 LIMIT 1;`, p.ID)
+	return &p, err
 }
 
 func (s *SubmissionStore) GetByUserAndTask(userID int64, taskID int64) (*model.Submission, error) {
-  p := model.Submission{}
-  err := s.db.Get(&p, `
+	p := model.Submission{}
+	err := s.db.Get(&p, `
 SELECT
   *
 FROM
@@ -51,23 +51,23 @@ WHERE
 AND
   task_id = $2
 LIMIT 1;`,
-    userID, taskID)
-  return &p, err
+		userID, taskID)
+	return &p, err
 }
 
 func (s *SubmissionStore) Create(p *model.Submission) (*model.Submission, error) {
-  newID, err := Insert(s.db, "submissions", p)
-  if err != nil {
-    return nil, err
-  }
-  return s.Get(newID)
+	newID, err := Insert(s.db, "submissions", p)
+	if err != nil {
+		return nil, err
+	}
+	return s.Get(newID)
 }
 
 func (s *SubmissionStore) GetFiltered(filterCourseID, filterGroupID, filterUserID, filterSheetID, filterTaskID int64) ([]model.Submission, error) {
 
-  p := []model.Submission{}
-  err := s.db.Select(&p,
-    `
+	p := []model.Submission{}
+	err := s.db.Select(&p,
+		`
 SELECT
   s.*
 FROM
@@ -86,6 +86,6 @@ AND
 AND
   ($5 = 0 or g.course_id = $5)
 `,
-    filterUserID, filterTaskID, filterGroupID, filterSheetID, filterCourseID)
-  return p, err
+		filterUserID, filterTaskID, filterGroupID, filterSheetID, filterCourseID)
+	return p, err
 }

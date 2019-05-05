@@ -19,68 +19,68 @@
 package console
 
 import (
-  "fmt"
-  "log"
+	"fmt"
+	"log"
 
-  "github.com/spf13/cobra"
+	"github.com/spf13/cobra"
 )
 
 func init() {
-  AdminCmd.AddCommand(AdminRemoveCmd)
-  AdminCmd.AddCommand(AdminAddCmd)
+	AdminCmd.AddCommand(AdminRemoveCmd)
+	AdminCmd.AddCommand(AdminAddCmd)
 }
 
 var AdminCmd = &cobra.Command{
-  Use:   "admin",
-  Short: "Management of global admins.",
+	Use:   "admin",
+	Short: "Management of global admins.",
 }
 
 var AdminAddCmd = &cobra.Command{
-  Use:   "add [userID]",
-  Short: "set gives an user global admin permission",
-  Long: `Will set the gobal root flag to "true" for a given user
+	Use:   "add [userID]",
+	Short: "set gives an user global admin permission",
+	Long: `Will set the gobal root flag to "true" for a given user
  bypassing all permission tests`,
-  Args: cobra.ExactArgs(1),
-  Run: func(cmd *cobra.Command, args []string) {
-    userID := MustInt64Parameter(args[0], "userID")
+	Args: cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		userID := MustInt64Parameter(args[0], "userID")
 
-    _, stores := MustConnectAndStores()
+		_, stores := MustConnectAndStores()
 
-    user, err := stores.User.Get(userID)
-    if err != nil {
-      log.Fatalf("user with id %v not found\n", userID)
-    }
+		user, err := stores.User.Get(userID)
+		if err != nil {
+			log.Fatalf("user with id %v not found\n", userID)
+		}
 
-    user.Root = true
-    if err := stores.User.Update(user); err != nil {
-      panic(err)
-    }
+		user.Root = true
+		if err := stores.User.Update(user); err != nil {
+			panic(err)
+		}
 
-    fmt.Printf("The user %s %s (id:%v) has now global admin privileges\n",
-      user.FirstName, user.LastName, user.ID)
-  },
+		fmt.Printf("The user %s %s (id:%v) has now global admin privileges\n",
+			user.FirstName, user.LastName, user.ID)
+	},
 }
 
 var AdminRemoveCmd = &cobra.Command{
-  Use:   "remove [userID]",
-  Short: "removes global admin permission from a user",
-  Long:  `Will set the gobal root flag to false for a user `,
-  Args:  cobra.ExactArgs(1),
-  Run: func(cmd *cobra.Command, args []string) {
-    userID := MustInt64Parameter(args[0], "userID")
+	Use:   "remove [userID]",
+	Short: "removes global admin permission from a user",
+	Long:  `Will set the gobal root flag to false for a user `,
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+		userID := MustInt64Parameter(args[0], "userID")
 
-    _, stores := MustConnectAndStores()
+		_, stores := MustConnectAndStores()
 
-    user, err := stores.User.Get(userID)
-    if err != nil {
-      log.Fatalf("user with id %v not found\n", userID)
-    }
-    user.Root = false
-    if err := stores.User.Update(user); err != nil {
-      panic(err)
-    }
+		user, err := stores.User.Get(userID)
+		if err != nil {
+			log.Fatalf("user with id %v not found\n", userID)
+		}
+		user.Root = false
+		if err := stores.User.Update(user); err != nil {
+			panic(err)
+		}
 
-    fmt.Printf("user %s %s (%v) is not an admin anymore\n", user.FirstName, user.LastName, user.ID)
+		fmt.Printf("user %s %s (%v) is not an admin anymore\n", user.FirstName, user.LastName, user.ID)
 
-  },
+	},
 }

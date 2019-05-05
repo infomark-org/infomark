@@ -19,57 +19,57 @@
 package database
 
 import (
-  "github.com/cgtuebingen/infomark-backend/model"
-  "github.com/jmoiron/sqlx"
+	"github.com/cgtuebingen/infomark-backend/model"
+	"github.com/jmoiron/sqlx"
 )
 
 type UserStore struct {
-  db *sqlx.DB
+	db *sqlx.DB
 }
 
 func NewUserStore(db *sqlx.DB) *UserStore {
-  return &UserStore{
-    db: db,
-  }
+	return &UserStore{
+		db: db,
+	}
 }
 
 func (s *UserStore) Get(userID int64) (*model.User, error) {
-  p := model.User{ID: userID}
-  err := s.db.Get(&p, "SELECT * FROM users WHERE id = $1 LIMIT 1;", p.ID)
-  return &p, err
+	p := model.User{ID: userID}
+	err := s.db.Get(&p, "SELECT * FROM users WHERE id = $1 LIMIT 1;", p.ID)
+	return &p, err
 }
 
 func (s *UserStore) FindByEmail(email string) (*model.User, error) {
-  p := model.User{Email: email}
-  err := s.db.Get(&p, "SELECT * FROM users WHERE email = $1 LIMIT 1;", p.Email)
-  return &p, err
+	p := model.User{Email: email}
+	err := s.db.Get(&p, "SELECT * FROM users WHERE email = $1 LIMIT 1;", p.Email)
+	return &p, err
 }
 
 func (s *UserStore) GetAll() ([]model.User, error) {
-  p := []model.User{}
-  err := s.db.Select(&p, "SELECT * FROM users;")
-  return p, err
+	p := []model.User{}
+	err := s.db.Select(&p, "SELECT * FROM users;")
+	return p, err
 }
 
 func (s *UserStore) Create(p *model.User) (*model.User, error) {
-  newID, err := Insert(s.db, "users", p)
-  if err != nil {
-    return nil, err
-  }
-  return s.Get(newID)
+	newID, err := Insert(s.db, "users", p)
+	if err != nil {
+		return nil, err
+	}
+	return s.Get(newID)
 }
 
 func (s *UserStore) Update(p *model.User) error {
-  return Update(s.db, "users", p.ID, p)
+	return Update(s.db, "users", p.ID, p)
 }
 
 func (s *UserStore) Delete(userID int64) error {
-  return Delete(s.db, "users", userID)
+	return Delete(s.db, "users", userID)
 }
 
 func (s *UserStore) GetEnrollments(userID int64) ([]model.Enrollment, error) {
-  p := []model.Enrollment{}
-  err := s.db.Select(&p, `
+	p := []model.Enrollment{}
+	err := s.db.Select(&p, `
 SELECT
   course_id,
   role
@@ -78,6 +78,6 @@ FROM
 WHERE
   user_id = $1
 `, userID)
-  return p, err
+	return p, err
 
 }

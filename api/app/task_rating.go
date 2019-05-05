@@ -19,24 +19,24 @@
 package app
 
 import (
-  "net/http"
+	"net/http"
 
-  "github.com/cgtuebingen/infomark-backend/auth/authenticate"
-  "github.com/cgtuebingen/infomark-backend/common"
-  "github.com/cgtuebingen/infomark-backend/model"
-  "github.com/go-chi/render"
+	"github.com/cgtuebingen/infomark-backend/auth/authenticate"
+	"github.com/cgtuebingen/infomark-backend/common"
+	"github.com/cgtuebingen/infomark-backend/model"
+	"github.com/go-chi/render"
 )
 
 // TaskRatingResource specifies TaskRating management handler.
 type TaskRatingResource struct {
-  Stores *Stores
+	Stores *Stores
 }
 
 // NewTaskRatingResource create and returns a TaskRatingResource.
 func NewTaskRatingResource(stores *Stores) *TaskRatingResource {
-  return &TaskRatingResource{
-    Stores: stores,
-  }
+	return &TaskRatingResource{
+		Stores: stores,
+	}
 }
 
 // GetHandler is public endpoint for
@@ -51,35 +51,35 @@ func NewTaskRatingResource(stores *Stores) *TaskRatingResource {
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  get all stats (average rating, own rating, ..) for a task
 func (rs *TaskRatingResource) GetHandler(w http.ResponseWriter, r *http.Request) {
-  // `TaskRating` is retrieved via middle-ware
-  task := r.Context().Value(common.CtxKeyTask).(*model.Task)
+	// `TaskRating` is retrieved via middle-ware
+	task := r.Context().Value(common.CtxKeyTask).(*model.Task)
 
-  // get rating
-  averageRating, err := rs.Stores.Task.GetAverageRating(task.ID)
-  if err != nil {
-    // no entries so far
-    averageRating = 0
-  }
+	// get rating
+	averageRating, err := rs.Stores.Task.GetAverageRating(task.ID)
+	if err != nil {
+		// no entries so far
+		averageRating = 0
+	}
 
-  // get own rating
-  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
-  taskRating, err := rs.Stores.Task.GetRatingOfTaskByUser(task.ID, accessClaims.LoginID)
-  if err != nil {
-    // record not found
-    taskRating = &model.TaskRating{
-      UserID: accessClaims.LoginID,
-      TaskID: task.ID,
-      Rating: 0,
-    }
-  }
+	// get own rating
+	accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+	taskRating, err := rs.Stores.Task.GetRatingOfTaskByUser(task.ID, accessClaims.LoginID)
+	if err != nil {
+		// record not found
+		taskRating = &model.TaskRating{
+			UserID: accessClaims.LoginID,
+			TaskID: task.ID,
+			Rating: 0,
+		}
+	}
 
-  // render JSON reponse
-  if err := render.Render(w, r, rs.newTaskRatingResponse(taskRating, averageRating)); err != nil {
-    render.Render(w, r, ErrRender(err))
-    return
-  }
+	// render JSON reponse
+	if err := render.Render(w, r, rs.newTaskRatingResponse(taskRating, averageRating)); err != nil {
+		render.Render(w, r, ErrRender(err))
+		return
+	}
 
-  render.Status(r, http.StatusOK)
+	render.Status(r, http.StatusOK)
 }
 
 // ChangeHandler is public endpoint for
@@ -95,57 +95,57 @@ func (rs *TaskRatingResource) GetHandler(w http.ResponseWriter, r *http.Request)
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  updates and gets all stats (average rating, own rating, ..) for a task
 func (rs *TaskRatingResource) ChangeHandler(w http.ResponseWriter, r *http.Request) {
-  // `TaskRating` is retrieved via middle-ware
-  task := r.Context().Value(common.CtxKeyTask).(*model.Task)
-  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+	// `TaskRating` is retrieved via middle-ware
+	task := r.Context().Value(common.CtxKeyTask).(*model.Task)
+	accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 
-  data := &TaskRatingRequest{}
-  // parse JSON request into struct
-  if err := render.Bind(r, data); err != nil {
-    render.Render(w, r, ErrBadRequestWithDetails(err))
-    return
-  }
+	data := &TaskRatingRequest{}
+	// parse JSON request into struct
+	if err := render.Bind(r, data); err != nil {
+		render.Render(w, r, ErrBadRequestWithDetails(err))
+		return
+	}
 
-  givenRating, err := rs.Stores.Task.GetRatingOfTaskByUser(task.ID, accessClaims.LoginID)
+	givenRating, err := rs.Stores.Task.GetRatingOfTaskByUser(task.ID, accessClaims.LoginID)
 
-  if err == nil {
-    // there is a rating
-    givenRating.Rating = data.Rating
-    if err := rs.Stores.Task.UpdateRating(givenRating); err != nil {
-      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-      return
-    }
-    render.Status(r, http.StatusNoContent)
+	if err == nil {
+		// there is a rating
+		givenRating.Rating = data.Rating
+		if err := rs.Stores.Task.UpdateRating(givenRating); err != nil {
+			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+			return
+		}
+		render.Status(r, http.StatusNoContent)
 
-  } else {
-    // there is no rating so far from the user
+	} else {
+		// there is no rating so far from the user
 
-    rating := &model.TaskRating{
-      UserID: accessClaims.LoginID,
-      TaskID: task.ID,
-      Rating: data.Rating,
-    }
+		rating := &model.TaskRating{
+			UserID: accessClaims.LoginID,
+			TaskID: task.ID,
+			Rating: data.Rating,
+		}
 
-    newTaskRating, err := rs.Stores.Task.CreateRating(rating)
-    if err != nil {
-      render.Render(w, r, ErrRender(err))
-      return
-    }
+		newTaskRating, err := rs.Stores.Task.CreateRating(rating)
+		if err != nil {
+			render.Render(w, r, ErrRender(err))
+			return
+		}
 
-    // get rating
-    averageRating, err := rs.Stores.Task.GetAverageRating(task.ID)
-    if err != nil {
-      // no entries so far
-      averageRating = 0
-    }
+		// get rating
+		averageRating, err := rs.Stores.Task.GetAverageRating(task.ID)
+		if err != nil {
+			// no entries so far
+			averageRating = 0
+		}
 
-    render.Status(r, http.StatusCreated)
+		render.Status(r, http.StatusCreated)
 
-    // return Task information of created entry
-    if err := render.Render(w, r, rs.newTaskRatingResponse(newTaskRating, averageRating)); err != nil {
-      render.Render(w, r, ErrRender(err))
-      return
-    }
-  }
+		// return Task information of created entry
+		if err := render.Render(w, r, rs.newTaskRatingResponse(newTaskRating, averageRating)); err != nil {
+			render.Render(w, r, ErrRender(err))
+			return
+		}
+	}
 
 }

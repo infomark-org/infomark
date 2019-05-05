@@ -19,49 +19,49 @@
 package shared
 
 import (
-  "fmt"
+	"fmt"
 )
 
 // SubmissionAMQPWorkerRequest is the message which is handed over to the background workers
 type SubmissionAMQPWorkerRequest struct {
-  SubmissionID      int64  `json:"submission_id"`
-  AccessToken       string `json:"access_token"`
-  FrameworkFileURL  string `json:"framework_file_url"`
-  SubmissionFileURL string `json:"submission_file_url"`
-  ResultEndpointURL string `json:"result_endpoint_url"`
-  DockerImage       string `json:"docker_image"`
-  Sha256            string `json:"sha_256"`
+	SubmissionID      int64  `json:"submission_id"`
+	AccessToken       string `json:"access_token"`
+	FrameworkFileURL  string `json:"framework_file_url"`
+	SubmissionFileURL string `json:"submission_file_url"`
+	ResultEndpointURL string `json:"result_endpoint_url"`
+	DockerImage       string `json:"docker_image"`
+	Sha256            string `json:"sha_256"`
 }
 
 // SubmissionWorkerResponse is the message handed from the workers to the server
 type SubmissionWorkerResponse struct {
-  Log    string `json:"log"`
-  Status int    `json:"status"`
+	Log    string `json:"log"`
+	Status int    `json:"status"`
 }
 
 // NewSubmissionAMQPWorkerRequest creates a new message for the workers
 func NewSubmissionAMQPWorkerRequest(
-  courseID int64, taskID int64, submissionID int64, gradeID int64,
-  accessToken string, url string, dockerimage string, sha256 string, visibility string) *SubmissionAMQPWorkerRequest {
+	courseID int64, taskID int64, submissionID int64, gradeID int64,
+	accessToken string, url string, dockerimage string, sha256 string, visibility string) *SubmissionAMQPWorkerRequest {
 
-  return &SubmissionAMQPWorkerRequest{
-    SubmissionID: submissionID,
-    AccessToken:  accessToken,
-    FrameworkFileURL: fmt.Sprintf("%s/api/v1/courses/%d/tasks/%d/%s_file",
-      url,
-      courseID,
-      taskID,
-      visibility),
-    SubmissionFileURL: fmt.Sprintf("%s/api/v1/courses/%d/submissions/%d/file",
-      url,
-      courseID,
-      submissionID),
-    ResultEndpointURL: fmt.Sprintf("%s/api/v1/courses/%d/grades/%d/%s_result",
-      url,
-      courseID,
-      gradeID,
-      visibility),
-    DockerImage: dockerimage,
-    Sha256:      sha256,
-  }
+	return &SubmissionAMQPWorkerRequest{
+		SubmissionID: submissionID,
+		AccessToken:  accessToken,
+		FrameworkFileURL: fmt.Sprintf("%s/api/v1/courses/%d/tasks/%d/%s_file",
+			url,
+			courseID,
+			taskID,
+			visibility),
+		SubmissionFileURL: fmt.Sprintf("%s/api/v1/courses/%d/submissions/%d/file",
+			url,
+			courseID,
+			submissionID),
+		ResultEndpointURL: fmt.Sprintf("%s/api/v1/courses/%d/grades/%d/%s_result",
+			url,
+			courseID,
+			gradeID,
+			visibility),
+		DockerImage: dockerimage,
+		Sha256:      sha256,
+	}
 }

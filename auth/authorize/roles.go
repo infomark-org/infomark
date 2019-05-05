@@ -19,70 +19,70 @@
 package authorize
 
 import (
-  "net/http"
+	"net/http"
 
-  "github.com/cgtuebingen/infomark-backend/auth"
-  "github.com/cgtuebingen/infomark-backend/auth/authenticate"
-  "github.com/cgtuebingen/infomark-backend/common"
-  "github.com/go-chi/render"
+	"github.com/cgtuebingen/infomark-backend/auth"
+	"github.com/cgtuebingen/infomark-backend/auth/authenticate"
+	"github.com/cgtuebingen/infomark-backend/common"
+	"github.com/go-chi/render"
 )
 
 type CourseRole int32
 
 const (
-  NOCOURSEROLE CourseRole = -1
-  STUDENT      CourseRole = 0
-  TUTOR        CourseRole = 1
-  ADMIN        CourseRole = 2
+	NOCOURSEROLE CourseRole = -1
+	STUDENT      CourseRole = 0
+	TUTOR        CourseRole = 1
+	ADMIN        CourseRole = 2
 )
 
 func (r CourseRole) ToInt() int {
-  switch r {
-  default:
-    return -1
-  case NOCOURSEROLE:
-    return -1
-  case STUDENT:
-    return 0
-  case TUTOR:
-    return 1
-  case ADMIN:
-    return 2
-  }
+	switch r {
+	default:
+		return -1
+	case NOCOURSEROLE:
+		return -1
+	case STUDENT:
+		return 0
+	case TUTOR:
+		return 1
+	case ADMIN:
+		return 2
+	}
 }
 
 // RequiresRole middleware restricts access to accounts having role parameter in their jwt claims.
 func RequiresAtLeastCourseRole(requiredRole CourseRole) func(next http.Handler) http.Handler {
-  return func(next http.Handler) http.Handler {
-    hfn := func(w http.ResponseWriter, r *http.Request) {
-      if HasAtLeastRole(requiredRole, r) {
-        next.ServeHTTP(w, r)
-      } else {
-        render.Render(w, r, auth.ErrUnauthorized)
-      }
-    }
-    return http.HandlerFunc(hfn)
-  }
+	return func(next http.Handler) http.Handler {
+		hfn := func(w http.ResponseWriter, r *http.Request) {
+			if HasAtLeastRole(requiredRole, r) {
+				next.ServeHTTP(w, r)
+			} else {
+				render.Render(w, r, auth.ErrUnauthorized)
+			}
+		}
+		return http.HandlerFunc(hfn)
+	}
 }
 
 func HasAtLeastRole(requiredRole CourseRole, r *http.Request) bool {
-  // global root can lever out this check
-  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
-  if accessClaims.Root {
-    // oh dear, sorry to ask. Please pass this check
-    return true
-  }
+	// global root can lever out this check
+	accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+	if accessClaims.Root {
+		// oh dear, sorry to ask. Please pass this check
+		return true
+	}
 
-  givenRole, ok := r.Context().Value(common.CtxKeyCourseRole).(CourseRole)
-  if !ok {
-    return false
-  }
+	givenRole, ok := r.Context().Value(common.CtxKeyCourseRole).(CourseRole)
+	if !ok {
+		return false
+	}
 
-  if givenRole < requiredRole {
-    return false
-  }
+	if givenRole < requiredRole {
+		return false
+	}
 
-  return true
+	return true
 }
 
 // func EndpointRequiresRole(endpoint http.HandlerFunc, requiredRole CourseRole) http.HandlerFunc {

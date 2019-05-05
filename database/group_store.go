@@ -19,55 +19,55 @@
 package database
 
 import (
-  "github.com/cgtuebingen/infomark-backend/model"
-  "github.com/jmoiron/sqlx"
-  "github.com/lib/pq"
+	"github.com/cgtuebingen/infomark-backend/model"
+	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 )
 
 type GroupStore struct {
-  db *sqlx.DB
+	db *sqlx.DB
 }
 
 func NewGroupStore(db *sqlx.DB) *GroupStore {
-  return &GroupStore{
-    db: db,
-  }
+	return &GroupStore{
+		db: db,
+	}
 }
 
 func (s *GroupStore) Get(groupID int64) (*model.Group, error) {
-  p := model.Group{ID: groupID}
-  err := s.db.Get(&p, "SELECT * FROM groups WHERE id = $1 LIMIT 1;", p.ID)
-  return &p, err
+	p := model.Group{ID: groupID}
+	err := s.db.Get(&p, "SELECT * FROM groups WHERE id = $1 LIMIT 1;", p.ID)
+	return &p, err
 }
 
 func (s *GroupStore) GetAll() ([]model.Group, error) {
-  p := []model.Group{}
-  err := s.db.Select(&p, "SELECT * FROM groups;")
-  return p, err
+	p := []model.Group{}
+	err := s.db.Select(&p, "SELECT * FROM groups;")
+	return p, err
 }
 
 func (s *GroupStore) Create(p *model.Group) (*model.Group, error) {
-  // create Group
-  newID, err := Insert(s.db, "groups", p)
-  if err != nil {
-    return nil, err
-  }
+	// create Group
+	newID, err := Insert(s.db, "groups", p)
+	if err != nil {
+		return nil, err
+	}
 
-  return s.Get(newID)
+	return s.Get(newID)
 }
 
 func (s *GroupStore) Update(p *model.Group) error {
-  return Update(s.db, "groups", p.ID, p)
+	return Update(s.db, "groups", p.ID, p)
 }
 
 func (s *GroupStore) Delete(taskID int64) error {
-  return Delete(s.db, "groups", taskID)
+	return Delete(s.db, "groups", taskID)
 }
 
 func (s *GroupStore) GroupsOfCourse(courseID int64) ([]model.GroupWithTutor, error) {
-  p := []model.GroupWithTutor{}
+	p := []model.GroupWithTutor{}
 
-  err := s.db.Select(&p, `
+	err := s.db.Select(&p, `
 SELECT
   g.*,
   u.first_name as tutor_first_name,
@@ -82,13 +82,13 @@ WHERE
   course_id = $1
 ORDER BY
   g.id ASC`, courseID)
-  return p, err
+	return p, err
 }
 
 func (s *GroupStore) GetMembers(groupID int64) ([]model.User, error) {
-  p := []model.User{}
+	p := []model.User{}
 
-  err := s.db.Select(&p, `
+	err := s.db.Select(&p, `
 SELECT
   u.*
 FROM
@@ -97,16 +97,16 @@ INNER JOIN
   user_group ug ON ug.user_id = u.id
 WHERE
   ug.group_id = $1`, groupID)
-  return p, err
+	return p, err
 }
 
 func (s *GroupStore) GetInCourseWithUser(userID int64, courseID int64) ([]model.GroupWithTutor, error) {
-  // This is a list as it is used at the sample places where tutors will get a LIST
-  // of their groups (can be multiple ones). For the sake of simplicity, this
-  // is  a list as well
-  p := []model.GroupWithTutor{}
+	// This is a list as it is used at the sample places where tutors will get a LIST
+	// of their groups (can be multiple ones). For the sake of simplicity, this
+	// is  a list as well
+	p := []model.GroupWithTutor{}
 
-  err := s.db.Select(&p, `
+	err := s.db.Select(&p, `
 SELECT
   g.*,
   u.first_name as tutor_first_name,
@@ -124,22 +124,22 @@ AND
   ug.user_id = $1
 ORDER BY
   g.id ASC`, userID, courseID)
-  return p, err
+	return p, err
 }
 
 func (s *GroupStore) EnrolledUsers(
-  courseID int64,
-  groupID int64,
-  roleFilter []string,
-  filterFirstName string,
-  filterLastName string,
-  filterEmail string,
-  filterSubject string,
-  filterLanguage string) ([]model.UserCourse, error) {
-  p := []model.UserCourse{}
+	courseID int64,
+	groupID int64,
+	roleFilter []string,
+	filterFirstName string,
+	filterLastName string,
+	filterEmail string,
+	filterSubject string,
+	filterLanguage string) ([]model.UserCourse, error) {
+	p := []model.UserCourse{}
 
-  // , u.avatar_path
-  err := s.db.Select(&p, `
+	// , u.avatar_path
+	err := s.db.Select(&p, `
 SELECT
   uc.role,
   u.id,
@@ -172,15 +172,15 @@ AND
 AND
   LOWER(u.language) LIKE $8
     `, courseID, groupID, pq.Array(roleFilter),
-    filterFirstName, filterLastName, filterEmail,
-    filterSubject, filterLanguage,
-  )
-  return p, err
+		filterFirstName, filterLastName, filterEmail,
+		filterSubject, filterLanguage,
+	)
+	return p, err
 }
 
 func (s *GroupStore) GetGroupEnrollmentOfUserInCourse(userID int64, courseID int64) (*model.GroupEnrollment, error) {
-  p := &model.GroupEnrollment{}
-  err := s.db.Get(p, `
+	p := &model.GroupEnrollment{}
+	err := s.db.Get(p, `
 SELECT
   ug.*
 FROM
@@ -190,33 +190,33 @@ WHERE
   ug.user_id = $1
 AND
   g.course_id = $2`, userID, courseID)
-  return p, err
+	return p, err
 }
 
 func (s *GroupStore) CreateGroupEnrollmentOfUserInCourse(p *model.GroupEnrollment) (*model.GroupEnrollment, error) {
-  newID, err := Insert(s.db, "user_group", p)
-  if err != nil {
-    return nil, err
-  }
+	newID, err := Insert(s.db, "user_group", p)
+	if err != nil {
+		return nil, err
+	}
 
-  res := &model.GroupEnrollment{}
+	res := &model.GroupEnrollment{}
 
-  err = s.db.Get(res, `SELECT * FROM user_group WHERE id= $1`, newID)
-  if err != nil {
-    return nil, err
-  }
+	err = s.db.Get(res, `SELECT * FROM user_group WHERE id= $1`, newID)
+	if err != nil {
+		return nil, err
+	}
 
-  return res, nil
+	return res, nil
 }
 
 func (s *GroupStore) ChangeGroupEnrollmentOfUserInCourse(p *model.GroupEnrollment) error {
-  return Update(s.db, "user_group", p.ID, p)
+	return Update(s.db, "user_group", p.ID, p)
 }
 
 func (s *GroupStore) GetOfTutor(tutorID int64, courseID int64) ([]model.GroupWithTutor, error) {
-  p := []model.GroupWithTutor{}
+	p := []model.GroupWithTutor{}
 
-  err := s.db.Select(&p, `
+	err := s.db.Select(&p, `
 SELECT
   g.*,
   u.first_name as tutor_first_name,
@@ -233,30 +233,30 @@ AND
   g.tutor_id = $1
 ORDER BY
   g.id ASC`, tutorID, courseID)
-  return p, err
+	return p, err
 }
 
 func (s *GroupStore) IdentifyCourseOfGroup(groupID int64) (*model.Course, error) {
 
-  course := &model.Course{}
-  err := s.db.Get(course,
-    `
+	course := &model.Course{}
+	err := s.db.Get(course,
+		`
 SELECT
   c.*
 FROM
   groups g
 INNER JOIN courses c ON c.id = g.course_ID
 WHERE g.id = $1`,
-    groupID)
-  if err != nil {
-    return nil, err
-  }
+		groupID)
+	if err != nil {
+		return nil, err
+	}
 
-  return course, err
+	return course, err
 }
 
 func (s *GroupStore) GetBidOfUserForGroup(userID int64, groupID int64) (bid int, err error) {
-  err = s.db.Get(&bid, `
+	err = s.db.Get(&bid, `
 SELECT
   bid
 FROM
@@ -264,24 +264,24 @@ FROM
 WHERE
   user_id = $1 and group_id = $2
 LIMIT 1`, userID, groupID)
-  return bid, err
+	return bid, err
 }
 
 func (s *GroupStore) InsertBidOfUserForGroup(userID int64, groupID int64, bid int) (int, error) {
 
-  // insert
-  _, err := Insert(s.db, "group_bids", &model.GroupBid{UserID: userID, GroupID: groupID, Bid: bid})
-  if err != nil {
-    return 0, err
-  }
+	// insert
+	_, err := Insert(s.db, "group_bids", &model.GroupBid{UserID: userID, GroupID: groupID, Bid: bid})
+	if err != nil {
+		return 0, err
+	}
 
-  return s.GetBidOfUserForGroup(userID, groupID)
+	return s.GetBidOfUserForGroup(userID, groupID)
 }
 
 func (s *GroupStore) UpdateBidOfUserForGroup(userID int64, groupID int64, bid int) (int, error) {
 
-  // update
-  _, err := s.db.Exec(`
+	// update
+	_, err := s.db.Exec(`
 UPDATE
   group_bids
 SET bid = $3
@@ -289,18 +289,18 @@ WHERE
   user_id = $1
 AND
   group_id = $2`, userID, groupID, bid)
-  if err != nil {
-    return 0, err
-  }
+	if err != nil {
+		return 0, err
+	}
 
-  return s.GetBidOfUserForGroup(userID, groupID)
+	return s.GetBidOfUserForGroup(userID, groupID)
 }
 
 func (s *GroupStore) GetBidsForCourseForUser(courseID int64, userID int64) ([]model.GroupBid, error) {
 
-  p := []model.GroupBid{}
+	p := []model.GroupBid{}
 
-  err := s.db.Select(&p, `
+	err := s.db.Select(&p, `
 SELECT
   gb.*
 FROM
@@ -310,15 +310,15 @@ WHERE
   gb.user_id = $2
 AND
   g.course_id = $1`, courseID, userID)
-  return p, err
+	return p, err
 
 }
 
 func (s *GroupStore) GetBidsForCourse(courseID int64) ([]model.GroupBid, error) {
 
-  p := []model.GroupBid{}
+	p := []model.GroupBid{}
 
-  err := s.db.Select(&p, `
+	err := s.db.Select(&p, `
 SELECT
   gb.*
 FROM
@@ -326,6 +326,6 @@ FROM
 INNER JOIN groups g ON gb.group_id = g.id
 AND
   g.course_id = $1`, courseID)
-  return p, err
+	return p, err
 
 }

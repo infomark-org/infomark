@@ -19,32 +19,32 @@
 package app
 
 import (
-  "context"
-  "errors"
-  "fmt"
-  "net/http"
-  "strconv"
+	"context"
+	"errors"
+	"fmt"
+	"net/http"
+	"strconv"
 
-  "github.com/cgtuebingen/infomark-backend/api/helper"
-  "github.com/cgtuebingen/infomark-backend/auth/authenticate"
-  "github.com/cgtuebingen/infomark-backend/auth/authorize"
-  "github.com/cgtuebingen/infomark-backend/common"
-  "github.com/cgtuebingen/infomark-backend/email"
-  "github.com/cgtuebingen/infomark-backend/model"
-  "github.com/go-chi/chi"
-  "github.com/go-chi/render"
+	"github.com/cgtuebingen/infomark-backend/api/helper"
+	"github.com/cgtuebingen/infomark-backend/auth/authenticate"
+	"github.com/cgtuebingen/infomark-backend/auth/authorize"
+	"github.com/cgtuebingen/infomark-backend/common"
+	"github.com/cgtuebingen/infomark-backend/email"
+	"github.com/cgtuebingen/infomark-backend/model"
+	"github.com/go-chi/chi"
+	"github.com/go-chi/render"
 )
 
 // GroupResource specifies Group management handler.
 type GroupResource struct {
-  Stores *Stores
+	Stores *Stores
 }
 
 // NewGroupResource create and returns a GroupResource.
 func NewGroupResource(stores *Stores) *GroupResource {
-  return &GroupResource{
-    Stores: stores,
-  }
+	return &GroupResource{
+		Stores: stores,
+	}
 }
 
 // .............................................................................
@@ -63,17 +63,17 @@ func NewGroupResource(stores *Stores) *GroupResource {
 // The ordering is abitary
 func (rs *GroupResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 
-  var groups []model.GroupWithTutor
-  var err error
+	var groups []model.GroupWithTutor
+	var err error
 
-  course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
-  groups, err = rs.Stores.Group.GroupsOfCourse(course.ID)
+	course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
+	groups, err = rs.Stores.Group.GroupsOfCourse(course.ID)
 
-  // render JSON reponse
-  if err = render.RenderList(w, r, rs.newGroupListResponse(groups)); err != nil {
-    render.Render(w, r, ErrRender(err))
-    return
-  }
+	// render JSON reponse
+	if err = render.RenderList(w, r, rs.newGroupListResponse(groups)); err != nil {
+		render.Render(w, r, ErrRender(err))
+		return
+	}
 }
 
 // CreateHandler is public endpoint for
@@ -89,41 +89,41 @@ func (rs *GroupResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 // SUMMARY:  create a new group
 func (rs *GroupResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
 
-  // start from empty Request
-  data := &groupRequest{}
-  // parse JSON request into struct
-  if err := render.Bind(r, data); err != nil {
-    render.Render(w, r, ErrBadRequestWithDetails(err))
-    return
-  }
+	// start from empty Request
+	data := &groupRequest{}
+	// parse JSON request into struct
+	if err := render.Bind(r, data); err != nil {
+		render.Render(w, r, ErrBadRequestWithDetails(err))
+		return
+	}
 
-  course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
+	course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
 
-  group := &model.Group{}
-  group.TutorID = data.Tutor.ID
-  group.CourseID = course.ID
-  group.Description = data.Description
+	group := &model.Group{}
+	group.TutorID = data.Tutor.ID
+	group.CourseID = course.ID
+	group.Description = data.Description
 
-  tutor, err := rs.Stores.User.Get(group.TutorID)
-  if err != nil {
-    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-    return
-  }
+	tutor, err := rs.Stores.User.Get(group.TutorID)
+	if err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
 
-  // create Group entry in database
-  newGroup, err := rs.Stores.Group.Create(group)
-  if err != nil {
-    render.Render(w, r, ErrRender(err))
-    return
-  }
+	// create Group entry in database
+	newGroup, err := rs.Stores.Group.Create(group)
+	if err != nil {
+		render.Render(w, r, ErrRender(err))
+		return
+	}
 
-  render.Status(r, http.StatusCreated)
+	render.Status(r, http.StatusCreated)
 
-  // return Group information of created entry
-  if err := render.Render(w, r, rs.newGroupResponse(newGroup, tutor)); err != nil {
-    render.Render(w, r, ErrRender(err))
-    return
-  }
+	// return Group information of created entry
+	if err := render.Render(w, r, rs.newGroupResponse(newGroup, tutor)); err != nil {
+		render.Render(w, r, ErrRender(err))
+		return
+	}
 
 }
 
@@ -139,22 +139,22 @@ func (rs *GroupResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  get a specific group
 func (rs *GroupResource) GetHandler(w http.ResponseWriter, r *http.Request) {
-  // `Task` is retrieved via middle-ware
-  group := r.Context().Value(common.CtxKeyGroup).(*model.Group)
+	// `Task` is retrieved via middle-ware
+	group := r.Context().Value(common.CtxKeyGroup).(*model.Group)
 
-  tutor, err := rs.Stores.User.Get(group.TutorID)
-  if err != nil {
-    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-    return
-  }
+	tutor, err := rs.Stores.User.Get(group.TutorID)
+	if err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
 
-  // render JSON reponse
-  if err := render.Render(w, r, rs.newGroupResponse(group, tutor)); err != nil {
-    render.Render(w, r, ErrRender(err))
-    return
-  }
+	// render JSON reponse
+	if err := render.Render(w, r, rs.newGroupResponse(group, tutor)); err != nil {
+		render.Render(w, r, ErrRender(err))
+		return
+	}
 
-  render.Status(r, http.StatusOK)
+	render.Status(r, http.StatusOK)
 }
 
 // GetMineHandler is public endpoint for
@@ -169,53 +169,53 @@ func (rs *GroupResource) GetHandler(w http.ResponseWriter, r *http.Request) {
 // SUMMARY:  get the group the request identity is enrolled in
 func (rs *GroupResource) GetMineHandler(w http.ResponseWriter, r *http.Request) {
 
-  // TODO(patwie): handle case when user is tutor in group
+	// TODO(patwie): handle case when user is tutor in group
 
-  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
-  course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
-  courseRole := r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole)
+	accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+	course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
+	courseRole := r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole)
 
-  var (
-    groups []model.GroupWithTutor
-    err    error
-  )
+	var (
+		groups []model.GroupWithTutor
+		err    error
+	)
 
-  if courseRole == authorize.STUDENT {
-    // here catch on the cases, when user is a student and enrolled in a group
-    groups, err = rs.Stores.Group.GetInCourseWithUser(accessClaims.LoginID, course.ID)
-  } else {
-    // must be tutor
-    groups, err = rs.Stores.Group.GetOfTutor(accessClaims.LoginID, course.ID)
+	if courseRole == authorize.STUDENT {
+		// here catch on the cases, when user is a student and enrolled in a group
+		groups, err = rs.Stores.Group.GetInCourseWithUser(accessClaims.LoginID, course.ID)
+	} else {
+		// must be tutor
+		groups, err = rs.Stores.Group.GetOfTutor(accessClaims.LoginID, course.ID)
 
-  }
+	}
 
-  // if we cannot find such an entry, this means the user have not been assigned to a group
-  if err != nil {
-    fmt.Println(err)
-    render.Render(w, r, ErrNotFound)
-    return
-  }
+	// if we cannot find such an entry, this means the user have not been assigned to a group
+	if err != nil {
+		fmt.Println(err)
+		render.Render(w, r, ErrNotFound)
+		return
+	}
 
-  // // students can be only within one group -> [0] is ok
-  // // tutors can be in multiple groups -> [0] is ok (they are the same person)
-  // tutor, err := rs.Stores.User.Get(groups[0].TutorID)
-  // if err != nil {
-  //   render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-  //   return
-  // }
+	// // students can be only within one group -> [0] is ok
+	// // tutors can be in multiple groups -> [0] is ok (they are the same person)
+	// tutor, err := rs.Stores.User.Get(groups[0].TutorID)
+	// if err != nil {
+	//   render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+	//   return
+	// }
 
-  if len(groups) == 0 {
-    render.Render(w, r, ErrNotFound)
-    return
-  }
+	if len(groups) == 0 {
+		render.Render(w, r, ErrNotFound)
+		return
+	}
 
-  // render JSON reponse
-  if err := render.RenderList(w, r, rs.newGroupListResponse(groups)); err != nil {
-    render.Render(w, r, ErrRender(err))
-    return
-  }
+	// render JSON reponse
+	if err := render.RenderList(w, r, rs.newGroupListResponse(groups)); err != nil {
+		render.Render(w, r, ErrRender(err))
+		return
+	}
 
-  render.Status(r, http.StatusOK)
+	render.Status(r, http.StatusOK)
 
 }
 
@@ -232,26 +232,26 @@ func (rs *GroupResource) GetMineHandler(w http.ResponseWriter, r *http.Request) 
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  update a specific group
 func (rs *GroupResource) EditHandler(w http.ResponseWriter, r *http.Request) {
-  // start from empty Request
-  data := &groupRequest{}
+	// start from empty Request
+	data := &groupRequest{}
 
-  // parse JSON request into struct
-  if err := render.Bind(r, data); err != nil {
-    render.Render(w, r, ErrBadRequestWithDetails(err))
-    return
-  }
+	// parse JSON request into struct
+	if err := render.Bind(r, data); err != nil {
+		render.Render(w, r, ErrBadRequestWithDetails(err))
+		return
+	}
 
-  group := r.Context().Value(common.CtxKeyGroup).(*model.Group)
-  group.TutorID = data.Tutor.ID
-  group.Description = data.Description
+	group := r.Context().Value(common.CtxKeyGroup).(*model.Group)
+	group.TutorID = data.Tutor.ID
+	group.Description = data.Description
 
-  // update database entry
-  if err := rs.Stores.Group.Update(group); err != nil {
-    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-    return
-  }
+	// update database entry
+	if err := rs.Stores.Group.Update(group); err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
 
-  render.Status(r, http.StatusNoContent)
+	render.Status(r, http.StatusNoContent)
 }
 
 // DeleteHandler is public endpoint for
@@ -266,15 +266,15 @@ func (rs *GroupResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  delete a specific group
 func (rs *GroupResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
-  group := r.Context().Value(common.CtxKeyGroup).(*model.Group)
+	group := r.Context().Value(common.CtxKeyGroup).(*model.Group)
 
-  // update database entry
-  if err := rs.Stores.Group.Delete(group.ID); err != nil {
-    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-    return
-  }
+	// update database entry
+	if err := rs.Stores.Group.Delete(group.ID); err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
 
-  render.Status(r, http.StatusNoContent)
+	render.Status(r, http.StatusNoContent)
 }
 
 // IndexEnrollmentsHandler is public endpoint for
@@ -295,43 +295,43 @@ func (rs *GroupResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  list all courses
 func (rs *GroupResource) IndexEnrollmentsHandler(w http.ResponseWriter, r *http.Request) {
-  // /courses/1/enrollments?roles=0,1
-  group := r.Context().Value(common.CtxKeyGroup).(*model.Group)
-  course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
+	// /courses/1/enrollments?roles=0,1
+	group := r.Context().Value(common.CtxKeyGroup).(*model.Group)
+	course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
 
-  // extract filters
-  filterRoles := helper.StringArrayFromURL(r, "roles", []string{"0", "1", "2"})
-  filterFirstName := helper.StringFromURL(r, "first_name", "%%")
-  filterLastName := helper.StringFromURL(r, "last_name", "%%")
-  filterEmail := helper.StringFromURL(r, "email", "%%")
-  filterSubject := helper.StringFromURL(r, "subject", "%%")
-  filterLanguage := helper.StringFromURL(r, "language", "%%")
+	// extract filters
+	filterRoles := helper.StringArrayFromURL(r, "roles", []string{"0", "1", "2"})
+	filterFirstName := helper.StringFromURL(r, "first_name", "%%")
+	filterLastName := helper.StringFromURL(r, "last_name", "%%")
+	filterEmail := helper.StringFromURL(r, "email", "%%")
+	filterSubject := helper.StringFromURL(r, "subject", "%%")
+	filterLanguage := helper.StringFromURL(r, "language", "%%")
 
-  givenRole := r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole)
+	givenRole := r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole)
 
-  if givenRole == authorize.STUDENT {
-    // students cannot query other students
-    filterRoles = []string{"1", "2"}
-  }
+	if givenRole == authorize.STUDENT {
+		// students cannot query other students
+		filterRoles = []string{"1", "2"}
+	}
 
-  enrolledUsers, err := rs.Stores.Group.EnrolledUsers(course.ID, group.ID,
-    filterRoles, filterFirstName, filterLastName, filterEmail,
-    filterSubject, filterLanguage,
-  )
-  if err != nil {
-    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-    return
-  }
+	enrolledUsers, err := rs.Stores.Group.EnrolledUsers(course.ID, group.ID,
+		filterRoles, filterFirstName, filterLastName, filterEmail,
+		filterSubject, filterLanguage,
+	)
+	if err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
 
-  enrolledUsers = EnsurePrivacyInEnrollments(enrolledUsers, givenRole)
+	enrolledUsers = EnsurePrivacyInEnrollments(enrolledUsers, givenRole)
 
-  // render JSON reponse
-  if err = render.RenderList(w, r, newEnrollmentListResponse(enrolledUsers)); err != nil {
-    render.Render(w, r, ErrRender(err))
-    return
-  }
+	// render JSON reponse
+	if err = render.RenderList(w, r, newEnrollmentListResponse(enrolledUsers)); err != nil {
+		render.Render(w, r, ErrRender(err))
+		return
+	}
 
-  render.Status(r, http.StatusOK)
+	render.Status(r, http.StatusOK)
 }
 
 // EditGroupEnrollmentHandler is public endpoint for
@@ -347,44 +347,44 @@ func (rs *GroupResource) IndexEnrollmentsHandler(w http.ResponseWriter, r *http.
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  will assign a given user to a group or change the group assignment
 func (rs *GroupResource) EditGroupEnrollmentHandler(w http.ResponseWriter, r *http.Request) {
-  // start from empty Request
-  data := &groupEnrollmentRequest{}
+	// start from empty Request
+	data := &groupEnrollmentRequest{}
 
-  // parse JSON request into struct
-  if err := render.Bind(r, data); err != nil {
-    render.Render(w, r, ErrBadRequestWithDetails(err))
-    return
-  }
+	// parse JSON request into struct
+	if err := render.Bind(r, data); err != nil {
+		render.Render(w, r, ErrBadRequestWithDetails(err))
+		return
+	}
 
-  group := r.Context().Value(common.CtxKeyGroup).(*model.Group)
-  course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
+	group := r.Context().Value(common.CtxKeyGroup).(*model.Group)
+	course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
 
-  enrollment, err := rs.Stores.Group.GetGroupEnrollmentOfUserInCourse(data.UserID, course.ID)
+	enrollment, err := rs.Stores.Group.GetGroupEnrollmentOfUserInCourse(data.UserID, course.ID)
 
-  if err != nil {
-    // does not exists yet
+	if err != nil {
+		// does not exists yet
 
-    enrollment := &model.GroupEnrollment{
-      UserID:  data.UserID,
-      GroupID: group.ID,
-    }
+		enrollment := &model.GroupEnrollment{
+			UserID:  data.UserID,
+			GroupID: group.ID,
+		}
 
-    _, err := rs.Stores.Group.CreateGroupEnrollmentOfUserInCourse(enrollment)
-    if err != nil {
-      render.Render(w, r, ErrRender(err))
-      return
-    }
+		_, err := rs.Stores.Group.CreateGroupEnrollmentOfUserInCourse(enrollment)
+		if err != nil {
+			render.Render(w, r, ErrRender(err))
+			return
+		}
 
-  } else {
-    // does exists --> simply change it
-    enrollment.GroupID = group.ID
-    if err := rs.Stores.Group.ChangeGroupEnrollmentOfUserInCourse(enrollment); err != nil {
-      render.Render(w, r, ErrRender(err))
-      return
-    }
-  }
+	} else {
+		// does exists --> simply change it
+		enrollment.GroupID = group.ID
+		if err := rs.Stores.Group.ChangeGroupEnrollmentOfUserInCourse(enrollment); err != nil {
+			render.Render(w, r, ErrRender(err))
+			return
+		}
+	}
 
-  render.Status(r, http.StatusNoContent)
+	render.Status(r, http.StatusNoContent)
 }
 
 // ChangeBidHandler is public endpoint for
@@ -401,53 +401,53 @@ func (rs *GroupResource) EditGroupEnrollmentHandler(w http.ResponseWriter, r *ht
 // SUMMARY:  change or add the bid for enrolling in a group
 func (rs *GroupResource) ChangeBidHandler(w http.ResponseWriter, r *http.Request) {
 
-  courseRole := r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole)
+	courseRole := r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole)
 
-  if courseRole != authorize.STUDENT {
-    render.Render(w, r, ErrBadRequestWithDetails(errors.New("Only students in a course can bid for a group")))
-    return
-  }
+	if courseRole != authorize.STUDENT {
+		render.Render(w, r, ErrBadRequestWithDetails(errors.New("Only students in a course can bid for a group")))
+		return
+	}
 
-  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+	accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 
-  // start from empty Request
-  group := r.Context().Value(common.CtxKeyGroup).(*model.Group)
+	// start from empty Request
+	group := r.Context().Value(common.CtxKeyGroup).(*model.Group)
 
-  data := &groupBidRequest{}
+	data := &groupBidRequest{}
 
-  // parse JSON request into struct
-  if err := render.Bind(r, data); err != nil {
-    render.Render(w, r, ErrBadRequestWithDetails(err))
-    return
-  }
+	// parse JSON request into struct
+	if err := render.Bind(r, data); err != nil {
+		render.Render(w, r, ErrBadRequestWithDetails(err))
+		return
+	}
 
-  _, existsErr := rs.Stores.Group.GetBidOfUserForGroup(accessClaims.LoginID, group.ID)
-  if existsErr == nil {
-    // exists
-    // update database entry
-    if _, err := rs.Stores.Group.UpdateBidOfUserForGroup(accessClaims.LoginID, group.ID, data.Bid); err != nil {
-      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-      return
-    }
-    render.Status(r, http.StatusNoContent)
-  } else {
-    // insert
-    // insert database entry
-    if _, err := rs.Stores.Group.InsertBidOfUserForGroup(accessClaims.LoginID, group.ID, data.Bid); err != nil {
-      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-      return
-    }
-    render.Status(r, http.StatusCreated)
+	_, existsErr := rs.Stores.Group.GetBidOfUserForGroup(accessClaims.LoginID, group.ID)
+	if existsErr == nil {
+		// exists
+		// update database entry
+		if _, err := rs.Stores.Group.UpdateBidOfUserForGroup(accessClaims.LoginID, group.ID, data.Bid); err != nil {
+			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+			return
+		}
+		render.Status(r, http.StatusNoContent)
+	} else {
+		// insert
+		// insert database entry
+		if _, err := rs.Stores.Group.InsertBidOfUserForGroup(accessClaims.LoginID, group.ID, data.Bid); err != nil {
+			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+			return
+		}
+		render.Status(r, http.StatusCreated)
 
-    resp := &GroupBidResponse{Bid: data.Bid}
+		resp := &GroupBidResponse{Bid: data.Bid}
 
-    if err := render.Render(w, r, resp); err != nil {
-      render.Render(w, r, ErrRender(err))
-      return
-    }
-  }
+		if err := render.Render(w, r, resp); err != nil {
+			render.Render(w, r, ErrRender(err))
+			return
+		}
+	}
 
-  render.Status(r, http.StatusNoContent)
+	render.Status(r, http.StatusNoContent)
 }
 
 // SendEmailHandler is public endpoint for
@@ -465,35 +465,35 @@ func (rs *GroupResource) ChangeBidHandler(w http.ResponseWriter, r *http.Request
 // SUMMARY:  send email to entire group
 func (rs *GroupResource) SendEmailHandler(w http.ResponseWriter, r *http.Request) {
 
-  group := r.Context().Value(common.CtxKeyGroup).(*model.Group)
-  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
-  accessUser, _ := rs.Stores.User.Get(accessClaims.LoginID)
+	group := r.Context().Value(common.CtxKeyGroup).(*model.Group)
+	accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+	accessUser, _ := rs.Stores.User.Get(accessClaims.LoginID)
 
-  data := &EmailRequest{}
+	data := &EmailRequest{}
 
-  // parse JSON request into struct
-  if err := render.Bind(r, data); err != nil {
-    render.Render(w, r, ErrBadRequestWithDetails(err))
-    return
-  }
+	// parse JSON request into struct
+	if err := render.Bind(r, data); err != nil {
+		render.Render(w, r, ErrBadRequestWithDetails(err))
+		return
+	}
 
-  recipients, err := rs.Stores.Group.GetMembers(group.ID)
+	recipients, err := rs.Stores.Group.GetMembers(group.ID)
 
-  if err != nil {
-    render.Render(w, r, ErrBadRequestWithDetails(err))
-    return
-  }
+	if err != nil {
+		render.Render(w, r, ErrBadRequestWithDetails(err))
+		return
+	}
 
-  for _, recipient := range recipients {
-    msg := email.NewEmailFromUser(
-      recipient.Email,
-      data.Subject,
-      data.Body,
-      accessUser,
-    )
+	for _, recipient := range recipients {
+		msg := email.NewEmailFromUser(
+			recipient.Email,
+			data.Subject,
+			data.Body,
+			accessUser,
+		)
 
-    email.OutgoingEmailsChannel <- msg
-  }
+		email.OutgoingEmailsChannel <- msg
+	}
 
 }
 
@@ -504,44 +504,44 @@ func (rs *GroupResource) SendEmailHandler(w http.ResponseWriter, r *http.Request
 // the group could not be found, we stop here and return a 404.
 // We do NOT check whether the identity is authorized to get this group.
 func (rs *GroupResource) Context(next http.Handler) http.Handler {
-  return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-    courseFromURL := r.Context().Value(common.CtxKeyCourse).(*model.Course)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		courseFromURL := r.Context().Value(common.CtxKeyCourse).(*model.Course)
 
-    var groupID int64
-    var err error
+		var groupID int64
+		var err error
 
-    // try to get id from URL
-    if groupID, err = strconv.ParseInt(chi.URLParam(r, "group_id"), 10, 64); err != nil {
-      render.Render(w, r, ErrNotFound)
-      return
-    }
+		// try to get id from URL
+		if groupID, err = strconv.ParseInt(chi.URLParam(r, "group_id"), 10, 64); err != nil {
+			render.Render(w, r, ErrNotFound)
+			return
+		}
 
-    // find specific group in database
-    group, err := rs.Stores.Group.Get(groupID)
-    if err != nil {
-      render.Render(w, r, ErrNotFound)
-      return
-    }
+		// find specific group in database
+		group, err := rs.Stores.Group.Get(groupID)
+		if err != nil {
+			render.Render(w, r, ErrNotFound)
+			return
+		}
 
-    ctx := context.WithValue(r.Context(), common.CtxKeyGroup, group)
+		ctx := context.WithValue(r.Context(), common.CtxKeyGroup, group)
 
-    // when there is a groupID in the url, there is NOT a courseID in the url,
-    // BUT: when there is a group, there is a course
+		// when there is a groupID in the url, there is NOT a courseID in the url,
+		// BUT: when there is a group, there is a course
 
-    course, err := rs.Stores.Group.IdentifyCourseOfGroup(group.ID)
-    if err != nil {
-      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-      return
-    }
+		course, err := rs.Stores.Group.IdentifyCourseOfGroup(group.ID)
+		if err != nil {
+			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+			return
+		}
 
-    if courseFromURL.ID != course.ID {
-      render.Render(w, r, ErrNotFound)
-      return
-    }
+		if courseFromURL.ID != course.ID {
+			render.Render(w, r, ErrNotFound)
+			return
+		}
 
-    ctx = context.WithValue(ctx, common.CtxKeyCourse, course)
+		ctx = context.WithValue(ctx, common.CtxKeyCourse, course)
 
-    // serve next
-    next.ServeHTTP(w, r.WithContext(ctx))
-  })
+		// serve next
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }

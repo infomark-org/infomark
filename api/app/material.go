@@ -19,29 +19,29 @@
 package app
 
 import (
-  "context"
-  "fmt"
-  "net/http"
-  "strconv"
+	"context"
+	"fmt"
+	"net/http"
+	"strconv"
 
-  "github.com/cgtuebingen/infomark-backend/api/helper"
-  "github.com/cgtuebingen/infomark-backend/auth/authorize"
-  "github.com/cgtuebingen/infomark-backend/common"
-  "github.com/cgtuebingen/infomark-backend/model"
-  "github.com/go-chi/chi"
-  "github.com/go-chi/render"
+	"github.com/cgtuebingen/infomark-backend/api/helper"
+	"github.com/cgtuebingen/infomark-backend/auth/authorize"
+	"github.com/cgtuebingen/infomark-backend/common"
+	"github.com/cgtuebingen/infomark-backend/model"
+	"github.com/go-chi/chi"
+	"github.com/go-chi/render"
 )
 
 // MaterialResource specifies Material management handler.
 type MaterialResource struct {
-  Stores *Stores
+	Stores *Stores
 }
 
 // NewMaterialResource create and returns a MaterialResource.
 func NewMaterialResource(stores *Stores) *MaterialResource {
-  return &MaterialResource{
-    Stores: stores,
-  }
+	return &MaterialResource{
+		Stores: stores,
+	}
 }
 
 // IndexHandler is public endpoint for
@@ -59,23 +59,23 @@ func NewMaterialResource(stores *Stores) *MaterialResource {
 // Kind means 0: slide, 1: supplementary
 func (rs *MaterialResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 
-  var materials []model.Material
-  var err error
-  // we use middle to detect whether there is a course given
-  course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
-  givenRole := r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole)
-  materials, err = rs.Stores.Material.MaterialsOfCourse(course.ID, givenRole.ToInt())
+	var materials []model.Material
+	var err error
+	// we use middle to detect whether there is a course given
+	course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
+	givenRole := r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole)
+	materials, err = rs.Stores.Material.MaterialsOfCourse(course.ID, givenRole.ToInt())
 
-  if err != nil {
-    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-    return
-  }
+	if err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
 
-  // render JSON reponse
-  if err = render.RenderList(w, r, rs.newMaterialListResponse(givenRole, course.ID, materials)); err != nil {
-    render.Render(w, r, ErrRender(err))
-    return
-  }
+	// render JSON reponse
+	if err = render.RenderList(w, r, rs.newMaterialListResponse(givenRole, course.ID, materials)); err != nil {
+		render.Render(w, r, ErrRender(err))
+		return
+	}
 }
 
 // CreateHandler is public endpoint for
@@ -93,39 +93,39 @@ func (rs *MaterialResource) IndexHandler(w http.ResponseWriter, r *http.Request)
 // Kind means 0: slide, 1: supplementary
 func (rs *MaterialResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
 
-  course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
+	course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
 
-  // start from empty Request
-  data := &MaterialRequest{}
+	// start from empty Request
+	data := &MaterialRequest{}
 
-  // parse JSON request into struct
-  if err := render.Bind(r, data); err != nil {
-    render.Render(w, r, ErrBadRequestWithDetails(err))
-    return
-  }
+	// parse JSON request into struct
+	if err := render.Bind(r, data); err != nil {
+		render.Render(w, r, ErrBadRequestWithDetails(err))
+		return
+	}
 
-  material := &model.Material{
-    Name:         data.Name,
-    Kind:         data.Kind,
-    PublishAt:    data.PublishAt,
-    LectureAt:    data.LectureAt,
-    RequiredRole: data.RequiredRole,
-  }
+	material := &model.Material{
+		Name:         data.Name,
+		Kind:         data.Kind,
+		PublishAt:    data.PublishAt,
+		LectureAt:    data.LectureAt,
+		RequiredRole: data.RequiredRole,
+	}
 
-  // create Material entry in database
-  newMaterial, err := rs.Stores.Material.Create(material, course.ID)
-  if err != nil {
-    render.Render(w, r, ErrRender(err))
-    return
-  }
+	// create Material entry in database
+	newMaterial, err := rs.Stores.Material.Create(material, course.ID)
+	if err != nil {
+		render.Render(w, r, ErrRender(err))
+		return
+	}
 
-  render.Status(r, http.StatusCreated)
+	render.Status(r, http.StatusCreated)
 
-  // return Material information of created entry
-  if err := render.Render(w, r, rs.newMaterialResponse(newMaterial, course.ID)); err != nil {
-    render.Render(w, r, ErrRender(err))
-    return
-  }
+	// return Material information of created entry
+	if err := render.Render(w, r, rs.newMaterialResponse(newMaterial, course.ID)); err != nil {
+		render.Render(w, r, ErrRender(err))
+		return
+	}
 
 }
 
@@ -143,28 +143,28 @@ func (rs *MaterialResource) CreateHandler(w http.ResponseWriter, r *http.Request
 // DESCRIPTION:
 // Kind means 0: slide, 1: supplementary
 func (rs *MaterialResource) GetHandler(w http.ResponseWriter, r *http.Request) {
-  // `Material` is retrieved via middle-ware
-  material := r.Context().Value(common.CtxKeyMaterial).(*model.Material)
-  course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
+	// `Material` is retrieved via middle-ware
+	material := r.Context().Value(common.CtxKeyMaterial).(*model.Material)
+	course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
 
-  givenRole := r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole)
-  if givenRole == authorize.STUDENT && !PublicYet(material.PublishAt) {
-    render.Render(w, r, ErrUnauthorizedWithDetails(fmt.Errorf("Not public yet")))
-    return
-  }
+	givenRole := r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole)
+	if givenRole == authorize.STUDENT && !PublicYet(material.PublishAt) {
+		render.Render(w, r, ErrUnauthorizedWithDetails(fmt.Errorf("Not public yet")))
+		return
+	}
 
-  if material.RequiredRole > givenRole.ToInt() {
-    render.Render(w, r, ErrUnauthorizedWithDetails(fmt.Errorf("no access allowed with your role")))
-    return
-  }
+	if material.RequiredRole > givenRole.ToInt() {
+		render.Render(w, r, ErrUnauthorizedWithDetails(fmt.Errorf("no access allowed with your role")))
+		return
+	}
 
-  // render JSON reponse
-  if err := render.Render(w, r, rs.newMaterialResponse(material, course.ID)); err != nil {
-    render.Render(w, r, ErrRender(err))
-    return
-  }
+	// render JSON reponse
+	if err := render.Render(w, r, rs.newMaterialResponse(material, course.ID)); err != nil {
+		render.Render(w, r, ErrRender(err))
+		return
+	}
 
-  render.Status(r, http.StatusOK)
+	render.Status(r, http.StatusOK)
 }
 
 // EditHandler is public endpoint for
@@ -182,30 +182,30 @@ func (rs *MaterialResource) GetHandler(w http.ResponseWriter, r *http.Request) {
 // DESCRIPTION:
 // Kind means 0: slide, 1: supplementary
 func (rs *MaterialResource) EditHandler(w http.ResponseWriter, r *http.Request) {
-  // start from empty Request
-  data := &MaterialRequest{}
+	// start from empty Request
+	data := &MaterialRequest{}
 
-  // parse JSON request into struct
-  if err := render.Bind(r, data); err != nil {
-    render.Render(w, r, ErrBadRequestWithDetails(err))
-    return
-  }
+	// parse JSON request into struct
+	if err := render.Bind(r, data); err != nil {
+		render.Render(w, r, ErrBadRequestWithDetails(err))
+		return
+	}
 
-  material := r.Context().Value(common.CtxKeyMaterial).(*model.Material)
+	material := r.Context().Value(common.CtxKeyMaterial).(*model.Material)
 
-  material.Name = data.Name
-  material.Kind = data.Kind
-  material.PublishAt = data.PublishAt
-  material.LectureAt = data.LectureAt
-  material.RequiredRole = data.RequiredRole
+	material.Name = data.Name
+	material.Kind = data.Kind
+	material.PublishAt = data.PublishAt
+	material.LectureAt = data.LectureAt
+	material.RequiredRole = data.RequiredRole
 
-  // update database entry
-  if err := rs.Stores.Material.Update(material); err != nil {
-    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-    return
-  }
+	// update database entry
+	if err := rs.Stores.Material.Update(material); err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
 
-  render.Status(r, http.StatusNoContent)
+	render.Status(r, http.StatusNoContent)
 }
 
 // DeleteHandler is public endpoint for
@@ -220,15 +220,15 @@ func (rs *MaterialResource) EditHandler(w http.ResponseWriter, r *http.Request) 
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  delete a specific material
 func (rs *MaterialResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
-  material := r.Context().Value(common.CtxKeyMaterial).(*model.Material)
+	material := r.Context().Value(common.CtxKeyMaterial).(*model.Material)
 
-  // update database entry
-  if err := rs.Stores.Material.Delete(material.ID); err != nil {
-    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-    return
-  }
+	// update database entry
+	if err := rs.Stores.Material.Delete(material.ID); err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
 
-  render.Status(r, http.StatusNoContent)
+	render.Status(r, http.StatusNoContent)
 }
 
 // GetFileHandler is public endpoint for
@@ -244,23 +244,23 @@ func (rs *MaterialResource) DeleteHandler(w http.ResponseWriter, r *http.Request
 // SUMMARY:  get the zip file of a material
 func (rs *MaterialResource) GetFileHandler(w http.ResponseWriter, r *http.Request) {
 
-  material := r.Context().Value(common.CtxKeyMaterial).(*model.Material)
-  course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
-  hnd := helper.NewMaterialFileHandle(material.ID)
-  if !hnd.Exists() {
-    render.Render(w, r, ErrNotFound)
-    return
-  }
+	material := r.Context().Value(common.CtxKeyMaterial).(*model.Material)
+	course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
+	hnd := helper.NewMaterialFileHandle(material.ID)
+	if !hnd.Exists() {
+		render.Render(w, r, ErrNotFound)
+		return
+	}
 
-  givenRole := r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole)
-  if givenRole == authorize.STUDENT && !PublicYet(material.PublishAt) {
-    render.Render(w, r, ErrNotFound)
-    return
-  }
+	givenRole := r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole)
+	if givenRole == authorize.STUDENT && !PublicYet(material.PublishAt) {
+		render.Render(w, r, ErrNotFound)
+		return
+	}
 
-  if err := hnd.WriteToBodyWithName(fmt.Sprintf("%s-%s", course.Name, material.Filename), w); err != nil {
-    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-  }
+	if err := hnd.WriteToBodyWithName(fmt.Sprintf("%s-%s", course.Name, material.Filename), w); err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+	}
 }
 
 // ChangeFileHandler is public endpoint for
@@ -278,27 +278,27 @@ func (rs *MaterialResource) GetFileHandler(w http.ResponseWriter, r *http.Reques
 // DESCRIPTION:
 // This endpoint will only support pdf or zip files.
 func (rs *MaterialResource) ChangeFileHandler(w http.ResponseWriter, r *http.Request) {
-  // will always be a POST
-  material := r.Context().Value(common.CtxKeyMaterial).(*model.Material)
+	// will always be a POST
+	material := r.Context().Value(common.CtxKeyMaterial).(*model.Material)
 
-  var (
-    err      error
-    filename string
-  )
+	var (
+		err      error
+		filename string
+	)
 
-  // the file will be located
-  if filename, err = helper.NewMaterialFileHandle(material.ID).WriteToDisk(r, "file_data"); err != nil {
-    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-  }
+	// the file will be located
+	if filename, err = helper.NewMaterialFileHandle(material.ID).WriteToDisk(r, "file_data"); err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+	}
 
-  material.Filename = filename
+	material.Filename = filename
 
-  if err := rs.Stores.Material.Update(material); err != nil {
-    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-    return
-  }
+	if err := rs.Stores.Material.Update(material); err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
 
-  render.Status(r, http.StatusNoContent)
+	render.Status(r, http.StatusNoContent)
 }
 
 // .............................................................................
@@ -308,50 +308,50 @@ func (rs *MaterialResource) ChangeFileHandler(w http.ResponseWriter, r *http.Req
 // the Material could not be found, we stop here and return a 404.
 // We do NOT check whether the Material is authorized to get this Material.
 func (rs *MaterialResource) Context(next http.Handler) http.Handler {
-  return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-    courseFromURL := r.Context().Value(common.CtxKeyCourse).(*model.Course)
-    // Should be done via another middleware
-    var materialID int64
-    var err error
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		courseFromURL := r.Context().Value(common.CtxKeyCourse).(*model.Course)
+		// Should be done via another middleware
+		var materialID int64
+		var err error
 
-    // try to get id from URL
-    if materialID, err = strconv.ParseInt(chi.URLParam(r, "material_id"), 10, 64); err != nil {
-      render.Render(w, r, ErrNotFound)
-      return
-    }
+		// try to get id from URL
+		if materialID, err = strconv.ParseInt(chi.URLParam(r, "material_id"), 10, 64); err != nil {
+			render.Render(w, r, ErrNotFound)
+			return
+		}
 
-    // find specific Material in database
-    material, err := rs.Stores.Material.Get(materialID)
-    if err != nil {
-      render.Render(w, r, ErrNotFound)
-      return
-    }
+		// find specific Material in database
+		material, err := rs.Stores.Material.Get(materialID)
+		if err != nil {
+			render.Render(w, r, ErrNotFound)
+			return
+		}
 
-    // public yet?
-    if r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole) == authorize.STUDENT && !PublicYet(material.PublishAt) {
-      render.Render(w, r, ErrUnauthorizedWithDetails(fmt.Errorf("material not published yet")))
-      return
-    }
+		// public yet?
+		if r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole) == authorize.STUDENT && !PublicYet(material.PublishAt) {
+			render.Render(w, r, ErrUnauthorizedWithDetails(fmt.Errorf("material not published yet")))
+			return
+		}
 
-    ctx := context.WithValue(r.Context(), common.CtxKeyMaterial, material)
+		ctx := context.WithValue(r.Context(), common.CtxKeyMaterial, material)
 
-    // when there is a sheetID in the url, there is NOT a courseID in the url,
-    // BUT: when there is a material, there is a course
+		// when there is a sheetID in the url, there is NOT a courseID in the url,
+		// BUT: when there is a material, there is a course
 
-    course, err := rs.Stores.Material.IdentifyCourseOfMaterial(material.ID)
-    if err != nil {
-      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-      return
-    }
+		course, err := rs.Stores.Material.IdentifyCourseOfMaterial(material.ID)
+		if err != nil {
+			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+			return
+		}
 
-    if courseFromURL.ID != course.ID {
-      render.Render(w, r, ErrNotFound)
-      return
-    }
+		if courseFromURL.ID != course.ID {
+			render.Render(w, r, ErrNotFound)
+			return
+		}
 
-    ctx = context.WithValue(ctx, common.CtxKeyCourse, course)
+		ctx = context.WithValue(ctx, common.CtxKeyCourse, course)
 
-    // serve next
-    next.ServeHTTP(w, r.WithContext(ctx))
-  })
+		// serve next
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }

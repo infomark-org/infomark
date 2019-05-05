@@ -19,66 +19,66 @@
 package database
 
 import (
-  "github.com/cgtuebingen/infomark-backend/model"
-  "github.com/jmoiron/sqlx"
+	"github.com/cgtuebingen/infomark-backend/model"
+	"github.com/jmoiron/sqlx"
 )
 
 type SheetStore struct {
-  db *sqlx.DB
+	db *sqlx.DB
 }
 
 func NewSheetStore(db *sqlx.DB) *SheetStore {
-  return &SheetStore{
-    db: db,
-  }
+	return &SheetStore{
+		db: db,
+	}
 }
 
 func (s *SheetStore) Get(sheetID int64) (*model.Sheet, error) {
-  p := model.Sheet{ID: sheetID}
-  err := s.db.Get(&p, "SELECT * FROM sheets WHERE id = $1 LIMIT 1;", p.ID)
-  return &p, err
+	p := model.Sheet{ID: sheetID}
+	err := s.db.Get(&p, "SELECT * FROM sheets WHERE id = $1 LIMIT 1;", p.ID)
+	return &p, err
 }
 
 func (s *SheetStore) GetAll() ([]model.Sheet, error) {
-  p := []model.Sheet{}
-  err := s.db.Select(&p, "SELECT * FROM sheets;")
-  return p, err
+	p := []model.Sheet{}
+	err := s.db.Select(&p, "SELECT * FROM sheets;")
+	return p, err
 }
 
 func (s *SheetStore) Create(p *model.Sheet, courseID int64) (*model.Sheet, error) {
 
-  newID, err := Insert(s.db, "sheets", p)
-  if err != nil {
-    return nil, err
-  }
+	newID, err := Insert(s.db, "sheets", p)
+	if err != nil {
+		return nil, err
+	}
 
-  // now associate sheet with course
-  _, err = s.db.Exec(`
+	// now associate sheet with course
+	_, err = s.db.Exec(`
 INSERT INTO
   sheet_course
   (id,sheet_id,course_id)
 VALUES
   (DEFAULT, $1, $2);`,
-    newID, courseID)
-  if err != nil {
-    return nil, err
-  }
+		newID, courseID)
+	if err != nil {
+		return nil, err
+	}
 
-  return s.Get(newID)
+	return s.Get(newID)
 }
 
 func (s *SheetStore) Update(p *model.Sheet) error {
-  return Update(s.db, "sheets", p.ID, p)
+	return Update(s.db, "sheets", p.ID, p)
 }
 
 func (s *SheetStore) Delete(sheetID int64) error {
-  return Delete(s.db, "sheets", sheetID)
+	return Delete(s.db, "sheets", sheetID)
 }
 
 func (s *SheetStore) SheetsOfCourse(courseID int64) ([]model.Sheet, error) {
-  p := []model.Sheet{}
+	p := []model.Sheet{}
 
-  err := s.db.Select(&p, `
+	err := s.db.Select(&p, `
 SELECT
   s.id, s.created_at, s.updated_at, s.name, s.publish_at, s.due_at
 FROM
@@ -91,14 +91,14 @@ WHERE
   sc.course_id = $1
 ORDER BY
   s.publish_at ASC;`, courseID)
-  return p, err
+	return p, err
 }
 
 func (s *SheetStore) IdentifyCourseOfSheet(sheetID int64) (*model.Course, error) {
 
-  course := &model.Course{}
-  err := s.db.Get(course,
-    `
+	course := &model.Course{}
+	err := s.db.Get(course,
+		`
 SELECT
   c.*
 FROM
@@ -106,19 +106,19 @@ FROM
 INNER JOIN
   courses c ON sc.course_id = c.id
 WHERE sc.sheet_id = $1`,
-    sheetID)
-  if err != nil {
-    return nil, err
-  }
+		sheetID)
+	if err != nil {
+		return nil, err
+	}
 
-  return course, err
+	return course, err
 }
 
 // PointsForUser returns all gather points in a given sheet for a given user accumulated.
 func (s *SheetStore) PointsForUser(userID int64, sheetID int64) ([]model.TaskPoints, error) {
-  p := []model.TaskPoints{}
+	p := []model.TaskPoints{}
 
-  err := s.db.Select(&p, `
+	err := s.db.Select(&p, `
 SELECT
   t.id task_id,
   g.acquired_points,
@@ -134,7 +134,7 @@ AND
   ts.sheet_id = $2
 ORDER BY
   ts.sheet_id`, userID, sheetID,
-  )
-  return p, err
+	)
+	return p, err
 
 }

@@ -19,65 +19,65 @@
 package database
 
 import (
-  "github.com/cgtuebingen/infomark-backend/model"
-  "github.com/jmoiron/sqlx"
+	"github.com/cgtuebingen/infomark-backend/model"
+	"github.com/jmoiron/sqlx"
 )
 
 type MaterialStore struct {
-  db *sqlx.DB
+	db *sqlx.DB
 }
 
 func NewMaterialStore(db *sqlx.DB) *MaterialStore {
-  return &MaterialStore{
-    db: db,
-  }
+	return &MaterialStore{
+		db: db,
+	}
 }
 
 func (s *MaterialStore) GetAll() ([]model.Material, error) {
-  p := []model.Material{}
-  err := s.db.Select(&p, "SELECT * FROM materials;")
-  return p, err
+	p := []model.Material{}
+	err := s.db.Select(&p, "SELECT * FROM materials;")
+	return p, err
 }
 
 func (s *MaterialStore) Get(sheetID int64) (*model.Material, error) {
-  p := model.Material{ID: sheetID}
-  err := s.db.Get(&p, "SELECT * FROM materials WHERE id = $1 LIMIT 1;", p.ID)
-  return &p, err
+	p := model.Material{ID: sheetID}
+	err := s.db.Get(&p, "SELECT * FROM materials WHERE id = $1 LIMIT 1;", p.ID)
+	return &p, err
 }
 
 func (s *MaterialStore) Create(p *model.Material, courseID int64) (*model.Material, error) {
 
-  newID, err := Insert(s.db, "materials", p)
-  if err != nil {
-    return nil, err
-  }
+	newID, err := Insert(s.db, "materials", p)
+	if err != nil {
+		return nil, err
+	}
 
-  // now associate sheet with course
-  _, err = s.db.Exec(`
+	// now associate sheet with course
+	_, err = s.db.Exec(`
 INSERT INTO
   material_course (id,material_id,course_id)
 VALUES
   (DEFAULT, $1, $2);`,
-    newID, courseID)
-  if err != nil {
-    return nil, err
-  }
+		newID, courseID)
+	if err != nil {
+		return nil, err
+	}
 
-  return s.Get(newID)
+	return s.Get(newID)
 }
 
 func (s *MaterialStore) Update(p *model.Material) error {
-  return Update(s.db, "materials", p.ID, p)
+	return Update(s.db, "materials", p.ID, p)
 }
 
 func (s *MaterialStore) Delete(sheetID int64) error {
-  return Delete(s.db, "materials", sheetID)
+	return Delete(s.db, "materials", sheetID)
 }
 
 func (s *MaterialStore) MaterialsOfCourse(courseID int64, requiredRole int) ([]model.Material, error) {
-  p := []model.Material{}
+	p := []model.Material{}
 
-  err := s.db.Select(&p, `
+	err := s.db.Select(&p, `
 SELECT
   m.*
 FROM
@@ -89,14 +89,14 @@ AND
   m.required_role <= $2
 ORDER BY
   m.lecture_at ASC;`, courseID, requiredRole)
-  return p, err
+	return p, err
 }
 
 func (s *MaterialStore) IdentifyCourseOfMaterial(sheetID int64) (*model.Course, error) {
 
-  course := &model.Course{}
-  err := s.db.Get(course,
-    `
+	course := &model.Course{}
+	err := s.db.Get(course,
+		`
 SELECT
   c.*
 FROM
@@ -105,10 +105,10 @@ INNER JOIN material_course mc ON mc.course_id = c.id
 WHERE
   mc.material_id = $1
 LIMIT 1`,
-    sheetID)
-  if err != nil {
-    return nil, err
-  }
+		sheetID)
+	if err != nil {
+		return nil, err
+	}
 
-  return course, err
+	return course, err
 }

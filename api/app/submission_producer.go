@@ -19,13 +19,13 @@
 package app
 
 import (
-  "github.com/cgtuebingen/infomark-backend/service"
-  "github.com/spf13/viper"
+	"github.com/cgtuebingen/infomark-backend/service"
+	"github.com/spf13/viper"
 )
 
 // Producer is interface to pipe the workload over AMPQ to the backend workers
 type Producer interface {
-  Publish(body []byte) error
+	Publish(body []byte) error
 }
 
 // DefaultSubmissionProducer is the producer which broadcasts all submissions
@@ -40,25 +40,25 @@ type VoidProducer struct{}
 func (t *VoidProducer) Publish(body []byte) error { return nil }
 
 func init() {
-  var err error
+	var err error
 
-  cfg := &service.Config{
-    Connection:   viper.GetString("rabbitmq_connection"),
-    Exchange:     viper.GetString("rabbitmq_exchange"),
-    ExchangeType: viper.GetString("rabbitmq_exchangeType"),
-    Queue:        viper.GetString("rabbitmq_queue"),
-    Key:          viper.GetString("rabbitmq_key"),
-    Tag:          "SimpleSubmission",
-  }
+	cfg := &service.Config{
+		Connection:   viper.GetString("rabbitmq_connection"),
+		Exchange:     viper.GetString("rabbitmq_exchange"),
+		ExchangeType: viper.GetString("rabbitmq_exchangeType"),
+		Queue:        viper.GetString("rabbitmq_queue"),
+		Key:          viper.GetString("rabbitmq_key"),
+		Tag:          "SimpleSubmission",
+	}
 
-  if viper.GetBool("use_backend_worker") {
-    DefaultSubmissionProducer, err = service.NewProducer(cfg)
-    if err != nil {
-      panic(err)
-    }
-  } else {
-    DefaultSubmissionProducer = &VoidProducer{}
+	if viper.GetBool("use_backend_worker") {
+		DefaultSubmissionProducer, err = service.NewProducer(cfg)
+		if err != nil {
+			panic(err)
+		}
+	} else {
+		DefaultSubmissionProducer = &VoidProducer{}
 
-  }
+	}
 
 }

@@ -19,38 +19,38 @@
 package model
 
 import (
-  "time"
+	"time"
 
-  null "gopkg.in/guregu/null.v3"
+	null "gopkg.in/guregu/null.v3"
 )
 
 // Group is a database view for a group entity
 type Group struct {
-  ID        int64     `db:"id"`
-  CreatedAt time.Time `db:"created_at,omitempty"`
-  UpdatedAt time.Time `db:"updated_at,omitempty"`
+	ID        int64     `db:"id"`
+	CreatedAt time.Time `db:"created_at,omitempty"`
+	UpdatedAt time.Time `db:"updated_at,omitempty"`
 
-  TutorID     int64  `db:"tutor_id"`
-  CourseID    int64  `db:"course_id"`
-  Description string `db:"description"`
+	TutorID     int64  `db:"tutor_id"`
+	CourseID    int64  `db:"course_id"`
+	Description string `db:"description"`
 }
 
 // GroupEnrollment is a database view for an enrollment of a student into a group.
 // Note, Tutors (a person who manage a group) is not enrolled in the group.
 type GroupEnrollment struct {
-  ID int64 `db:"id"`
+	ID int64 `db:"id"`
 
-  UserID  int64 `db:"user_id"`
-  GroupID int64 `db:"group_id"`
+	UserID  int64 `db:"user_id"`
+	GroupID int64 `db:"group_id"`
 }
 
 // GroupWithTutor is a database view of a group including tutor information
 type GroupWithTutor struct {
-  Group
+	Group
 
-  TutorFirstName string      `db:"tutor_first_name"`
-  TutorLastName  string      `db:"tutor_last_name"`
-  TutorAvatarURL null.String `db:"tutor_avatar_url"`
-  TutorEmail     string      `db:"tutor_email"`
-  TutorLanguage  string      `db:"tutor_language"`
+	TutorFirstName string      `db:"tutor_first_name"`
+	TutorLastName  string      `db:"tutor_last_name"`
+	TutorAvatarURL null.String `db:"tutor_avatar_url"`
+	TutorEmail     string      `db:"tutor_email"`
+	TutorLanguage  string      `db:"tutor_language"`
 }

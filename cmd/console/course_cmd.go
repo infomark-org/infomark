@@ -19,60 +19,60 @@
 package console
 
 import (
-  "fmt"
-  "log"
+	"fmt"
+	"log"
 
-  "github.com/spf13/cobra"
+	"github.com/spf13/cobra"
 )
 
 func init() {
-  CourseCmd.AddCommand(UserEnrollInCourse)
+	CourseCmd.AddCommand(UserEnrollInCourse)
 }
 
 var CourseCmd = &cobra.Command{
-  Use:   "course",
-  Short: "Management of cours assignment",
+	Use:   "course",
+	Short: "Management of cours assignment",
 }
 
 var UserEnrollInCourse = &cobra.Command{
-  Use:   "enroll [courseID] [userID] [role]",
-  Short: "will enroll a user into course",
-  Args:  cobra.ExactArgs(3),
-  Run: func(cmd *cobra.Command, args []string) {
-    var err error
+	Use:   "enroll [courseID] [userID] [role]",
+	Short: "will enroll a user into course",
+	Args:  cobra.ExactArgs(3),
+	Run: func(cmd *cobra.Command, args []string) {
+		var err error
 
-    courseID := MustInt64Parameter(args[0], "courseID")
-    userID := MustInt64Parameter(args[1], "userID")
+		courseID := MustInt64Parameter(args[0], "courseID")
+		userID := MustInt64Parameter(args[1], "userID")
 
-    role := int64(0)
-    switch args[2] {
-    case "admin":
-      role = int64(2)
-    case "tutor":
-      role = int64(1)
-    case "student":
-      role = int64(0)
-    default:
-      log.Fatalf("role '%s' must be one of 'student', 'tutor', 'admin'\n", args[2])
-    }
+		role := int64(0)
+		switch args[2] {
+		case "admin":
+			role = int64(2)
+		case "tutor":
+			role = int64(1)
+		case "student":
+			role = int64(0)
+		default:
+			log.Fatalf("role '%s' must be one of 'student', 'tutor', 'admin'\n", args[2])
+		}
 
-    _, stores := MustConnectAndStores()
+		_, stores := MustConnectAndStores()
 
-    user, err := stores.User.Get(userID)
-    if err != nil {
-      log.Fatal("user with id %v not found\n", userID)
-    }
+		user, err := stores.User.Get(userID)
+		if err != nil {
+			log.Fatal("user with id %v not found\n", userID)
+		}
 
-    course, err := stores.Course.Get(courseID)
-    if err != nil {
-      log.Fatal("user with id %v not found\n", userID)
-    }
+		course, err := stores.Course.Get(courseID)
+		if err != nil {
+			log.Fatal("user with id %v not found\n", userID)
+		}
 
-    if err := stores.Course.Enroll(course.ID, user.ID, role); err != nil {
-      panic(err)
-    }
+		if err := stores.Course.Enroll(course.ID, user.ID, role); err != nil {
+			panic(err)
+		}
 
-    fmt.Printf("user %s %s is now enrolled in course %v with role %v\n",
-      user.FirstName, user.LastName, course.ID, role)
-  },
+		fmt.Printf("user %s %s is now enrolled in course %v with role %v\n",
+			user.FirstName, user.LastName, course.ID, role)
+	},
 }

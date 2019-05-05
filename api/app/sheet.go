@@ -19,30 +19,30 @@
 package app
 
 import (
-  "context"
-  "fmt"
-  "net/http"
-  "strconv"
+	"context"
+	"fmt"
+	"net/http"
+	"strconv"
 
-  "github.com/cgtuebingen/infomark-backend/api/helper"
-  "github.com/cgtuebingen/infomark-backend/auth/authenticate"
-  "github.com/cgtuebingen/infomark-backend/auth/authorize"
-  "github.com/cgtuebingen/infomark-backend/common"
-  "github.com/cgtuebingen/infomark-backend/model"
-  "github.com/go-chi/chi"
-  "github.com/go-chi/render"
+	"github.com/cgtuebingen/infomark-backend/api/helper"
+	"github.com/cgtuebingen/infomark-backend/auth/authenticate"
+	"github.com/cgtuebingen/infomark-backend/auth/authorize"
+	"github.com/cgtuebingen/infomark-backend/common"
+	"github.com/cgtuebingen/infomark-backend/model"
+	"github.com/go-chi/chi"
+	"github.com/go-chi/render"
 )
 
 // SheetResource specifies Sheet management handler.
 type SheetResource struct {
-  Stores *Stores
+	Stores *Stores
 }
 
 // NewSheetResource create and returns a SheetResource.
 func NewSheetResource(stores *Stores) *SheetResource {
-  return &SheetResource{
-    Stores: stores,
-  }
+	return &SheetResource{
+		Stores: stores,
+	}
 }
 
 // IndexHandler is public endpoint for
@@ -59,20 +59,20 @@ func NewSheetResource(stores *Stores) *SheetResource {
 // The sheets are ordered by their names
 func (rs *SheetResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 
-  var sheets []model.Sheet
-  var err error
-  // we use middle to detect whether there is a course given
+	var sheets []model.Sheet
+	var err error
+	// we use middle to detect whether there is a course given
 
-  course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
-  sheets, err = rs.Stores.Sheet.SheetsOfCourse(course.ID)
+	course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
+	sheets, err = rs.Stores.Sheet.SheetsOfCourse(course.ID)
 
-  givenRole := r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole)
+	givenRole := r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole)
 
-  // render JSON reponse
-  if err = render.RenderList(w, r, rs.newSheetListResponse(givenRole, sheets)); err != nil {
-    render.Render(w, r, ErrRender(err))
-    return
-  }
+	// render JSON reponse
+	if err = render.RenderList(w, r, rs.newSheetListResponse(givenRole, sheets)); err != nil {
+		render.Render(w, r, ErrRender(err))
+		return
+	}
 }
 
 // CreateHandler is public endpoint for
@@ -88,37 +88,37 @@ func (rs *SheetResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 // SUMMARY:  create a new sheet
 func (rs *SheetResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
 
-  course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
+	course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
 
-  // start from empty Request
-  data := &SheetRequest{}
+	// start from empty Request
+	data := &SheetRequest{}
 
-  // parse JSON request into struct
-  if err := render.Bind(r, data); err != nil {
-    render.Render(w, r, ErrBadRequestWithDetails(err))
-    return
-  }
+	// parse JSON request into struct
+	if err := render.Bind(r, data); err != nil {
+		render.Render(w, r, ErrBadRequestWithDetails(err))
+		return
+	}
 
-  sheet := &model.Sheet{
-    Name:      data.Name,
-    PublishAt: data.PublishAt,
-    DueAt:     data.DueAt,
-  }
+	sheet := &model.Sheet{
+		Name:      data.Name,
+		PublishAt: data.PublishAt,
+		DueAt:     data.DueAt,
+	}
 
-  // create Sheet entry in database
-  newSheet, err := rs.Stores.Sheet.Create(sheet, course.ID)
-  if err != nil {
-    render.Render(w, r, ErrRender(err))
-    return
-  }
+	// create Sheet entry in database
+	newSheet, err := rs.Stores.Sheet.Create(sheet, course.ID)
+	if err != nil {
+		render.Render(w, r, ErrRender(err))
+		return
+	}
 
-  render.Status(r, http.StatusCreated)
+	render.Status(r, http.StatusCreated)
 
-  // return Sheet information of created entry
-  if err := render.Render(w, r, rs.newSheetResponse(newSheet)); err != nil {
-    render.Render(w, r, ErrRender(err))
-    return
-  }
+	// return Sheet information of created entry
+	if err := render.Render(w, r, rs.newSheetResponse(newSheet)); err != nil {
+		render.Render(w, r, ErrRender(err))
+		return
+	}
 
 }
 
@@ -134,16 +134,16 @@ func (rs *SheetResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  get a specific sheet
 func (rs *SheetResource) GetHandler(w http.ResponseWriter, r *http.Request) {
-  // `Sheet` is retrieved via middle-ware
-  Sheet := r.Context().Value(common.CtxKeySheet).(*model.Sheet)
+	// `Sheet` is retrieved via middle-ware
+	Sheet := r.Context().Value(common.CtxKeySheet).(*model.Sheet)
 
-  // render JSON reponse
-  if err := render.Render(w, r, rs.newSheetResponse(Sheet)); err != nil {
-    render.Render(w, r, ErrRender(err))
-    return
-  }
+	// render JSON reponse
+	if err := render.Render(w, r, rs.newSheetResponse(Sheet)); err != nil {
+		render.Render(w, r, ErrRender(err))
+		return
+	}
 
-  render.Status(r, http.StatusOK)
+	render.Status(r, http.StatusOK)
 }
 
 // EditHandler is public endpoint for
@@ -159,28 +159,28 @@ func (rs *SheetResource) GetHandler(w http.ResponseWriter, r *http.Request) {
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  update a specific sheet
 func (rs *SheetResource) EditHandler(w http.ResponseWriter, r *http.Request) {
-  sheet := r.Context().Value(common.CtxKeySheet).(*model.Sheet)
+	sheet := r.Context().Value(common.CtxKeySheet).(*model.Sheet)
 
-  // start from empty Request
-  data := &SheetRequest{}
+	// start from empty Request
+	data := &SheetRequest{}
 
-  // parse JSON request into struct
-  if err := render.Bind(r, data); err != nil {
-    render.Render(w, r, ErrBadRequestWithDetails(err))
-    return
-  }
+	// parse JSON request into struct
+	if err := render.Bind(r, data); err != nil {
+		render.Render(w, r, ErrBadRequestWithDetails(err))
+		return
+	}
 
-  sheet.Name = data.Name
-  sheet.PublishAt = data.PublishAt
-  sheet.DueAt = data.DueAt
+	sheet.Name = data.Name
+	sheet.PublishAt = data.PublishAt
+	sheet.DueAt = data.DueAt
 
-  // update database entry
-  if err := rs.Stores.Sheet.Update(sheet); err != nil {
-    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-    return
-  }
+	// update database entry
+	if err := rs.Stores.Sheet.Update(sheet); err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
 
-  render.Status(r, http.StatusNoContent)
+	render.Status(r, http.StatusNoContent)
 }
 
 // DeleteHandler is public endpoint for
@@ -195,15 +195,15 @@ func (rs *SheetResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  delete a specific sheet
 func (rs *SheetResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
-  Sheet := r.Context().Value(common.CtxKeySheet).(*model.Sheet)
+	Sheet := r.Context().Value(common.CtxKeySheet).(*model.Sheet)
 
-  // update database entry
-  if err := rs.Stores.Sheet.Delete(Sheet.ID); err != nil {
-    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-    return
-  }
+	// update database entry
+	if err := rs.Stores.Sheet.Delete(Sheet.ID); err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
 
-  render.Status(r, http.StatusNoContent)
+	render.Status(r, http.StatusNoContent)
 }
 
 // GetFileHandler is public endpoint for
@@ -219,18 +219,18 @@ func (rs *SheetResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 // SUMMARY:  get the zip file of a sheet
 func (rs *SheetResource) GetFileHandler(w http.ResponseWriter, r *http.Request) {
 
-  sheet := r.Context().Value(common.CtxKeySheet).(*model.Sheet)
-  course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
-  hnd := helper.NewSheetFileHandle(sheet.ID)
+	sheet := r.Context().Value(common.CtxKeySheet).(*model.Sheet)
+	course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
+	hnd := helper.NewSheetFileHandle(sheet.ID)
 
-  if !hnd.Exists() {
-    render.Render(w, r, ErrNotFound)
-    return
-  }
+	if !hnd.Exists() {
+		render.Render(w, r, ErrNotFound)
+		return
+	}
 
-  if err := hnd.WriteToBodyWithName(fmt.Sprintf("%s-%s.zip", course.Name, sheet.Name), w); err != nil {
-    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-  }
+	if err := hnd.WriteToBodyWithName(fmt.Sprintf("%s-%s.zip", course.Name, sheet.Name), w); err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+	}
 
 }
 
@@ -247,14 +247,14 @@ func (rs *SheetResource) GetFileHandler(w http.ResponseWriter, r *http.Request) 
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  change the zip file of a sheet
 func (rs *SheetResource) ChangeFileHandler(w http.ResponseWriter, r *http.Request) {
-  // will always be a POST
-  sheet := r.Context().Value(common.CtxKeySheet).(*model.Sheet)
+	// will always be a POST
+	sheet := r.Context().Value(common.CtxKeySheet).(*model.Sheet)
 
-  // the file will be located
-  if _, err := helper.NewSheetFileHandle(sheet.ID).WriteToDisk(r, "file_data"); err != nil {
-    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-  }
-  render.Status(r, http.StatusOK)
+	// the file will be located
+	if _, err := helper.NewSheetFileHandle(sheet.ID).WriteToDisk(r, "file_data"); err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+	}
+	render.Status(r, http.StatusOK)
 }
 
 // PointsHandler is public endpoint for
@@ -269,22 +269,22 @@ func (rs *SheetResource) ChangeFileHandler(w http.ResponseWriter, r *http.Reques
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  return all points from a sheet for the request identity
 func (rs *SheetResource) PointsHandler(w http.ResponseWriter, r *http.Request) {
-  sheet := r.Context().Value(common.CtxKeySheet).(*model.Sheet)
-  accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+	sheet := r.Context().Value(common.CtxKeySheet).(*model.Sheet)
+	accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 
-  taskPoints, err := rs.Stores.Sheet.PointsForUser(accessClaims.LoginID, sheet.ID)
-  if err != nil {
-    render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-    return
-  }
+	taskPoints, err := rs.Stores.Sheet.PointsForUser(accessClaims.LoginID, sheet.ID)
+	if err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
 
-  // resp := &SheetPointsResponse{SheetPoints: taskPoints}
-  if err := render.RenderList(w, r, newTaskPointsListResponse(taskPoints)); err != nil {
-    render.Render(w, r, ErrRender(err))
-    return
-  }
+	// resp := &SheetPointsResponse{SheetPoints: taskPoints}
+	if err := render.RenderList(w, r, newTaskPointsListResponse(taskPoints)); err != nil {
+		render.Render(w, r, ErrRender(err))
+		return
+	}
 
-  render.Status(r, http.StatusOK)
+	render.Status(r, http.StatusOK)
 }
 
 // .............................................................................
@@ -294,50 +294,50 @@ func (rs *SheetResource) PointsHandler(w http.ResponseWriter, r *http.Request) {
 // the Sheet could not be found, we stop here and return a 404.
 // We do NOT check whether the Sheet is authorized to get this Sheet.
 func (rs *SheetResource) Context(next http.Handler) http.Handler {
-  return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-    courseFromURL := r.Context().Value(common.CtxKeyCourse).(*model.Course)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		courseFromURL := r.Context().Value(common.CtxKeyCourse).(*model.Course)
 
-    var sheetID int64
-    var err error
+		var sheetID int64
+		var err error
 
-    // try to get id from URL
-    if sheetID, err = strconv.ParseInt(chi.URLParam(r, "sheet_id"), 10, 64); err != nil {
-      render.Render(w, r, ErrNotFound)
-      return
-    }
+		// try to get id from URL
+		if sheetID, err = strconv.ParseInt(chi.URLParam(r, "sheet_id"), 10, 64); err != nil {
+			render.Render(w, r, ErrNotFound)
+			return
+		}
 
-    // find specific Sheet in database
-    sheet, err := rs.Stores.Sheet.Get(sheetID)
-    if err != nil {
-      render.Render(w, r, ErrNotFound)
-      return
-    }
+		// find specific Sheet in database
+		sheet, err := rs.Stores.Sheet.Get(sheetID)
+		if err != nil {
+			render.Render(w, r, ErrNotFound)
+			return
+		}
 
-    // public yet?
-    if r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole) == authorize.STUDENT && !PublicYet(sheet.PublishAt) {
-      render.Render(w, r, ErrBadRequestWithDetails(fmt.Errorf("sheet not published yet")))
-      return
-    }
+		// public yet?
+		if r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole) == authorize.STUDENT && !PublicYet(sheet.PublishAt) {
+			render.Render(w, r, ErrBadRequestWithDetails(fmt.Errorf("sheet not published yet")))
+			return
+		}
 
-    ctx := context.WithValue(r.Context(), common.CtxKeySheet, sheet)
+		ctx := context.WithValue(r.Context(), common.CtxKeySheet, sheet)
 
-    // when there is a sheetID in the url, there is NOT a courseID in the url,
-    // BUT: when there is a sheet, there is a course
+		// when there is a sheetID in the url, there is NOT a courseID in the url,
+		// BUT: when there is a sheet, there is a course
 
-    course, err := rs.Stores.Sheet.IdentifyCourseOfSheet(sheet.ID)
-    if err != nil {
-      render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-      return
-    }
+		course, err := rs.Stores.Sheet.IdentifyCourseOfSheet(sheet.ID)
+		if err != nil {
+			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+			return
+		}
 
-    if courseFromURL.ID != course.ID {
-      render.Render(w, r, ErrNotFound)
-      return
-    }
+		if courseFromURL.ID != course.ID {
+			render.Render(w, r, ErrNotFound)
+			return
+		}
 
-    ctx = context.WithValue(ctx, common.CtxKeyCourse, course)
+		ctx = context.WithValue(ctx, common.CtxKeyCourse, course)
 
-    // serve next
-    next.ServeHTTP(w, r.WithContext(ctx))
-  })
+		// serve next
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }

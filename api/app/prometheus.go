@@ -19,59 +19,59 @@
 package app
 
 import (
-  "github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 var (
-  totalFailedLoginsVec = prometheus.NewCounterVec(
-    prometheus.CounterOpts{
-      Namespace: "auth",
-      Subsystem: "logins",
-      Name:      "failed_logins",
-      Help:      "Total number of failed logins",
-    },
-    //
-    []string{},
-  )
+	totalFailedLoginsVec = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "auth",
+			Subsystem: "logins",
+			Name:      "failed_logins",
+			Help:      "Total number of failed logins",
+		},
+		//
+		[]string{},
+	)
 
-  totalSubmissionCounterVec = prometheus.NewCounterVec(
-    prometheus.CounterOpts{
-      Namespace: "worker",
-      Subsystem: "submissions",
-      Name:      "pushed_total",
-      Help:      "Total number of submissions pushed to the server",
-    },
-    //
-    []string{"task_id"},
-  )
+	totalSubmissionCounterVec = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "worker",
+			Subsystem: "submissions",
+			Name:      "pushed_total",
+			Help:      "Total number of submissions pushed to the server",
+		},
+		//
+		[]string{"task_id"},
+	)
 
-  totalDockerFailExitCounterVec = prometheus.NewCounterVec(
-    prometheus.CounterOpts{
-      Namespace: "worker",
-      Subsystem: "submissions",
-      Name:      "failed_total",
-      Help:      "Total number of submissions where docker has unsuccessful exit status",
-    },
-    //
-    []string{"task_id", "kind"},
-  )
+	totalDockerFailExitCounterVec = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "worker",
+			Subsystem: "submissions",
+			Name:      "failed_total",
+			Help:      "Total number of submissions where docker has unsuccessful exit status",
+		},
+		//
+		[]string{"task_id", "kind"},
+	)
 
-  totalDockerSuccessExitCounterVec = prometheus.NewCounterVec(
-    prometheus.CounterOpts{
-      Namespace: "worker",
-      Subsystem: "submissions",
-      Name:      "success_total",
-      Help:      "Total number of submissions where docker has successful exit status",
-    },
-    //
-    []string{"task_id", "kind"},
-  )
+	totalDockerSuccessExitCounterVec = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Namespace: "worker",
+			Subsystem: "submissions",
+			Name:      "success_total",
+			Help:      "Total number of submissions where docker has successful exit status",
+		},
+		//
+		[]string{"task_id", "kind"},
+	)
 )
 
 func init() {
-  // register with the prometheus collector
-  prometheus.MustRegister(totalSubmissionCounterVec)
-  prometheus.MustRegister(totalDockerFailExitCounterVec)
-  prometheus.MustRegister(totalDockerSuccessExitCounterVec)
-  prometheus.MustRegister(totalFailedLoginsVec)
+	// register with the prometheus collector
+	prometheus.MustRegister(totalSubmissionCounterVec)
+	prometheus.MustRegister(totalDockerFailExitCounterVec)
+	prometheus.MustRegister(totalDockerSuccessExitCounterVec)
+	prometheus.MustRegister(totalFailedLoginsVec)
 }

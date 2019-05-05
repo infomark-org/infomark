@@ -19,154 +19,154 @@
 package authenticate
 
 import (
-  "errors"
-  "net/http"
+	"errors"
+	"net/http"
 
-  jwt "github.com/dgrijalva/jwt-go"
-  "github.com/spf13/viper"
+	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/spf13/viper"
 )
 
 // AccessClaims represent the claims parsed from JWT access token.
 type AccessClaims struct {
-  jwt.StandardClaims
-  AccessNotRefresh bool  `json:"anr"`      // to distinguish between access and refresh code
-  LoginID          int64 `json:"login_id"` // the id to get user information
-  Root             bool  `json:"root"`     // a global flag to bypass all permission checks
+	jwt.StandardClaims
+	AccessNotRefresh bool  `json:"anr"`      // to distinguish between access and refresh code
+	LoginID          int64 `json:"login_id"` // the id to get user information
+	Root             bool  `json:"root"`     // a global flag to bypass all permission checks
 }
 
 func NewAccessClaims(loginId int64, root bool) AccessClaims {
-  return AccessClaims{
-    LoginID:          loginId,
-    AccessNotRefresh: true,
-    Root:             root,
-  }
+	return AccessClaims{
+		LoginID:          loginId,
+		AccessNotRefresh: true,
+		Root:             root,
+	}
 }
 
 // RefreshClaims represent the claims parsed from JWT refresh token.
 type RefreshClaims struct {
-  jwt.StandardClaims
-  AccessNotRefresh bool  `json:"anr"`
-  LoginID          int64 `json:"login_id"`
+	jwt.StandardClaims
+	AccessNotRefresh bool  `json:"anr"`
+	LoginID          int64 `json:"login_id"`
 }
 
 func NewRefreshClaims(loginId int64) RefreshClaims {
-  return RefreshClaims{
-    LoginID:          loginId,
-    AccessNotRefresh: false,
-  }
+	return RefreshClaims{
+		LoginID:          loginId,
+		AccessNotRefresh: false,
+	}
 }
 
 // Parse refresh claims from a token string
 func (ret *RefreshClaims) ParseRefreshClaimsFromToken(tokenStr string) error {
 
-  secret := viper.GetString("auth_jwt_secret")
+	secret := viper.GetString("auth_jwt_secret")
 
-  // verify the token
-  token, err := jwt.ParseWithClaims(tokenStr, &RefreshClaims{}, func(token *jwt.Token) (interface{}, error) {
-    return []byte(secret), nil
-  })
+	// verify the token
+	token, err := jwt.ParseWithClaims(tokenStr, &RefreshClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return []byte(secret), nil
+	})
 
-  if err != nil {
-    return err
-  }
+	if err != nil {
+		return err
+	}
 
-  if claims, ok := token.Claims.(*RefreshClaims); ok && token.Valid {
+	if claims, ok := token.Claims.(*RefreshClaims); ok && token.Valid {
 
-    if !claims.AccessNotRefresh {
-      ret.LoginID = claims.LoginID
-      ret.AccessNotRefresh = claims.AccessNotRefresh
-      return nil
-    } else {
-      return errors.New("token is an access token, but refresh token was required")
-    }
+		if !claims.AccessNotRefresh {
+			ret.LoginID = claims.LoginID
+			ret.AccessNotRefresh = claims.AccessNotRefresh
+			return nil
+		} else {
+			return errors.New("token is an access token, but refresh token was required")
+		}
 
-  } else {
-    return errors.New("token is invalid")
-  }
+	} else {
+		return errors.New("token is invalid")
+	}
 
 }
 
 // Parse access claims from a JWT token string
 func (ret *AccessClaims) ParseAccessClaimsFromToken(tokenStr string) error {
 
-  secret := viper.GetString("auth_jwt_secret")
+	secret := viper.GetString("auth_jwt_secret")
 
-  // verify the token
-  token, err := jwt.ParseWithClaims(tokenStr, &AccessClaims{}, func(token *jwt.Token) (interface{}, error) {
-    return []byte(secret), nil
-  })
+	// verify the token
+	token, err := jwt.ParseWithClaims(tokenStr, &AccessClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return []byte(secret), nil
+	})
 
-  if err != nil {
-    return err
-  }
+	if err != nil {
+		return err
+	}
 
-  if claims, ok := token.Claims.(*AccessClaims); ok && token.Valid {
+	if claims, ok := token.Claims.(*AccessClaims); ok && token.Valid {
 
-    if claims.AccessNotRefresh {
-      ret.LoginID = claims.LoginID
-      ret.AccessNotRefresh = claims.AccessNotRefresh
-      ret.Root = claims.Root
-      return nil
-    } else {
-      return errors.New("token is an refresh token, but access token was required")
-    }
+		if claims.AccessNotRefresh {
+			ret.LoginID = claims.LoginID
+			ret.AccessNotRefresh = claims.AccessNotRefresh
+			ret.Root = claims.Root
+			return nil
+		} else {
+			return errors.New("token is an refresh token, but access token was required")
+		}
 
-  } else {
-    return errors.New("token is invalid")
-  }
+	} else {
+		return errors.New("token is invalid")
+	}
 
 }
 
 // Parse access claims from a cookie
 func (ret *AccessClaims) ParseRefreshClaimsFromSession(r *http.Request) error {
 
-  session := SessionManager.Load(r)
+	session := SessionManager.Load(r)
 
-  loginId, err := session.GetInt64("login_id")
-  if err != nil {
-    return err
-  }
-  root, err := session.GetBool("root")
-  if err != nil {
-    return err
-  }
+	loginId, err := session.GetInt64("login_id")
+	if err != nil {
+		return err
+	}
+	root, err := session.GetBool("root")
+	if err != nil {
+		return err
+	}
 
-  ret.LoginID = loginId
-  // cookie based authentification is access-token only
-  ret.AccessNotRefresh = true
-  ret.Root = root
-  return nil
+	ret.LoginID = loginId
+	// cookie based authentification is access-token only
+	ret.AccessNotRefresh = true
+	ret.Root = root
+	return nil
 }
 
 func (ret *AccessClaims) WriteToSession(w http.ResponseWriter, r *http.Request) http.ResponseWriter {
-  session := SessionManager.Load(r)
+	session := SessionManager.Load(r)
 
-  err := session.PutInt64(w, "login_id", ret.LoginID)
-  if err != nil {
-    panic("hh")
-  }
-  // fmt.Println("Wrote ret.LoginID", ret.LoginID)
-  err = session.PutBool(w, "root", ret.Root)
-  if err != nil {
-    panic("hh")
-  }
-  // fmt.Println("Wrote ret.Root", ret.Root)
+	err := session.PutInt64(w, "login_id", ret.LoginID)
+	if err != nil {
+		panic("hh")
+	}
+	// fmt.Println("Wrote ret.LoginID", ret.LoginID)
+	err = session.PutBool(w, "root", ret.Root)
+	if err != nil {
+		panic("hh")
+	}
+	// fmt.Println("Wrote ret.Root", ret.Root)
 
-  return w
+	return w
 }
 
 func (ret *AccessClaims) UpdateSession(w http.ResponseWriter, r *http.Request) http.ResponseWriter {
-  session := SessionManager.Load(r)
+	session := SessionManager.Load(r)
 
-  err := session.Touch(w)
-  if err != nil {
-    panic("hh")
-  }
+	err := session.Touch(w)
+	if err != nil {
+		panic("hh")
+	}
 
-  return w
+	return w
 }
 
 func (ret *AccessClaims) DestroyInSession(w http.ResponseWriter, r *http.Request) error {
-  session := SessionManager.Load(r)
-  return session.Destroy(w)
+	session := SessionManager.Load(r)
+	return session.Destroy(w)
 }

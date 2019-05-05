@@ -19,83 +19,83 @@
 package cmd
 
 import (
-  "fmt"
-  "log"
-  "os"
-  "path"
-  "path/filepath"
-  "strings"
-  "time"
+	"fmt"
+	"log"
+	"os"
+	"path"
+	"path/filepath"
+	"strings"
+	"time"
 
-  "github.com/cgtuebingen/infomark-backend/cmd/console"
-  "github.com/spf13/cobra"
-  "github.com/spf13/cobra/doc"
+	"github.com/cgtuebingen/infomark-backend/cmd/console"
+	"github.com/spf13/cobra"
+	"github.com/spf13/cobra/doc"
 )
 
 // ConsoleCmd starts the infomark console
 var ConsoleCmd = &cobra.Command{
-  Use:   "console",
-  Short: "infomark console commands",
+	Use:   "console",
+	Short: "infomark console commands",
 }
 
 func init() {
-  ConsoleCmd.AddCommand(console.AdminCmd)
-  ConsoleCmd.AddCommand(console.UserCmd)
-  ConsoleCmd.AddCommand(console.CourseCmd)
-  ConsoleCmd.AddCommand(console.SubmissionCmd)
-  ConsoleCmd.AddCommand(console.GroupCmd)
-  ConsoleCmd.AddCommand(console.DatabaseCmd)
+	ConsoleCmd.AddCommand(console.AdminCmd)
+	ConsoleCmd.AddCommand(console.UserCmd)
+	ConsoleCmd.AddCommand(console.CourseCmd)
+	ConsoleCmd.AddCommand(console.SubmissionCmd)
+	ConsoleCmd.AddCommand(console.GroupCmd)
+	ConsoleCmd.AddCommand(console.DatabaseCmd)
 
-  UtilsCmd.AddCommand(UtilsCompletionCmd)
-  UtilsCmd.AddCommand(UtilsDocCmd)
-  ConsoleCmd.AddCommand(UtilsCmd)
+	UtilsCmd.AddCommand(UtilsCompletionCmd)
+	UtilsCmd.AddCommand(UtilsDocCmd)
+	ConsoleCmd.AddCommand(UtilsCmd)
 
-  RootCmd.AddCommand(ConsoleCmd)
+	RootCmd.AddCommand(ConsoleCmd)
 
-  // doc.GenMarkdownTree(RootCmd, "/tmp")
+	// doc.GenMarkdownTree(RootCmd, "/tmp")
 }
 
 var UtilsCmd = &cobra.Command{
-  Use:   "utils",
-  Short: "Some helper functions.",
+	Use:   "utils",
+	Short: "Some helper functions.",
 }
 
 var UtilsCompletionCmd = &cobra.Command{
-  Use:   "completion [shell]",
-  Short: "Output (bash/zsh) shell completion code",
-  Long: `Pipe the stdout to your completion collection, e.g.,
+	Use:   "completion [shell]",
+	Short: "Output (bash/zsh) shell completion code",
+	Long: `Pipe the stdout to your completion collection, e.g.,
 
 ./infomark console utils completion zsh > ~/.my-shell/completions/_infomark
 
 `,
-  // Hidden: true,
-  Run: func(cmd *cobra.Command, args []string) {
-    if len(args) != 1 {
-      log.Fatalln("Expected one argument with the desired shell")
-    }
+	// Hidden: true,
+	Run: func(cmd *cobra.Command, args []string) {
+		if len(args) != 1 {
+			log.Fatalln("Expected one argument with the desired shell")
+		}
 
-    switch args[0] {
-    case "bash":
-      RootCmd.GenBashCompletion(os.Stdout)
-    case "zsh":
-      RootCmd.GenZshCompletion(os.Stdout)
-    default:
-      log.Fatalln("Unknown shell %s, only bash and zsh are available\n", args[0])
-    }
-  },
+		switch args[0] {
+		case "bash":
+			RootCmd.GenBashCompletion(os.Stdout)
+		case "zsh":
+			RootCmd.GenZshCompletion(os.Stdout)
+		default:
+			log.Fatalln("Unknown shell %s, only bash and zsh are available\n", args[0])
+		}
+	},
 }
 
 var UtilsDocCmd = &cobra.Command{
-  Use:   "doc",
-  Short: "Generates docs for console",
-  // Hidden: true,
-  Run: func(cmd *cobra.Command, args []string) {
+	Use:   "doc",
+	Short: "Generates docs for console",
+	// Hidden: true,
+	Run: func(cmd *cobra.Command, args []string) {
 
-    if len(args) != 1 {
-      log.Fatalln("Expected one argument with the destination dir")
-    }
+		if len(args) != 1 {
+			log.Fatalln("Expected one argument with the destination dir")
+		}
 
-    const fmTemplate = `---
+		const fmTemplate = `---
 date: %s
 title: "%s"
 slug: %s
@@ -106,22 +106,22 @@ layout: subpagewithout
 
 `
 
-    filePrepender := func(filename string) string {
-      now := time.Now().Format(time.RFC3339)
-      name := filepath.Base(filename)
-      base := strings.TrimSuffix(name, path.Ext(name))
-      url := "/guides/console/commands/" + strings.ToLower(base) + "/"
-      return fmt.Sprintf(fmTemplate, now, "Console", base, url, now)
-    }
+		filePrepender := func(filename string) string {
+			now := time.Now().Format(time.RFC3339)
+			name := filepath.Base(filename)
+			base := strings.TrimSuffix(name, path.Ext(name))
+			url := "/guides/console/commands/" + strings.ToLower(base) + "/"
+			return fmt.Sprintf(fmTemplate, now, "Console", base, url, now)
+		}
 
-    linkHandler := func(name string) string {
-      base := strings.TrimSuffix(name, path.Ext(name))
-      return "/guides/console/commands/" + strings.ToLower(base) + "/"
-    }
+		linkHandler := func(name string) string {
+			base := strings.TrimSuffix(name, path.Ext(name))
+			return "/guides/console/commands/" + strings.ToLower(base) + "/"
+		}
 
-    err := doc.GenMarkdownTreeCustom(RootCmd, args[0], filePrepender, linkHandler)
-    if err != nil {
-      log.Fatal(err)
-    }
-  },
+		err := doc.GenMarkdownTreeCustom(RootCmd, args[0], filePrepender, linkHandler)
+		if err != nil {
+			log.Fatal(err)
+		}
+	},
 }

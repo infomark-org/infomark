@@ -19,98 +19,98 @@
 package app
 
 import (
-  "net/http"
+	"net/http"
 
-  "github.com/go-chi/render"
-  validation "github.com/go-ozzo/ozzo-validation"
+	"github.com/go-chi/render"
+	validation "github.com/go-ozzo/ozzo-validation"
 )
 
 // ErrResponse renderer type for handling all sorts of errors.
 type ErrResponse struct {
-  Err            error `json:"-"` // low-level runtime error
-  HTTPStatusCode int   `json:"-"` // http response status code
+	Err            error `json:"-"` // low-level runtime error
+	HTTPStatusCode int   `json:"-"` // http response status code
 
-  StatusText       string            `json:"status"`           // user-level status message
-  AppCode          int64             `json:"code,omitempty"`   // application-specific error code
-  ErrorText        string            `json:"error,omitempty"`  // application-level error message, for debugging
-  ValidationErrors validation.Errors `json:"errors,omitempty"` // user level model validation errors
+	StatusText       string            `json:"status"`           // user-level status message
+	AppCode          int64             `json:"code,omitempty"`   // application-specific error code
+	ErrorText        string            `json:"error,omitempty"`  // application-level error message, for debugging
+	ValidationErrors validation.Errors `json:"errors,omitempty"` // user level model validation errors
 }
 
 // Render sets the application-specific error code in AppCode.
 func (e *ErrResponse) Render(w http.ResponseWriter, r *http.Request) error {
-  render.Status(r, e.HTTPStatusCode)
-  return nil
+	render.Status(r, e.HTTPStatusCode)
+	return nil
 }
 
 // ErrRender returns status 422 Unprocessable Entity rendering response error.
 func ErrRender(err error) render.Renderer {
-  return &ErrResponse{
-    Err:            err,
-    HTTPStatusCode: http.StatusUnprocessableEntity,
-    StatusText:     http.StatusText(http.StatusUnprocessableEntity),
-    ErrorText:      err.Error(),
-  }
+	return &ErrResponse{
+		Err:            err,
+		HTTPStatusCode: http.StatusUnprocessableEntity,
+		StatusText:     http.StatusText(http.StatusUnprocessableEntity),
+		ErrorText:      err.Error(),
+	}
 }
 
 // ErrBadRequestWithDetails returns status 400 with a text
 func ErrBadRequestWithDetails(err error) *ErrResponse {
-  return &ErrResponse{
-    Err:            err,
-    HTTPStatusCode: http.StatusBadRequest,
-    StatusText:     http.StatusText(http.StatusBadRequest),
-    ErrorText:      err.Error(),
-  }
+	return &ErrResponse{
+		Err:            err,
+		HTTPStatusCode: http.StatusBadRequest,
+		StatusText:     http.StatusText(http.StatusBadRequest),
+		ErrorText:      err.Error(),
+	}
 }
 
 // ErrInternalServerErrorWithDetails returns status 500 with a text
 func ErrInternalServerErrorWithDetails(err error) *ErrResponse {
-  return &ErrResponse{
-    Err:            err,
-    HTTPStatusCode: http.StatusInternalServerError,
-    StatusText:     http.StatusText(http.StatusInternalServerError),
-    ErrorText:      err.Error(),
-  }
+	return &ErrResponse{
+		Err:            err,
+		HTTPStatusCode: http.StatusInternalServerError,
+		StatusText:     http.StatusText(http.StatusInternalServerError),
+		ErrorText:      err.Error(),
+	}
 }
 
 // ErrTimeoutWithDetails returns status 504 with a text
 func ErrTimeoutWithDetails(err error) *ErrResponse {
-  return &ErrResponse{
-    Err:            err,
-    HTTPStatusCode: http.StatusGatewayTimeout,
-    StatusText:     http.StatusText(http.StatusGatewayTimeout),
-    ErrorText:      err.Error(),
-  }
+	return &ErrResponse{
+		Err:            err,
+		HTTPStatusCode: http.StatusGatewayTimeout,
+		StatusText:     http.StatusText(http.StatusGatewayTimeout),
+		ErrorText:      err.Error(),
+	}
 }
 
 // ErrUnauthorizedWithDetails returns status 403 with a text
 // e.g. "User doesn't have enough privilege"
 func ErrUnauthorizedWithDetails(err error) *ErrResponse {
-  return &ErrResponse{
-    Err:            err,
-    HTTPStatusCode: http.StatusForbidden,
-    StatusText:     http.StatusText(http.StatusForbidden),
-    ErrorText:      err.Error(),
-  }
+	return &ErrResponse{
+		Err:            err,
+		HTTPStatusCode: http.StatusForbidden,
+		StatusText:     http.StatusText(http.StatusForbidden),
+		ErrorText:      err.Error(),
+	}
 }
 
 // see https://stackoverflow.com/a/50143519/7443104
 var (
-  // ErrBadRequest returns status 400 Bad Request for malformed request body.
-  ErrBadRequest = &ErrResponse{HTTPStatusCode: http.StatusBadRequest, StatusText: http.StatusText(http.StatusBadRequest)}
+	// ErrBadRequest returns status 400 Bad Request for malformed request body.
+	ErrBadRequest = &ErrResponse{HTTPStatusCode: http.StatusBadRequest, StatusText: http.StatusText(http.StatusBadRequest)}
 
-  // ErrUnauthorized returns 401 Unauthorized.
-  // e.g. "User has not logged-in"
-  ErrUnauthenticated = &ErrResponse{HTTPStatusCode: http.StatusUnauthorized, StatusText: http.StatusText(http.StatusUnauthorized)}
+	// ErrUnauthorized returns 401 Unauthorized.
+	// e.g. "User has not logged-in"
+	ErrUnauthenticated = &ErrResponse{HTTPStatusCode: http.StatusUnauthorized, StatusText: http.StatusText(http.StatusUnauthorized)}
 
-  // ErrForbidden returns status 403 Forbidden for unauthorized request.
-  // e.g. "User doesn't have enough privilege"
-  ErrUnauthorized = &ErrResponse{HTTPStatusCode: http.StatusForbidden, StatusText: http.StatusText(http.StatusForbidden)}
+	// ErrForbidden returns status 403 Forbidden for unauthorized request.
+	// e.g. "User doesn't have enough privilege"
+	ErrUnauthorized = &ErrResponse{HTTPStatusCode: http.StatusForbidden, StatusText: http.StatusText(http.StatusForbidden)}
 
-  // ErrNotFound returns status 404 Not Found for invalid resource request.
-  ErrNotFound = &ErrResponse{HTTPStatusCode: http.StatusNotFound, StatusText: http.StatusText(http.StatusNotFound)}
+	// ErrNotFound returns status 404 Not Found for invalid resource request.
+	ErrNotFound = &ErrResponse{HTTPStatusCode: http.StatusNotFound, StatusText: http.StatusText(http.StatusNotFound)}
 
-  // ErrInternalServerError returns status 500 Internal Server Error.
-  ErrInternalServerError = &ErrResponse{HTTPStatusCode: http.StatusInternalServerError, StatusText: http.StatusText(http.StatusInternalServerError)}
+	// ErrInternalServerError returns status 500 Internal Server Error.
+	ErrInternalServerError = &ErrResponse{HTTPStatusCode: http.StatusInternalServerError, StatusText: http.StatusText(http.StatusInternalServerError)}
 )
 
 // StatusContinue                      = 100 // RFC 7231, 6.2.1

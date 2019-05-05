@@ -19,217 +19,217 @@
 package app
 
 import (
-  "encoding/json"
-  "net/http"
-  "testing"
+	"encoding/json"
+	"net/http"
+	"testing"
 
-  "github.com/cgtuebingen/infomark-backend/api/helper"
-  "github.com/cgtuebingen/infomark-backend/email"
-  "github.com/cgtuebingen/infomark-backend/model"
-  "github.com/franela/goblin"
+	"github.com/cgtuebingen/infomark-backend/api/helper"
+	"github.com/cgtuebingen/infomark-backend/email"
+	"github.com/cgtuebingen/infomark-backend/model"
+	"github.com/franela/goblin"
 )
 
 func TestUser(t *testing.T) {
-  g := goblin.Goblin(t)
-  email.DefaultMail = email.VoidMail
+	g := goblin.Goblin(t)
+	email.DefaultMail = email.VoidMail
 
-  tape := &Tape{}
+	tape := &Tape{}
 
-  var stores *Stores
+	var stores *Stores
 
-  g.Describe("User", func() {
+	g.Describe("User", func() {
 
-    g.BeforeEach(func() {
-      tape.BeforeEach()
-      stores = NewStores(tape.DB)
-      _ = stores
-    })
+		g.BeforeEach(func() {
+			tape.BeforeEach()
+			stores = NewStores(tape.DB)
+			_ = stores
+		})
 
-    g.It("Query should require access claims", func() {
-      w := tape.Get("/api/v1/users")
-      g.Assert(w.Code).Equal(http.StatusUnauthorized)
+		g.It("Query should require access claims", func() {
+			w := tape.Get("/api/v1/users")
+			g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
-      w = tape.GetWithClaims("/api/v1/users", 1, true)
-      g.Assert(w.Code).Equal(http.StatusOK)
-    })
+			w = tape.GetWithClaims("/api/v1/users", 1, true)
+			g.Assert(w.Code).Equal(http.StatusOK)
+		})
 
-    g.It("Query should list all users", func() {
-      usersExpected, err := stores.User.GetAll()
-      g.Assert(err).Equal(nil)
+		g.It("Query should list all users", func() {
+			usersExpected, err := stores.User.GetAll()
+			g.Assert(err).Equal(nil)
 
-      w := tape.GetWithClaims("/api/v1/users", 1, true)
-      g.Assert(w.Code).Equal(http.StatusOK)
+			w := tape.GetWithClaims("/api/v1/users", 1, true)
+			g.Assert(w.Code).Equal(http.StatusOK)
 
-      usersActual := []model.User{}
-      err = json.NewDecoder(w.Body).Decode(&usersActual)
-      g.Assert(err).Equal(nil)
-      g.Assert(len(usersActual)).Equal(len(usersExpected))
-    })
+			usersActual := []model.User{}
+			err = json.NewDecoder(w.Body).Decode(&usersActual)
+			g.Assert(err).Equal(nil)
+			g.Assert(len(usersActual)).Equal(len(usersExpected))
+		})
 
-    g.It("Should get a specific user", func() {
+		g.It("Should get a specific user", func() {
 
-      userExpected, err := stores.User.Get(1)
-      g.Assert(err).Equal(nil)
+			userExpected, err := stores.User.Get(1)
+			g.Assert(err).Equal(nil)
 
-      w := tape.GetWithClaims("/api/v1/users/1", 1, true)
-      g.Assert(w.Code).Equal(http.StatusOK)
+			w := tape.GetWithClaims("/api/v1/users/1", 1, true)
+			g.Assert(w.Code).Equal(http.StatusOK)
 
-      userActual := &userResponse{}
-      err = json.NewDecoder(w.Body).Decode(userActual)
-      g.Assert(err).Equal(nil)
+			userActual := &userResponse{}
+			err = json.NewDecoder(w.Body).Decode(userActual)
+			g.Assert(err).Equal(nil)
 
-      g.Assert(userActual.ID).Equal(userExpected.ID)
+			g.Assert(userActual.ID).Equal(userExpected.ID)
 
-      g.Assert(userActual.FirstName).Equal(userExpected.FirstName)
-      g.Assert(userActual.LastName).Equal(userExpected.LastName)
-      g.Assert(userActual.Email).Equal(userExpected.Email)
-      g.Assert(userActual.StudentNumber).Equal(userExpected.StudentNumber)
-      g.Assert(userActual.Semester).Equal(userExpected.Semester)
-      g.Assert(userActual.Subject).Equal(userExpected.Subject)
-      g.Assert(userActual.Language).Equal(userExpected.Language)
+			g.Assert(userActual.FirstName).Equal(userExpected.FirstName)
+			g.Assert(userActual.LastName).Equal(userExpected.LastName)
+			g.Assert(userActual.Email).Equal(userExpected.Email)
+			g.Assert(userActual.StudentNumber).Equal(userExpected.StudentNumber)
+			g.Assert(userActual.Semester).Equal(userExpected.Semester)
+			g.Assert(userActual.Subject).Equal(userExpected.Subject)
+			g.Assert(userActual.Language).Equal(userExpected.Language)
 
-    })
+		})
 
-    g.Xit("Should send email", func() {})
+		g.Xit("Should send email", func() {})
 
-    g.It("Changes should require access claims", func() {
-      w := tape.Put("/api/v1/users/1", H{})
-      g.Assert(w.Code).Equal(http.StatusUnauthorized)
-    })
+		g.It("Changes should require access claims", func() {
+			w := tape.Put("/api/v1/users/1", H{})
+			g.Assert(w.Code).Equal(http.StatusUnauthorized)
+		})
 
-    g.It("Should perform updates (incl email)", func() {
-      // this is NOT the /me enpoint, we can update the user here
+		g.It("Should perform updates (incl email)", func() {
+			// this is NOT the /me enpoint, we can update the user here
 
-      userDb, err := stores.User.Get(1)
-      g.Assert(err).Equal(nil)
+			userDb, err := stores.User.Get(1)
+			g.Assert(err).Equal(nil)
 
-      userSent := &userRequest{
-        FirstName: "Info2_update",
-        LastName:  "Lorem Ipsum_update",
-        Email:     "new@mail.com",
-        Semester:  1,
+			userSent := &userRequest{
+				FirstName: "Info2_update",
+				LastName:  "Lorem Ipsum_update",
+				Email:     "new@mail.com",
+				Semester:  1,
 
-        StudentNumber: userDb.StudentNumber,
-        Subject:       userDb.Subject,
-        Language:      userDb.Language,
-      }
+				StudentNumber: userDb.StudentNumber,
+				Subject:       userDb.Subject,
+				Language:      userDb.Language,
+			}
 
-      err = userSent.Validate()
-      g.Assert(err).Equal(nil)
+			err = userSent.Validate()
+			g.Assert(err).Equal(nil)
 
-      w := tape.PutWithClaims("/api/v1/users/1", helper.ToH(userSent), 1, true)
-      g.Assert(w.Code).Equal(http.StatusOK)
+			w := tape.PutWithClaims("/api/v1/users/1", helper.ToH(userSent), 1, true)
+			g.Assert(w.Code).Equal(http.StatusOK)
 
-      userAfter, err := stores.User.Get(1)
-      g.Assert(err).Equal(nil)
+			userAfter, err := stores.User.Get(1)
+			g.Assert(err).Equal(nil)
 
-      g.Assert(userAfter.FirstName).Equal(userSent.FirstName)
-      g.Assert(userAfter.LastName).Equal(userSent.LastName)
-      g.Assert(userAfter.Email).Equal(userSent.Email)
+			g.Assert(userAfter.FirstName).Equal(userSent.FirstName)
+			g.Assert(userAfter.LastName).Equal(userSent.LastName)
+			g.Assert(userAfter.Email).Equal(userSent.Email)
 
-    })
+		})
 
-    g.It("Should delete whith claims", func() {
-      usersBefore, err := stores.User.GetAll()
-      g.Assert(err).Equal(nil)
+		g.It("Should delete whith claims", func() {
+			usersBefore, err := stores.User.GetAll()
+			g.Assert(err).Equal(nil)
 
-      w := tape.Delete("/api/v1/users/1")
-      g.Assert(w.Code).Equal(http.StatusUnauthorized)
+			w := tape.Delete("/api/v1/users/1")
+			g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
-      w = tape.DeleteWithClaims("/api/v1/users/1", 1, true)
-      g.Assert(w.Code).Equal(http.StatusOK)
+			w = tape.DeleteWithClaims("/api/v1/users/1", 1, true)
+			g.Assert(w.Code).Equal(http.StatusOK)
 
-      usersAfter, err := stores.User.GetAll()
-      g.Assert(err).Equal(nil)
-      g.Assert(len(usersAfter)).Equal(len(usersBefore) - 1)
-    })
+			usersAfter, err := stores.User.GetAll()
+			g.Assert(err).Equal(nil)
+			g.Assert(len(usersAfter)).Equal(len(usersBefore) - 1)
+		})
 
-    g.It("Self-query require claims", func() {
-      w := tape.Get("/api/v1/me")
-      g.Assert(w.Code).Equal(http.StatusUnauthorized)
+		g.It("Self-query require claims", func() {
+			w := tape.Get("/api/v1/me")
+			g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
-      w = tape.GetWithClaims("/api/v1/me", 1, true)
-      g.Assert(w.Code).Equal(http.StatusOK)
-    })
+			w = tape.GetWithClaims("/api/v1/me", 1, true)
+			g.Assert(w.Code).Equal(http.StatusOK)
+		})
 
-    g.It("Should list myself", func() {
-      userExpected, err := stores.User.Get(1)
-      g.Assert(err).Equal(nil)
+		g.It("Should list myself", func() {
+			userExpected, err := stores.User.Get(1)
+			g.Assert(err).Equal(nil)
 
-      w := tape.GetWithClaims("/api/v1/me", 1, true)
-      g.Assert(w.Code).Equal(http.StatusOK)
+			w := tape.GetWithClaims("/api/v1/me", 1, true)
+			g.Assert(w.Code).Equal(http.StatusOK)
 
-      userActual := &userResponse{}
-      err = json.NewDecoder(w.Body).Decode(&userActual)
-      g.Assert(err).Equal(nil)
+			userActual := &userResponse{}
+			err = json.NewDecoder(w.Body).Decode(&userActual)
+			g.Assert(err).Equal(nil)
 
-      g.Assert(userActual.FirstName).Equal(userExpected.FirstName)
-      g.Assert(userActual.LastName).Equal(userExpected.LastName)
-      g.Assert(userActual.Email).Equal(userExpected.Email)
-      g.Assert(userActual.StudentNumber).Equal(userExpected.StudentNumber)
-      g.Assert(userActual.Semester).Equal(userExpected.Semester)
-      g.Assert(userActual.Subject).Equal(userExpected.Subject)
-      g.Assert(userActual.Language).Equal(userExpected.Language)
-    })
+			g.Assert(userActual.FirstName).Equal(userExpected.FirstName)
+			g.Assert(userActual.LastName).Equal(userExpected.LastName)
+			g.Assert(userActual.Email).Equal(userExpected.Email)
+			g.Assert(userActual.StudentNumber).Equal(userExpected.StudentNumber)
+			g.Assert(userActual.Semester).Equal(userExpected.Semester)
+			g.Assert(userActual.Subject).Equal(userExpected.Subject)
+			g.Assert(userActual.Language).Equal(userExpected.Language)
+		})
 
-    g.Xit("Should not perform self-updates when some data is missing", func() {
-      // This endpoint acts like a PATCH, since we need to start anyway from the
-      // database entry to avoid overriding "email".
-      // Theoretically (by definition of PUT) this endpoint must fail.
-      // But in practise, it is ever to act like PATCH here and pass also this request.
-      dataSent := H{
-        "first_name": "blub",
-      }
+		g.Xit("Should not perform self-updates when some data is missing", func() {
+			// This endpoint acts like a PATCH, since we need to start anyway from the
+			// database entry to avoid overriding "email".
+			// Theoretically (by definition of PUT) this endpoint must fail.
+			// But in practise, it is ever to act like PATCH here and pass also this request.
+			dataSent := H{
+				"first_name": "blub",
+			}
 
-      w := tape.PutWithClaims("/api/v1/me", dataSent, 1, true)
-      g.Assert(w.Code).Equal(http.StatusBadRequest)
-    })
+			w := tape.PutWithClaims("/api/v1/me", dataSent, 1, true)
+			g.Assert(w.Code).Equal(http.StatusBadRequest)
+		})
 
-    g.It("Should perform self-updates (excl email)", func() {
-      userBefore, err := stores.User.Get(1)
-      g.Assert(err).Equal(nil)
+		g.It("Should perform self-updates (excl email)", func() {
+			userBefore, err := stores.User.Get(1)
+			g.Assert(err).Equal(nil)
 
-      userDb, err := stores.User.Get(1)
-      g.Assert(err).Equal(nil)
+			userDb, err := stores.User.Get(1)
+			g.Assert(err).Equal(nil)
 
-      // this is NOT the /me enpoint, we can update the user here
+			// this is NOT the /me enpoint, we can update the user here
 
-      userSent := &userRequest{
-        FirstName: "Info2_update",
-        LastName:  "Lorem Ipsum_update",
-        Email:     "new@mail.com",
-        Semester:  1,
+			userSent := &userRequest{
+				FirstName: "Info2_update",
+				LastName:  "Lorem Ipsum_update",
+				Email:     "new@mail.com",
+				Semester:  1,
 
-        StudentNumber: userDb.StudentNumber,
-        Subject:       userDb.Subject,
-        Language:      userDb.Language,
-      }
+				StudentNumber: userDb.StudentNumber,
+				Subject:       userDb.Subject,
+				Language:      userDb.Language,
+			}
 
-      err = userSent.Validate()
-      g.Assert(err).Equal(nil)
+			err = userSent.Validate()
+			g.Assert(err).Equal(nil)
 
-      err = userSent.Validate()
-      g.Assert(err).Equal(nil)
+			err = userSent.Validate()
+			g.Assert(err).Equal(nil)
 
-      w := tape.PutWithClaims("/api/v1/me", helper.ToH(userSent), 1, true)
-      g.Assert(w.Code).Equal(http.StatusOK)
+			w := tape.PutWithClaims("/api/v1/me", helper.ToH(userSent), 1, true)
+			g.Assert(w.Code).Equal(http.StatusOK)
 
-      userAfter, err := stores.User.Get(1)
-      g.Assert(err).Equal(nil)
+			userAfter, err := stores.User.Get(1)
+			g.Assert(err).Equal(nil)
 
-      g.Assert(userAfter.FirstName).Equal(userSent.FirstName)
-      g.Assert(userAfter.LastName).Equal(userSent.LastName)
-      g.Assert(userAfter.Email).Equal(userBefore.Email) // should be really before
-      g.Assert(userAfter.StudentNumber).Equal(userSent.StudentNumber)
-      g.Assert(userAfter.Semester).Equal(userSent.Semester)
-      g.Assert(userAfter.Subject).Equal(userSent.Subject)
-      g.Assert(userAfter.Language).Equal(userSent.Language)
+			g.Assert(userAfter.FirstName).Equal(userSent.FirstName)
+			g.Assert(userAfter.LastName).Equal(userSent.LastName)
+			g.Assert(userAfter.Email).Equal(userBefore.Email) // should be really before
+			g.Assert(userAfter.StudentNumber).Equal(userSent.StudentNumber)
+			g.Assert(userAfter.Semester).Equal(userSent.Semester)
+			g.Assert(userAfter.Subject).Equal(userSent.Subject)
+			g.Assert(userAfter.Language).Equal(userSent.Language)
 
-    })
+		})
 
-    g.AfterEach(func() {
-      tape.AfterEach()
-    })
-  })
+		g.AfterEach(func() {
+			tape.AfterEach()
+		})
+	})
 
 }

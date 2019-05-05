@@ -19,165 +19,165 @@
 package service
 
 import (
-  "bytes"
-  "context"
-  "fmt"
+	"bytes"
+	"context"
+	"fmt"
 
-  "github.com/docker/docker/api/types"
-  "github.com/docker/docker/api/types/container"
-  "github.com/docker/docker/api/types/mount"
-  "github.com/docker/docker/client"
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/mount"
+	"github.com/docker/docker/client"
 )
 
 // DockerService contains all settings to talk to the docker api
 type DockerService struct {
-  // the context docker is relate to
-  Context context.Context
-  // client is the interface to the docker runtime
-  Client *client.Client
+	// the context docker is relate to
+	Context context.Context
+	// client is the interface to the docker runtime
+	Client *client.Client
 }
 
 // NewDockerService creates a new docker client
 func NewDockerService() *DockerService {
-  ctx := context.Background()
-  cli, err := client.NewEnvClient()
-  if err != nil {
-    panic(err)
-  }
+	ctx := context.Background()
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		panic(err)
+	}
 
-  return &DockerService{
-    Context: ctx,
-    Client:  cli,
-  }
+	return &DockerService{
+		Context: ctx,
+		Client:  cli,
+	}
 }
 
 // ListContainers lists all docker containers
 func (ds *DockerService) ListContainers() {
 
-  containers, err := ds.Client.ContainerList(ds.Context, types.ContainerListOptions{})
-  if err != nil {
-    panic(err)
-  }
+	containers, err := ds.Client.ContainerList(ds.Context, types.ContainerListOptions{})
+	if err != nil {
+		panic(err)
+	}
 
-  for _, container := range containers {
-    fmt.Println(container.ID)
-    fmt.Println(container.Names)
-  }
+	for _, container := range containers {
+		fmt.Println(container.ID)
+		fmt.Println(container.Names)
+	}
 }
 
 // ListImages lists all docker images
 func (ds *DockerService) ListImages() {
 
-  images, err := ds.Client.ImageList(ds.Context, types.ImageListOptions{})
-  if err != nil {
-    panic(err)
-  }
+	images, err := ds.Client.ImageList(ds.Context, types.ImageListOptions{})
+	if err != nil {
+		panic(err)
+	}
 
-  for _, image := range images {
-    fmt.Println(image.ID)
-    fmt.Println(image.RepoTags)
-    fmt.Println(image.Size)
-    fmt.Println(image.VirtualSize)
-    if len(image.RepoTags) > 0 {
-      fmt.Println(image.RepoTags[0])
-    }
-    fmt.Println("")
-  }
+	for _, image := range images {
+		fmt.Println(image.ID)
+		fmt.Println(image.RepoTags)
+		fmt.Println(image.Size)
+		fmt.Println(image.VirtualSize)
+		if len(image.RepoTags) > 0 {
+			fmt.Println(image.RepoTags[0])
+		}
+		fmt.Println("")
+	}
 }
 
 // Pull pulls a docker image
 func (ds *DockerService) Pull(image string) (string, error) {
-  // image example: "docker.io/library/alpine"
-  outputReader, err := ds.Client.ImagePull(ds.Context, image, types.ImagePullOptions{})
-  if err != nil {
-    return "", err
-  }
-  // io.Copy(os.Stdout, reader)
+	// image example: "docker.io/library/alpine"
+	outputReader, err := ds.Client.ImagePull(ds.Context, image, types.ImagePullOptions{})
+	if err != nil {
+		return "", err
+	}
+	// io.Copy(os.Stdout, reader)
 
-  buf := new(bytes.Buffer)
-  buf.ReadFrom(outputReader)
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(outputReader)
 
-  return buf.String(), nil
+	return buf.String(), nil
 
 }
 
 // Run executes a docker container and waits for the output
 func (ds *DockerService) Run(
-  imageName string,
-  submissionZipFile string,
-  frameworkZipFile string,
-  DockerMemoryBytes int64,
+	imageName string,
+	submissionZipFile string,
+	frameworkZipFile string,
+	DockerMemoryBytes int64,
 ) (string, int64, error) {
-  // create some context for docker
+	// create some context for docker
 
-  // fmt.Println("imageName", imageName)
-  // fmt.Println("submissionZipFile", submissionZipFile)
-  // fmt.Println("frameworkZipFile", frameworkZipFile)
+	// fmt.Println("imageName", imageName)
+	// fmt.Println("submissionZipFile", submissionZipFile)
+	// fmt.Println("frameworkZipFile", frameworkZipFile)
 
-  // submissionZipFile := "/home/patwie/git/github.com/cgtuebingen/infomark/infomark-backend/.local/simple_ci_runner/submission.zip"
-  // frameworkZipFile := "/home/patwie/git/github.com/cgtuebingen/infomark/infomark-backend/.local/simple_ci_runner/unittest.zip"
+	// submissionZipFile := "/home/patwie/git/github.com/cgtuebingen/infomark/infomark-backend/.local/simple_ci_runner/submission.zip"
+	// frameworkZipFile := "/home/patwie/git/github.com/cgtuebingen/infomark/infomark-backend/.local/simple_ci_runner/unittest.zip"
 
-  cmds := []string{}
+	cmds := []string{}
 
-  cfg := &container.Config{
-    Image:           imageName,
-    Cmd:             cmds,
-    Tty:             true,
-    AttachStdin:     false,
-    AttachStdout:    true,
-    AttachStderr:    true,
-    NetworkDisabled: true, // no network activity required
-    // StopTimeout:
-  }
+	cfg := &container.Config{
+		Image:           imageName,
+		Cmd:             cmds,
+		Tty:             true,
+		AttachStdin:     false,
+		AttachStdout:    true,
+		AttachStderr:    true,
+		NetworkDisabled: true, // no network activity required
+		// StopTimeout:
+	}
 
-  hostCfg := &container.HostConfig{
-    Resources: container.Resources{
-      Memory:     DockerMemoryBytes, // 200mb
-      MemorySwap: 0,
-    },
-    // AutoRemove: true,
-    Mounts: []mount.Mount{
-      {
-        ReadOnly: true,
-        Type:     mount.TypeBind,
-        Source:   submissionZipFile,
-        Target:   "/data/submission.zip",
-      },
-      {
-        ReadOnly: true,
-        Type:     mount.TypeBind,
-        Source:   frameworkZipFile,
-        Target:   "/data/unittest.zip",
-      },
-    },
-  }
+	hostCfg := &container.HostConfig{
+		Resources: container.Resources{
+			Memory:     DockerMemoryBytes, // 200mb
+			MemorySwap: 0,
+		},
+		// AutoRemove: true,
+		Mounts: []mount.Mount{
+			{
+				ReadOnly: true,
+				Type:     mount.TypeBind,
+				Source:   submissionZipFile,
+				Target:   "/data/submission.zip",
+			},
+			{
+				ReadOnly: true,
+				Type:     mount.TypeBind,
+				Source:   frameworkZipFile,
+				Target:   "/data/unittest.zip",
+			},
+		},
+	}
 
-  resp, err := ds.Client.ContainerCreate(ds.Context, cfg, hostCfg, nil, "")
-  if err != nil {
-    return "", 0, err
-  }
+	resp, err := ds.Client.ContainerCreate(ds.Context, cfg, hostCfg, nil, "")
+	if err != nil {
+		return "", 0, err
+	}
 
-  defer ds.Client.ContainerRemove(ds.Context, resp.ID, types.ContainerRemoveOptions{})
+	defer ds.Client.ContainerRemove(ds.Context, resp.ID, types.ContainerRemoveOptions{})
 
-  if err := ds.Client.ContainerStart(ds.Context, resp.ID, types.ContainerStartOptions{}); err != nil {
-    return "", 0, err
-  }
+	if err := ds.Client.ContainerStart(ds.Context, resp.ID, types.ContainerStartOptions{}); err != nil {
+		return "", 0, err
+	}
 
-  exitCode, err := ds.Client.ContainerWait(ds.Context, resp.ID)
-  if err != nil {
-    return "", exitCode, err
-  }
+	exitCode, err := ds.Client.ContainerWait(ds.Context, resp.ID)
+	if err != nil {
+		return "", exitCode, err
+	}
 
-  outputReader, err := ds.Client.ContainerLogs(ds.Context, resp.ID, types.ContainerLogsOptions{ShowStdout: true})
-  if err != nil {
-    return "", 0, err
-  }
+	outputReader, err := ds.Client.ContainerLogs(ds.Context, resp.ID, types.ContainerLogsOptions{ShowStdout: true})
+	if err != nil {
+		return "", 0, err
+	}
 
-  buf := new(bytes.Buffer)
-  buf.ReadFrom(outputReader)
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(outputReader)
 
-  // io.Copy(os.Stdout, outputReader)
-  return buf.String(), exitCode, nil
+	// io.Copy(os.Stdout, outputReader)
+	return buf.String(), exitCode, nil
 }
 
 // func main() {

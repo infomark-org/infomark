@@ -19,490 +19,490 @@
 package app
 
 import (
-  "encoding/json"
-  "fmt"
-  "mime"
-  "net/http"
-  "testing"
-  "time"
+	"encoding/json"
+	"fmt"
+	"mime"
+	"net/http"
+	"testing"
+	"time"
 
-  "github.com/cgtuebingen/infomark-backend/api/helper"
-  "github.com/cgtuebingen/infomark-backend/auth/authorize"
-  "github.com/cgtuebingen/infomark-backend/email"
-  "github.com/franela/goblin"
-  "github.com/spf13/viper"
+	"github.com/cgtuebingen/infomark-backend/api/helper"
+	"github.com/cgtuebingen/infomark-backend/auth/authorize"
+	"github.com/cgtuebingen/infomark-backend/email"
+	"github.com/franela/goblin"
+	"github.com/spf13/viper"
 )
 
 func TestMaterial(t *testing.T) {
-  g := goblin.Goblin(t)
-  email.DefaultMail = email.VoidMail
+	g := goblin.Goblin(t)
+	email.DefaultMail = email.VoidMail
 
-  tape := &Tape{}
+	tape := &Tape{}
 
-  var stores *Stores
+	var stores *Stores
 
-  g.Describe("Material", func() {
+	g.Describe("Material", func() {
 
-    g.BeforeEach(func() {
-      tape.BeforeEach()
-      stores = NewStores(tape.DB)
-    })
+		g.BeforeEach(func() {
+			tape.BeforeEach()
+			stores = NewStores(tape.DB)
+		})
 
-    g.It("Query should require access claims", func() {
+		g.It("Query should require access claims", func() {
 
-      w := tape.Get("/api/v1/courses/1/materials")
-      g.Assert(w.Code).Equal(http.StatusUnauthorized)
+			w := tape.Get("/api/v1/courses/1/materials")
+			g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
-      w = tape.GetWithClaims("/api/v1/courses/1/materials", 1, true)
-      g.Assert(w.Code).Equal(http.StatusOK)
-    })
+			w = tape.GetWithClaims("/api/v1/courses/1/materials", 1, true)
+			g.Assert(w.Code).Equal(http.StatusOK)
+		})
 
-    g.It("Should list all materials a course (student)", func() {
-      materialsExpected, err := stores.Material.MaterialsOfCourse(1, authorize.STUDENT.ToInt())
-      g.Assert(err).Equal(nil)
+		g.It("Should list all materials a course (student)", func() {
+			materialsExpected, err := stores.Material.MaterialsOfCourse(1, authorize.STUDENT.ToInt())
+			g.Assert(err).Equal(nil)
 
-      for _, mat := range materialsExpected {
-        mat.PublishAt = NowUTC().Add(-time.Hour)
-        stores.Material.Update(&mat)
-      }
+			for _, mat := range materialsExpected {
+				mat.PublishAt = NowUTC().Add(-time.Hour)
+				stores.Material.Update(&mat)
+			}
 
-      user, err := stores.Course.GetUserEnrollment(1, 112)
-      g.Assert(err).Equal(nil)
-      g.Assert(user.Role).Equal(int64(0))
+			user, err := stores.Course.GetUserEnrollment(1, 112)
+			g.Assert(err).Equal(nil)
+			g.Assert(user.Role).Equal(int64(0))
 
-      w := tape.GetWithClaims("/api/v1/courses/1/materials", user.ID, false)
-      g.Assert(w.Code).Equal(http.StatusOK)
+			w := tape.GetWithClaims("/api/v1/courses/1/materials", user.ID, false)
+			g.Assert(w.Code).Equal(http.StatusOK)
 
-      materialsActual := []MaterialResponse{}
-      err = json.NewDecoder(w.Body).Decode(&materialsActual)
-      g.Assert(err).Equal(nil)
+			materialsActual := []MaterialResponse{}
+			err = json.NewDecoder(w.Body).Decode(&materialsActual)
+			g.Assert(err).Equal(nil)
 
-      g.Assert(len(materialsActual)).Equal(len(materialsExpected))
-    })
+			g.Assert(len(materialsActual)).Equal(len(materialsExpected))
+		})
 
-    g.It("Should list all materials a course (tutor)", func() {
+		g.It("Should list all materials a course (tutor)", func() {
 
-      user, err := stores.Course.GetUserEnrollment(1, 2)
-      g.Assert(err).Equal(nil)
-      g.Assert(user.Role).Equal(int64(1))
+			user, err := stores.Course.GetUserEnrollment(1, 2)
+			g.Assert(err).Equal(nil)
+			g.Assert(user.Role).Equal(int64(1))
 
-      w := tape.GetWithClaims("/api/v1/courses/1/materials", user.ID, false)
-      g.Assert(w.Code).Equal(http.StatusOK)
+			w := tape.GetWithClaims("/api/v1/courses/1/materials", user.ID, false)
+			g.Assert(w.Code).Equal(http.StatusOK)
 
-      materialsActual := []MaterialResponse{}
-      err = json.NewDecoder(w.Body).Decode(&materialsActual)
-      g.Assert(err).Equal(nil)
+			materialsActual := []MaterialResponse{}
+			err = json.NewDecoder(w.Body).Decode(&materialsActual)
+			g.Assert(err).Equal(nil)
 
-      materialsExpected, err := stores.Material.MaterialsOfCourse(1, authorize.TUTOR.ToInt())
-      g.Assert(err).Equal(nil)
-      g.Assert(len(materialsActual)).Equal(len(materialsExpected))
-    })
+			materialsExpected, err := stores.Material.MaterialsOfCourse(1, authorize.TUTOR.ToInt())
+			g.Assert(err).Equal(nil)
+			g.Assert(len(materialsActual)).Equal(len(materialsExpected))
+		})
 
-    g.It("Should list all materials a course (admin)", func() {
+		g.It("Should list all materials a course (admin)", func() {
 
-      user, err := stores.Course.GetUserEnrollment(1, 1)
-      g.Assert(err).Equal(nil)
-      g.Assert(user.Role).Equal(int64(2))
+			user, err := stores.Course.GetUserEnrollment(1, 1)
+			g.Assert(err).Equal(nil)
+			g.Assert(user.Role).Equal(int64(2))
 
-      w := tape.GetWithClaims("/api/v1/courses/1/materials", user.ID, false)
-      g.Assert(w.Code).Equal(http.StatusOK)
+			w := tape.GetWithClaims("/api/v1/courses/1/materials", user.ID, false)
+			g.Assert(w.Code).Equal(http.StatusOK)
 
-      materialsActual := []MaterialResponse{}
-      err = json.NewDecoder(w.Body).Decode(&materialsActual)
-      g.Assert(err).Equal(nil)
+			materialsActual := []MaterialResponse{}
+			err = json.NewDecoder(w.Body).Decode(&materialsActual)
+			g.Assert(err).Equal(nil)
 
-      materialsExpected, err := stores.Material.MaterialsOfCourse(1, authorize.ADMIN.ToInt())
-      g.Assert(err).Equal(nil)
-      g.Assert(len(materialsActual)).Equal(len(materialsExpected))
-    })
+			materialsExpected, err := stores.Material.MaterialsOfCourse(1, authorize.ADMIN.ToInt())
+			g.Assert(err).Equal(nil)
+			g.Assert(len(materialsActual)).Equal(len(materialsExpected))
+		})
 
-    g.It("Should get a specific material", func() {
-      materialExpected, err := stores.Material.Get(1)
-      g.Assert(err).Equal(nil)
+		g.It("Should get a specific material", func() {
+			materialExpected, err := stores.Material.Get(1)
+			g.Assert(err).Equal(nil)
 
-      w := tape.GetWithClaims("/api/v1/courses/1/materials/1", 1, true)
-      g.Assert(w.Code).Equal(http.StatusOK)
-      materialActual := &MaterialResponse{}
-      err = json.NewDecoder(w.Body).Decode(materialActual)
-      g.Assert(err).Equal(nil)
+			w := tape.GetWithClaims("/api/v1/courses/1/materials/1", 1, true)
+			g.Assert(w.Code).Equal(http.StatusOK)
+			materialActual := &MaterialResponse{}
+			err = json.NewDecoder(w.Body).Decode(materialActual)
+			g.Assert(err).Equal(nil)
 
-      g.Assert(materialActual.ID).Equal(materialExpected.ID)
-      g.Assert(materialActual.Name).Equal(materialExpected.Name)
-      g.Assert(materialActual.PublishAt.Equal(materialExpected.PublishAt)).Equal(true)
-      g.Assert(materialActual.LectureAt.Equal(materialExpected.LectureAt)).Equal(true)
-    })
+			g.Assert(materialActual.ID).Equal(materialExpected.ID)
+			g.Assert(materialActual.Name).Equal(materialExpected.Name)
+			g.Assert(materialActual.PublishAt.Equal(materialExpected.PublishAt)).Equal(true)
+			g.Assert(materialActual.LectureAt.Equal(materialExpected.LectureAt)).Equal(true)
+		})
 
-    g.It("Should not get a specific material (unpublish)", func() {
-      materialExpected, err := stores.Material.Get(1)
-      g.Assert(err).Equal(nil)
-      materialExpected.RequiredRole = 0
-      stores.Material.Update(materialExpected)
+		g.It("Should not get a specific material (unpublish)", func() {
+			materialExpected, err := stores.Material.Get(1)
+			g.Assert(err).Equal(nil)
+			materialExpected.RequiredRole = 0
+			stores.Material.Update(materialExpected)
 
-      materialExpected.PublishAt = NowUTC().Add(time.Hour)
-      err = stores.Material.Update(materialExpected)
-      g.Assert(err).Equal(nil)
+			materialExpected.PublishAt = NowUTC().Add(time.Hour)
+			err = stores.Material.Update(materialExpected)
+			g.Assert(err).Equal(nil)
 
-      w := tape.GetWithClaims("/api/v1/courses/1/materials/1", 112, false)
-      g.Assert(w.Code).Equal(http.StatusForbidden)
+			w := tape.GetWithClaims("/api/v1/courses/1/materials/1", 112, false)
+			g.Assert(w.Code).Equal(http.StatusForbidden)
 
-      materialExpected.PublishAt = NowUTC().Add(-time.Hour)
-      err = stores.Material.Update(materialExpected)
-      g.Assert(err).Equal(nil)
+			materialExpected.PublishAt = NowUTC().Add(-time.Hour)
+			err = stores.Material.Update(materialExpected)
+			g.Assert(err).Equal(nil)
 
-      w = tape.GetWithClaims("/api/v1/courses/1/materials/1", 112, false)
-      g.Assert(w.Code).Equal(http.StatusOK)
+			w = tape.GetWithClaims("/api/v1/courses/1/materials/1", 112, false)
+			g.Assert(w.Code).Equal(http.StatusOK)
 
-    })
+		})
 
-    g.It("Should create valid material for tutors", func() {
-
-      materialsBeforeStudent, err := stores.Material.MaterialsOfCourse(1, authorize.STUDENT.ToInt())
-      g.Assert(err).Equal(nil)
+		g.It("Should create valid material for tutors", func() {
+
+			materialsBeforeStudent, err := stores.Material.MaterialsOfCourse(1, authorize.STUDENT.ToInt())
+			g.Assert(err).Equal(nil)
 
-      materialsBeforeTutor, err := stores.Material.MaterialsOfCourse(1, authorize.TUTOR.ToInt())
-      g.Assert(err).Equal(nil)
-
-      materialsBeforeAdmin, err := stores.Material.MaterialsOfCourse(1, authorize.ADMIN.ToInt())
-      g.Assert(err).Equal(nil)
-
-      materialSent := MaterialRequest{
-        Name:         "Material_new",
-        Kind:         0,
-        RequiredRole: authorize.TUTOR.ToInt(),
-        PublishAt:    helper.Time(time.Now()),
-        LectureAt:    helper.Time(time.Now()),
-      }
-
-      g.Assert(materialSent.Validate()).Equal(nil)
-
-      w := tape.Post("/api/v1/courses/1/materials", helper.ToH(materialSent))
-      g.Assert(w.Code).Equal(http.StatusUnauthorized)
-
-      w = tape.PostWithClaims("/api/v1/courses/1/materials", helper.ToH(materialSent), 112, false)
-      g.Assert(w.Code).Equal(http.StatusForbidden)
-
-      w = tape.PostWithClaims("/api/v1/courses/1/materials", helper.ToH(materialSent), 2, false)
-      g.Assert(w.Code).Equal(http.StatusForbidden)
-
-      w = tape.PostWithClaims("/api/v1/courses/1/materials", helper.ToH(materialSent), 1, false)
-      g.Assert(w.Code).Equal(http.StatusCreated)
-
-      materialsAfterStudent, err := stores.Material.MaterialsOfCourse(1, authorize.STUDENT.ToInt())
-      g.Assert(err).Equal(nil)
-      materialsAfterTutor, err := stores.Material.MaterialsOfCourse(1, authorize.TUTOR.ToInt())
-      g.Assert(err).Equal(nil)
-      materialsAfterAdmin, err := stores.Material.MaterialsOfCourse(1, authorize.ADMIN.ToInt())
-      g.Assert(err).Equal(nil)
-
-      materialReturn := &MaterialResponse{}
-      err = json.NewDecoder(w.Body).Decode(&materialReturn)
-      g.Assert(err).Equal(nil)
-      g.Assert(materialReturn.Name).Equal(materialSent.Name)
-      g.Assert(materialReturn.Kind).Equal(materialSent.Kind)
-      g.Assert(materialReturn.RequiredRole).Equal(materialSent.RequiredRole)
-      g.Assert(materialReturn.PublishAt.Equal(materialSent.PublishAt)).Equal(true)
-      g.Assert(materialReturn.LectureAt.Equal(materialSent.LectureAt)).Equal(true)
-
-      g.Assert(len(materialsAfterStudent)).Equal(len(materialsBeforeStudent))
-      g.Assert(len(materialsAfterTutor)).Equal(len(materialsBeforeTutor) + 1)
-      g.Assert(len(materialsAfterAdmin)).Equal(len(materialsBeforeAdmin) + 1)
-    })
-
-    g.It("Should create valid material for admins", func() {
-
-      materialsBeforeStudent, err := stores.Material.MaterialsOfCourse(1, authorize.STUDENT.ToInt())
-      g.Assert(err).Equal(nil)
-
-      materialsBeforeTutor, err := stores.Material.MaterialsOfCourse(1, authorize.TUTOR.ToInt())
-      g.Assert(err).Equal(nil)
-
-      materialsBeforeAdmin, err := stores.Material.MaterialsOfCourse(1, authorize.ADMIN.ToInt())
-      g.Assert(err).Equal(nil)
-
-      materialSent := MaterialRequest{
-        Name:         "Material_new",
-        Kind:         0,
-        RequiredRole: authorize.ADMIN.ToInt(),
-        PublishAt:    helper.Time(time.Now()),
-        LectureAt:    helper.Time(time.Now()),
-      }
-
-      g.Assert(materialSent.Validate()).Equal(nil)
-
-      w := tape.Post("/api/v1/courses/1/materials", helper.ToH(materialSent))
-      g.Assert(w.Code).Equal(http.StatusUnauthorized)
-
-      w = tape.PostWithClaims("/api/v1/courses/1/materials", helper.ToH(materialSent), 112, false)
-      g.Assert(w.Code).Equal(http.StatusForbidden)
-
-      w = tape.PostWithClaims("/api/v1/courses/1/materials", helper.ToH(materialSent), 2, false)
-      g.Assert(w.Code).Equal(http.StatusForbidden)
-
-      w = tape.PostWithClaims("/api/v1/courses/1/materials", helper.ToH(materialSent), 1, false)
-      g.Assert(w.Code).Equal(http.StatusCreated)
-
-      materialsAfterStudent, err := stores.Material.MaterialsOfCourse(1, authorize.STUDENT.ToInt())
-      g.Assert(err).Equal(nil)
-      materialsAfterTutor, err := stores.Material.MaterialsOfCourse(1, authorize.TUTOR.ToInt())
-      g.Assert(err).Equal(nil)
-      materialsAfterAdmin, err := stores.Material.MaterialsOfCourse(1, authorize.ADMIN.ToInt())
-      g.Assert(err).Equal(nil)
-
-      materialReturn := &MaterialResponse{}
-      err = json.NewDecoder(w.Body).Decode(&materialReturn)
-      g.Assert(err).Equal(nil)
-      g.Assert(materialReturn.Name).Equal(materialSent.Name)
-      g.Assert(materialReturn.Kind).Equal(materialSent.Kind)
-      g.Assert(materialReturn.RequiredRole).Equal(materialSent.RequiredRole)
-      g.Assert(materialReturn.PublishAt.Equal(materialSent.PublishAt)).Equal(true)
-      g.Assert(materialReturn.LectureAt.Equal(materialSent.LectureAt)).Equal(true)
-
-      g.Assert(len(materialsAfterStudent)).Equal(len(materialsBeforeStudent))
-      g.Assert(len(materialsAfterTutor)).Equal(len(materialsBeforeTutor))
-      g.Assert(len(materialsAfterAdmin)).Equal(len(materialsBeforeAdmin) + 1)
-    })
-
-    g.It("Creating a material should require body", func() {
-      w := tape.PlayDataWithClaims("POST", "/api/v1/courses/1/materials", H{}, 1, true)
-      g.Assert(w.Code).Equal(http.StatusBadRequest)
-    })
-
-    g.It("Should not create material with missing data", func() {
-      data := H{
-        "name":       "Sheet_new",
-        "publish_at": "2019-02-01T01:02:03Z",
-        // "lecture_at" is be missing
-      }
-
-      w := tape.PlayDataWithClaims("POST", "/api/v1/courses/1/materials", data, 1, true)
-      g.Assert(w.Code).Equal(http.StatusBadRequest)
-    })
-
-    g.It("Should skip non-existent material file", func() {
-
-      hnd := helper.NewMaterialFileHandle(1)
-      g.Assert(hnd.Exists()).Equal(false)
-      g.Assert(hnd.Exists()).Equal(false)
-
-      w := tape.GetWithClaims("/api/v1/courses/1/materials/1/file", 1, true)
-      g.Assert(w.Code).Equal(http.StatusNotFound)
-    })
-
-    g.It("Should upload material file", func() {
-      defer helper.NewMaterialFileHandle(1).Delete()
-
-      // set to publish
-      material, err := stores.Material.Get(1)
-      g.Assert(err).Equal(nil)
-      material.PublishAt = NowUTC().Add(-2 * time.Hour)
-      err = stores.Material.Update(material)
-      g.Assert(err).Equal(nil)
-
-      // no file so far
-      g.Assert(helper.NewMaterialFileHandle(1).Exists()).Equal(false)
-      filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
-
-      // students
-      w, err := tape.UploadWithClaims("/api/v1/courses/1/materials/1/file", filename, "application/zip", 112, false)
-      g.Assert(err).Equal(nil)
-      g.Assert(w.Code).Equal(http.StatusForbidden)
-
-      // tutors
-      w, err = tape.UploadWithClaims("/api/v1/courses/1/materials/1/file", filename, "application/zip", 2, false)
-      g.Assert(w.Code).Equal(http.StatusForbidden)
-
-      // admin
-      w, err = tape.UploadWithClaims("/api/v1/courses/1/materials/1/file", filename, "application/zip", 1, false)
-      g.Assert(err).Equal(nil)
-      g.Assert(w.Code).Equal(http.StatusOK)
-
-      // check disk
-      hnd := helper.NewMaterialFileHandle(1)
-      g.Assert(hnd.Exists()).Equal(true)
-
-      // a file should be now served
-      w = tape.GetWithClaims("/api/v1/courses/1/materials/1/file", 1, true)
-      g.Assert(w.Code).Equal(http.StatusOK)
-    })
-
-    g.It("Should upload material file (zip)", func() {
-      defer helper.NewMaterialFileHandle(1).Delete()
-      filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
-      // admin
-      w, err := tape.UploadWithClaims("/api/v1/courses/1/materials/1/file", filename, "application/zip", 1, false)
-      g.Assert(err).Equal(nil)
-      g.Assert(w.Code).Equal(http.StatusOK)
-
-      // check disk
-      hnd := helper.NewMaterialFileHandle(1)
-      g.Assert(hnd.Exists()).Equal(true)
-
-      // a file should be now served
-      w = tape.GetWithClaims("/api/v1/courses/1/materials/1/file", 1, true)
-      g.Assert(w.HeaderMap["Content-Type"][0]).Equal("application/zip")
-      g.Assert(w.Code).Equal(http.StatusOK)
-
-      course, err := stores.Material.IdentifyCourseOfMaterial(1)
-      g.Assert(err).Equal(nil)
-
-      _, params, err := mime.ParseMediaType(w.HeaderMap["Content-Disposition"][0])
-      g.Assert(err).Equal(nil)
-      g.Assert(params["filename"]).Equal(fmt.Sprintf("%s-empty.zip", course.Name))
-    })
-
-    g.It("Should upload material file (pdf)", func() {
-      defer helper.NewMaterialFileHandle(1).Delete()
-      filename := fmt.Sprintf("%s/empty.pdf", viper.GetString("fixtures_dir"))
-      // admin
-      w, err := tape.UploadWithClaims("/api/v1/courses/1/materials/1/file", filename, "application/pdf", 1, false)
-      g.Assert(err).Equal(nil)
-      g.Assert(w.Code).Equal(http.StatusOK)
-
-      // check disk
-      hnd := helper.NewMaterialFileHandle(1)
-      g.Assert(hnd.Exists()).Equal(true)
-
-      // a file should be now served
-      w = tape.GetWithClaims("/api/v1/courses/1/materials/1/file", 1, true)
-      g.Assert(w.HeaderMap["Content-Type"][0]).Equal("application/pdf")
-      g.Assert(w.Code).Equal(http.StatusOK)
-
-      course, err := stores.Material.IdentifyCourseOfMaterial(1)
-      g.Assert(err).Equal(nil)
-
-      _, params, err := mime.ParseMediaType(w.HeaderMap["Content-Disposition"][0])
-      g.Assert(err).Equal(nil)
-      g.Assert(params["filename"]).Equal(fmt.Sprintf("%s-empty.pdf", course.Name))
-    })
-
-    g.It("Changes should require claims", func() {
-      w := tape.Put("/api/v1/courses/1/materials", H{})
-      g.Assert(w.Code).Equal(http.StatusUnauthorized)
-    })
-
-    g.It("Should perform updates", func() {
-
-      // set to publish
-      material, err := stores.Material.Get(1)
-      g.Assert(err).Equal(nil)
-      material.PublishAt = NowUTC().Add(-2 * time.Hour)
-      err = stores.Material.Update(material)
-      g.Assert(err).Equal(nil)
-
-      materialSent := MaterialRequest{
-        Name:      "Material_new",
-        Kind:      0,
-        PublishAt: helper.Time(time.Now()),
-        LectureAt: helper.Time(time.Now()),
-      }
-
-      // students
-      w := tape.PutWithClaims("/api/v1/courses/1/materials/1", tape.ToH(materialSent), 122, false)
-      g.Assert(w.Code).Equal(http.StatusForbidden)
-
-      // tutors
-      w = tape.PutWithClaims("/api/v1/courses/1/materials/1", tape.ToH(materialSent), 2, false)
-      g.Assert(w.Code).Equal(http.StatusForbidden)
-
-      // admin
-      w = tape.PutWithClaims("/api/v1/courses/1/materials/1", tape.ToH(materialSent), 1, true)
-      g.Assert(w.Code).Equal(http.StatusOK)
-
-      materialAfter, err := stores.Material.Get(1)
-      g.Assert(err).Equal(nil)
-      g.Assert(materialAfter.Name).Equal(materialSent.Name)
-      g.Assert(materialAfter.Kind).Equal(materialSent.Kind)
-      g.Assert(materialAfter.PublishAt.Equal(materialSent.PublishAt)).Equal(true)
-      g.Assert(materialAfter.LectureAt.Equal(materialSent.LectureAt)).Equal(true)
-    })
-
-    g.It("Should delete when valid access claims", func() {
-
-      // set to publish
-      material, err := stores.Material.Get(1)
-      g.Assert(err).Equal(nil)
-      material.PublishAt = NowUTC().Add(-2 * time.Hour)
-      err = stores.Material.Update(material)
-      g.Assert(err).Equal(nil)
-
-      entriesBefore, err := stores.Material.GetAll()
-      g.Assert(err).Equal(nil)
-
-      w := tape.Delete("/api/v1/courses/1/materials/1")
-      g.Assert(w.Code).Equal(http.StatusUnauthorized)
-
-      // students
-      w = tape.DeleteWithClaims("/api/v1/courses/1/materials/1", 112, false)
-      g.Assert(w.Code).Equal(http.StatusForbidden)
-
-      // tutors
-      w = tape.DeleteWithClaims("/api/v1/courses/1/materials/1", 2, false)
-      g.Assert(w.Code).Equal(http.StatusForbidden)
-
-      // verify nothing has changes
-      entriesAfter, err := stores.Material.GetAll()
-      g.Assert(err).Equal(nil)
-      g.Assert(len(entriesAfter)).Equal(len(entriesBefore))
-
-      // admin
-      w = tape.DeleteWithClaims("/api/v1/courses/1/materials/1", 1, false)
-      g.Assert(w.Code).Equal(http.StatusOK)
-
-      // verify a sheet less exists
-      entriesAfter, err = stores.Material.GetAll()
-      g.Assert(err).Equal(nil)
-      g.Assert(len(entriesAfter)).Equal(len(entriesBefore) - 1)
-    })
-
-    g.It("Should delete when valid access claims and not published", func() {
-
-      // set to publish
-      material, err := stores.Material.Get(1)
-      g.Assert(err).Equal(nil)
-      material.PublishAt = NowUTC().Add(2 * time.Hour)
-      err = stores.Material.Update(material)
-      g.Assert(err).Equal(nil)
-
-      entriesBefore, err := stores.Material.GetAll()
-      g.Assert(err).Equal(nil)
-
-      // admin
-      w := tape.DeleteWithClaims("/api/v1/courses/1/materials/1", 1, false)
-      g.Assert(w.Code).Equal(http.StatusOK)
-
-      // verify a sheet less exists
-      entriesAfter, err := stores.Material.GetAll()
-      g.Assert(err).Equal(nil)
-      g.Assert(len(entriesAfter)).Equal(len(entriesBefore) - 1)
-    })
-
-    g.It("Permission test", func() {
-      url := "/api/v1/courses/1/materials"
-
-      // global root can do whatever they want
-      w := tape.GetWithClaims(url, 1, true)
-      g.Assert(w.Code).Equal(http.StatusOK)
-
-      // enrolled tutors can access
-      w = tape.GetWithClaims(url, 2, false)
-      g.Assert(w.Code).Equal(http.StatusOK)
-
-      // enrolled students can access
-      w = tape.GetWithClaims(url, 112, false)
-      g.Assert(w.Code).Equal(http.StatusOK)
-
-      // disenroll student
-      w = tape.DeleteWithClaims("/api/v1/courses/1/enrollments", 112, false)
-      g.Assert(w.Code).Equal(http.StatusOK)
-
-      // cannot access anymore
-      w = tape.GetWithClaims(url, 112, false)
-      g.Assert(w.Code).Equal(http.StatusForbidden)
-    })
-
-    g.AfterEach(func() {
-      tape.AfterEach()
-    })
-  })
+			materialsBeforeTutor, err := stores.Material.MaterialsOfCourse(1, authorize.TUTOR.ToInt())
+			g.Assert(err).Equal(nil)
+
+			materialsBeforeAdmin, err := stores.Material.MaterialsOfCourse(1, authorize.ADMIN.ToInt())
+			g.Assert(err).Equal(nil)
+
+			materialSent := MaterialRequest{
+				Name:         "Material_new",
+				Kind:         0,
+				RequiredRole: authorize.TUTOR.ToInt(),
+				PublishAt:    helper.Time(time.Now()),
+				LectureAt:    helper.Time(time.Now()),
+			}
+
+			g.Assert(materialSent.Validate()).Equal(nil)
+
+			w := tape.Post("/api/v1/courses/1/materials", helper.ToH(materialSent))
+			g.Assert(w.Code).Equal(http.StatusUnauthorized)
+
+			w = tape.PostWithClaims("/api/v1/courses/1/materials", helper.ToH(materialSent), 112, false)
+			g.Assert(w.Code).Equal(http.StatusForbidden)
+
+			w = tape.PostWithClaims("/api/v1/courses/1/materials", helper.ToH(materialSent), 2, false)
+			g.Assert(w.Code).Equal(http.StatusForbidden)
+
+			w = tape.PostWithClaims("/api/v1/courses/1/materials", helper.ToH(materialSent), 1, false)
+			g.Assert(w.Code).Equal(http.StatusCreated)
+
+			materialsAfterStudent, err := stores.Material.MaterialsOfCourse(1, authorize.STUDENT.ToInt())
+			g.Assert(err).Equal(nil)
+			materialsAfterTutor, err := stores.Material.MaterialsOfCourse(1, authorize.TUTOR.ToInt())
+			g.Assert(err).Equal(nil)
+			materialsAfterAdmin, err := stores.Material.MaterialsOfCourse(1, authorize.ADMIN.ToInt())
+			g.Assert(err).Equal(nil)
+
+			materialReturn := &MaterialResponse{}
+			err = json.NewDecoder(w.Body).Decode(&materialReturn)
+			g.Assert(err).Equal(nil)
+			g.Assert(materialReturn.Name).Equal(materialSent.Name)
+			g.Assert(materialReturn.Kind).Equal(materialSent.Kind)
+			g.Assert(materialReturn.RequiredRole).Equal(materialSent.RequiredRole)
+			g.Assert(materialReturn.PublishAt.Equal(materialSent.PublishAt)).Equal(true)
+			g.Assert(materialReturn.LectureAt.Equal(materialSent.LectureAt)).Equal(true)
+
+			g.Assert(len(materialsAfterStudent)).Equal(len(materialsBeforeStudent))
+			g.Assert(len(materialsAfterTutor)).Equal(len(materialsBeforeTutor) + 1)
+			g.Assert(len(materialsAfterAdmin)).Equal(len(materialsBeforeAdmin) + 1)
+		})
+
+		g.It("Should create valid material for admins", func() {
+
+			materialsBeforeStudent, err := stores.Material.MaterialsOfCourse(1, authorize.STUDENT.ToInt())
+			g.Assert(err).Equal(nil)
+
+			materialsBeforeTutor, err := stores.Material.MaterialsOfCourse(1, authorize.TUTOR.ToInt())
+			g.Assert(err).Equal(nil)
+
+			materialsBeforeAdmin, err := stores.Material.MaterialsOfCourse(1, authorize.ADMIN.ToInt())
+			g.Assert(err).Equal(nil)
+
+			materialSent := MaterialRequest{
+				Name:         "Material_new",
+				Kind:         0,
+				RequiredRole: authorize.ADMIN.ToInt(),
+				PublishAt:    helper.Time(time.Now()),
+				LectureAt:    helper.Time(time.Now()),
+			}
+
+			g.Assert(materialSent.Validate()).Equal(nil)
+
+			w := tape.Post("/api/v1/courses/1/materials", helper.ToH(materialSent))
+			g.Assert(w.Code).Equal(http.StatusUnauthorized)
+
+			w = tape.PostWithClaims("/api/v1/courses/1/materials", helper.ToH(materialSent), 112, false)
+			g.Assert(w.Code).Equal(http.StatusForbidden)
+
+			w = tape.PostWithClaims("/api/v1/courses/1/materials", helper.ToH(materialSent), 2, false)
+			g.Assert(w.Code).Equal(http.StatusForbidden)
+
+			w = tape.PostWithClaims("/api/v1/courses/1/materials", helper.ToH(materialSent), 1, false)
+			g.Assert(w.Code).Equal(http.StatusCreated)
+
+			materialsAfterStudent, err := stores.Material.MaterialsOfCourse(1, authorize.STUDENT.ToInt())
+			g.Assert(err).Equal(nil)
+			materialsAfterTutor, err := stores.Material.MaterialsOfCourse(1, authorize.TUTOR.ToInt())
+			g.Assert(err).Equal(nil)
+			materialsAfterAdmin, err := stores.Material.MaterialsOfCourse(1, authorize.ADMIN.ToInt())
+			g.Assert(err).Equal(nil)
+
+			materialReturn := &MaterialResponse{}
+			err = json.NewDecoder(w.Body).Decode(&materialReturn)
+			g.Assert(err).Equal(nil)
+			g.Assert(materialReturn.Name).Equal(materialSent.Name)
+			g.Assert(materialReturn.Kind).Equal(materialSent.Kind)
+			g.Assert(materialReturn.RequiredRole).Equal(materialSent.RequiredRole)
+			g.Assert(materialReturn.PublishAt.Equal(materialSent.PublishAt)).Equal(true)
+			g.Assert(materialReturn.LectureAt.Equal(materialSent.LectureAt)).Equal(true)
+
+			g.Assert(len(materialsAfterStudent)).Equal(len(materialsBeforeStudent))
+			g.Assert(len(materialsAfterTutor)).Equal(len(materialsBeforeTutor))
+			g.Assert(len(materialsAfterAdmin)).Equal(len(materialsBeforeAdmin) + 1)
+		})
+
+		g.It("Creating a material should require body", func() {
+			w := tape.PlayDataWithClaims("POST", "/api/v1/courses/1/materials", H{}, 1, true)
+			g.Assert(w.Code).Equal(http.StatusBadRequest)
+		})
+
+		g.It("Should not create material with missing data", func() {
+			data := H{
+				"name":       "Sheet_new",
+				"publish_at": "2019-02-01T01:02:03Z",
+				// "lecture_at" is be missing
+			}
+
+			w := tape.PlayDataWithClaims("POST", "/api/v1/courses/1/materials", data, 1, true)
+			g.Assert(w.Code).Equal(http.StatusBadRequest)
+		})
+
+		g.It("Should skip non-existent material file", func() {
+
+			hnd := helper.NewMaterialFileHandle(1)
+			g.Assert(hnd.Exists()).Equal(false)
+			g.Assert(hnd.Exists()).Equal(false)
+
+			w := tape.GetWithClaims("/api/v1/courses/1/materials/1/file", 1, true)
+			g.Assert(w.Code).Equal(http.StatusNotFound)
+		})
+
+		g.It("Should upload material file", func() {
+			defer helper.NewMaterialFileHandle(1).Delete()
+
+			// set to publish
+			material, err := stores.Material.Get(1)
+			g.Assert(err).Equal(nil)
+			material.PublishAt = NowUTC().Add(-2 * time.Hour)
+			err = stores.Material.Update(material)
+			g.Assert(err).Equal(nil)
+
+			// no file so far
+			g.Assert(helper.NewMaterialFileHandle(1).Exists()).Equal(false)
+			filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
+
+			// students
+			w, err := tape.UploadWithClaims("/api/v1/courses/1/materials/1/file", filename, "application/zip", 112, false)
+			g.Assert(err).Equal(nil)
+			g.Assert(w.Code).Equal(http.StatusForbidden)
+
+			// tutors
+			w, err = tape.UploadWithClaims("/api/v1/courses/1/materials/1/file", filename, "application/zip", 2, false)
+			g.Assert(w.Code).Equal(http.StatusForbidden)
+
+			// admin
+			w, err = tape.UploadWithClaims("/api/v1/courses/1/materials/1/file", filename, "application/zip", 1, false)
+			g.Assert(err).Equal(nil)
+			g.Assert(w.Code).Equal(http.StatusOK)
+
+			// check disk
+			hnd := helper.NewMaterialFileHandle(1)
+			g.Assert(hnd.Exists()).Equal(true)
+
+			// a file should be now served
+			w = tape.GetWithClaims("/api/v1/courses/1/materials/1/file", 1, true)
+			g.Assert(w.Code).Equal(http.StatusOK)
+		})
+
+		g.It("Should upload material file (zip)", func() {
+			defer helper.NewMaterialFileHandle(1).Delete()
+			filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
+			// admin
+			w, err := tape.UploadWithClaims("/api/v1/courses/1/materials/1/file", filename, "application/zip", 1, false)
+			g.Assert(err).Equal(nil)
+			g.Assert(w.Code).Equal(http.StatusOK)
+
+			// check disk
+			hnd := helper.NewMaterialFileHandle(1)
+			g.Assert(hnd.Exists()).Equal(true)
+
+			// a file should be now served
+			w = tape.GetWithClaims("/api/v1/courses/1/materials/1/file", 1, true)
+			g.Assert(w.HeaderMap["Content-Type"][0]).Equal("application/zip")
+			g.Assert(w.Code).Equal(http.StatusOK)
+
+			course, err := stores.Material.IdentifyCourseOfMaterial(1)
+			g.Assert(err).Equal(nil)
+
+			_, params, err := mime.ParseMediaType(w.HeaderMap["Content-Disposition"][0])
+			g.Assert(err).Equal(nil)
+			g.Assert(params["filename"]).Equal(fmt.Sprintf("%s-empty.zip", course.Name))
+		})
+
+		g.It("Should upload material file (pdf)", func() {
+			defer helper.NewMaterialFileHandle(1).Delete()
+			filename := fmt.Sprintf("%s/empty.pdf", viper.GetString("fixtures_dir"))
+			// admin
+			w, err := tape.UploadWithClaims("/api/v1/courses/1/materials/1/file", filename, "application/pdf", 1, false)
+			g.Assert(err).Equal(nil)
+			g.Assert(w.Code).Equal(http.StatusOK)
+
+			// check disk
+			hnd := helper.NewMaterialFileHandle(1)
+			g.Assert(hnd.Exists()).Equal(true)
+
+			// a file should be now served
+			w = tape.GetWithClaims("/api/v1/courses/1/materials/1/file", 1, true)
+			g.Assert(w.HeaderMap["Content-Type"][0]).Equal("application/pdf")
+			g.Assert(w.Code).Equal(http.StatusOK)
+
+			course, err := stores.Material.IdentifyCourseOfMaterial(1)
+			g.Assert(err).Equal(nil)
+
+			_, params, err := mime.ParseMediaType(w.HeaderMap["Content-Disposition"][0])
+			g.Assert(err).Equal(nil)
+			g.Assert(params["filename"]).Equal(fmt.Sprintf("%s-empty.pdf", course.Name))
+		})
+
+		g.It("Changes should require claims", func() {
+			w := tape.Put("/api/v1/courses/1/materials", H{})
+			g.Assert(w.Code).Equal(http.StatusUnauthorized)
+		})
+
+		g.It("Should perform updates", func() {
+
+			// set to publish
+			material, err := stores.Material.Get(1)
+			g.Assert(err).Equal(nil)
+			material.PublishAt = NowUTC().Add(-2 * time.Hour)
+			err = stores.Material.Update(material)
+			g.Assert(err).Equal(nil)
+
+			materialSent := MaterialRequest{
+				Name:      "Material_new",
+				Kind:      0,
+				PublishAt: helper.Time(time.Now()),
+				LectureAt: helper.Time(time.Now()),
+			}
+
+			// students
+			w := tape.PutWithClaims("/api/v1/courses/1/materials/1", tape.ToH(materialSent), 122, false)
+			g.Assert(w.Code).Equal(http.StatusForbidden)
+
+			// tutors
+			w = tape.PutWithClaims("/api/v1/courses/1/materials/1", tape.ToH(materialSent), 2, false)
+			g.Assert(w.Code).Equal(http.StatusForbidden)
+
+			// admin
+			w = tape.PutWithClaims("/api/v1/courses/1/materials/1", tape.ToH(materialSent), 1, true)
+			g.Assert(w.Code).Equal(http.StatusOK)
+
+			materialAfter, err := stores.Material.Get(1)
+			g.Assert(err).Equal(nil)
+			g.Assert(materialAfter.Name).Equal(materialSent.Name)
+			g.Assert(materialAfter.Kind).Equal(materialSent.Kind)
+			g.Assert(materialAfter.PublishAt.Equal(materialSent.PublishAt)).Equal(true)
+			g.Assert(materialAfter.LectureAt.Equal(materialSent.LectureAt)).Equal(true)
+		})
+
+		g.It("Should delete when valid access claims", func() {
+
+			// set to publish
+			material, err := stores.Material.Get(1)
+			g.Assert(err).Equal(nil)
+			material.PublishAt = NowUTC().Add(-2 * time.Hour)
+			err = stores.Material.Update(material)
+			g.Assert(err).Equal(nil)
+
+			entriesBefore, err := stores.Material.GetAll()
+			g.Assert(err).Equal(nil)
+
+			w := tape.Delete("/api/v1/courses/1/materials/1")
+			g.Assert(w.Code).Equal(http.StatusUnauthorized)
+
+			// students
+			w = tape.DeleteWithClaims("/api/v1/courses/1/materials/1", 112, false)
+			g.Assert(w.Code).Equal(http.StatusForbidden)
+
+			// tutors
+			w = tape.DeleteWithClaims("/api/v1/courses/1/materials/1", 2, false)
+			g.Assert(w.Code).Equal(http.StatusForbidden)
+
+			// verify nothing has changes
+			entriesAfter, err := stores.Material.GetAll()
+			g.Assert(err).Equal(nil)
+			g.Assert(len(entriesAfter)).Equal(len(entriesBefore))
+
+			// admin
+			w = tape.DeleteWithClaims("/api/v1/courses/1/materials/1", 1, false)
+			g.Assert(w.Code).Equal(http.StatusOK)
+
+			// verify a sheet less exists
+			entriesAfter, err = stores.Material.GetAll()
+			g.Assert(err).Equal(nil)
+			g.Assert(len(entriesAfter)).Equal(len(entriesBefore) - 1)
+		})
+
+		g.It("Should delete when valid access claims and not published", func() {
+
+			// set to publish
+			material, err := stores.Material.Get(1)
+			g.Assert(err).Equal(nil)
+			material.PublishAt = NowUTC().Add(2 * time.Hour)
+			err = stores.Material.Update(material)
+			g.Assert(err).Equal(nil)
+
+			entriesBefore, err := stores.Material.GetAll()
+			g.Assert(err).Equal(nil)
+
+			// admin
+			w := tape.DeleteWithClaims("/api/v1/courses/1/materials/1", 1, false)
+			g.Assert(w.Code).Equal(http.StatusOK)
+
+			// verify a sheet less exists
+			entriesAfter, err := stores.Material.GetAll()
+			g.Assert(err).Equal(nil)
+			g.Assert(len(entriesAfter)).Equal(len(entriesBefore) - 1)
+		})
+
+		g.It("Permission test", func() {
+			url := "/api/v1/courses/1/materials"
+
+			// global root can do whatever they want
+			w := tape.GetWithClaims(url, 1, true)
+			g.Assert(w.Code).Equal(http.StatusOK)
+
+			// enrolled tutors can access
+			w = tape.GetWithClaims(url, 2, false)
+			g.Assert(w.Code).Equal(http.StatusOK)
+
+			// enrolled students can access
+			w = tape.GetWithClaims(url, 112, false)
+			g.Assert(w.Code).Equal(http.StatusOK)
+
+			// disenroll student
+			w = tape.DeleteWithClaims("/api/v1/courses/1/enrollments", 112, false)
+			g.Assert(w.Code).Equal(http.StatusOK)
+
+			// cannot access anymore
+			w = tape.GetWithClaims(url, 112, false)
+			g.Assert(w.Code).Equal(http.StatusForbidden)
+		})
+
+		g.AfterEach(func() {
+			tape.AfterEach()
+		})
+	})
 
 }
