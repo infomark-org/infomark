@@ -48,10 +48,17 @@ const (
 	TestingStateFinished testingState = 2 // submission test has finished
 )
 
-type TestingResult int
+type TestingResult int64
 
 const (
 	TestingResultSuccess TestingResult = 0 // docker was able to test (but test could have failed)
 	TestingResultFailed  TestingResult = 1 // something went wrong with docker
 
 )
+
+func (t TestingResult) AsInt64() int64 {
+	if t == TestingResultSuccess {
+		return 0
+	}
+	return 1
+}

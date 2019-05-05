@@ -31,6 +31,7 @@ import (
 	"github.com/cgtuebingen/infomark-backend/api/helper"
 	"github.com/cgtuebingen/infomark-backend/api/shared"
 	"github.com/cgtuebingen/infomark-backend/service"
+	"github.com/cgtuebingen/infomark-backend/symbol"
 	"github.com/cgtuebingen/infomark-backend/tape"
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
@@ -64,13 +65,18 @@ func init() {
 	}
 
 	DefaultLogger = logrus.StandardLogger()
-	file, err := os.OpenFile("submission_handler.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
-	if err == nil {
-		DefaultLogger.Out = file
-	} else {
-		fmt.Println(err)
-		DefaultLogger.Info("Failed to log to file, using default stderr")
-	}
+	DefaultLogger.SetFormatter(&logrus.TextFormatter{
+		DisableColors: false,
+		FullTimestamp: true,
+	})
+	DefaultLogger.Out = os.Stdout
+	// file, err := os.OpenFile("submission_handler.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+	// if err == nil {
+	// 	DefaultLogger.Out = file
+	// } else {
+	// 	fmt.Println(err)
+	// 	DefaultLogger.Info("Failed to log to file, using default stderr")
+	// }
 	// defer file.Close()
 
 }
@@ -83,7 +89,7 @@ func (h *DummySubmissionHandler) Handle(workerBody []byte) error {
 
 	if err != nil {
 		DefaultLogger.WithFields(logrus.Fields{
-			"SubmissionID":      msg.SubmissionID,
+			"submissionID":      msg.SubmissionID,
 			"AccessToken":       msg.AccessToken,
 			"SubmissionFileURL": msg.SubmissionFileURL,
 			"FrameworkFileURL":  msg.FrameworkFileURL,
@@ -181,14 +187,15 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
 		return err
 	}
 
-	// DefaultLogger.WithFields(logrus.Fields{
-	//   "SubmissionID":      msg.SubmissionID,
-	//   "AccessToken":       msg.AccessToken,
-	//   "SubmissionFileURL": msg.SubmissionFileURL,
-	//   "FrameworkFileURL":  msg.FrameworkFileURL,
-	//   "ResultEndpointURL": msg.ResultEndpointURL,
-	//   "Sha256":            msg.Sha256,
-	// }).Info("handle")
+	DefaultLogger.WithFields(logrus.Fields{
+		"submissionID": msg.SubmissionID,
+		// "AccessToken":       msg.AccessToken,
+		// "SubmissionFileURL": msg.SubmissionFileURL,
+		"FrameworkFileURL": msg.FrameworkFileURL,
+		"image":            msg.DockerImage,
+		// "ResultEndpointURL": msg.ResultEndpointURL,
+		"Sha256": msg.Sha256,
+	}).Info("start processing")
 
 	uuid, err := uuid.NewRandom()
 	if err != nil {
@@ -239,7 +246,7 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
 	// if err != nil {
 	//   DefaultLogger.WithFields(logrus.Fields{
 	//     "action":       "send result to backend",
-	//     "SubmissionID": msg.SubmissionID,
+	//     "submissionID": msg.SubmissionID,
 	//     "resp":         resp,
 	//   }).Warn(err)
 
@@ -249,7 +256,7 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
 	// 4. verify checksums to avoid race conditions
 	if err := verifySha256(submissionPath, msg.Sha256); err != nil {
 		DefaultLogger.WithFields(logrus.Fields{
-			"SubmissionID":      msg.SubmissionID,
+			"submissionID":      msg.SubmissionID,
 			"SubmissionFileURL": msg.SubmissionFileURL,
 			"FrameworkFileURL":  msg.FrameworkFileURL,
 			"Sha256":            msg.Sha256,
@@ -274,14 +281,15 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
 	)
 	if err != nil {
 		DefaultLogger.WithFields(logrus.Fields{
-			"SubmissionID": msg.SubmissionID,
+			"submissionID": msg.SubmissionID,
 			"stdout":       stdout,
 			"exitcode":     exit,
+			"image":        msg.DockerImage,
 		}).Warn(err)
 		return err
 	}
 
-	if exit == 0 {
+	if exit == symbol.TestingResultSuccess.AsInt64() {
 		stdout = cleanDockerOutput(stdout)
 		// 3. push result back to server
 		workerResp = &shared.SubmissionWorkerResponse{
@@ -289,6 +297,14 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
 			Status: int(exit),
 		}
 	} else {
+
+		DefaultLogger.WithFields(logrus.Fields{
+			"submissionID": msg.SubmissionID,
+			"stdout":       stdout,
+			"exitcode":     exit,
+			"image":        msg.DockerImage,
+		}).Warn(err)
+
 		workerResp = &shared.SubmissionWorkerResponse{
 			Log: fmt.Sprintf(`
         There has been an issue during testing your upload (The ID is %v).
@@ -302,16 +318,23 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
 	r = tape.BuildDataRequest("POST", msg.ResultEndpointURL, tape.ToH(workerResp))
 	r.Header.Add("Authorization", "Bearer "+msg.AccessToken)
 
+	DefaultLogger.WithFields(logrus.Fields{
+		"submissionID": msg.SubmissionID,
+		"exitcode":     exit,
+		"image":        msg.DockerImage,
+	}).Info("send result to backend")
+
 	// run request
 	client := newHTTPClientSingleRequest()
 	resp, err := client.Do(r)
 	if err != nil {
 		DefaultLogger.WithFields(logrus.Fields{
 			"action":       "send result to backend",
-			"SubmissionID": msg.SubmissionID,
+			"submissionID": msg.SubmissionID,
 			"stdout":       stdout,
 			"exitcode":     exit,
 			"resp":         resp,
+			"image":        msg.DockerImage,
 		}).Warn(err)
 
 		return err
