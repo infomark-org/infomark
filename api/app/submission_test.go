@@ -169,6 +169,8 @@ func TestSubmission(t *testing.T) {
       // upload
       filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
       w, err = tape.UploadWithClaims("/api/v1/courses/1/tasks/1/submission", filename, "application/zip", 112, false)
+      fmt.Println(err)
+
       g.Assert(err).Equal(nil)
 
       g.Assert(w.Code).Equal(http.StatusBadRequest)

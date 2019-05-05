@@ -26,6 +26,7 @@ import (
   "net/http"
   "os"
   "strings"
+  "time"
 
   "github.com/cgtuebingen/infomark-backend/api/helper"
   "github.com/cgtuebingen/infomark-backend/api/shared"
@@ -124,8 +125,18 @@ func verifySha256(filePath string, expectedChecksum string) error {
   return nil
 }
 
+func newHTTPClientSingleRequest() *http.Client {
+  return &http.Client{
+    Transport: &http.Transport{
+      TLSHandshakeTimeout: 30 * time.Second,
+      DisableKeepAlives:   true,
+    },
+    Timeout: 1 * time.Minute,
+  }
+}
+
 func downloadFile(r *http.Request, dst string) error {
-  client := &http.Client{}
+  client := newHTTPClientSingleRequest()
 
   w, err := client.Do(r)
   if err != nil {
@@ -206,8 +217,6 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
   }
   defer helper.FileDelete(frameworkPath)
 
-  client := &http.Client{}
-
   // Under circumstances there is no guarantee that the following request will be issues
   // BEFORE the actual test result.
   // we use a HTTP Request to send the answer
@@ -284,6 +293,7 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
   r.Header.Add("Authorization", "Bearer "+msg.AccessToken)
 
   // run request
+  client := newHTTPClientSingleRequest()
   resp, err := client.Do(r)
   if err != nil {
     DefaultLogger.WithFields(logrus.Fields{
