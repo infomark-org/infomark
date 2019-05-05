@@ -25,7 +25,7 @@ import (
 	"strconv"
 
 	"github.com/cgtuebingen/infomark-backend/auth"
-	"github.com/cgtuebingen/infomark-backend/common"
+	"github.com/cgtuebingen/infomark-backend/symbol"
 	"github.com/go-chi/jwtauth"
 	"github.com/go-chi/render"
 	"github.com/spf13/viper"
@@ -90,7 +90,7 @@ func RequiredValidAccessClaims(next http.Handler) http.Handler {
 
 		// nothing given
 		// serve next
-		ctx := context.WithValue(r.Context(), common.CtxKeyAccessClaims, accessClaims)
+		ctx := context.WithValue(r.Context(), symbol.CtxKeyAccessClaims, accessClaims)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

@@ -23,7 +23,7 @@ import (
 
 	"github.com/cgtuebingen/infomark-backend/auth"
 	"github.com/cgtuebingen/infomark-backend/auth/authenticate"
-	"github.com/cgtuebingen/infomark-backend/common"
+	"github.com/cgtuebingen/infomark-backend/symbol"
 	"github.com/go-chi/render"
 )
 
@@ -67,13 +67,13 @@ func RequiresAtLeastCourseRole(requiredRole CourseRole) func(next http.Handler) 
 
 func HasAtLeastRole(requiredRole CourseRole, r *http.Request) bool {
 	// global root can lever out this check
-	accessClaims := r.Context().Value(common.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+	accessClaims := r.Context().Value(symbol.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 	if accessClaims.Root {
 		// oh dear, sorry to ask. Please pass this check
 		return true
 	}
 
-	givenRole, ok := r.Context().Value(common.CtxKeyCourseRole).(CourseRole)
+	givenRole, ok := r.Context().Value(symbol.CtxKeyCourseRole).(CourseRole)
 	if !ok {
 		return false
 	}

@@ -28,7 +28,7 @@ import (
 	"github.com/cgtuebingen/infomark-backend/api/helper"
 	"github.com/cgtuebingen/infomark-backend/auth/authenticate"
 	"github.com/cgtuebingen/infomark-backend/auth/authorize"
-	"github.com/cgtuebingen/infomark-backend/common"
+	"github.com/cgtuebingen/infomark-backend/symbol"
 	"github.com/cgtuebingen/infomark-backend/model"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"

@@ -22,7 +22,7 @@ import (
 	"net/http"
 
 	"github.com/cgtuebingen/infomark-backend/auth/authenticate"
-	"github.com/cgtuebingen/infomark-backend/common"
+	"github.com/cgtuebingen/infomark-backend/symbol"
 	"github.com/cgtuebingen/infomark-backend/model"
 	"github.com/go-chi/render"
 )
