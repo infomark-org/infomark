@@ -18,7 +18,12 @@
 
 package service
 
-import "github.com/streadway/amqp"
+import (
+	"os"
+
+	"github.com/sirupsen/logrus"
+	"github.com/streadway/amqp"
+)
 
 // Worker is a description for an object getting messages over AMPQ
 type Worker interface {
@@ -35,4 +40,14 @@ type Config struct {
 	ExchangeType string
 	Queue        string
 	Key          string
+}
+
+var log = logrus.New()
+
+func init() {
+	log.SetFormatter(&logrus.TextFormatter{
+		DisableColors: false,
+		FullTimestamp: true,
+	})
+	log.Out = os.Stdout
 }

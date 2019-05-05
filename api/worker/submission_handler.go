@@ -29,7 +29,6 @@ import (
 
   "github.com/cgtuebingen/infomark-backend/api/helper"
   "github.com/cgtuebingen/infomark-backend/api/shared"
-  "github.com/cgtuebingen/infomark-backend/logging"
   "github.com/cgtuebingen/infomark-backend/service"
   "github.com/cgtuebingen/infomark-backend/tape"
   "github.com/google/uuid"
@@ -63,7 +62,7 @@ func init() {
     DefaultSubmissionHandler = &RealSubmissionHandler{}
   }
 
-  DefaultLogger = logging.NewLogger()
+  DefaultLogger = logrus.StandardLogger()
   file, err := os.OpenFile("submission_handler.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
   if err == nil {
     DefaultLogger.Out = file

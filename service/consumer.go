@@ -20,8 +20,8 @@ package service
 
 import (
   "fmt"
-  "log"
 
+  "github.com/sirupsen/logrus"
   "github.com/streadway/amqp"
 )
 
@@ -53,29 +53,39 @@ func NewConsumer(cfg *Config, handleFunc func(body []byte) error) (*Consumer, er
 
 // Setup connects a consumer to the AMPQ queue from the config
 func (c *Consumer) Setup() (<-chan amqp.Delivery, error) {
+  logger := log.WithFields(logrus.Fields{
+    // "connection":   c.Config.Connection,
+    "exchange":     c.Config.Exchange,
+    "exchangetype": c.Config.ExchangeType,
+    "queue":        c.Config.Queue,
+    "key":          c.Config.Key,
+    "tag":          c.Config.Tag,
+  })
 
-  fmt.Println("-- Connection", c.Config.Connection)
-  fmt.Println("-- Exchange", c.Config.Exchange)
-  fmt.Println("-- ExchangeType", c.Config.ExchangeType)
-  fmt.Println("-- Queue", c.Config.Queue)
-  fmt.Println("-- Key", c.Config.Key)
-  fmt.Println("-- Tag", c.Config.Tag)
+  logger.Info("setup AMPQ connection")
+
+  // fmt.Println("-- Connection", c.Config.Connection)
+  // fmt.Println("-- Exchange", c.Config.Exchange)
+  // fmt.Println("-- ExchangeType", c.Config.ExchangeType)
+  // fmt.Println("-- Queue", c.Config.Queue)
+  // fmt.Println("-- Key", c.Config.Key)
+  // fmt.Println("-- Tag", c.Config.Tag)
 
   var err error
 
-  log.Printf("dialing %s", c.Config.Connection)
+  logger.Info("dialing", c.Config.Connection)
   c.conn, err = amqp.Dial(c.Config.Connection)
   if err != nil {
     return nil, fmt.Errorf("Dial: %s", err)
   }
 
-  log.Printf("got Connection, getting Channel")
+  logger.Info("got Connection, getting Channel")
   c.channel, err = c.conn.Channel()
   if err != nil {
     return nil, fmt.Errorf("Channel: %s", err)
   }
 
-  log.Printf("got Channel, declaring Exchange (%s)", c.Config.Exchange)
+  logger.Info("got Channel, declaring Exchange")
   if err = c.channel.ExchangeDeclare(
     c.Config.Exchange,     // name of the exchange
     c.Config.ExchangeType, // type
@@ -88,7 +98,7 @@ func (c *Consumer) Setup() (<-chan amqp.Delivery, error) {
     return nil, fmt.Errorf("Exchange Declare: %s", err)
   }
 
-  log.Printf("declared Exchange, declaring Queue (%s)", c.Config.Queue)
+  logger.Info("declared Exchange, declaring Queue")
   state, err := c.channel.QueueDeclare(
     c.Config.Queue, // name of the queue
     true,           // durable
@@ -101,8 +111,8 @@ func (c *Consumer) Setup() (<-chan amqp.Delivery, error) {
     return nil, fmt.Errorf("Queue Declare: %s", err)
   }
 
-  log.Printf("declared Queue (%d messages, %d consumers), binding to Exchange (key '%s')",
-    state.Messages, state.Consumers, c.Config.Key)
+  logger.Info("declared Queue (%d messages, %d consumers), binding to Exchange",
+    state.Messages, state.Consumers)
 
   if err = c.channel.QueueBind(
     c.Config.Queue,    // name of the queue
@@ -114,7 +124,7 @@ func (c *Consumer) Setup() (<-chan amqp.Delivery, error) {
     return nil, fmt.Errorf("Queue Bind: %s", err)
   }
 
-  log.Printf("Queue bound to Exchange, starting Consume (Consumer tag '%s')", c.Config.Tag)
+  logger.Info("Queue bound to Exchange, starting Consume (Consumer tag '%s')", c.Config.Tag)
   deliveries, err := c.channel.Consume(
     c.Config.Queue, // name
     c.Config.Tag,   // consumerTag,
@@ -134,6 +144,16 @@ func (c *Consumer) Setup() (<-chan amqp.Delivery, error) {
 
 // Shutdown will gracefully stop a consumer
 func (c *Consumer) Shutdown() error {
+
+  logger := log.WithFields(logrus.Fields{
+    // "connection":   c.Config.Connection,
+    "exchange":     c.Config.Exchange,
+    "exchangetype": c.Config.ExchangeType,
+    "queue":        c.Config.Queue,
+    "key":          c.Config.Key,
+    "tag":          c.Config.Tag,
+  })
+
   // will close() the deliveries channel
   if err := c.channel.Cancel(c.Config.Tag, true); err != nil {
     return fmt.Errorf("Consumer cancel failed: %s", err)
@@ -143,7 +163,7 @@ func (c *Consumer) Shutdown() error {
     return fmt.Errorf("AMQP connection close error: %s", err)
   }
 
-  defer log.Printf("AMQP shutdown OK")
+  defer logger.Info("AMQP shutdown OK")
 
   // wait for handle() to exit
   return <-c.done
@@ -151,14 +171,26 @@ func (c *Consumer) Shutdown() error {
 
 // HandleLoop is the message loop of a consumer
 func (c *Consumer) HandleLoop(deliveries <-chan amqp.Delivery) {
-  for d := range deliveries {
 
-    log.Printf(
-      "got %dB delivery: [%v] %s",
-      len(d.Body),
-      d.DeliveryTag,
-      d.Body,
-    )
+  logger := log.WithFields(logrus.Fields{
+    // "connection":   c.Config.Connection,
+    "exchange":     c.Config.Exchange,
+    "exchangetype": c.Config.ExchangeType,
+    "queue":        c.Config.Queue,
+    "key":          c.Config.Key,
+    "tag":          c.Config.Tag,
+  })
+
+  for d := range deliveries {
+    logger.WithFields(logrus.Fields{
+      "bytes": len(d.Body),
+    }).Info("got delivery")
+    // logger.Debug(
+    //   "got %dB delivery: [%v] %s",
+    //   len(d.Body),
+    //   d.DeliveryTag,
+    //   d.Body,
+    // )
 
     if err := c.handleFunc(d.Body); err != nil {
       fmt.Println(err)
@@ -168,6 +200,6 @@ func (c *Consumer) HandleLoop(deliveries <-chan amqp.Delivery) {
     }
 
   }
-  log.Printf("handle: deliveries channel closed")
+  logger.Info("handle: deliveries channel closed")
   c.done <- nil
 }

@@ -19,7 +19,6 @@
 package api
 
 import (
-	"log"
 	"os"
 	"os/signal"
 

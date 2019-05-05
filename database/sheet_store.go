@@ -90,7 +90,7 @@ INNER JOIN
 WHERE
   sc.course_id = $1
 ORDER BY
-  s.name ASC;`, courseID)
+  s.publish_at ASC;`, courseID)
   return p, err
 }
 

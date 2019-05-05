@@ -85,17 +85,13 @@ func HasAtLeastRole(requiredRole CourseRole, r *http.Request) bool {
   return true
 }
 
-func EndpointRequiresRole(endpoint http.HandlerFunc, requiredRole CourseRole) http.HandlerFunc {
-
-  fn := func(w http.ResponseWriter, r *http.Request) {
-
-    if HasAtLeastRole(requiredRole, r) {
-      endpoint.ServeHTTP(w, r)
-    } else {
-      render.Render(w, r, auth.ErrUnauthorized)
-    }
-  }
-
-  return http.HandlerFunc(fn)
-
-}
+// func EndpointRequiresRole(endpoint http.HandlerFunc, requiredRole CourseRole) http.HandlerFunc {
+//   fn := func(w http.ResponseWriter, r *http.Request) {
+//     if HasAtLeastRole(requiredRole, r) {
+//       endpoint.ServeHTTP(w, r)
+//     } else {
+//       render.Render(w, r, auth.ErrUnauthorized)
+//     }
+//   }
+//   return http.HandlerFunc(fn)
+// }

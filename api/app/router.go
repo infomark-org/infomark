@@ -30,17 +30,17 @@ import (
 
   "github.com/cgtuebingen/infomark-backend/auth/authenticate"
   "github.com/cgtuebingen/infomark-backend/auth/authorize"
-  "github.com/cgtuebingen/infomark-backend/logging"
   "github.com/go-chi/chi"
   "github.com/go-chi/chi/middleware"
   "github.com/go-chi/cors"
   "github.com/go-chi/render"
   "github.com/jmoiron/sqlx"
+  "github.com/sirupsen/logrus"
   "github.com/spf13/viper"
 )
 
 // LimitedDecoder limits the amount of data a client can send in a JSON data request.
-// The golang fork-join multi-threading allows no easy way to cancel started request
+// The golang fork-join multi-threading allows no easy way to cancel started requests.
 // Therefore we limit the amount of data which is read by the server whenever
 // we need to parse a JSON request.
 func LimitedDecoder(r *http.Request, v interface{}) error {
@@ -57,8 +57,32 @@ func LimitedDecoder(r *http.Request, v interface{}) error {
   return err
 }
 
+var log = logrus.New()
+
 func init() {
   render.Decode = LimitedDecoder
+
+  log.SetFormatter(&logrus.TextFormatter{
+    DisableColors: false,
+    FullTimestamp: true,
+  })
+  log.Out = os.Stdout
+}
+
+func LoggingMiddleware(next http.Handler) http.Handler {
+  return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+    start := time.Now()
+    next.ServeHTTP(w, r)
+    end := time.Now()
+    log.WithFields(logrus.Fields{
+      "method": r.Method,
+      // "proto":   r.Proto,
+      "agent":   r.UserAgent(),
+      "remote":  r.RemoteAddr,
+      "latency": end.Sub(start),
+      "time":    end.Format(time.RFC3339),
+    }).Info(r.RequestURI)
+  })
 }
 
 // VersionMiddleware writes the current API version to the headers.
@@ -100,7 +124,7 @@ func NoCache(next http.Handler) http.Handler {
 
 // New configures application resources and routes.
 func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
-  logger := logging.NewLogger()
+  logger := logrus.StandardLogger()
 
   if err := db.Ping(); err != nil {
     logger.WithField("module", "database").Error(err)
@@ -119,10 +143,8 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
   r.Use(NoCache)
   r.Use(middleware.Recoverer)
   r.Use(middleware.RequestID)
-  // the following line does not make any sense
-  // r.Use(middleware.Timeout(15 * time.Second))
   if log {
-    r.Use(logging.NewStructuredLogger(logger))
+    r.Use(LoggingMiddleware)
   }
   r.Use(render.SetContentType(render.ContentTypeJSON))
   r.Use(corsConfig().Handler)
@@ -173,7 +195,7 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 
         r.Route("/courses", func(r chi.Router) {
           r.Get("/", appAPI.Course.IndexHandler)
-          r.Post("/", authorize.EndpointRequiresRole(appAPI.Course.CreateHandler, authorize.ADMIN))
+          r.With(authorize.RequiresAtLeastCourseRole(authorize.ADMIN)).Post("/", appAPI.Course.CreateHandler)
 
           r.Route("/{course_id}", func(r chi.Router) {
             r.Use(appAPI.Course.Context)
@@ -193,9 +215,6 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
                 r.Delete("/", appAPI.Course.DeleteHandler)
               })
 
-              // we handle permission dependent chnages WITHIN this endpoint
-              //
-
               r.Get("/enrollments", appAPI.Course.IndexEnrollmentsHandler)
               r.Delete("/enrollments", appAPI.Course.DisenrollHandler)
 
@@ -213,13 +232,11 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
               })
 
               r.Route("/sheets", func(r chi.Router) {
-
                 r.Get("/", appAPI.Sheet.IndexHandler)
-                r.Post("/", authorize.EndpointRequiresRole(appAPI.Sheet.CreateHandler, authorize.ADMIN))
+                r.With(authorize.RequiresAtLeastCourseRole(authorize.ADMIN)).Post("/", appAPI.Sheet.CreateHandler)
 
                 r.Route("/{sheet_id}", func(r chi.Router) {
                   r.Use(appAPI.Sheet.Context)
-                  // r.Use(appAPI.Course.RoleContext)
 
                   // ensures user is enrolled in the associated course
 
@@ -227,7 +244,7 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 
                   r.Route("/tasks", func(r chi.Router) {
                     r.Get("/", appAPI.Task.IndexHandler)
-                    r.Post("/", authorize.EndpointRequiresRole(appAPI.Task.CreateHandler, authorize.ADMIN))
+                    r.With(authorize.RequiresAtLeastCourseRole(authorize.ADMIN)).Post("/", appAPI.Task.CreateHandler)
 
                   })
 
@@ -249,7 +266,7 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
               r.Route("/groups", func(r chi.Router) {
                 r.Get("/own", appAPI.Group.GetMineHandler)
                 r.Get("/", appAPI.Group.IndexHandler)
-                r.Post("/", authorize.EndpointRequiresRole(appAPI.Group.CreateHandler, authorize.ADMIN))
+                r.With(authorize.RequiresAtLeastCourseRole(authorize.ADMIN)).Post("/", appAPI.Group.CreateHandler)
                 r.Route("/{group_id}", func(r chi.Router) {
                   r.Use(appAPI.Group.Context)
                   r.Use(appAPI.Course.RoleContext)
@@ -257,9 +274,9 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
                   // ensures user is enrolled in the associated course
 
                   r.Post("/bids", appAPI.Group.ChangeBidHandler)
-                  r.Post("/emails", authorize.EndpointRequiresRole(appAPI.Group.SendEmailHandler, authorize.TUTOR))
+                  r.With(authorize.RequiresAtLeastCourseRole(authorize.TUTOR)).Post("/emails", appAPI.Group.SendEmailHandler)
                   r.Get("/enrollments", appAPI.Group.IndexEnrollmentsHandler)
-                  r.Post("/enrollments", authorize.EndpointRequiresRole(appAPI.Group.EditGroupEnrollmentHandler, authorize.ADMIN))
+                  r.With(authorize.RequiresAtLeastCourseRole(authorize.ADMIN)).Post("/enrollments", appAPI.Group.EditGroupEnrollmentHandler)
 
                   r.Get("/", appAPI.Group.GetHandler)
 
@@ -273,8 +290,8 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 
               r.Route("/grades", func(r chi.Router) {
 
-                r.Get("/", authorize.EndpointRequiresRole(appAPI.Grade.IndexHandler, authorize.TUTOR))
-                r.Get("/summary", authorize.EndpointRequiresRole(appAPI.Grade.IndexSummaryHandler, authorize.TUTOR))
+                r.With(authorize.RequiresAtLeastCourseRole(authorize.TUTOR)).Get("/", appAPI.Grade.IndexHandler)
+                r.With(authorize.RequiresAtLeastCourseRole(authorize.TUTOR)).Get("/summary", appAPI.Grade.IndexSummaryHandler)
                 // does not require a role
                 r.Get("/missing", appAPI.Grade.IndexMissingHandler)
                 r.Route("/{grade_id}", func(r chi.Router) {
@@ -286,8 +303,8 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 
                   r.Put("/", appAPI.Grade.EditHandler)
                   r.Get("/", appAPI.Grade.GetByIDHandler)
-                  r.Post("/public_result", authorize.EndpointRequiresRole(appAPI.Grade.PublicResultEditHandler, authorize.ADMIN))
-                  r.Post("/private_result", authorize.EndpointRequiresRole(appAPI.Grade.PrivateResultEditHandler, authorize.ADMIN))
+                  r.With(authorize.RequiresAtLeastCourseRole(authorize.ADMIN)).Post("/public_result", appAPI.Grade.PublicResultEditHandler)
+                  r.With(authorize.RequiresAtLeastCourseRole(authorize.ADMIN)).Post("/private_result", appAPI.Grade.PrivateResultEditHandler)
 
                 })
               })
@@ -295,14 +312,13 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
               r.Route("/materials", func(r chi.Router) {
 
                 r.Get("/", appAPI.Material.IndexHandler)
-                r.Post("/", authorize.EndpointRequiresRole(appAPI.Material.CreateHandler, authorize.ADMIN))
+                r.With(authorize.RequiresAtLeastCourseRole(authorize.ADMIN)).Post("/", appAPI.Material.CreateHandler)
 
                 r.Route("/{material_id}", func(r chi.Router) {
                   r.Use(appAPI.Material.Context)
                   r.Use(appAPI.Course.RoleContext)
 
                   // ensures user is enrolled in the associated course
-
                   r.Get("/", appAPI.Material.GetHandler)
                   r.Get("/file", appAPI.Material.GetFileHandler)
 
@@ -317,7 +333,7 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
               })
 
               r.Route("/submissions", func(r chi.Router) {
-                r.Get("/", authorize.EndpointRequiresRole(appAPI.Submission.IndexHandler, authorize.TUTOR))
+                r.With(authorize.RequiresAtLeastCourseRole(authorize.TUTOR)).Get("/", appAPI.Submission.IndexHandler)
 
                 r.Route("/{submission_id}", func(r chi.Router) {
                   r.Use(appAPI.Submission.Context)

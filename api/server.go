@@ -21,7 +21,6 @@ package api
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -31,12 +30,22 @@ import (
 	"github.com/cgtuebingen/infomark-backend/api/app"
 	"github.com/cgtuebingen/infomark-backend/api/cronjob"
 	"github.com/cgtuebingen/infomark-backend/email"
-	"github.com/cgtuebingen/infomark-backend/logging"
 	"github.com/jmoiron/sqlx"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/robfig/cron"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
+
+var log = logrus.New()
+
+func init() {
+	log.SetFormatter(&logrus.TextFormatter{
+		DisableColors: false,
+		FullTimestamp: true,
+	})
+	log.Out = os.Stdout
+}
 
 // Server provides an http.Server.
 type Server struct {
@@ -46,29 +55,25 @@ type Server struct {
 
 // NewServer creates and configures an APIServer serving all application routes.
 func NewServer() (*Server, error) {
-	log.Println("configuring server...")
-	logger := logging.NewLogger()
+	log.Info("configuring server...")
 
 	if viper.GetString("sendmail_binary") != "" {
+		log.WithFields(logrus.Fields{"path": viper.GetString("sendmail_binary")}).Info("found sendmail")
 		email.DefaultMail = email.SendMail
 	}
 
-	// db, err := sqlx.Connect("sqlite3", "__deleteme.db")
 	db, err := sqlx.Connect("postgres", viper.GetString("database_connection"))
-	// db, err := sqlx.Connect("postgres", "user=postgres dbname=infomark password=postgres sslmode=disable")
 	if err != nil {
-		logger.WithField("module", "database").Error(err)
+		log.WithField("module", "database").Error(err)
 		return nil, err
 	}
 
 	handler, err := app.New(db, true)
-
-	// add metric
-	handler.Handle("/metrics", promhttp.Handler())
-
 	if err != nil {
 		return nil, err
 	}
+
+	handler.Handle("/metrics", promhttp.Handler())
 
 	var addr string
 	port := viper.GetString("port")
@@ -100,35 +105,37 @@ func NewServer() (*Server, error) {
 
 // Start runs ListenAndServe on the http.Server with graceful shutdown.
 func (srv *Server) Start() {
-
-	log.Println("starting server...")
+	// log := logrus.StandardLogger()
+	log.Info("starting server...")
 	go func() {
 		if err := srv.HTTP.ListenAndServe(); err != http.ErrServerClosed {
 			panic(err)
 		}
 	}()
-	log.Printf("Listening on %s\n", srv.HTTP.Addr)
+	log.WithFields(logrus.Fields{
+		"addr": srv.HTTP.Addr,
+	}).Info("http is listening")
 
-	log.Println("starting background email sender...")
+	log.Info("starting background email sender...")
 	go email.BackgroundSend(email.OutgoingEmailsChannel)
 
-	log.Println("starting cronjob for zipping submissions...")
+	log.Info("starting cronjob for zipping submissions...")
 	srv.Cron.Start()
 
-	quit := make(chan os.Signal, viper.GetInt("email_channel_size"))
+	quit := make(chan os.Signal)
 	signal.Notify(quit, os.Interrupt)
 	sig := <-quit
-	log.Println("Shutting down server... Reason:", sig)
+	log.Info("Shutting down server... Reason:", sig)
 
 	// teardown logic...
 	srv.Cron.Stop()
-	log.Println("Cronjobs gracefully stopped")
+	log.Info("Cronjobs gracefully stopped")
 
 	close(email.OutgoingEmailsChannel)
-	log.Println("Background email sender gracefully stopped")
+	log.Info("Background email sender gracefully stopped")
 
 	if err := srv.HTTP.Shutdown(context.Background()); err != nil {
 		panic(err)
 	}
-	log.Println("Server gracefully stopped")
+	log.Info("Server gracefully stopped")
 }
