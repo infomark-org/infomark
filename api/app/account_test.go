@@ -302,8 +302,8 @@ func TestAccount(t *testing.T) {
 			g.Assert(err).Equal(nil)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
-			if !strings.HasSuffix(w.HeaderMap["Content-Type"][0], "jpeg") {
-				g.Assert(strings.HasSuffix(w.HeaderMap["Content-Type"][0], "jpg")).Equal(true)
+			if !strings.HasSuffix(w.Header().Get("Content-Type"), "jpeg") {
+				g.Assert(strings.HasSuffix(w.Header().Get("Content-Type"), "jpg")).Equal(true)
 			}
 
 		})
@@ -344,7 +344,7 @@ func TestAccount(t *testing.T) {
 			w = tape.GetWithClaims("/api/v1/account/avatar", 1, true)
 			g.Assert(err).Equal(nil)
 			g.Assert(w.Code).Equal(http.StatusOK)
-			g.Assert(strings.HasSuffix(w.HeaderMap["Content-Type"][0], "png")).Equal(true)
+			g.Assert(strings.HasSuffix(w.Header().Get("Content-Type"), "png")).Equal(true)
 
 		})
 

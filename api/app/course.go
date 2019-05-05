@@ -59,6 +59,10 @@ func NewCourseResource(stores *Stores) *CourseResource {
 func (rs *CourseResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 	// fetch collection of courses from database
 	courses, err := rs.Stores.Course.GetAll()
+	if err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
 
 	// render JSON reponse
 	if err = render.RenderList(w, r, rs.newCourseListResponse(courses)); err != nil {

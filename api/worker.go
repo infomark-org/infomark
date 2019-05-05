@@ -57,7 +57,7 @@ func (srv *Worker) Start() {
 
 	go consumer.HandleLoop(deliveries)
 
-	quit := make(chan os.Signal)
+	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
 	sig := <-quit
 	log.Println("Shutting down Worker... Reason:", sig)

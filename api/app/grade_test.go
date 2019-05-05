@@ -496,6 +496,7 @@ func TestGrade(t *testing.T) {
 				PublicDockerImage:  null.StringFrom("ff"),
 				PrivateDockerImage: null.StringFrom("ff"),
 			}, sheet1.ID)
+			g.Assert(err).Equal(nil)
 
 			task2, err := stores.Task.Create(&model.Task{
 				Name:               "2",
@@ -503,9 +504,7 @@ func TestGrade(t *testing.T) {
 				PublicDockerImage:  null.StringFrom("ff"),
 				PrivateDockerImage: null.StringFrom("ff"),
 			}, sheet2.ID)
-
-			_ = task1
-			_ = task2
+			g.Assert(err).Equal(nil)
 
 			uid1 := int64(42)
 			uid2 := int64(43)

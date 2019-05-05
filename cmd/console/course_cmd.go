@@ -60,12 +60,12 @@ var UserEnrollInCourse = &cobra.Command{
 
 		user, err := stores.User.Get(userID)
 		if err != nil {
-			log.Fatal("user with id %v not found\n", userID)
+			log.Fatalf("user with id %v not found\n", userID)
 		}
 
 		course, err := stores.Course.Get(courseID)
 		if err != nil {
-			log.Fatal("user with id %v not found\n", userID)
+			log.Fatalf("user with id %v not found\n", userID)
 		}
 
 		if err := stores.Course.Enroll(course.ID, user.ID, role); err != nil {

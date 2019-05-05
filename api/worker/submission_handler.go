@@ -200,6 +200,11 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
 
 	// 2. fetch submission file from server
 	r, err := http.NewRequest("GET", msg.SubmissionFileURL, nil)
+	if err != nil {
+		DefaultLogger.Printf("error: %v\n", err)
+		return err
+	}
+
 	r.Header.Add("Authorization", "Bearer "+msg.AccessToken)
 	if err := downloadFile(r, submissionPath); err != nil {
 		DefaultLogger.Printf("error: %v\n", err)
@@ -210,7 +215,12 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
 
 	// 3. fetch framework file from server
 	r, err = http.NewRequest("GET", msg.FrameworkFileURL, nil)
+	if err != nil {
+		DefaultLogger.Printf("error: %v\n", err)
+		return err
+	}
 	r.Header.Add("Authorization", "Bearer "+msg.AccessToken)
+
 	if err := downloadFile(r, frameworkPath); err != nil {
 		DefaultLogger.Printf("error: %v\n", err)
 		return err

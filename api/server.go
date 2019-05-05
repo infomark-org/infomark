@@ -122,7 +122,7 @@ func (srv *Server) Start() {
 	log.Info("starting cronjob for zipping submissions...")
 	srv.Cron.Start()
 
-	quit := make(chan os.Signal)
+	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
 	sig := <-quit
 	log.Info("Shutting down server... Reason:", sig)

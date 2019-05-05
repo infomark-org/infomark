@@ -66,6 +66,10 @@ func (rs *UserResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 
 	// fetch collection of users from database
 	users, err := rs.Stores.User.GetAll()
+	if err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
 
 	// render JSON reponse
 	if err = render.RenderList(w, r, newUserListResponse(users)); err != nil {

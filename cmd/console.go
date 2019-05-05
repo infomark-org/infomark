@@ -80,7 +80,7 @@ var UtilsCompletionCmd = &cobra.Command{
 		case "zsh":
 			RootCmd.GenZshCompletion(os.Stdout)
 		default:
-			log.Fatalln("Unknown shell %s, only bash and zsh are available\n", args[0])
+			log.Fatalf("Unknown shell %s, only bash and zsh are available\n", args[0])
 		}
 	},
 }

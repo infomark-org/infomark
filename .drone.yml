@@ -61,9 +61,7 @@ steps:
   commands:
   - cp .infomark.yml.ci .infomark.yml
   - export INFOMARK_CONFIG_DIR=`pwd`
-  -
-  - go test ./api/app -cover -v --goblin.timeout 15s
-  - go test ./api/helper -cover -v
+  - go test ./... -cover -v --goblin.timeout 15s
   environment:
     GOPROXY: https://gomods.patwie.com/
 

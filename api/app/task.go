@@ -63,6 +63,10 @@ func (rs *TaskResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 	// we use middle to detect whether there is a sheet given
 	sheet := r.Context().Value(common.CtxKeySheet).(*model.Sheet)
 	tasks, err = rs.Stores.Task.TasksOfSheet(sheet.ID)
+	if err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
 
 	// render JSON reponse
 	if err = render.RenderList(w, r, newTaskListResponse(tasks)); err != nil {

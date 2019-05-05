@@ -65,6 +65,10 @@ func (rs *SheetResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 
 	course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
 	sheets, err = rs.Stores.Sheet.SheetsOfCourse(course.ID)
+	if err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
 
 	givenRole := r.Context().Value(common.CtxKeyCourseRole).(authorize.CourseRole)
 

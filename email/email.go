@@ -164,7 +164,7 @@ func (sm *SendMailer) Send(e *Email) error {
 	pw.Write([]byte(fmt.Sprintf("To: %s\n", e.To)))
 	pw.Write([]byte(fmt.Sprintf("Subject: %s\n", e.Subject)))
 	pw.Write([]byte(fmt.Sprintf("\n"))) // blank line separating headers from body
-	pw.Write([]byte(fmt.Sprintf("%s", e.Body)))
+	pw.Write([]byte(e.Body))
 
 	err = pw.Close()
 	if err != nil {
@@ -188,5 +188,5 @@ func LoadAndFillTemplate(file string, data map[string]string) (string, error) {
 	}
 	var tpl bytes.Buffer
 	err = t.Execute(&tpl, data)
-	return tpl.String(), nil
+	return tpl.String(), err
 }

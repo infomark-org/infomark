@@ -309,6 +309,7 @@ func TestMaterial(t *testing.T) {
 
 			// tutors
 			w, err = tape.UploadWithClaims("/api/v1/courses/1/materials/1/file", filename, "application/zip", 2, false)
+			g.Assert(err).Equal(nil)
 			g.Assert(w.Code).Equal(http.StatusForbidden)
 
 			// admin
@@ -339,13 +340,13 @@ func TestMaterial(t *testing.T) {
 
 			// a file should be now served
 			w = tape.GetWithClaims("/api/v1/courses/1/materials/1/file", 1, true)
-			g.Assert(w.HeaderMap["Content-Type"][0]).Equal("application/zip")
+			g.Assert(w.Header().Get("Content-Type")).Equal("application/zip")
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 			course, err := stores.Material.IdentifyCourseOfMaterial(1)
 			g.Assert(err).Equal(nil)
 
-			_, params, err := mime.ParseMediaType(w.HeaderMap["Content-Disposition"][0])
+			_, params, err := mime.ParseMediaType(w.Header().Get("Content-Disposition"))
 			g.Assert(err).Equal(nil)
 			g.Assert(params["filename"]).Equal(fmt.Sprintf("%s-empty.zip", course.Name))
 		})
@@ -364,13 +365,13 @@ func TestMaterial(t *testing.T) {
 
 			// a file should be now served
 			w = tape.GetWithClaims("/api/v1/courses/1/materials/1/file", 1, true)
-			g.Assert(w.HeaderMap["Content-Type"][0]).Equal("application/pdf")
+			g.Assert(w.Header().Get("Content-Type")).Equal("application/pdf")
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 			course, err := stores.Material.IdentifyCourseOfMaterial(1)
 			g.Assert(err).Equal(nil)
 
-			_, params, err := mime.ParseMediaType(w.HeaderMap["Content-Disposition"][0])
+			_, params, err := mime.ParseMediaType(w.Header().Get("Content-Disposition"))
 			g.Assert(err).Equal(nil)
 			g.Assert(params["filename"]).Equal(fmt.Sprintf("%s-empty.pdf", course.Name))
 		})

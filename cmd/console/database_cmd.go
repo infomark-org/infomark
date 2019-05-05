@@ -166,7 +166,7 @@ var DatabaseRestoreCmd = &cobra.Command{
 		err = shell2.Wait()
 		// io.Copy(os.Stdout, &b2)
 		if err != nil {
-			log.Fatal("load db from was not successfull\n %s", err)
+			log.Fatalf("load db from was not successfull\n %s", err)
 		}
 	},
 }
@@ -211,6 +211,9 @@ var DatabaseBackupCmd = &cobra.Command{
 		shell1.Wait()
 		w.Close()
 		err := shell2.Wait()
+		if err != nil {
+			panic(err)
+		}
 
 		destination, err := os.Create(file)
 		if err != nil {
@@ -219,7 +222,7 @@ var DatabaseBackupCmd = &cobra.Command{
 		defer destination.Close()
 		_, err = io.Copy(destination, &b2)
 		if err != nil {
-			log.Fatal("storing snapshot was not successfull\n %s", err)
+			log.Fatalf("storing snapshot was not successfull\n %s", err)
 		}
 
 	},

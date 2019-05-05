@@ -348,6 +348,10 @@ func (rs *AccountResource) GetEnrollmentsHandler(w http.ResponseWriter, r *http.
 
 	// get enrollments
 	enrollments, err := rs.Stores.User.GetEnrollments(accessClaims.LoginID)
+	if err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
 
 	// render JSON reponse
 	if err = render.RenderList(w, r, rs.newUserEnrollmentsResponse(enrollments)); err != nil {

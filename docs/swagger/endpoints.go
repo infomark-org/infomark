@@ -19,7 +19,6 @@
 package swagger
 
 import (
-	"errors"
 	"fmt"
 	"go/ast"
 	"go/token"
@@ -48,7 +47,7 @@ func ParseResponse(source string) (*Response, error) {
 func ParseParameter(source string) (*Parameter, error) {
 	tmp := strings.Split(source, ",")
 	if len(tmp) != 2 {
-		return nil, errors.New(fmt.Sprintf("error in \"%s\"", source))
+		return nil, fmt.Errorf("error in \"%s\"", source)
 	}
 	stringName := strings.TrimSpace(tmp[0])
 	stringType := strings.TrimSpace(tmp[1])

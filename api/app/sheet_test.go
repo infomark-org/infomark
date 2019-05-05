@@ -170,6 +170,7 @@ func TestSheet(t *testing.T) {
 
 			// tutors
 			w, err = tape.UploadWithClaims("/api/v1/courses/1/sheets/1/file", filename, "application/zip", 2, false)
+			g.Assert(err).Equal(nil)
 			g.Assert(w.Code).Equal(http.StatusForbidden)
 
 			// admin

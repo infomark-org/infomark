@@ -129,6 +129,7 @@ func TestTask(t *testing.T) {
 
 			taskReturn := &TaskResponse{}
 			err = json.NewDecoder(w.Body).Decode(&taskReturn)
+			g.Assert(err).Equal(nil)
 			g.Assert(taskReturn.Name).Equal("new Task")
 			g.Assert(taskReturn.MaxPoints).Equal(88)
 			g.Assert(taskReturn.PrivateDockerImage.Valid).Equal(true)

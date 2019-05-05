@@ -47,7 +47,7 @@ type Field struct {
 func IdentString(str string, ch int) string {
 	preSpace := strings.Repeat(" ", ch)
 	lines := strings.Split(str, "\n")
-	for k, _ := range lines {
+	for k := range lines {
 		lines[k] = preSpace + lines[k]
 	}
 

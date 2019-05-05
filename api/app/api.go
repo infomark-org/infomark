@@ -25,13 +25,6 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type ctxKey int
-
-const (
-	ctxAccount ctxKey = iota
-	ctxProfile
-)
-
 // UserStore defines user related database queries
 type UserStore interface {
 	Get(userID int64) (*model.User, error)

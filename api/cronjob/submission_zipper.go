@@ -178,8 +178,6 @@ Please log in to grade these solutions.
 				fmt.Println(" --> already done", sheet.ID)
 			}
 
-		} else {
-			// fmt.Println("ok", sheet.ID)
 		}
 
 	}

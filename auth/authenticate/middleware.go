@@ -92,8 +92,6 @@ func RequiredValidAccessClaims(next http.Handler) http.Handler {
 		// serve next
 		ctx := context.WithValue(r.Context(), common.CtxKeyAccessClaims, accessClaims)
 		next.ServeHTTP(w, r.WithContext(ctx))
-		return
-
 	})
 }
 
@@ -146,6 +144,10 @@ func NewLoginLimiter(prefix string, limit string, redisURL string) (*LoginLimite
 		MaxRetry: 3,
 	})
 
+	if err != nil {
+		return nil, err
+	}
+
 	// store := memory.NewStore()
 
 	return &LoginLimiter{Store: &store, Rate: &rate, Prefix: prefix}, nil
@@ -182,7 +184,7 @@ func RateLimitMiddleware(prefix string, limit string, redisURL string) func(h ht
 
 			context, err := ll.Get(r, keyFunc)
 			if err != nil {
-				panic(err)
+				http.Error(w, "Internal Server Error", http.StatusInternalServerError)
 				return
 			}
 

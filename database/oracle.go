@@ -213,59 +213,25 @@ type StatementData struct {
 	Value  interface{}
 }
 
-// // isZero tests whether the incoming value is the default value.
-// // https://stackoverflow.com/a/27494761/7443104
-// func isZero2(v reflect.Value) bool {
-//   switch v.Kind() {
-//   case reflect.Func, reflect.Map, reflect.Slice:
-//     return v.IsNil()
-//   case reflect.Array:
-//     z := true
-//     for i := 0; i < v.Len(); i++ {
-//       z = z && isZero(v.Index(i))
-//     }
-//     return z
-//   case reflect.Struct:
-//     z := true
-//     for i := 0; i < v.NumField(); i++ {
-//       if v.Field(i).CanSet() {
-//         fmt.Println("Field ", i, v.Field(i), isZero(v.Field(i)))
-//         z = z && isZero(v.Field(i))
-//       } else {
-//         fmt.Println("Cannot set ", i, v.Field(i))
-//       }
-//     }
-//     return z
-//   case reflect.Ptr:
-//     if !v.IsNil() {
-//       return isZero(reflect.Indirect(v))
-//     }
-//   }
-//   // Compare other types directly:
-//   z := reflect.Zero(v.Type())
-//   result := v.Interface() == z.Interface()
+// We switched from PATCH to PUT
+// func isZero(value reflect.Value) bool {
+// 	switch value.Kind() {
+// 	case reflect.String:
+// 		return value.Len() == 0
+// 	case reflect.Bool:
+// 		return !value.Bool()
+// 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+// 		return value.Int() == 0
+// 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+// 		return value.Uint() == 0
+// 	case reflect.Float32, reflect.Float64:
+// 		return value.Float() == 0
+// 	case reflect.Interface, reflect.Ptr:
+// 		return value.IsNil()
+// 	}
 
-//   return result
+// 	return reflect.DeepEqual(value.Interface(), reflect.Zero(value.Type()).Interface())
 // }
-
-func isZero(value reflect.Value) bool {
-	switch value.Kind() {
-	case reflect.String:
-		return value.Len() == 0
-	case reflect.Bool:
-		return !value.Bool()
-	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		return value.Int() == 0
-	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-		return value.Uint() == 0
-	case reflect.Float32, reflect.Float64:
-		return value.Float() == 0
-	case reflect.Interface, reflect.Ptr:
-		return value.IsNil()
-	}
-
-	return reflect.DeepEqual(value.Interface(), reflect.Zero(value.Type()).Interface())
-}
 
 // PackStatementData reads a struct and extract necessary data for a query.
 // This skips the primary key "id" automatically. No data modification is made.
@@ -286,6 +252,9 @@ func (d *DatabaseSyntax) PackStatementData(src interface{}) ([]StatementData, er
 	structVal := reflect.ValueOf(src).Elem()
 	// structType := objectType.Elem()
 	data, err := parseStruct(reflect.TypeOf(src))
+	if err != nil {
+		return nil, err
+	}
 
 	// structVal := reflect.ValueOf(src).Elem()
 	for _, name := range columns {
@@ -307,7 +276,7 @@ func (d *DatabaseSyntax) PackStatementData(src interface{}) ([]StatementData, er
 			if reflect.TypeOf(null_string) == current_value.Type() {
 				// sql.NUll
 				// Valid is true if String is not NULL
-				if current_value.Field(0).Field(1).Bool() == true {
+				if current_value.Field(0).Field(1).Bool() {
 					statementDatas = append(statementDatas, StatementData{
 						Column: name,
 						Value:  current_value.Field(0).Field(0).String(),
@@ -329,8 +298,6 @@ func (d *DatabaseSyntax) PackStatementData(src interface{}) ([]StatementData, er
 						Column: name,
 						Value:  current_value.Interface(), //current_value.Interface(),
 					})
-				} else {
-					// fmt.Println("field ", name, " is zero", current_value.Interface(), current_value.Kind()) // DEBUG
 				}
 
 			}
@@ -365,8 +332,6 @@ func (d *DatabaseSyntax) PackStatementData(src interface{}) ([]StatementData, er
 
 			// }
 
-		} else {
-			// fmt.Println("field ", name, " is NOT present") // DEBUG
 		}
 
 	}
@@ -411,6 +376,9 @@ func (d *DatabaseSyntax) InsertStatement(table string, src interface{}) (string,
 	// set "created_at" and "updated_at"
 	current_time := time.Now()
 	structInfo, err := parseStruct(reflect.TypeOf(src))
+	if err != nil {
+		return "", nil, err
+	}
 	_, present := structInfo.fields["created_at"]
 	if present {
 		// we will need to set created_at
@@ -504,6 +472,9 @@ func (d *DatabaseSyntax) UpdateStatement(table string, id int64, src interface{}
 	}
 
 	structInfo, err := parseStruct(reflect.TypeOf(src))
+	if err != nil {
+		return "", nil, err
+	}
 	_, present := structInfo.fields["updated_at"]
 	if present {
 		// we will need to set updated_at

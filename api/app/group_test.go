@@ -119,6 +119,7 @@ func TestGroup(t *testing.T) {
 
 			entryReturn := &GroupResponse{}
 			err = json.NewDecoder(w.Body).Decode(&entryReturn)
+			g.Assert(err).Equal(nil)
 			g.Assert(entryReturn.Tutor.ID).Equal(tutorID)
 			g.Assert(entryReturn.CourseID).Equal(int64(1))
 			g.Assert(entryReturn.Description).Equal("blah blahe")

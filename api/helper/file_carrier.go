@@ -212,9 +212,14 @@ func FileExists(path string) bool {
 }
 
 // FileTouch creates an empty file
-func FileTouch(path string) error {
+func FileTouch(path string) (err error) {
 	emptyFile, err := os.Create(path)
-	defer emptyFile.Close()
+
+	defer func() {
+		if lerr := emptyFile.Close(); lerr != nil {
+			err = lerr
+		}
+	}()
 	return err
 }
 

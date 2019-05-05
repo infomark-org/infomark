@@ -68,7 +68,7 @@ func main() {
 	routes := GetAllRoutes()
 	for _, route := range routes {
 		found := false
-		for url, _ := range endpoints {
+		for url := range endpoints {
 			if route.Path == url {
 
 				for _, action := range endpoints[url] {
@@ -231,7 +231,7 @@ func main() {
 
 	// create all list responses
 	pre := strings.Repeat(" ", 4)
-	for url, _ := range endpoints {
+	for url := range endpoints {
 		for _, action := range endpoints[url] {
 			for _, r := range action.Details.Responses {
 				text := strings.TrimSpace(r.Text)
@@ -258,7 +258,7 @@ func main() {
 	}
 
 	f.WriteString(fmt.Sprintf("paths:\n"))
-	for url, _ := range endpoints {
+	for url := range endpoints {
 
 		f.WriteString(fmt.Sprintf("  %s:\n", url))
 		for _, action := range endpoints[url] {

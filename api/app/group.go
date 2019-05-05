@@ -68,6 +68,10 @@ func (rs *GroupResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 
 	course := r.Context().Value(common.CtxKeyCourse).(*model.Course)
 	groups, err = rs.Stores.Group.GroupsOfCourse(course.ID)
+	if err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
 
 	// render JSON reponse
 	if err = render.RenderList(w, r, rs.newGroupListResponse(groups)); err != nil {

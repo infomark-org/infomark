@@ -111,8 +111,10 @@ func (c *Consumer) Setup() (<-chan amqp.Delivery, error) {
 		return nil, fmt.Errorf("Queue Declare: %s", err)
 	}
 
-	logger.Info("declared Queue (%d messages, %d consumers), binding to Exchange",
-		state.Messages, state.Consumers)
+	logger.WithFields(logrus.Fields{
+		"messages":  state.Messages,
+		"consumers": state.Consumers,
+	}).Info("declared Queue, binding to Exchange")
 
 	if err = c.channel.QueueBind(
 		c.Config.Queue,    // name of the queue
@@ -124,7 +126,7 @@ func (c *Consumer) Setup() (<-chan amqp.Delivery, error) {
 		return nil, fmt.Errorf("Queue Bind: %s", err)
 	}
 
-	logger.Info("Queue bound to Exchange, starting Consume (Consumer tag '%s')", c.Config.Tag)
+	logger.Info("Queue bound to Exchange, starting Consume")
 	deliveries, err := c.channel.Consume(
 		c.Config.Queue, // name
 		c.Config.Tag,   // consumerTag,

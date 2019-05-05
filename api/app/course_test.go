@@ -144,6 +144,7 @@ func TestCourse(t *testing.T) {
 			enrollmentsExpected, err := stores.Course.FindEnrolledUsers(courseActive.ID,
 				[]string{"0", "1", "2"}, "%chi%",
 			)
+			g.Assert(err).Equal(nil)
 
 			w := tape.GetWithClaims("/api/v1/courses/1/enrollments?q=chi", 1, false)
 			enrollmentsActual := []enrollmentResponse{}
@@ -264,6 +265,7 @@ func TestCourse(t *testing.T) {
 			// verify body
 			courseReturn := &courseResponse{}
 			err = json.NewDecoder(w.Body).Decode(&courseReturn)
+			g.Assert(err).Equal(nil)
 			g.Assert(courseReturn.Name).Equal(entrySent.Name)
 			g.Assert(courseReturn.Description).Equal(entrySent.Description)
 			g.Assert(courseReturn.BeginsAt.Equal(entrySent.BeginsAt)).Equal(true)

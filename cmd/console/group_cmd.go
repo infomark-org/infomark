@@ -460,6 +460,7 @@ var GroupParseBidsSolution = &cobra.Command{
 
 		// we perform the update as a transaction
 		tx, err := db.Begin()
+		failWhenSmallestWhiff(err)
 		// delete assignments so far
 		_, err = tx.Exec(`
 DELETE FROM
