@@ -20,7 +20,10 @@ auth_jwt_access_expiry: 15m
 auth_jwt_refresh_expiry: 10h
 auth_session_secret: u46IpCV9y5Vlur8YvODJEhgOY8m9JVE4sdfdfsdf
 auth_total_requests_per_minute: 600
-# when using https
+auth_cookie_lifetime: 24h
+auth_cookie_idle_timeout: 60m
+
+# when using https (should be true)
 auth_secure_cookie: false
 
 # database
