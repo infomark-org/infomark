@@ -488,6 +488,14 @@ func (rs *GroupResource) SendEmailHandler(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	msgOwn := email.NewEmailFromUser(
+		accessUser.Email,
+		data.Subject,
+		data.Body,
+		accessUser,
+	)
+	email.OutgoingEmailsChannel <- msg
+
 	for _, recipient := range recipients {
 		msg := email.NewEmailFromUser(
 			recipient.Email,
