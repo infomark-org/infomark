@@ -22,17 +22,21 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/cgtuebingen/infomark-backend/api/helper"
 	"github.com/cgtuebingen/infomark-backend/api/shared"
 	"github.com/cgtuebingen/infomark-backend/auth/authenticate"
+	"github.com/cgtuebingen/infomark-backend/model"
 	"github.com/cgtuebingen/infomark-backend/service"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
 func init() {
-	SubmissionCmd.AddCommand(SubmissionEnqueueCmd)
+	SubmissionCmd.AddCommand(SubmissionTriggerCmd)
+	SubmissionCmd.AddCommand(SubmissionTriggerAllCmd)
 	SubmissionCmd.AddCommand(SubmissionRunCmd)
 
 }
@@ -42,8 +46,8 @@ var SubmissionCmd = &cobra.Command{
 	Short: "Management of submission",
 }
 
-var SubmissionEnqueueCmd = &cobra.Command{
-	Use:   "enqeue [submissionID]",
+var SubmissionTriggerCmd = &cobra.Command{
+	Use:   "trigger [submissionID]",
 	Short: "put submission into testing queue",
 	Long:  `will enqueue a submission again into the testing queue`,
 	Args:  cobra.ExactArgs(1),
@@ -196,6 +200,116 @@ var SubmissionRunCmd = &cobra.Command{
 
 		} else {
 			fmt.Println("skip private test, there is no docker file")
+		}
+
+	},
+}
+
+type SubmissionWithGradeID struct {
+	*model.Submission
+	GradeID int64 `db:"grade_id"`
+}
+
+var SubmissionTriggerAllCmd = &cobra.Command{
+	Use:   "trigger_all [taskID] [kind]",
+	Short: "trigger_all tests all submissions for a given task",
+	Long: `Will enqueue all submissions for a given task again into the testing queue
+This triggers all [kind]-tests again (private, public).
+`,
+	Args: cobra.ExactArgs(2),
+	Run: func(cmd *cobra.Command, args []string) {
+
+		taskID := MustInt64Parameter(args[0], "taskID")
+
+		switch args[1] {
+		case "public", "private":
+		default:
+			log.Fatalf("kind '%s' must be one of 'public', 'private'\n", args[2])
+		}
+
+		db, stores := MustConnectAndStores()
+
+		task, err := stores.Task.Get(taskID)
+		failWhenSmallestWhiff(err)
+
+		sheet, err := stores.Task.IdentifySheetOfTask(task.ID)
+		failWhenSmallestWhiff(err)
+
+		course, err := stores.Sheet.IdentifyCourseOfSheet(sheet.ID)
+		failWhenSmallestWhiff(err)
+
+		log.Println("starting producer...")
+
+		cfg := &service.Config{
+			Connection:   viper.GetString("rabbitmq_connection"),
+			Exchange:     viper.GetString("rabbitmq_exchange"),
+			ExchangeType: viper.GetString("rabbitmq_exchangeType"),
+			Queue:        viper.GetString("rabbitmq_queue"),
+			Key:          viper.GetString("rabbitmq_key"),
+			Tag:          "SimpleSubmission",
+		}
+
+		submissions := []SubmissionWithGradeID{}
+		err = db.Select(&submissions, `
+SELECT
+  s.*, g.id grade_id
+FROM
+  submissions s
+INNER JOIN grades g ON s.id = g.submission_ID
+WHERE task_id = $1
+    `, task.ID)
+		failWhenSmallestWhiff(err)
+
+		producer, _ := service.NewProducer(cfg)
+		logger := logrus.New()
+		logger.SetFormatter(&logrus.TextFormatter{
+			DisableColors: false,
+			FullTimestamp: true,
+		})
+		logger.Out = os.Stdout
+
+		for _, submissionWithGrade := range submissions {
+			sublog := logger.WithFields(logrus.Fields{"submissionID": submissionWithGrade.ID})
+
+			sublog.Info("Try to enqueue")
+
+			submissionHnd := helper.NewSubmissionFileHandle(submissionWithGrade.ID)
+			if !submissionHnd.Exists() {
+				sublog.Warn("uploaded file does not exists --> skip")
+			}
+
+			sha256, err := helper.NewSubmissionFileHandle(submissionWithGrade.ID).Sha256()
+			if err != nil {
+				sublog.Warn("Skip as sha cannot be computed")
+			}
+
+			tokenManager, err := authenticate.NewTokenAuth()
+			failWhenSmallestWhiff(err)
+			accessToken, err := tokenManager.CreateAccessJWT(
+				authenticate.NewAccessClaims(1, true))
+			failWhenSmallestWhiff(err)
+
+			var (
+				body []byte
+				merr error
+			)
+
+			if args[1] == "public" {
+				body, merr = json.Marshal(shared.NewSubmissionAMQPWorkerRequest(
+					course.ID, taskID, submissionWithGrade.ID, submissionWithGrade.GradeID,
+					accessToken, viper.GetString("url"), task.PublicDockerImage.String, sha256, "public"))
+
+			} else {
+				body, merr = json.Marshal(shared.NewSubmissionAMQPWorkerRequest(
+					course.ID, taskID, submissionWithGrade.ID, submissionWithGrade.GradeID,
+					accessToken, viper.GetString("url"), task.PrivateDockerImage.String, sha256, "private"))
+			}
+			if merr != nil {
+				log.Fatalf("json.Marshal: %s", merr)
+			}
+
+			producer.Publish(body)
+
 		}
 
 	},
