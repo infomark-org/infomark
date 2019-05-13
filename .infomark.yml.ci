@@ -2,9 +2,6 @@
 # ------------------------------------------------------------------------------
 
 rabbitmq_connection: amqp://user:password@localhost:5672/
-rabbitmq_exchange: test-exchange
-rabbitmq_exchangeType: direct
-rabbitmq_queue: test-queue
 rabbitmq_key: test-key
 
 

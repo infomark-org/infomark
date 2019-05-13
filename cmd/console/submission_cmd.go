@@ -75,9 +75,9 @@ var SubmissionTriggerCmd = &cobra.Command{
 
 		cfg := &service.Config{
 			Connection:   viper.GetString("rabbitmq_connection"),
-			Exchange:     viper.GetString("rabbitmq_exchange"),
-			ExchangeType: viper.GetString("rabbitmq_exchangeType"),
-			Queue:        viper.GetString("rabbitmq_queue"),
+			Exchange:     "infomark-worker-exchange",
+			ExchangeType: "direct",
+			Queue:        "infomark-worker-submissions",
 			Key:          viper.GetString("rabbitmq_key"),
 			Tag:          "SimpleSubmission",
 		}
@@ -242,9 +242,9 @@ This triggers all [kind]-tests again (private, public).
 
 		cfg := &service.Config{
 			Connection:   viper.GetString("rabbitmq_connection"),
-			Exchange:     viper.GetString("rabbitmq_exchange"),
-			ExchangeType: viper.GetString("rabbitmq_exchangeType"),
-			Queue:        viper.GetString("rabbitmq_queue"),
+			Exchange:     "infomark-worker-exchange",
+			ExchangeType: "direct",
+			Queue:        "infomark-worker-submissions",
 			Key:          viper.GetString("rabbitmq_key"),
 			Tag:          "SimpleSubmission",
 		}

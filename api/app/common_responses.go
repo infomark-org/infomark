@@ -20,14 +20,16 @@ package app
 
 import (
 	"net/http"
+
+	"github.com/cgtuebingen/infomark-backend/symbol"
 )
 
-// courseResponse is the response payload for course management.
+// rawResponse is the response payload for course management.
 type rawResponse struct {
 	Text string `json:"text" example:"some text"`
 }
 
-// Render post-processes a courseResponse.
+// Render post-processes a rawResponse.
 func (body *rawResponse) Render(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
@@ -37,4 +39,23 @@ func newRawResponse(text string) *rawResponse {
 	return &rawResponse{
 		Text: text,
 	}
+}
+
+// versionResponse is the response payload for course management.
+type versionResponse struct {
+	Commit  string `json:"commit" example:"d725269a8a7498aae1dbb07786bed4c88b002661"`
+	Version string `json:"version" example:"1"`
+}
+
+// newVersionResponse creates a response from a course model.
+func newVersionResponse() *versionResponse {
+	return &versionResponse{
+		Commit:  symbol.GitCommit,
+		Version: symbol.Version.String(),
+	}
+}
+
+// Render post-processes a versionResponse.
+func (body *versionResponse) Render(w http.ResponseWriter, r *http.Request) error {
+	return nil
 }

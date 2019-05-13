@@ -24,16 +24,19 @@ import (
 
 	background "github.com/cgtuebingen/infomark-backend/api/worker"
 	"github.com/cgtuebingen/infomark-backend/service"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
 // Worker provides a background worker
-type Worker struct{}
+type Worker struct {
+	NumInstances int
+}
 
 // NewWorker creates and configures an background worker
-func NewWorker() (*Worker, error) {
+func NewWorker(numInstances int) (*Worker, error) {
 	log.Println("configuring worker...")
-	return &Worker{}, nil
+	return &Worker{NumInstances: numInstances}, nil
 }
 
 // Start runs ListenAndServe on the http.Worker with graceful shutdown.
@@ -42,25 +45,34 @@ func (srv *Worker) Start() {
 
 	cfg := &service.Config{
 		Connection:   viper.GetString("rabbitmq_connection"),
-		Exchange:     viper.GetString("rabbitmq_exchange"),
-		ExchangeType: viper.GetString("rabbitmq_exchangeType"),
-		Queue:        viper.GetString("rabbitmq_queue"),
+		Exchange:     "infomark-worker-exchange",
+		ExchangeType: "direct",
+		Queue:        "infomark-worker-submissions",
 		Key:          viper.GetString("rabbitmq_key"),
 		Tag:          "SimpleSubmission",
 	}
 
-	consumer, _ := service.NewConsumer(cfg, background.DefaultSubmissionHandler.Handle)
-	deliveries, err := consumer.Setup()
-	if err != nil {
-		panic(err)
-	}
+	consumers := []*service.Consumer{}
 
-	go consumer.HandleLoop(deliveries)
+	for i := 0; i < srv.NumInstances; i++ {
+		log.WithFields(logrus.Fields{"instance": i}).Info("start")
+		consumer, _ := service.NewConsumer(cfg, background.DefaultSubmissionHandler.Handle, i)
+		deliveries, err := consumer.Setup()
+		if err != nil {
+			panic(err)
+		}
+		consumers = append(consumers, consumer)
+		go consumers[i].HandleLoop(deliveries)
+	}
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt)
 	sig := <-quit
 	log.Println("Shutting down Worker... Reason:", sig)
-	consumer.Shutdown()
+
+	for i := 0; i < srv.NumInstances; i++ {
+		consumers[i].Shutdown()
+	}
+
 	log.Println("Worker gracefully stopped")
 }

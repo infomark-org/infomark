@@ -16,36 +16,32 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package cmd
+package symbol
 
 import (
-	"log"
-
-	"github.com/cgtuebingen/infomark-backend/api"
-
-	"github.com/spf13/cobra"
+	"github.com/coreos/go-semver/semver"
 )
 
-var numWorkers = 1
+var (
+	// GitCommit is the git commit that was compiled
+	GitCommit string = "YXZ"
+	// VersionMajor is for an API incompatible changes.
+	VersionMajor int64 = 0
+	// VersionMinor is for functionality in a backwards-compatible manner.
+	VersionMinor int64 = 0
+	// VersionPatch is for backwards-compatible bug fixes.
+	VersionPatch int64 = 1
+	// VersionPre indicates prerelease.
+	VersionPre = "beta"
+	// VersionDev indicates development branch. Releases will be empty string.
+	VersionDev string
+)
 
-var workCmd = &cobra.Command{
-	Use:   "work",
-	Short: "start a worker",
-	Long: `Starts a background worker which will use docker to test submissions.
-Can be used with the flag "-n" to start multiple workers within one process.
-`,
-	Run: func(cmd *cobra.Command, args []string) {
-
-		worker, err := api.NewWorker(numWorkers)
-		if err != nil {
-			log.Fatal(err)
-		}
-		worker.Start()
-	},
-}
-
-func init() {
-
-	workCmd.Flags().IntVarP(&numWorkers, "number", "n", 1, "number of workers within one routine")
-	RootCmd.AddCommand(workCmd)
+// Version is the specification version that the package types support.
+var Version = semver.Version{
+	Major:      VersionMajor,
+	Minor:      VersionMinor,
+	Patch:      VersionPatch,
+	PreRelease: semver.PreRelease(VersionPre),
+	Metadata:   VersionDev,
 }

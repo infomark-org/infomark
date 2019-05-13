@@ -33,17 +33,21 @@ type Consumer struct {
 	channel *amqp.Channel
 	done    chan error
 
+	instanceID int
+
 	handleFunc func(body []byte) error
 }
 
 // NewConsumer creates new consumer which can act on AMPQ messages
-func NewConsumer(cfg *Config, handleFunc func(body []byte) error) (*Consumer, error) {
+func NewConsumer(cfg *Config, handleFunc func(body []byte) error, instanceID int) (*Consumer, error) {
 
 	consumer := &Consumer{
 		conn:       nil,
 		channel:    nil,
 		done:       make(chan error),
 		handleFunc: handleFunc,
+
+		instanceID: instanceID,
 
 		Config: cfg,
 	}
@@ -55,6 +59,7 @@ func NewConsumer(cfg *Config, handleFunc func(body []byte) error) (*Consumer, er
 func (c *Consumer) Setup() (<-chan amqp.Delivery, error) {
 	logger := log.WithFields(logrus.Fields{
 		// "connection":   c.Config.Connection,
+		"instance":     c.instanceID,
 		"exchange":     c.Config.Exchange,
 		"exchangetype": c.Config.ExchangeType,
 		"queue":        c.Config.Queue,

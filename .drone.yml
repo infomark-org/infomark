@@ -23,7 +23,7 @@ steps:
   pull: default
   image: golang
   commands:
-  - sed -i 's/"X-INFOMARK-VERSION", "0.0.1"/"X-INFOMARK-VERSION", "${DRONE_COMMIT_SHA}"/g' api/app/router.go
+  - sed -i 's/"YXZ"/"${DRONE_COMMIT_SHA}"/g' symbol/version.go
   - go version
   - go build infomark.go
   environment:

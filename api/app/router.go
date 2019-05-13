@@ -30,6 +30,7 @@ import (
 
 	"github.com/cgtuebingen/infomark-backend/auth/authenticate"
 	"github.com/cgtuebingen/infomark-backend/auth/authorize"
+	"github.com/cgtuebingen/infomark-backend/symbol"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
@@ -74,21 +75,24 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 		start := time.Now()
 		next.ServeHTTP(w, r)
 		end := time.Now()
-		log.WithFields(logrus.Fields{
-			"method": r.Method,
-			// "proto":   r.Proto,
-			"agent":   r.UserAgent(),
-			"remote":  r.RemoteAddr,
-			"latency": end.Sub(start),
-			"time":    end.Format(time.RFC3339),
-		}).Info(r.RequestURI)
+		if r.RequestURI != "/metrics" {
+			log.WithFields(logrus.Fields{
+				"method": r.Method,
+				// "proto":   r.Proto,
+				"agent":   r.UserAgent(),
+				"remote":  r.RemoteAddr,
+				"latency": end.Sub(start),
+				"time":    end.Format(time.RFC3339),
+			}).Info(r.RequestURI)
+		}
 	})
 }
 
 // VersionMiddleware writes the current API version to the headers.
 func VersionMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("X-INFOMARK-VERSION", "0.0.1")
+		w.Header().Set("X-INFOMARK-VERSION", symbol.Version.String())
+		w.Header().Set("X-INFOMARK-Commit", symbol.GitCommit)
 		next.ServeHTTP(w, r)
 	})
 }
@@ -171,6 +175,7 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 				r.Post("/auth/confirm_email", appAPI.Auth.ConfirmEmailHandler)
 				r.Post("/account", appAPI.Account.CreateHandler)
 				r.Get("/ping", appAPI.Common.PingHandler)
+				r.Get("/version", appAPI.Common.VersionHandler)
 				r.Get("/privacy_statement", appAPI.Common.PrivacyStatementHandler)
 			})
 
