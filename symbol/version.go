@@ -32,7 +32,7 @@ var (
 	// VersionPatch is for backwards-compatible bug fixes.
 	VersionPatch int64 = 1
 	// VersionPre indicates prerelease.
-	VersionPre = "beta"
+	VersionPre = "beta-1"
 	// VersionDev indicates development branch. Releases will be empty string.
 	VersionDev string
 )

@@ -276,7 +276,7 @@ func (rs *AuthResource) RequestPasswordResetHandler(w http.ResponseWriter, r *ht
 	msg, err := email.NewEmailFromTemplate(
 		user.Email,
 		"Password Reset Instructions",
-		"request_password_token.en.txt",
+		email.RequestPasswordTokenTemailTemplateEN,
 		map[string]string{
 			"first_name":           user.FirstName,
 			"last_name":            user.LastName,
