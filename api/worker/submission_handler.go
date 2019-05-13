@@ -28,6 +28,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cgtuebingen/infomark-backend/api/app"
 	"github.com/cgtuebingen/infomark-backend/api/helper"
 	"github.com/cgtuebingen/infomark-backend/api/shared"
 	"github.com/cgtuebingen/infomark-backend/service"
@@ -237,7 +238,7 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
 	// Under circumstances there is no guarantee that the following request will be issues
 	// BEFORE the actual test result.
 	// we use a HTTP Request to send the answer
-	// r = tape.BuildDataRequest("POST", msg.ResultEndpointURL, tape.ToH(&shared.SubmissionWorkerResponse{
+	// r = tape.BuildDataRequest("POST", msg.ResultEndpointURL, tape.ToH(&app.GradeFromWorkerRequest{
 	//   Log:    "submission is currently being tested ...",
 	//   Status: 1,
 	// }))
@@ -271,7 +272,9 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
 	var exit int64
 	var stdout string
 
-	var workerResp *shared.SubmissionWorkerResponse
+	workerResp := &app.GradeFromWorkerRequest{}
+	workerResp.EnqueuedAt = msg.EnqueuedAt
+	workerResp.StartedAt = time.Now()
 
 	stdout, exit, err = ds.Run(
 		msg.DockerImage,
@@ -292,10 +295,10 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
 	if exit == symbol.TestingResultSuccess.AsInt64() {
 		stdout = cleanDockerOutput(stdout)
 		// 3. push result back to server
-		workerResp = &shared.SubmissionWorkerResponse{
-			Log:    stdout,
-			Status: int(exit),
-		}
+		workerResp.Log = stdout
+		workerResp.Status = symbol.TestingResult(exit)
+		workerResp.FinishedAt = time.Now()
+
 	} else {
 
 		DefaultLogger.WithFields(logrus.Fields{
@@ -305,13 +308,12 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
 			"image":        msg.DockerImage,
 		}).Warn(err)
 
-		workerResp = &shared.SubmissionWorkerResponse{
-			Log: fmt.Sprintf(`
-        There has been an issue during testing your upload (The ID is %v).
+		workerResp.Log = fmt.Sprintf(`There has been an issue during testing your upload (The ID is %v).
         The testing-framework has failed (not the server).\n`,
-				msg.SubmissionID),
-			Status: int(exit),
-		}
+			msg.SubmissionID)
+		workerResp.Status = symbol.TestingResult(exit)
+		workerResp.FinishedAt = time.Now()
+
 	}
 
 	// we use a HTTP Request to send the answer

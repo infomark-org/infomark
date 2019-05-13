@@ -20,6 +20,7 @@ package app
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/cgtuebingen/infomark-backend/symbol"
 	validation "github.com/go-ozzo/ozzo-validation"
@@ -60,8 +61,11 @@ func (body *GradeRequest) Validate() error {
 // GradeFromWorkerRequest represents the request a backendwork will sent
 // after completion.
 type GradeFromWorkerRequest struct {
-	Log    string               `json:"log" example:"failed in line ..."`
-	Status symbol.TestingResult `json:"status" example:"1"`
+	Log        string               `json:"log" example:"failed in line ..."`
+	Status     symbol.TestingResult `json:"status" example:"1"`
+	EnqueuedAt time.Time            `json:"enqueued_at"`
+	StartedAt  time.Time            `json:"started_at"`
+	FinishedAt time.Time            `json:"finished_at"`
 }
 
 // Bind preprocesses a GradeRequest.

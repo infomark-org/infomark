@@ -66,6 +66,39 @@ var (
 		//
 		[]string{"task_id", "kind"},
 	)
+
+	totalDockerTimeHist = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Namespace: "worker",
+			Subsystem: "submissions",
+			Name:      "totalTime",
+			Help:      "Total time in seconds taken from received upload to finished docker run",
+		},
+		//
+		[]string{"task_id", "kind"},
+	)
+
+	totalDockerRunTimeHist = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Namespace: "worker",
+			Subsystem: "submissions",
+			Name:      "totalRunTime",
+			Help:      "Total time in seconds taken spent inside docker when running tests",
+		},
+		//
+		[]string{"task_id", "kind"},
+	)
+
+	totalDockerWaitTimeHist = prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Namespace: "worker",
+			Subsystem: "submissions",
+			Name:      "totalWaitTime",
+			Help:      "Total time waited between uploading and fetched from worker",
+		},
+		//
+		[]string{"task_id", "kind"},
+	)
 )
 
 func init() {
@@ -74,4 +107,7 @@ func init() {
 	prometheus.MustRegister(totalDockerFailExitCounterVec)
 	prometheus.MustRegister(totalDockerSuccessExitCounterVec)
 	prometheus.MustRegister(totalFailedLoginsVec)
+	prometheus.MustRegister(totalDockerTimeHist)
+	prometheus.MustRegister(totalDockerRunTimeHist)
+	prometheus.MustRegister(totalDockerWaitTimeHist)
 }

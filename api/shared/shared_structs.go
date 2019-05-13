@@ -20,24 +20,29 @@ package shared
 
 import (
 	"fmt"
+	"time"
 )
 
 // SubmissionAMQPWorkerRequest is the message which is handed over to the background workers
 type SubmissionAMQPWorkerRequest struct {
-	SubmissionID      int64  `json:"submission_id"`
-	AccessToken       string `json:"access_token"`
-	FrameworkFileURL  string `json:"framework_file_url"`
-	SubmissionFileURL string `json:"submission_file_url"`
-	ResultEndpointURL string `json:"result_endpoint_url"`
-	DockerImage       string `json:"docker_image"`
-	Sha256            string `json:"sha_256"`
+	SubmissionID      int64     `json:"submission_id"`
+	AccessToken       string    `json:"access_token"`
+	FrameworkFileURL  string    `json:"framework_file_url"`
+	SubmissionFileURL string    `json:"submission_file_url"`
+	ResultEndpointURL string    `json:"result_endpoint_url"`
+	DockerImage       string    `json:"docker_image"`
+	Sha256            string    `json:"sha_256"`
+	EnqueuedAt        time.Time `json:"enqueued_at"`
 }
 
-// SubmissionWorkerResponse is the message handed from the workers to the server
-type SubmissionWorkerResponse struct {
-	Log    string `json:"log"`
-	Status int    `json:"status"`
-}
+// // SubmissionWorkerResponse is the message handed from the workers to the server
+// type SubmissionWorkerResponse struct {
+// 	Log        string    `json:"log"`
+// 	Status     int       `json:"status"`
+// 	EnqueuedAt time.Time `json:"enqueued_at"`
+// 	StartedAt  time.Time `json:"started_at"`
+// 	FinishedAt time.Time `json:"finished_at"`
+// }
 
 // NewSubmissionAMQPWorkerRequest creates a new message for the workers
 func NewSubmissionAMQPWorkerRequest(
@@ -46,6 +51,7 @@ func NewSubmissionAMQPWorkerRequest(
 
 	return &SubmissionAMQPWorkerRequest{
 		SubmissionID: submissionID,
+		EnqueuedAt:   time.Now(),
 		AccessToken:  accessToken,
 		FrameworkFileURL: fmt.Sprintf("%s/api/v1/courses/%d/tasks/%d/%s_file",
 			url,

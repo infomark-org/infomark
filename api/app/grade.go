@@ -160,6 +160,24 @@ func (rs *GradeResource) PublicResultEditHandler(w http.ResponseWriter, r *http.
 		).Inc()
 	}
 
+	totalTime := data.FinishedAt.Sub(data.EnqueuedAt)
+	runTime := data.FinishedAt.Sub(data.StartedAt)
+	waitTime := data.StartedAt.Sub(data.EnqueuedAt)
+
+	totalDockerTimeHist.WithLabelValues(
+		fmt.Sprintf("%d", submission.TaskID),
+		"public",
+	).Observe(totalTime.Seconds())
+
+	totalDockerRunTimeHist.WithLabelValues(
+		fmt.Sprintf("%d", submission.TaskID),
+		"public",
+	).Observe(runTime.Seconds())
+
+	totalDockerWaitTimeHist.WithLabelValues(
+		fmt.Sprintf("%d", submission.TaskID),
+		"public",
+	).Observe(waitTime.Seconds())
 	// currentGrade.PublicTestLog = data.Log
 	// currentGrade.PublicTestStatus = data.Status
 	// currentGrade.PublicExecutionState = 2
@@ -215,6 +233,25 @@ func (rs *GradeResource) PrivateResultEditHandler(w http.ResponseWriter, r *http
 			"private",
 		).Inc()
 	}
+
+	totalTime := data.FinishedAt.Sub(data.EnqueuedAt)
+	runTime := data.FinishedAt.Sub(data.StartedAt)
+	waitTime := data.StartedAt.Sub(data.EnqueuedAt)
+
+	totalDockerTimeHist.WithLabelValues(
+		fmt.Sprintf("%d", submission.TaskID),
+		"private",
+	).Observe(totalTime.Seconds())
+
+	totalDockerRunTimeHist.WithLabelValues(
+		fmt.Sprintf("%d", submission.TaskID),
+		"private",
+	).Observe(runTime.Seconds())
+
+	totalDockerWaitTimeHist.WithLabelValues(
+		fmt.Sprintf("%d", submission.TaskID),
+		"private",
+	).Observe(waitTime.Seconds())
 
 	// currentGrade.PrivateTestLog = data.Log
 	// currentGrade.PrivateTestStatus = data.Status
