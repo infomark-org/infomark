@@ -52,6 +52,22 @@ func (rs *CommonResource) PingHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("pong"))
 }
 
+// VersionHandler is public endpoint for
+// URL: /version
+// METHOD: get
+// TAG: common
+// RESPONSE: 200,versionResponse
+// SUMMARY:  all version information
+func (rs *CommonResource) VersionHandler(w http.ResponseWriter, r *http.Request) {
+	// render JSON reponse
+	if err := render.Render(w, r, newVersionResponse()); err != nil {
+		render.Render(w, r, ErrRender(err))
+		return
+	}
+
+	render.Status(r, http.StatusOK)
+}
+
 // PrivacyStatementHandler is public endpoint for
 // URL: /privacy_statement
 // METHOD: get

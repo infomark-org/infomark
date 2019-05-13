@@ -28,7 +28,7 @@ import (
 // serveCmd represents the serve command
 var serveCmd = &cobra.Command{
 	Use:   "serve",
-	Short: "start http server with configured api",
+	Short: "start the infomark RESTful JSON backend server with configured api",
 	Long:  `Starts a http server and serves the configured api`,
 	Run: func(cmd *cobra.Command, args []string) {
 		server, err := api.NewServer()

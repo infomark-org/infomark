@@ -31,10 +31,12 @@ import (
 var RootCmd = &cobra.Command{
 	Use:   "infomark",
 	Short: "A CI based course framework",
-	Long: `InfoMark distributes exercise sheets in an course management system and
-tests students homework submission for these exercises sheet automatically.
-
+	Long: `InfoMark is a a scalable, modern and open-source
+online course management system supporting auto-testing/grading of
+programming assignments and distributing exercise sheets.
 The infomark-server is the REST api backend for the course distributing system.
+
+Complete documentation is available at https://infomark.org/.
 	`,
 }
 
