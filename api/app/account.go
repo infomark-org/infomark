@@ -113,7 +113,7 @@ func sendConfirmEmailForUser(user *model.User) error {
 	msg, err := email.NewEmailFromTemplate(
 		user.Email,
 		"Confirm Account Instructions",
-		"confirm_email.en.txt",
+		email.ConfirmEmailTemplateEN,
 		map[string]string{
 			"first_name":            user.FirstName,
 			"last_name":             user.LastName,

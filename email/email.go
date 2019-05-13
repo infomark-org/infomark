@@ -63,8 +63,8 @@ func NewEmailFromUser(toEmail string, subject string, body string, user *model.U
 }
 
 // NewEmailFromTemplate creates a new email structure filling a template file
-func NewEmailFromTemplate(toEmail string, subject string, file string, data map[string]string) (*Email, error) {
-	body, err := LoadAndFillTemplate(file, data)
+func NewEmailFromTemplate(toEmail string, subject string, tpl *template.Template, data map[string]string) (*Email, error) {
+	body, err := FillTemplate(tpl, data)
 	if err != nil {
 		return nil, err
 	}
@@ -190,3 +190,40 @@ func LoadAndFillTemplate(file string, data map[string]string) (string, error) {
 	err = t.Execute(&tpl, data)
 	return tpl.String(), err
 }
+
+// FillTemplate loads a template and fills out the placeholders.
+func FillTemplate(t *template.Template, data map[string]string) (string, error) {
+	var tpl bytes.Buffer
+	err := t.Execute(&tpl, data)
+	return tpl.String(), err
+}
+
+const (
+	confirmEmailTemplateSrcEN = `Hi {{.first_name}} {{.last_name}}!
+
+You must now confirm your email address to:
+   - Log into our system and upload your homework solutions
+   - Reset your password
+   - Receive account alerts
+
+Please use the following link to confirm your email address:
+
+{{.confirm_email_url}}/{{.confirm_email_address}}/{{.confirm_email_token}}
+
+`
+
+	requestPasswordTokenTemailTemplateSrcEN = `Hi {{.first_name}} {{.last_name}}!
+
+We got a request to change your password. You can change your password using the following link.
+
+{{.reset_password_url}}/{{.email_address}}/{{.reset_password_token}}
+
+If you have not requested the change, you can ignore this mail.
+
+Your password can only be changed manually by you.
+
+`
+)
+
+var ConfirmEmailTemplateEN *template.Template = template.Must(template.New("confirmEmailTemplateSrcEN").Parse(confirmEmailTemplateSrcEN))
+var RequestPasswordTokenTemailTemplateEN *template.Template = template.Must(template.New("requestPasswordTokenTemailTemplateSrcEN").Parse(requestPasswordTokenTemailTemplateSrcEN))
