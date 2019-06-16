@@ -49,29 +49,26 @@ func StringArrayToIntArray(values []string) ([]int, error) {
 
 // StringArrayFromURL will read an URL parameter like /api/?some_strings=foo,bar
 func StringArrayFromURL(r *http.Request, name string, standard []string) []string {
-	rolesFromURL, ok := r.URL.Query()[name]
-	if ok {
-		return strings.Split(rolesFromURL[0], ",")
+	str := r.FormValue(name)
+	if str != "" {
+		return strings.Split(str, ",")
 	}
 	return standard
 }
 
 // StringFromURL will read an URL parameter like /api/?some_string=foo
 func StringFromURL(r *http.Request, name string, standard string) string {
-	rolesFromURL, ok := r.URL.Query()[name]
-	if ok {
-		if len(rolesFromURL[0]) > 0 {
-			return rolesFromURL[0]
-		}
-		return standard
+	str := r.FormValue(name)
+	if str != "" {
+		return str
 	}
 	return standard
 }
 
 // IntFromURL will read an URL parameter like /api/?some_int=3
 func IntFromURL(r *http.Request, name string, standard int) int {
-	str := StringFromURL(r, name, "uglyhardcoded")
-	if str == "uglyhardcoded" {
+	str := r.FormValue(name)
+	if str == "" {
 		return standard
 	}
 
@@ -84,8 +81,8 @@ func IntFromURL(r *http.Request, name string, standard int) int {
 
 // Int64FromURL will read an URL parameter like /api/?some_int=3
 func Int64FromURL(r *http.Request, name string, standard int64) int64 {
-	str := StringFromURL(r, name, "uglyhardcoded")
-	if str == "uglyhardcoded" {
+	str := r.FormValue(name)
+	if str == "" {
 		return standard
 	}
 	i, err := strconv.Atoi(str)
