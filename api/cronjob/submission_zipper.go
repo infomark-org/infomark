@@ -55,7 +55,7 @@ type StudentSubmission struct {
 func FetchStudentSubmissions(db *sqlx.DB, groupID int64, taskID int64) ([]StudentSubmission, error) {
 	p := []StudentSubmission{}
 	err := db.Select(&p, `
-  SELECT s.id, u.first_name, u.last_name FROM submissions s
+SELECT s.id, u.first_name, u.last_name FROM submissions s
   INNER JOIN user_group ug ON ug.user_id = s.user_id
   INNER JOIN users u ON u.id  = s.user_id
   WHERE  ug.group_id = $1
@@ -109,6 +109,10 @@ func (job *SubmissionFileZipper) Run() {
 
 							newZipFile, err := os.Create(archivZip.Path())
 							if err != nil {
+								// creating zip went wrong... delete lock files => retry later
+								helper.FileDelete(archivLockPath)
+								helper.FileDelete(sheetLockPath)
+								fmt.Println(" Creating zip file went wrong.")
 								return
 							}
 							defer newZipFile.Close()
@@ -129,6 +133,11 @@ func (job *SubmissionFileZipper) Run() {
 									// refer to the zip file
 									zipfile, err := os.Open(submissionHnd.Path())
 									if err != nil {
+										// Open submission file failed
+										// retry later
+										helper.FileDelete(archivLockPath)
+										helper.FileDelete(sheetLockPath)
+										fmt.Println(" Opening submission file", submissionHnd.Path())
 										return
 									}
 									defer zipfile.Close()
@@ -136,11 +145,21 @@ func (job *SubmissionFileZipper) Run() {
 									// Get the file information
 									info, err := zipfile.Stat()
 									if err != nil {
+										// Extracting file information failed
+										// retry later
+										helper.FileDelete(archivLockPath)
+										helper.FileDelete(sheetLockPath)
+										fmt.Println(" Extracting file information failed for", submissionHnd.Path())
 										return
 									}
 
 									header, err := zip.FileInfoHeader(info)
 									if err != nil {
+										// Reading file header failed
+										// retry later
+										helper.FileDelete(archivLockPath)
+										helper.FileDelete(sheetLockPath)
+										fmt.Println(" Reading file header failed for", submissionHnd.Path())
 										return
 									}
 
@@ -154,9 +173,19 @@ func (job *SubmissionFileZipper) Run() {
 
 									writer, err := zipWriter.CreateHeader(header)
 									if err != nil {
+										// Creating header failed
+										// retry later
+										helper.FileDelete(archivLockPath)
+										helper.FileDelete(sheetLockPath)
+										fmt.Println(" Creating header failed for", submissionHnd.Path())
 										return
 									}
 									if _, err = io.Copy(writer, zipfile); err != nil {
+										// Copying data to zipfile failed
+										// retry later
+										helper.FileDelete(archivLockPath)
+										helper.FileDelete(sheetLockPath)
+										fmt.Println(" Copying data to zip file failed for", submissionHnd.Path())
 										return
 									}
 								}
