@@ -137,7 +137,7 @@ func (job *SubmissionFileZipper) Run() {
 										// retry later
 										helper.FileDelete(archivLockPath)
 										helper.FileDelete(sheetLockPath)
-										fmt.Println(" Opening submission file", submissionHnd.Path())
+										fmt.Println(" Opening submission file failed for ", submissionHnd.Path())
 										return
 									}
 									defer zipfile.Close()
