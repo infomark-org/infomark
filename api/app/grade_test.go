@@ -61,6 +61,7 @@ func copyFile(src, dst string) (int64, error) {
 }
 
 func TestGrade(t *testing.T) {
+	PrepareTests()
 	g := goblin.Goblin(t)
 	email.DefaultMail = email.VoidMail
 

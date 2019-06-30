@@ -27,6 +27,7 @@ import (
 )
 
 func TestCommon(t *testing.T) {
+	PrepareTests()
 	g := goblin.Goblin(t)
 
 	tape := NewTape()

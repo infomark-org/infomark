@@ -30,6 +30,7 @@ import (
 )
 
 func TestGroup(t *testing.T) {
+	PrepareTests()
 	g := goblin.Goblin(t)
 	email.DefaultMail = email.VoidMail
 

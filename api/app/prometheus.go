@@ -101,13 +101,18 @@ var (
 	)
 )
 
-func init() {
-	// register with the prometheus collector
-	prometheus.MustRegister(totalSubmissionCounterVec)
-	prometheus.MustRegister(totalDockerFailExitCounterVec)
-	prometheus.MustRegister(totalDockerSuccessExitCounterVec)
-	prometheus.MustRegister(totalFailedLoginsVec)
-	prometheus.MustRegister(totalDockerTimeHist)
-	prometheus.MustRegister(totalDockerRunTimeHist)
-	prometheus.MustRegister(totalDockerWaitTimeHist)
+var prometheusIsRegistered = false
+
+func InitPrometheus() {
+	if !prometheusIsRegistered {
+		// register with the prometheus collector
+		prometheus.MustRegister(totalSubmissionCounterVec)
+		prometheus.MustRegister(totalDockerFailExitCounterVec)
+		prometheus.MustRegister(totalDockerSuccessExitCounterVec)
+		prometheus.MustRegister(totalFailedLoginsVec)
+		prometheus.MustRegister(totalDockerTimeHist)
+		prometheus.MustRegister(totalDockerRunTimeHist)
+		prometheus.MustRegister(totalDockerWaitTimeHist)
+		prometheusIsRegistered = true
+	}
 }

@@ -28,6 +28,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cgtuebingen/infomark-backend/api/helper"
 	"github.com/cgtuebingen/infomark-backend/auth/authenticate"
 	"github.com/cgtuebingen/infomark-backend/auth/authorize"
 	"github.com/cgtuebingen/infomark-backend/symbol"
@@ -130,6 +131,11 @@ func NoCache(next http.Handler) http.Handler {
 // New configures application resources and routes.
 func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 	logger := logrus.StandardLogger()
+
+	helper.InitConfig()
+	authenticate.PrepareSessionManager()
+	InitPrometheus()
+	InitSubmissionProducer()
 
 	if err := db.Ping(); err != nil {
 		logger.WithField("module", "database").Error(err)

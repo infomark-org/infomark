@@ -59,6 +59,7 @@ type Server struct {
 // NewServer creates and configures an APIServer serving all application routes.
 func NewServer() (*Server, error) {
 	RunInit()
+	app.PrepareTokenManager()
 	log.Info("configuring server...")
 
 	if viper.GetString("sendmail_binary") != "" {

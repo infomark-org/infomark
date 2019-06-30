@@ -18,5 +18,13 @@
 
 package app
 
+import "github.com/cgtuebingen/infomark-backend/auth/authenticate"
+
 // H is a wrapper for convenience
 type H map[string]interface{}
+
+var tokenManager *authenticate.TokenAuth
+
+func PrepareTokenManager() {
+	tokenManager, _ = authenticate.NewTokenAuth()
+}

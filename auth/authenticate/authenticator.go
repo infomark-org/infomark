@@ -26,7 +26,11 @@ import (
 	"github.com/spf13/viper"
 )
 
-var SessionManager = createSessionManager()
+var SessionManager *scs.Manager
+
+func PrepareSessionManager() {
+	SessionManager = createSessionManager()
+}
 
 // createSessionManager starts a web session and stores the information into a
 // http-only cookie. This is the prefered way when using a SPA.

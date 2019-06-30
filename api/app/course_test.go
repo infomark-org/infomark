@@ -43,6 +43,7 @@ func DBGetInt2(tape *Tape, stmt string, param1 int64, param2 int64) (int, error)
 }
 
 func TestCourse(t *testing.T) {
+	PrepareTests()
 
 	g := goblin.Goblin(t)
 	email.DefaultMail = email.VoidMail

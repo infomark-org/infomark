@@ -32,6 +32,7 @@ import (
 )
 
 func TestSubmission(t *testing.T) {
+	PrepareTests()
 	g := goblin.Goblin(t)
 	email.DefaultMail = email.VoidMail
 	// DefaultSubmissionProducer = &VoidProducer{}

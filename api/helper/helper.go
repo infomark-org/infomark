@@ -29,6 +29,7 @@ import (
 	"strings"
 
 	txdb "github.com/DATA-DOG/go-txdb"
+	"github.com/cgtuebingen/infomark-backend/auth/authenticate"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq" // need for Postgres
 	"github.com/spf13/viper"
@@ -141,14 +142,20 @@ func InitConfig() {
 	}
 }
 
-func init() {
-	// read config to get the database information
-	InitConfig()
-	// we register an sql driver named "txdb"
-	// This allows to run all tests as transaction in isolated environemnts to make sure
-	// we do not accidentially alter the database in a persistent way. Hence,  all tests can run
-	// in an arbitrary order.
-	txdb.Register("psql_txdb", "postgres", viper.GetString("database_connection"))
+var isInit = false
+
+func FakeDatabase() {
+	if !isInit {
+		// read config to get the database information
+		InitConfig()
+		authenticate.PrepareSessionManager()
+		// we register an sql driver named "txdb"
+		// This allows to run all tests as transaction in isolated environemnts to make sure
+		// we do not accidentially alter the database in a persistent way. Hence,  all tests can run
+		// in an arbitrary order.
+		txdb.Register("psql_txdb", "postgres", viper.GetString("database_connection"))
+		isInit = true
+	}
 }
 
 // TransactionDB creates a sql-driver which seemlessly supports transactions.

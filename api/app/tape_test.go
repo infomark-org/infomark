@@ -49,8 +49,6 @@ func NewJWTRequest(loginID int64, root bool) JWTRequest {
 	}
 }
 
-var tokenManager *authenticate.TokenAuth
-
 func SetConfigFile() {
 	var err error
 	home := os.Getenv("INFOMARK_CONFIG_DIR")
@@ -77,20 +75,20 @@ func InitConfig() {
 	}
 }
 
-func init() {
-	// prepate token management
-	tokenManager, _ = authenticate.NewTokenAuth()
+func PrepareTests() {
+	helper.FakeDatabase()
+	PrepareTokenManager()
 	InitConfig()
 
 }
 
 type Tape struct {
 	otape.Tape
-
 	DB *sqlx.DB
 }
 
 func NewTape() *Tape {
+
 	t := &Tape{}
 	return t
 }
