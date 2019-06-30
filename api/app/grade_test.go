@@ -68,6 +68,11 @@ func TestGrade(t *testing.T) {
 
 	var stores *Stores
 
+	studentJWT := NewJWTRequest(112, false)
+	tutorJWT := NewJWTRequest(2, false)
+	adminJWT := NewJWTRequest(1, true)
+	noAdminJWT := NewJWTRequest(1, false)
+
 	g.Describe("Grade", func() {
 
 		g.BeforeEach(func() {
@@ -81,13 +86,13 @@ func TestGrade(t *testing.T) {
 			w := tape.Get(url)
 			g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
-			w = tape.GetWithClaims(url, 1, true)
+			w = tape.Get(url, adminJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 		})
 
 		g.It("Should get a specific grade", func() {
 
-			w := tape.GetWithClaims("/api/v1/courses/1/grades/1", 1, true)
+			w := tape.Get("/api/v1/courses/1/grades/1", adminJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 			gradeActual := &GradeResponse{}
@@ -124,7 +129,7 @@ func TestGrade(t *testing.T) {
 
 			g.Assert(hnd.Exists()).Equal(true)
 
-			w = tape.GetWithClaims("/api/v1/courses/1/grades/1", 1, true)
+			w = tape.Get("/api/v1/courses/1/grades/1", adminJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 			err = json.NewDecoder(w.Body).Decode(gradeActual)
@@ -158,7 +163,7 @@ func TestGrade(t *testing.T) {
 			gradesExpected, err := stores.Grade.GetFiltered(1, 0, 0, 1, 0, 0, "%%", -1, -1, -1, -1, -1)
 			g.Assert(err).Equal(nil)
 
-			w := tape.GetWithClaims(url, 1, true)
+			w := tape.Get(url, adminJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 			gradesActual := []GradeResponse{}
@@ -169,7 +174,7 @@ func TestGrade(t *testing.T) {
 
 		g.It("Should list all grades of a group with some filters", func() {
 
-			w := tape.GetWithClaims("/api/v1/courses/1/grades?group_id=1&public_test_status=0", 1, true)
+			w := tape.Get("/api/v1/courses/1/grades?group_id=1&public_test_status=0", adminJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 			gradesActual := []GradeResponse{}
 			err := json.NewDecoder(w.Body).Decode(&gradesActual)
@@ -178,7 +183,7 @@ func TestGrade(t *testing.T) {
 				g.Assert(el.PublicTestStatus).Equal(0)
 			}
 
-			w = tape.GetWithClaims("/api/v1/courses/1/grades?group_id=1&private_test_status=0", 1, true)
+			w = tape.Get("/api/v1/courses/1/grades?group_id=1&private_test_status=0", adminJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 			err = json.NewDecoder(w.Body).Decode(&gradesActual)
 			g.Assert(err).Equal(nil)
@@ -186,7 +191,7 @@ func TestGrade(t *testing.T) {
 				g.Assert(el.PrivateTestStatus).Equal(0)
 			}
 
-			w = tape.GetWithClaims("/api/v1/courses/1/grades?group_id=1&tutor_id=3", 1, true)
+			w = tape.Get("/api/v1/courses/1/grades?group_id=1&tutor_id=3", adminJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 			err = json.NewDecoder(w.Body).Decode(&gradesActual)
 			g.Assert(err).Equal(nil)
@@ -206,15 +211,15 @@ func TestGrade(t *testing.T) {
 			g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
 			// students
-			w = tape.PutWithClaims("/api/v1/courses/1/grades/1", data, 112, false)
+			w = tape.Put("/api/v1/courses/1/grades/1", data, studentJWT)
 			g.Assert(w.Code).Equal(http.StatusForbidden)
 
 			// admin
-			w = tape.PutWithClaims("/api/v1/courses/1/grades/1", data, 1, false)
+			w = tape.Put("/api/v1/courses/1/grades/1", data, noAdminJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 			// tutors
-			w = tape.PutWithClaims("/api/v1/courses/1/grades/1", data, 3, false)
+			w = tape.Put("/api/v1/courses/1/grades/1", data, tutorJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 			entryAfter, err := stores.Grade.Get(1)
@@ -222,7 +227,7 @@ func TestGrade(t *testing.T) {
 
 			g.Assert(entryAfter.Feedback).Equal("Lorem Ipsum_update")
 			g.Assert(entryAfter.AcquiredPoints).Equal(3)
-			g.Assert(entryAfter.TutorID).Equal(int64(3))
+			g.Assert(entryAfter.TutorID).Equal(tutorJWT.Claims.LoginID)
 		})
 
 		g.It("Should perform updates when zero points", func() {
@@ -236,15 +241,15 @@ func TestGrade(t *testing.T) {
 			g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
 			// students
-			w = tape.PutWithClaims("/api/v1/courses/1/grades/1", data, 112, false)
+			w = tape.Put("/api/v1/courses/1/grades/1", data, studentJWT)
 			g.Assert(w.Code).Equal(http.StatusForbidden)
 
 			// admin
-			w = tape.PutWithClaims("/api/v1/courses/1/grades/1", data, 1, false)
+			w = tape.Put("/api/v1/courses/1/grades/1", data, noAdminJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 			// tutors
-			w = tape.PutWithClaims("/api/v1/courses/1/grades/1", data, 3, false)
+			w = tape.Put("/api/v1/courses/1/grades/1", data, tutorJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 			entryAfter, err := stores.Grade.Get(1)
@@ -252,7 +257,7 @@ func TestGrade(t *testing.T) {
 
 			g.Assert(entryAfter.Feedback).Equal("Lorem Ipsum_update")
 			g.Assert(entryAfter.AcquiredPoints).Equal(0)
-			g.Assert(entryAfter.TutorID).Equal(int64(3))
+			g.Assert(entryAfter.TutorID).Equal(tutorJWT.Claims.LoginID)
 		})
 
 		g.Xit("Should not perform updates when missing points", func() {
@@ -266,15 +271,15 @@ func TestGrade(t *testing.T) {
 			g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
 			// students
-			w = tape.PutWithClaims("/api/v1/courses/1/grades/1", data, 112, false)
+			w = tape.Put("/api/v1/courses/1/grades/1", data, studentJWT)
 			g.Assert(w.Code).Equal(http.StatusForbidden)
 
 			// admin
-			w = tape.PutWithClaims("/api/v1/courses/1/grades/1", data, 1, false)
+			w = tape.Put("/api/v1/courses/1/grades/1", data, noAdminJWT)
 			g.Assert(w.Code).Equal(http.StatusBadRequest)
 
 			// tutors
-			w = tape.PutWithClaims("/api/v1/courses/1/grades/1", data, 3, false)
+			w = tape.Put("/api/v1/courses/1/grades/1", data, tutorJWT)
 			g.Assert(w.Code).Equal(http.StatusBadRequest)
 
 		})
@@ -296,15 +301,15 @@ func TestGrade(t *testing.T) {
 			g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
 			// students
-			w = tape.PutWithClaims("/api/v1/courses/1/grades/1", data, 112, false)
+			w = tape.Put("/api/v1/courses/1/grades/1", data, studentJWT)
 			g.Assert(w.Code).Equal(http.StatusForbidden)
 
 			// admin
-			w = tape.PutWithClaims("/api/v1/courses/1/grades/1", data, 1, false)
+			w = tape.Put("/api/v1/courses/1/grades/1", data, noAdminJWT)
 			g.Assert(w.Code).Equal(http.StatusBadRequest)
 
 			// tutors
-			w = tape.PutWithClaims("/api/v1/courses/1/grades/1", data, 3, false)
+			w = tape.Put("/api/v1/courses/1/grades/1", data, tutorJWT)
 			g.Assert(w.Code).Equal(http.StatusBadRequest)
 
 			entryAfter, err := stores.Grade.Get(1)
@@ -319,29 +324,29 @@ func TestGrade(t *testing.T) {
 			gradesActual := []MissingGradeResponse{}
 			// students have no missing data
 			// but we do not know if a user is student in a course
-			w := tape.GetWithClaims("/api/v1/courses/1/grades/missing", 112, false)
+			w := tape.Get("/api/v1/courses/1/grades/missing", studentJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 			err := json.NewDecoder(w.Body).Decode(&gradesActual)
 			g.Assert(err).Equal(nil)
 			g.Assert(len(gradesActual)).Equal(0)
 
 			// admin (mock creates feed back for all submissions)
-			w = tape.GetWithClaims("/api/v1/courses/1/grades/missing", 1, false)
+			w = tape.Get("/api/v1/courses/1/grades/missing", noAdminJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 			err = json.NewDecoder(w.Body).Decode(&gradesActual)
 			g.Assert(err).Equal(nil)
 
-			gradesExpected, err := stores.Grade.GetAllMissingGrades(1, 1, 0)
+			gradesExpected, err := stores.Grade.GetAllMissingGrades(1, noAdminJWT.Claims.LoginID, 0)
 			g.Assert(err).Equal(nil)
 			g.Assert(len(gradesActual)).Equal(len(gradesExpected))
 
 			// tutors (mock creates feed back for all submissions)
-			w = tape.GetWithClaims("/api/v1/courses/1/grades/missing", 3, false)
+			w = tape.Get("/api/v1/courses/1/grades/missing", tutorJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 			err = json.NewDecoder(w.Body).Decode(&gradesActual)
 			g.Assert(err).Equal(nil)
 
-			gradesExpected, err = stores.Grade.GetAllMissingGrades(1, 3, 0)
+			gradesExpected, err = stores.Grade.GetAllMissingGrades(1, tutorJWT.Claims.LoginID, 0)
 			g.Assert(err).Equal(nil)
 			g.Assert(len(gradesActual)).Equal(len(gradesExpected))
 
@@ -349,12 +354,12 @@ func TestGrade(t *testing.T) {
 			g.Assert(err).Equal(nil)
 
 			// tutors (mock creates feed back for all submissions)
-			w = tape.GetWithClaims("/api/v1/courses/1/grades/missing", 3, false)
+			w = tape.Get("/api/v1/courses/1/grades/missing", tutorJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 			err = json.NewDecoder(w.Body).Decode(&gradesActual)
 			g.Assert(err).Equal(nil)
 
-			gradesExpected, err = stores.Grade.GetAllMissingGrades(1, 3, 0)
+			gradesExpected, err = stores.Grade.GetAllMissingGrades(1, tutorJWT.Claims.LoginID, 0)
 			g.Assert(err).Equal(nil)
 
 			// see mock.py
@@ -370,7 +375,7 @@ func TestGrade(t *testing.T) {
 				g.Assert(el.Grade.AcquiredPoints).Equal(gradesExpected[k].Grade.AcquiredPoints)
 				g.Assert(el.Grade.PrivateTestLog).Equal(gradesExpected[k].Grade.PrivateTestLog)
 				g.Assert(el.Grade.Feedback).Equal("")
-				g.Assert(el.Grade.TutorID).Equal(int64(3))
+				g.Assert(el.Grade.TutorID).Equal(tutorJWT.Claims.LoginID)
 				g.Assert(el.Grade.SubmissionID).Equal(gradesExpected[k].Grade.SubmissionID)
 
 				g.Assert(el.Grade.User.ID).Equal(gradesExpected[k].Grade.UserID)
@@ -393,15 +398,15 @@ func TestGrade(t *testing.T) {
 			g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
 			// students
-			w = tape.PostWithClaims(url, data, 112, false)
+			w = tape.Post(url, data, studentJWT)
 			g.Assert(w.Code).Equal(http.StatusForbidden)
 
 			// tutors
-			w = tape.PostWithClaims(url, data, 3, false)
+			w = tape.Post(url, data, tutorJWT)
 			g.Assert(w.Code).Equal(http.StatusForbidden)
 
 			// admin
-			w = tape.PostWithClaims(url, data, 1, false)
+			w = tape.Post(url, data, noAdminJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 			entryAfter, err := stores.Grade.Get(1)
@@ -425,15 +430,15 @@ func TestGrade(t *testing.T) {
 			g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
 			// students
-			w = tape.PostWithClaims(url, data, 112, false)
+			w = tape.Post(url, data, studentJWT)
 			g.Assert(w.Code).Equal(http.StatusForbidden)
 
 			// tutors
-			w = tape.PostWithClaims(url, data, 3, false)
+			w = tape.Post(url, data, tutorJWT)
 			g.Assert(w.Code).Equal(http.StatusForbidden)
 
 			// admin
-			w = tape.PostWithClaims(url, data, 1, false)
+			w = tape.Post(url, data, noAdminJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 			entryAfter, err := stores.Grade.Get(1)
@@ -519,7 +524,7 @@ func TestGrade(t *testing.T) {
 
 			// test empty grades
 			response := GradeOverviewResponse{}
-			w := tape.GetWithClaims("/api/v1/courses/1/grades/summary", 1, true)
+			w := tape.Get("/api/v1/courses/1/grades/summary", adminJWT)
 			// fmt.Println(w.Body)
 			g.Assert(w.Code).Equal(http.StatusOK)
 			err = json.NewDecoder(w.Body).Decode(&response)
@@ -549,7 +554,7 @@ func TestGrade(t *testing.T) {
 			g.Assert(len(p)).Equal(1)
 
 			response = GradeOverviewResponse{}
-			w = tape.GetWithClaims("/api/v1/courses/1/grades/summary", 1, true)
+			w = tape.Get("/api/v1/courses/1/grades/summary", adminJWT)
 			// fmt.Println(w.Body)
 			g.Assert(w.Code).Equal(http.StatusOK)
 			err = json.NewDecoder(w.Body).Decode(&response)
@@ -587,7 +592,7 @@ func TestGrade(t *testing.T) {
 			g.Assert(len(p)).Equal(2)
 
 			response = GradeOverviewResponse{}
-			w = tape.GetWithClaims("/api/v1/courses/1/grades/summary", 1, true)
+			w = tape.Get("/api/v1/courses/1/grades/summary", adminJWT)
 			// fmt.Println(w.Body)
 			g.Assert(w.Code).Equal(http.StatusOK)
 			err = json.NewDecoder(w.Body).Decode(&response)
@@ -631,7 +636,7 @@ func TestGrade(t *testing.T) {
 			g.Assert(len(p)).Equal(3)
 
 			response = GradeOverviewResponse{}
-			w = tape.GetWithClaims("/api/v1/courses/1/grades/summary", 1, true)
+			w = tape.Get("/api/v1/courses/1/grades/summary", adminJWT)
 			// fmt.Println(w.Body)
 			g.Assert(w.Code).Equal(http.StatusOK)
 			err = json.NewDecoder(w.Body).Decode(&response)

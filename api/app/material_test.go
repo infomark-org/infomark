@@ -41,6 +41,11 @@ func TestMaterial(t *testing.T) {
 
 	var stores *Stores
 
+	studentJWT := NewJWTRequest(112, false)
+	tutorJWT := NewJWTRequest(2, false)
+	adminJWT := NewJWTRequest(1, true)
+	noAdminJWT := NewJWTRequest(1, false)
+
 	g.Describe("Material", func() {
 
 		g.BeforeEach(func() {
@@ -53,7 +58,7 @@ func TestMaterial(t *testing.T) {
 			w := tape.Get("/api/v1/courses/1/materials")
 			g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
-			w = tape.GetWithClaims("/api/v1/courses/1/materials", 1, true)
+			w = tape.Get("/api/v1/courses/1/materials", adminJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 		})
 
@@ -66,11 +71,12 @@ func TestMaterial(t *testing.T) {
 				stores.Material.Update(&mat)
 			}
 
-			user, err := stores.Course.GetUserEnrollment(1, 112)
+			user, err := stores.Course.GetUserEnrollment(1, studentJWT.Claims.LoginID)
 			g.Assert(err).Equal(nil)
 			g.Assert(user.Role).Equal(int64(0))
+			g.Assert(user.ID).Equal(studentJWT.Claims.LoginID)
 
-			w := tape.GetWithClaims("/api/v1/courses/1/materials", user.ID, false)
+			w := tape.Get("/api/v1/courses/1/materials", studentJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 			materialsActual := []MaterialResponse{}
@@ -82,11 +88,12 @@ func TestMaterial(t *testing.T) {
 
 		g.It("Should list all materials a course (tutor)", func() {
 
-			user, err := stores.Course.GetUserEnrollment(1, 2)
+			user, err := stores.Course.GetUserEnrollment(1, tutorJWT.Claims.LoginID)
 			g.Assert(err).Equal(nil)
 			g.Assert(user.Role).Equal(int64(1))
+			g.Assert(user.ID).Equal(tutorJWT.Claims.LoginID)
 
-			w := tape.GetWithClaims("/api/v1/courses/1/materials", user.ID, false)
+			w := tape.Get("/api/v1/courses/1/materials", tutorJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 			materialsActual := []MaterialResponse{}
@@ -100,11 +107,12 @@ func TestMaterial(t *testing.T) {
 
 		g.It("Should list all materials a course (admin)", func() {
 
-			user, err := stores.Course.GetUserEnrollment(1, 1)
+			user, err := stores.Course.GetUserEnrollment(1, adminJWT.Claims.LoginID)
 			g.Assert(err).Equal(nil)
 			g.Assert(user.Role).Equal(int64(2))
+			g.Assert(user.ID).Equal(adminJWT.Claims.LoginID)
 
-			w := tape.GetWithClaims("/api/v1/courses/1/materials", user.ID, false)
+			w := tape.Get("/api/v1/courses/1/materials", adminJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 			materialsActual := []MaterialResponse{}
@@ -120,7 +128,7 @@ func TestMaterial(t *testing.T) {
 			materialExpected, err := stores.Material.Get(1)
 			g.Assert(err).Equal(nil)
 
-			w := tape.GetWithClaims("/api/v1/courses/1/materials/1", 1, true)
+			w := tape.Get("/api/v1/courses/1/materials/1", adminJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 			materialActual := &MaterialResponse{}
 			err = json.NewDecoder(w.Body).Decode(materialActual)
@@ -142,14 +150,14 @@ func TestMaterial(t *testing.T) {
 			err = stores.Material.Update(materialExpected)
 			g.Assert(err).Equal(nil)
 
-			w := tape.GetWithClaims("/api/v1/courses/1/materials/1", 112, false)
+			w := tape.Get("/api/v1/courses/1/materials/1", studentJWT)
 			g.Assert(w.Code).Equal(http.StatusForbidden)
 
 			materialExpected.PublishAt = NowUTC().Add(-time.Hour)
 			err = stores.Material.Update(materialExpected)
 			g.Assert(err).Equal(nil)
 
-			w = tape.GetWithClaims("/api/v1/courses/1/materials/1", 112, false)
+			w = tape.Get("/api/v1/courses/1/materials/1", studentJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 		})
@@ -178,13 +186,13 @@ func TestMaterial(t *testing.T) {
 			w := tape.Post("/api/v1/courses/1/materials", helper.ToH(materialSent))
 			g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
-			w = tape.PostWithClaims("/api/v1/courses/1/materials", helper.ToH(materialSent), 112, false)
+			w = tape.Post("/api/v1/courses/1/materials", helper.ToH(materialSent), studentJWT)
 			g.Assert(w.Code).Equal(http.StatusForbidden)
 
-			w = tape.PostWithClaims("/api/v1/courses/1/materials", helper.ToH(materialSent), 2, false)
+			w = tape.Post("/api/v1/courses/1/materials", helper.ToH(materialSent), tutorJWT)
 			g.Assert(w.Code).Equal(http.StatusForbidden)
 
-			w = tape.PostWithClaims("/api/v1/courses/1/materials", helper.ToH(materialSent), 1, false)
+			w = tape.Post("/api/v1/courses/1/materials", helper.ToH(materialSent), noAdminJWT)
 			g.Assert(w.Code).Equal(http.StatusCreated)
 
 			materialsAfterStudent, err := stores.Material.MaterialsOfCourse(1, authorize.STUDENT.ToInt())
@@ -232,13 +240,13 @@ func TestMaterial(t *testing.T) {
 			w := tape.Post("/api/v1/courses/1/materials", helper.ToH(materialSent))
 			g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
-			w = tape.PostWithClaims("/api/v1/courses/1/materials", helper.ToH(materialSent), 112, false)
+			w = tape.Post("/api/v1/courses/1/materials", helper.ToH(materialSent), studentJWT)
 			g.Assert(w.Code).Equal(http.StatusForbidden)
 
-			w = tape.PostWithClaims("/api/v1/courses/1/materials", helper.ToH(materialSent), 2, false)
+			w = tape.Post("/api/v1/courses/1/materials", helper.ToH(materialSent), tutorJWT)
 			g.Assert(w.Code).Equal(http.StatusForbidden)
 
-			w = tape.PostWithClaims("/api/v1/courses/1/materials", helper.ToH(materialSent), 1, false)
+			w = tape.Post("/api/v1/courses/1/materials", helper.ToH(materialSent), noAdminJWT)
 			g.Assert(w.Code).Equal(http.StatusCreated)
 
 			materialsAfterStudent, err := stores.Material.MaterialsOfCourse(1, authorize.STUDENT.ToInt())
@@ -263,7 +271,7 @@ func TestMaterial(t *testing.T) {
 		})
 
 		g.It("Creating a material should require body", func() {
-			w := tape.PlayDataWithClaims("POST", "/api/v1/courses/1/materials", H{}, 1, true)
+			w := tape.Post("/api/v1/courses/1/materials", H{}, adminJWT)
 			g.Assert(w.Code).Equal(http.StatusBadRequest)
 		})
 
@@ -274,7 +282,7 @@ func TestMaterial(t *testing.T) {
 				// "lecture_at" is be missing
 			}
 
-			w := tape.PlayDataWithClaims("POST", "/api/v1/courses/1/materials", data, 1, true)
+			w := tape.Post("/api/v1/courses/1/materials", data, adminJWT)
 			g.Assert(w.Code).Equal(http.StatusBadRequest)
 		})
 
@@ -284,7 +292,7 @@ func TestMaterial(t *testing.T) {
 			g.Assert(hnd.Exists()).Equal(false)
 			g.Assert(hnd.Exists()).Equal(false)
 
-			w := tape.GetWithClaims("/api/v1/courses/1/materials/1/file", 1, true)
+			w := tape.Get("/api/v1/courses/1/materials/1/file", adminJWT)
 			g.Assert(w.Code).Equal(http.StatusNotFound)
 		})
 
@@ -303,17 +311,17 @@ func TestMaterial(t *testing.T) {
 			filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
 
 			// students
-			w, err := tape.UploadWithClaims("/api/v1/courses/1/materials/1/file", filename, "application/zip", 112, false)
+			w, err := tape.Upload("/api/v1/courses/1/materials/1/file", filename, "application/zip", studentJWT)
 			g.Assert(err).Equal(nil)
 			g.Assert(w.Code).Equal(http.StatusForbidden)
 
 			// tutors
-			w, err = tape.UploadWithClaims("/api/v1/courses/1/materials/1/file", filename, "application/zip", 2, false)
+			w, err = tape.Upload("/api/v1/courses/1/materials/1/file", filename, "application/zip", tutorJWT)
 			g.Assert(err).Equal(nil)
 			g.Assert(w.Code).Equal(http.StatusForbidden)
 
 			// admin
-			w, err = tape.UploadWithClaims("/api/v1/courses/1/materials/1/file", filename, "application/zip", 1, false)
+			w, err = tape.Upload("/api/v1/courses/1/materials/1/file", filename, "application/zip", noAdminJWT)
 			g.Assert(err).Equal(nil)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
@@ -322,7 +330,7 @@ func TestMaterial(t *testing.T) {
 			g.Assert(hnd.Exists()).Equal(true)
 
 			// a file should be now served
-			w = tape.GetWithClaims("/api/v1/courses/1/materials/1/file", 1, true)
+			w = tape.Get("/api/v1/courses/1/materials/1/file", adminJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 		})
 
@@ -330,7 +338,7 @@ func TestMaterial(t *testing.T) {
 			defer helper.NewMaterialFileHandle(1).Delete()
 			filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
 			// admin
-			w, err := tape.UploadWithClaims("/api/v1/courses/1/materials/1/file", filename, "application/zip", 1, false)
+			w, err := tape.Upload("/api/v1/courses/1/materials/1/file", filename, "application/zip", noAdminJWT)
 			g.Assert(err).Equal(nil)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
@@ -339,7 +347,7 @@ func TestMaterial(t *testing.T) {
 			g.Assert(hnd.Exists()).Equal(true)
 
 			// a file should be now served
-			w = tape.GetWithClaims("/api/v1/courses/1/materials/1/file", 1, true)
+			w = tape.Get("/api/v1/courses/1/materials/1/file", adminJWT)
 			g.Assert(w.Header().Get("Content-Type")).Equal("application/zip")
 			g.Assert(w.Code).Equal(http.StatusOK)
 
@@ -355,7 +363,7 @@ func TestMaterial(t *testing.T) {
 			defer helper.NewMaterialFileHandle(1).Delete()
 			filename := fmt.Sprintf("%s/empty.pdf", viper.GetString("fixtures_dir"))
 			// admin
-			w, err := tape.UploadWithClaims("/api/v1/courses/1/materials/1/file", filename, "application/pdf", 1, false)
+			w, err := tape.Upload("/api/v1/courses/1/materials/1/file", filename, "application/pdf", noAdminJWT)
 			g.Assert(err).Equal(nil)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
@@ -364,7 +372,7 @@ func TestMaterial(t *testing.T) {
 			g.Assert(hnd.Exists()).Equal(true)
 
 			// a file should be now served
-			w = tape.GetWithClaims("/api/v1/courses/1/materials/1/file", 1, true)
+			w = tape.Get("/api/v1/courses/1/materials/1/file", adminJWT)
 			g.Assert(w.Header().Get("Content-Type")).Equal("application/pdf")
 			g.Assert(w.Code).Equal(http.StatusOK)
 
@@ -398,15 +406,15 @@ func TestMaterial(t *testing.T) {
 			}
 
 			// students
-			w := tape.PutWithClaims("/api/v1/courses/1/materials/1", tape.ToH(materialSent), 122, false)
+			w := tape.Put("/api/v1/courses/1/materials/1", tape.ToH(materialSent), studentJWT)
 			g.Assert(w.Code).Equal(http.StatusForbidden)
 
 			// tutors
-			w = tape.PutWithClaims("/api/v1/courses/1/materials/1", tape.ToH(materialSent), 2, false)
+			w = tape.Put("/api/v1/courses/1/materials/1", tape.ToH(materialSent), tutorJWT)
 			g.Assert(w.Code).Equal(http.StatusForbidden)
 
 			// admin
-			w = tape.PutWithClaims("/api/v1/courses/1/materials/1", tape.ToH(materialSent), 1, true)
+			w = tape.Put("/api/v1/courses/1/materials/1", tape.ToH(materialSent), adminJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 			materialAfter, err := stores.Material.Get(1)
@@ -433,11 +441,11 @@ func TestMaterial(t *testing.T) {
 			g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
 			// students
-			w = tape.DeleteWithClaims("/api/v1/courses/1/materials/1", 112, false)
+			w = tape.Delete("/api/v1/courses/1/materials/1", studentJWT)
 			g.Assert(w.Code).Equal(http.StatusForbidden)
 
 			// tutors
-			w = tape.DeleteWithClaims("/api/v1/courses/1/materials/1", 2, false)
+			w = tape.Delete("/api/v1/courses/1/materials/1", tutorJWT)
 			g.Assert(w.Code).Equal(http.StatusForbidden)
 
 			// verify nothing has changes
@@ -446,7 +454,7 @@ func TestMaterial(t *testing.T) {
 			g.Assert(len(entriesAfter)).Equal(len(entriesBefore))
 
 			// admin
-			w = tape.DeleteWithClaims("/api/v1/courses/1/materials/1", 1, false)
+			w = tape.Delete("/api/v1/courses/1/materials/1", noAdminJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 			// verify a sheet less exists
@@ -468,7 +476,7 @@ func TestMaterial(t *testing.T) {
 			g.Assert(err).Equal(nil)
 
 			// admin
-			w := tape.DeleteWithClaims("/api/v1/courses/1/materials/1", 1, false)
+			w := tape.Delete("/api/v1/courses/1/materials/1", noAdminJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 			// verify a sheet less exists
@@ -481,23 +489,23 @@ func TestMaterial(t *testing.T) {
 			url := "/api/v1/courses/1/materials"
 
 			// global root can do whatever they want
-			w := tape.GetWithClaims(url, 1, true)
+			w := tape.Get(url, adminJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 			// enrolled tutors can access
-			w = tape.GetWithClaims(url, 2, false)
+			w = tape.Get(url, tutorJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 			// enrolled students can access
-			w = tape.GetWithClaims(url, 112, false)
+			w = tape.Get(url, studentJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 			// disenroll student
-			w = tape.DeleteWithClaims("/api/v1/courses/1/enrollments", 112, false)
+			w = tape.Delete("/api/v1/courses/1/enrollments", studentJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 			// cannot access anymore
-			w = tape.GetWithClaims(url, 112, false)
+			w = tape.Get(url, studentJWT)
 			g.Assert(w.Code).Equal(http.StatusForbidden)
 		})
 

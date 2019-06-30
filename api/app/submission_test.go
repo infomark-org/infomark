@@ -40,6 +40,11 @@ func TestSubmission(t *testing.T) {
 
 	var stores *Stores
 
+	studentJWT := NewJWTRequest(112, false)
+	otherStudentJWT := NewJWTRequest(113, false)
+	tutorJWT := NewJWTRequest(2, false)
+	adminJWT := NewJWTRequest(1, true)
+
 	g.Describe("Submission", func() {
 
 		g.BeforeEach(func() {
@@ -53,7 +58,7 @@ func TestSubmission(t *testing.T) {
 			w := tape.Get("/api/v1/courses/1/tasks/1/submission")
 			g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
-			w = tape.GetWithClaims("/api/v1/courses/1/tasks/1/submission", 112, false)
+			w = tape.Get("/api/v1/courses/1/tasks/1/submission", studentJWT)
 			g.Assert(w.Code).Equal(http.StatusNotFound)
 		})
 
@@ -81,13 +86,13 @@ func TestSubmission(t *testing.T) {
 			w := tape.Get("/api/v1/courses/1/tasks/1/groups/1/file")
 			g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
-			w = tape.GetWithClaims("/api/v1/courses/1/tasks/1/groups/1/file", 112, false)
+			w = tape.Get("/api/v1/courses/1/tasks/1/groups/1/file", studentJWT)
 			g.Assert(w.Code).Equal(http.StatusForbidden)
 
-			w = tape.GetWithClaims("/api/v1/courses/1/tasks/1/groups/1/file", 2, false)
+			w = tape.Get("/api/v1/courses/1/tasks/1/groups/1/file", tutorJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
-			w = tape.GetWithClaims("/api/v1/courses/1/tasks/1/groups/1/file", 1, false)
+			w = tape.Get("/api/v1/courses/1/tasks/1/groups/1/file", adminJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 		})
@@ -117,12 +122,12 @@ func TestSubmission(t *testing.T) {
 			_, err = tape.DB.Exec("DELETE FROM submissions WHERE user_id = 112;")
 			g.Assert(err).Equal(nil)
 
-			w := tape.GetWithClaims("/api/v1/courses/1/tasks/1/submission", 112, false)
+			w := tape.Get("/api/v1/courses/1/tasks/1/submission", studentJWT)
 			g.Assert(w.Code).Equal(http.StatusNotFound)
 
 			// upload
 			filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
-			w, err = tape.UploadWithClaims("/api/v1/courses/1/tasks/1/submission", filename, "application/zip", 112, false)
+			w, err = tape.Upload("/api/v1/courses/1/tasks/1/submission", filename, "application/zip", studentJWT)
 			g.Assert(err).Equal(nil)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
@@ -133,7 +138,7 @@ func TestSubmission(t *testing.T) {
 			defer helper.NewSubmissionFileHandle(createdSubmission.ID).Delete()
 
 			// files exists
-			w = tape.GetWithClaims("/api/v1/courses/1/tasks/1/submission", 112, false)
+			w = tape.Get("/api/v1/courses/1/tasks/1/submission", studentJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 		})
@@ -163,13 +168,12 @@ func TestSubmission(t *testing.T) {
 			_, err = tape.DB.Exec("DELETE FROM submissions WHERE user_id = 112;")
 			g.Assert(err).Equal(nil)
 
-			w := tape.GetWithClaims("/api/v1/courses/1/tasks/1/submission", 112, false)
+			w := tape.Get("/api/v1/courses/1/tasks/1/submission", studentJWT)
 			g.Assert(w.Code).Equal(http.StatusNotFound)
 
 			// upload
 			filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
-			w, err = tape.UploadWithClaims("/api/v1/courses/1/tasks/1/submission", filename, "application/zip", 112, false)
-			fmt.Println(err)
+			w, err = tape.Upload("/api/v1/courses/1/tasks/1/submission", filename, "application/zip", studentJWT)
 
 			g.Assert(err).Equal(nil)
 
@@ -203,13 +207,13 @@ func TestSubmission(t *testing.T) {
 
 			// upload
 			filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
-			w, err := tape.UploadWithClaims("/api/v1/courses/1/tasks/1/submission", filename, "application/zip", 112, false)
+			w, err := tape.Upload("/api/v1/courses/1/tasks/1/submission", filename, "application/zip", studentJWT)
 			g.Assert(err).Equal(nil)
 			g.Assert(w.Code).Equal(http.StatusOK)
 			g.Assert(helper.NewSubmissionFileHandle(3001).Exists()).Equal(true)
 
 			// files exists
-			w = tape.GetWithClaims("/api/v1/courses/1/tasks/1/submission", 112, false)
+			w = tape.Get("/api/v1/courses/1/tasks/1/submission", studentJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 		})
@@ -237,7 +241,7 @@ func TestSubmission(t *testing.T) {
 
 			// upload
 			filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
-			w, err := tape.UploadWithClaims("/api/v1/courses/1/tasks/1/submission", filename, "application/zip", 112, false)
+			w, err := tape.Upload("/api/v1/courses/1/tasks/1/submission", filename, "application/zip", studentJWT)
 			g.Assert(err).Equal(nil)
 			g.Assert(w.Code).Equal(http.StatusBadRequest)
 			g.Assert(helper.NewSubmissionFileHandle(3001).Exists()).Equal(false)
@@ -260,12 +264,12 @@ func TestSubmission(t *testing.T) {
 			g.Assert(err).Equal(nil)
 
 			// no submission
-			w := tape.GetWithClaims("/api/v1/courses/1/tasks/1/submission", 112, false)
+			w := tape.Get("/api/v1/courses/1/tasks/1/submission", studentJWT)
 			g.Assert(w.Code).Equal(http.StatusNotFound)
 
 			// upload
 			filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
-			w, err = tape.UploadWithClaims("/api/v1/courses/1/tasks/1/submission", filename, "application/zip", 112, false)
+			w, err = tape.Upload("/api/v1/courses/1/tasks/1/submission", filename, "application/zip", studentJWT)
 			g.Assert(err).Equal(nil)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
@@ -276,7 +280,7 @@ func TestSubmission(t *testing.T) {
 			defer helper.NewSubmissionFileHandle(createdSubmission.ID).Delete()
 
 			// files exists
-			w = tape.GetWithClaims("/api/v1/courses/1/tasks/1/submission", 112, false)
+			w = tape.Get("/api/v1/courses/1/tasks/1/submission", studentJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 			// verify there is also a grade
@@ -295,17 +299,17 @@ func TestSubmission(t *testing.T) {
 
 			// upload
 			filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
-			w, err := tape.UploadWithClaims("/api/v1/courses/1/tasks/1/submission", filename, "application/zip", 112, false)
+			w, err := tape.Upload("/api/v1/courses/1/tasks/1/submission", filename, "application/zip", studentJWT)
 			g.Assert(err).Equal(nil)
 			g.Assert(w.Code).Equal(http.StatusOK)
 			g.Assert(helper.NewSubmissionFileHandle(3001).Exists()).Equal(true)
 
 			// access own submission
-			w = tape.GetWithClaims("/api/v1/courses/1/submissions/3001/file", 112, false)
+			w = tape.Get("/api/v1/courses/1/submissions/3001/file", studentJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 			// access others submission
-			w = tape.GetWithClaims("/api/v1/courses/1/submissions/3001/file", 113, false)
+			w = tape.Get("/api/v1/courses/1/submissions/3001/file", otherStudentJWT)
 			g.Assert(w.Code).Equal(http.StatusForbidden)
 
 		})
@@ -315,24 +319,24 @@ func TestSubmission(t *testing.T) {
 			w := tape.Get("/api/v1/courses/1/submissions")
 			g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
-			w = tape.GetWithClaims("/api/v1/courses/1/submissions", 112, false)
+			w = tape.Get("/api/v1/courses/1/submissions", studentJWT)
 			g.Assert(w.Code).Equal(http.StatusForbidden)
 
-			w = tape.GetWithClaims("/api/v1/courses/1/submissions", 2, false)
+			w = tape.Get("/api/v1/courses/1/submissions", tutorJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 			submissionsAllActual := []SubmissionResponse{}
 			err := json.NewDecoder(w.Body).Decode(&submissionsAllActual)
 			g.Assert(err).Equal(nil)
 
-			w = tape.GetWithClaims("/api/v1/courses/1/submissions?group_id=4", 2, false)
+			w = tape.Get("/api/v1/courses/1/submissions?group_id=4", tutorJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 			submissionsG4Actual := []SubmissionResponse{}
 			err = json.NewDecoder(w.Body).Decode(&submissionsG4Actual)
 			g.Assert(err).Equal(nil)
 
-			w = tape.GetWithClaims("/api/v1/courses/1/submissions?task_id=2", 2, false)
+			w = tape.Get("/api/v1/courses/1/submissions?task_id=2", tutorJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 			submissionsT4Actual := []SubmissionResponse{}
@@ -343,7 +347,7 @@ func TestSubmission(t *testing.T) {
 				g.Assert(el.TaskID).Equal(int64(2))
 			}
 
-			w = tape.GetWithClaims("/api/v1/courses/1/submissions?user_id=112", 2, false)
+			w = tape.Get("/api/v1/courses/1/submissions?user_id=112", tutorJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 			submissionsU112Actual := []SubmissionResponse{}

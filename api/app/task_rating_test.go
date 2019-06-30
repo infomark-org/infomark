@@ -36,6 +36,8 @@ func TestTaskRating(t *testing.T) {
 
 	var stores *Stores
 
+	studentJWT := NewJWTRequest(112, false)
+
 	g.Describe("TaskRating", func() {
 
 		g.BeforeEach(func() {
@@ -44,13 +46,12 @@ func TestTaskRating(t *testing.T) {
 		})
 
 		g.It("Should get own rating", func() {
-			userID := int64(112)
 			taskID := int64(1)
 
-			givenRating, err := stores.Task.GetRatingOfTaskByUser(taskID, userID)
+			givenRating, err := stores.Task.GetRatingOfTaskByUser(taskID, studentJWT.Claims.LoginID)
 			g.Assert(err).Equal(nil)
 
-			w := tape.GetWithClaims("/api/v1/courses/1/tasks/1/ratings", userID, false)
+			w := tape.Get("/api/v1/courses/1/tasks/1/ratings", studentJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 			taskRatingActual := &TaskRatingResponse{}
@@ -61,11 +62,11 @@ func TestTaskRating(t *testing.T) {
 			g.Assert(taskRatingActual.TaskID).Equal(taskID)
 
 			// update rating (mock had rating 2)
-			w = tape.PostWithClaims("/api/v1/courses/1/tasks/1/ratings", H{"rating": 4}, userID, false)
+			w = tape.Post("/api/v1/courses/1/tasks/1/ratings", H{"rating": 4}, studentJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 			// new query
-			w = tape.GetWithClaims("/api/v1/courses/1/tasks/1/ratings", userID, false)
+			w = tape.Get("/api/v1/courses/1/tasks/1/ratings", studentJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 			taskRatingActual2 := &TaskRatingResponse{}
@@ -77,15 +78,14 @@ func TestTaskRating(t *testing.T) {
 		})
 
 		g.It("Should create own rating", func() {
-			userID := int64(112)
 			taskID := int64(1)
 
 			// delete and create (see mock.py)
-			prevRatingModel, err := stores.Task.GetRatingOfTaskByUser(taskID, userID)
+			prevRatingModel, err := stores.Task.GetRatingOfTaskByUser(taskID, studentJWT.Claims.LoginID)
 			g.Assert(err).Equal(nil)
 			database.Delete(tape.DB, "task_ratings", prevRatingModel.ID)
 
-			w := tape.GetWithClaims("/api/v1/courses/1/tasks/1/ratings", userID, false)
+			w := tape.Get("/api/v1/courses/1/tasks/1/ratings", studentJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 			taskRatingActual3 := &TaskRatingResponse{}
@@ -96,11 +96,11 @@ func TestTaskRating(t *testing.T) {
 			g.Assert(taskRatingActual3.TaskID).Equal(taskID)
 
 			// update rating (mock had rating 2)
-			w = tape.PostWithClaims("/api/v1/courses/1/tasks/1/ratings", H{"rating": 4}, userID, false)
+			w = tape.Post("/api/v1/courses/1/tasks/1/ratings", H{"rating": 4}, studentJWT)
 			g.Assert(w.Code).Equal(http.StatusCreated)
 
 			// new query
-			w = tape.GetWithClaims("/api/v1/courses/1/tasks/1/ratings", userID, false)
+			w = tape.Get("/api/v1/courses/1/tasks/1/ratings", studentJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 			taskRatingActual2 := &TaskRatingResponse{}

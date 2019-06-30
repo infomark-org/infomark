@@ -39,6 +39,11 @@ func TestSheet(t *testing.T) {
 
 	var stores *Stores
 
+	studentJWT := NewJWTRequest(112, false)
+	tutorJWT := NewJWTRequest(2, false)
+	adminJWT := NewJWTRequest(1, true)
+	noAdminJWT := NewJWTRequest(1, false)
+
 	g.Describe("Sheet", func() {
 
 		g.BeforeEach(func() {
@@ -52,13 +57,13 @@ func TestSheet(t *testing.T) {
 			w := tape.Get("/api/v1/courses/1/sheets")
 			g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
-			w = tape.GetWithClaims("/api/v1/courses/1/sheets", 1, true)
+			w = tape.Get("/api/v1/courses/1/sheets", adminJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 		})
 
 		g.It("Should list all sheets a course", func() {
 
-			w := tape.GetWithClaims("/api/v1/courses/1/sheets", 1, true)
+			w := tape.Get("/api/v1/courses/1/sheets", adminJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 			sheetsActual := []SheetResponse{}
@@ -71,7 +76,7 @@ func TestSheet(t *testing.T) {
 			sheetExpected, err := stores.Sheet.Get(1)
 			g.Assert(err).Equal(nil)
 
-			w := tape.GetWithClaims("/api/v1/courses/1/sheets/1", 1, true)
+			w := tape.Get("/api/v1/courses/1/sheets/1", adminJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 			sheetActual := &SheetResponse{}
@@ -90,7 +95,7 @@ func TestSheet(t *testing.T) {
 		})
 
 		g.It("Creating a sheet should require access body", func() {
-			w := tape.PlayDataWithClaims("POST", "/api/v1/courses/1/sheets", H{}, 1, true)
+			w := tape.Post("/api/v1/courses/1/sheets", H{}, adminJWT)
 			g.Assert(w.Code).Equal(http.StatusBadRequest)
 		})
 
@@ -101,7 +106,7 @@ func TestSheet(t *testing.T) {
 				// "due_at" is be missing
 			}
 
-			w := tape.PlayDataWithClaims("POST", "/api/v1/courses/1/sheets", data, 1, true)
+			w := tape.Post("/api/v1/courses/1/sheets", data, adminJWT)
 			g.Assert(w.Code).Equal(http.StatusBadRequest)
 		})
 
@@ -112,7 +117,7 @@ func TestSheet(t *testing.T) {
 				"due_at":     "2018-02-01T01:02:03Z", // time before publish
 			}
 
-			w := tape.PlayDataWithClaims("POST", "/api/v1/courses/1/sheets", data, 1, true)
+			w := tape.Post("/api/v1/courses/1/sheets", data, adminJWT)
 			g.Assert(w.Code).Equal(http.StatusBadRequest)
 		})
 
@@ -127,16 +132,16 @@ func TestSheet(t *testing.T) {
 			}
 
 			// students
-			w := tape.PlayDataWithClaims("POST", "/api/v1/courses/1/sheets", tape.ToH(sheetSent), 112, false)
+			w := tape.Post("/api/v1/courses/1/sheets", tape.ToH(sheetSent), studentJWT)
 			g.Assert(err).Equal(nil)
 			g.Assert(w.Code).Equal(http.StatusForbidden)
 
 			// tutors
-			w = tape.PlayDataWithClaims("POST", "/api/v1/courses/1/sheets", tape.ToH(sheetSent), 2, false)
+			w = tape.Post("/api/v1/courses/1/sheets", tape.ToH(sheetSent), tutorJWT)
 			g.Assert(w.Code).Equal(http.StatusForbidden)
 
 			// admin
-			w = tape.PlayDataWithClaims("POST", "/api/v1/courses/1/sheets", tape.ToH(sheetSent), 1, false)
+			w = tape.Post("/api/v1/courses/1/sheets", tape.ToH(sheetSent), noAdminJWT)
 			g.Assert(w.Code).Equal(http.StatusCreated)
 
 			sheetReturn := &SheetResponse{}
@@ -152,7 +157,7 @@ func TestSheet(t *testing.T) {
 		})
 
 		g.It("Should skip non-existent sheet file", func() {
-			w := tape.GetWithClaims("/api/v1/courses/1/sheets/1/file", 1, true)
+			w := tape.Get("/api/v1/courses/1/sheets/1/file", adminJWT)
 			g.Assert(w.Code).Equal(http.StatusNotFound)
 		})
 
@@ -164,17 +169,17 @@ func TestSheet(t *testing.T) {
 			filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
 
 			// students
-			w, err := tape.UploadWithClaims("/api/v1/courses/1/sheets/1/file", filename, "application/zip", 112, false)
+			w, err := tape.Upload("/api/v1/courses/1/sheets/1/file", filename, "application/zip", studentJWT)
 			g.Assert(err).Equal(nil)
 			g.Assert(w.Code).Equal(http.StatusForbidden)
 
 			// tutors
-			w, err = tape.UploadWithClaims("/api/v1/courses/1/sheets/1/file", filename, "application/zip", 2, false)
+			w, err = tape.Upload("/api/v1/courses/1/sheets/1/file", filename, "application/zip", tutorJWT)
 			g.Assert(err).Equal(nil)
 			g.Assert(w.Code).Equal(http.StatusForbidden)
 
 			// admin
-			w, err = tape.UploadWithClaims("/api/v1/courses/1/sheets/1/file", filename, "application/zip", 1, false)
+			w, err = tape.Upload("/api/v1/courses/1/sheets/1/file", filename, "application/zip", noAdminJWT)
 			g.Assert(err).Equal(nil)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
@@ -182,7 +187,7 @@ func TestSheet(t *testing.T) {
 			g.Assert(helper.NewSheetFileHandle(1).Exists()).Equal(true)
 
 			// a file should be now served
-			w = tape.GetWithClaims("/api/v1/courses/1/sheets/1/file", 1, true)
+			w = tape.Get("/api/v1/courses/1/sheets/1/file", adminJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 		})
 
@@ -200,15 +205,15 @@ func TestSheet(t *testing.T) {
 			}
 
 			// students
-			w := tape.PutWithClaims("/api/v1/courses/1/sheets/1", tape.ToH(sheetSent), 122, false)
+			w := tape.Put("/api/v1/courses/1/sheets/1", tape.ToH(sheetSent), studentJWT)
 			g.Assert(w.Code).Equal(http.StatusForbidden)
 
 			// tutors
-			w = tape.PutWithClaims("/api/v1/courses/1/sheets/1", tape.ToH(sheetSent), 2, false)
+			w = tape.Put("/api/v1/courses/1/sheets/1", tape.ToH(sheetSent), tutorJWT)
 			g.Assert(w.Code).Equal(http.StatusForbidden)
 
 			// admin
-			w = tape.PutWithClaims("/api/v1/courses/1/sheets/1", tape.ToH(sheetSent), 1, true)
+			w = tape.Put("/api/v1/courses/1/sheets/1", tape.ToH(sheetSent), adminJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 			sheetAfter, err := stores.Sheet.Get(1)
@@ -226,11 +231,11 @@ func TestSheet(t *testing.T) {
 			g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
 			// students
-			w = tape.DeleteWithClaims("/api/v1/courses/1/sheets/1", 112, false)
+			w = tape.Delete("/api/v1/courses/1/sheets/1", studentJWT)
 			g.Assert(w.Code).Equal(http.StatusForbidden)
 
 			// tutors
-			w = tape.DeleteWithClaims("/api/v1/courses/1/sheets/1", 2, false)
+			w = tape.Delete("/api/v1/courses/1/sheets/1", tutorJWT)
 			g.Assert(w.Code).Equal(http.StatusForbidden)
 
 			// verify nothing has changes
@@ -239,7 +244,7 @@ func TestSheet(t *testing.T) {
 			g.Assert(len(entriesAfter)).Equal(len(entriesBefore))
 
 			// admin
-			w = tape.DeleteWithClaims("/api/v1/courses/1/sheets/1", 1, false)
+			w = tape.Delete("/api/v1/courses/1/sheets/1", noAdminJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 			// verify a sheet less exists
@@ -249,12 +254,10 @@ func TestSheet(t *testing.T) {
 		})
 
 		g.It("Should see points for a sheet", func() {
-			userID := int64(112)
-
 			w := tape.Get("/api/v1/courses/1/sheets/1/points")
 			g.Assert(w.Code).Equal(http.StatusUnauthorized)
 
-			w = tape.GetWithClaims("/api/v1/courses/1/sheets/1/points", userID, false)
+			w = tape.Get("/api/v1/courses/1/sheets/1/points", studentJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 		})
@@ -263,23 +266,23 @@ func TestSheet(t *testing.T) {
 			url := "/api/v1/courses/1/sheets"
 
 			// global root can do whatever they want
-			w := tape.GetWithClaims(url, 1, true)
+			w := tape.Get(url, adminJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 			// enrolled tutors can access
-			w = tape.GetWithClaims(url, 2, false)
+			w = tape.Get(url, tutorJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 			// enrolled students can access
-			w = tape.GetWithClaims(url, 112, false)
+			w = tape.Get(url, studentJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 			// disenroll student
-			w = tape.DeleteWithClaims("/api/v1/courses/1/enrollments", 112, false)
+			w = tape.Delete("/api/v1/courses/1/enrollments", studentJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
 			// cannot access anymore
-			w = tape.GetWithClaims(url, 112, false)
+			w = tape.Get(url, studentJWT)
 			g.Assert(w.Code).Equal(http.StatusForbidden)
 		})
 

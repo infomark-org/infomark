@@ -47,6 +47,10 @@ func NewTape() *Tape {
 	return &Tape{}
 }
 
+type RequestModifier interface {
+	Modify(r *http.Request)
+}
+
 var quoteEscaper = strings.NewReplacer("\\", "\\\\", `"`, "\\\"")
 
 func escapeQuotes(s string) string {
@@ -65,7 +69,7 @@ func createFormFile(w *multipart.Writer, fieldname, filename string, contentType
 
 // CreateFileRequestBody create a multi-part form data. We assume all endpoints
 // handling files are receicing a single file with form name "file_data"
-func CreateFileRequestBody(path, contentType string) (*bytes.Buffer, string, error) {
+func CreateFileRequestBody(path, contentType string, params map[string]string) (*bytes.Buffer, string, error) {
 	// open file on disk
 	file, err := os.Open(path)
 	if err != nil {
@@ -83,6 +87,13 @@ func CreateFileRequestBody(path, contentType string) (*bytes.Buffer, string, err
 	_, err = io.Copy(part, file)
 	if err != nil {
 		return nil, "", err
+	}
+
+	for key, val := range params {
+		err = writer.WriteField(key, val)
+		if err != nil {
+			return nil, "", err
+		}
 	}
 
 	err = writer.Close()
@@ -149,35 +160,68 @@ func ToH(z interface{}) map[string]interface{} {
 	return msgMapTemplate.(map[string]interface{})
 }
 
+// ToH is a convenience wrapper create a json for any object
+func (t *Tape) ToH(z interface{}) map[string]interface{} {
+	data, _ := json.Marshal(z)
+	var msgMapTemplate interface{}
+	_ = json.Unmarshal(data, &msgMapTemplate)
+	return msgMapTemplate.(map[string]interface{})
+}
+
 // Get creates, sends a GET request and fetches the response
-func (t *Tape) Get(url string) *httptest.ResponseRecorder {
+func (t *Tape) Get(url string, modifiers ...RequestModifier) *httptest.ResponseRecorder {
 	h := make(map[string]interface{})
 	r := BuildDataRequest("GET", url, h)
+
+	for _, modifier := range modifiers {
+		modifier.Modify(r)
+	}
+
 	return t.PlayRequest(r)
 }
 
 // Post creates, sends a POST request and fetches the response
-func (t *Tape) Post(url string, data map[string]interface{}) *httptest.ResponseRecorder {
+func (t *Tape) Post(url string, data map[string]interface{}, modifiers ...RequestModifier) *httptest.ResponseRecorder {
 	r := BuildDataRequest("POST", url, data)
+
+	for _, modifier := range modifiers {
+		modifier.Modify(r)
+	}
+
 	return t.PlayRequest(r)
 }
 
 // Put creates, sends a PUT request and fetches the response
-func (t *Tape) Put(url string, data map[string]interface{}) *httptest.ResponseRecorder {
+func (t *Tape) Put(url string, data map[string]interface{}, modifiers ...RequestModifier) *httptest.ResponseRecorder {
 	r := BuildDataRequest("PUT", url, data)
+
+	for _, modifier := range modifiers {
+		modifier.Modify(r)
+	}
+
 	return t.PlayRequest(r)
 }
 
 // Patch creates, sends a PATCH request and fetches the response
-func (t *Tape) Patch(url string, data map[string]interface{}) *httptest.ResponseRecorder {
+func (t *Tape) Patch(url string, data map[string]interface{}, modifiers ...RequestModifier) *httptest.ResponseRecorder {
 	r := BuildDataRequest("PATCH", url, data)
+
+	for _, modifier := range modifiers {
+		modifier.Modify(r)
+	}
+
 	return t.PlayRequest(r)
 }
 
 // Delete creates, sends a DELETE request and fetches the response
-func (t *Tape) Delete(url string) *httptest.ResponseRecorder {
+func (t *Tape) Delete(url string, modifiers ...RequestModifier) *httptest.ResponseRecorder {
 	h := make(map[string]interface{})
 	r := BuildDataRequest("DELETE", url, h)
+
+	for _, modifier := range modifiers {
+		modifier.Modify(r)
+	}
+
 	return t.PlayRequest(r)
 }
 
@@ -206,4 +250,30 @@ func (t *Tape) FormatRequest(r *http.Request) string {
 	}
 	// Return the request as a string
 	return strings.Join(request, "\n")
+}
+
+func (t *Tape) Upload(url string, filename string, contentType string, modifiers ...RequestModifier) (*httptest.ResponseRecorder, error) {
+	return t.UploadWithParameters(url, filename, contentType, map[string]string{}, modifiers...)
+}
+
+func (t *Tape) UploadWithParameters(url string, filename string, contentType string, params map[string]string, modifiers ...RequestModifier) (*httptest.ResponseRecorder, error) {
+
+	body, ct, err := CreateFileRequestBody(filename, contentType, params)
+	if err != nil {
+		return nil, err
+	}
+
+	r, err := http.NewRequest("POST", url, body)
+	if err != nil {
+		return nil, err
+	}
+	r.Header.Set("Content-Type", ct)
+	r.Header.Add("X-Forwarded-For", "1.2.3.4")
+	r.Header.Set("User-Agent", "Test-Agent")
+
+	for _, modifier := range modifiers {
+		modifier.Modify(r)
+	}
+
+	return t.PlayRequest(r), nil
 }
