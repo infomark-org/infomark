@@ -58,9 +58,10 @@ func LimitedDecoder(r *http.Request, v interface{}) error {
 	return err
 }
 
-var log = logrus.New()
+var log *logrus.Logger
 
-func init() {
+func RunInit() {
+	log = logrus.New()
 	render.Decode = LimitedDecoder
 
 	log.SetFormatter(&logrus.TextFormatter{

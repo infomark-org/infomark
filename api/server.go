@@ -37,14 +37,17 @@ import (
 	"github.com/spf13/viper"
 )
 
-var log = logrus.New()
+var log *logrus.Logger
 
-func init() {
+func RunInit() {
+	log = logrus.New()
 	log.SetFormatter(&logrus.TextFormatter{
 		DisableColors: false,
 		FullTimestamp: true,
 	})
 	log.Out = os.Stdout
+
+	app.RunInit()
 }
 
 // Server provides an http.Server.
@@ -55,6 +58,7 @@ type Server struct {
 
 // NewServer creates and configures an APIServer serving all application routes.
 func NewServer() (*Server, error) {
+	RunInit()
 	log.Info("configuring server...")
 
 	if viper.GetString("sendmail_binary") != "" {
