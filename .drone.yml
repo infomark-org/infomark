@@ -126,6 +126,6 @@ services:
 
 ---
 kind: signature
-hmac: f0c892d5528986846a3e67508c12f635049d74272546d69b64766d4de0dd8bce
+hmac: 820af159962c04baffb614c34ee517f1ff60c94a862f49bd02bdf189927cfd3c
 
 ...
