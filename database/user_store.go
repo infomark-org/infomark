@@ -45,6 +45,22 @@ func (s *UserStore) FindByEmail(email string) (*model.User, error) {
 	return &p, err
 }
 
+func (s *UserStore) Find(query string) ([]model.User, error) {
+	p := []model.User{}
+	err := s.db.Select(&p, `
+SELECT
+  *
+FROM
+  users
+WHERE
+ last_name LIKE $1
+OR
+ first_name LIKE $1
+OR
+ email LIKE $1`, query)
+	return p, err
+}
+
 func (s *UserStore) GetAll() ([]model.User, error) {
 	p := []model.User{}
 	err := s.db.Select(&p, "SELECT * FROM users;")

@@ -34,6 +34,7 @@ type UserStore interface {
 	Create(p *model.User) (*model.User, error)
 	Delete(userID int64) error
 	FindByEmail(email string) (*model.User, error)
+	Find(query string) ([]model.User, error)
 	GetEnrollments(userID int64) ([]model.Enrollment, error)
 }
 

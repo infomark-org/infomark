@@ -20,6 +20,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -98,6 +99,32 @@ func (rs *UserResource) GetMeHandler(w http.ResponseWriter, r *http.Request) {
 
 	// render JSON reponse
 	if err := render.Render(w, r, newUserResponse(user)); err != nil {
+		render.Render(w, r, ErrRender(err))
+		return
+	}
+}
+
+// Find is public endpoint for
+// URL: /users/find
+// QUERYPARAM: query,string
+// METHOD: get
+// TAG: users
+// RESPONSE: 200,userResponseList
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// SUMMARY:  Query a specific user
+func (rs *UserResource) Find(w http.ResponseWriter, r *http.Request) {
+	query := helper.StringFromURL(r, "query", "%%")
+	if query != "%%" {
+		query = fmt.Sprintf("%%%s%%", query)
+	}
+	users, err := rs.Stores.User.Find(query)
+	if err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
+	// render JSON reponse
+	if err = render.RenderList(w, r, newUserListResponse(users)); err != nil {
 		render.Render(w, r, ErrRender(err))
 		return
 	}

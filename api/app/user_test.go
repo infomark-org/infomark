@@ -69,6 +69,19 @@ func TestUser(t *testing.T) {
 			g.Assert(len(usersActual)).Equal(len(usersExpected))
 		})
 
+		g.It("Query should find a user", func() {
+			usersExpected, err := stores.User.Find("%%meinhard%%")
+			g.Assert(err).Equal(nil)
+
+			w := tape.Get("/api/v1/users/find?query=meinhard", adminJWT)
+			g.Assert(w.Code).Equal(http.StatusOK)
+
+			usersActual := []model.User{}
+			err = json.NewDecoder(w.Body).Decode(&usersActual)
+			g.Assert(err).Equal(nil)
+			g.Assert(len(usersActual)).Equal(len(usersExpected))
+		})
+
 		g.It("Should get a specific user", func() {
 
 			userExpected, err := stores.User.Get(1)

@@ -202,6 +202,7 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 						r.Delete("/", appAPI.User.DeleteHandler)
 						r.Post("/emails", appAPI.User.SendEmailHandler)
 					})
+					r.With(authorize.RequiresAtLeastCourseRole(authorize.ADMIN)).Get("/find", appAPI.User.Find)
 				})
 
 				r.Route("/courses", func(r chi.Router) {
