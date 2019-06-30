@@ -23,12 +23,12 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/cgtuebingen/infomark-backend/auth"
-	"github.com/cgtuebingen/infomark-backend/auth/authenticate"
-	"github.com/cgtuebingen/infomark-backend/email"
-	"github.com/cgtuebingen/infomark-backend/symbol"
 	"github.com/go-chi/jwtauth"
 	"github.com/go-chi/render"
+	"github.com/infomark-org/infomark-backend/auth"
+	"github.com/infomark-org/infomark-backend/auth/authenticate"
+	"github.com/infomark-org/infomark-backend/email"
+	"github.com/infomark-org/infomark-backend/symbol"
 	"github.com/spf13/viper"
 	null "gopkg.in/guregu/null.v3"
 )

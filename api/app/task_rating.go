@@ -21,10 +21,10 @@ package app
 import (
 	"net/http"
 
-	"github.com/cgtuebingen/infomark-backend/auth/authenticate"
-	"github.com/cgtuebingen/infomark-backend/model"
-	"github.com/cgtuebingen/infomark-backend/symbol"
 	"github.com/go-chi/render"
+	"github.com/infomark-org/infomark-backend/auth/authenticate"
+	"github.com/infomark-org/infomark-backend/model"
+	"github.com/infomark-org/infomark-backend/symbol"
 )
 
 // TaskRatingResource specifies TaskRating management handler.

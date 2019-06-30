@@ -23,9 +23,9 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/cgtuebingen/infomark-backend/database"
-	"github.com/cgtuebingen/infomark-backend/email"
 	"github.com/franela/goblin"
+	"github.com/infomark-org/infomark-backend/database"
+	"github.com/infomark-org/infomark-backend/email"
 )
 
 func TestTaskRating(t *testing.T) {

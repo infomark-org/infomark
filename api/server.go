@@ -27,9 +27,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cgtuebingen/infomark-backend/api/app"
-	"github.com/cgtuebingen/infomark-backend/api/cronjob"
-	"github.com/cgtuebingen/infomark-backend/email"
+	"github.com/infomark-org/infomark-backend/api/app"
+	"github.com/infomark-org/infomark-backend/api/cronjob"
+	"github.com/infomark-org/infomark-backend/email"
 	"github.com/jmoiron/sqlx"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/robfig/cron"

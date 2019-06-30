@@ -21,7 +21,7 @@ package cmd
 import (
 	"log"
 
-	"github.com/cgtuebingen/infomark-backend/api"
+	"github.com/infomark-org/infomark-backend/api"
 
 	"github.com/spf13/cobra"
 )

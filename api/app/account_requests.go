@@ -23,9 +23,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/cgtuebingen/infomark-backend/auth"
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/go-ozzo/ozzo-validation/is"
+	"github.com/infomark-org/infomark-backend/auth"
 	"github.com/spf13/viper"
 )
 

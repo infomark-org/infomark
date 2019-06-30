@@ -4,7 +4,7 @@ No manual settings, plug and play:
 
 ```bash
 # get code
-git clone https://github.com/cgtuebingen/infomark-backend.git
+git clone https://github.com/infomark-org/infomark-backend.git
 go build infomark.go
 
 # copy pre-defined config (just for demo purposes)

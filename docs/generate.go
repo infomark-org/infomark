@@ -9,9 +9,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/cgtuebingen/infomark-backend/api/app"
-	"github.com/cgtuebingen/infomark-backend/docs/swagger"
 	"github.com/go-chi/chi"
+	"github.com/infomark-org/infomark-backend/api/app"
+	"github.com/infomark-org/infomark-backend/docs/swagger"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/spf13/viper"

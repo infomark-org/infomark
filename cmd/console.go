@@ -27,7 +27,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cgtuebingen/infomark-backend/cmd/console"
+	"github.com/infomark-org/infomark-backend/cmd/console"
 	"github.com/spf13/cobra"
 	"github.com/spf13/cobra/doc"
 )

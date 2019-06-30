@@ -19,7 +19,7 @@
 package database
 
 import (
-	"github.com/cgtuebingen/infomark-backend/model"
+	"github.com/infomark-org/infomark-backend/model"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 )

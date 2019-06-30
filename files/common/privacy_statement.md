@@ -8,7 +8,7 @@ mittels dieser Datenschutzerklärung möchten wir Sie im Folgenden über die Dat
 Wir bitten Sie, diese Datenschutzerklärung sorgfältig durchzulesen, bevor Sie unsere Webseiten weiter besuchen oder die auf den Webseiten enthaltenen Funktionen nutzen. Mit dem Besuch unserer Webseiten stimmen Sie den im Folgenden beschriebenen Verarbeitungen und Nutzungen Ihrer Daten zu. Unsere Datenschutzerklärung ist nur für unsere Webseiten gültig und nicht für die Webseiten Dritter.
 
 Grundsätzlich möchten wir darauf hinweisen, dass der Code für jegliche Verarbeitungsschritte
-als Open-Source Projekt unter https://github.com/cgtuebingen/infomark-backend frei für jeden kostenlos einsehbar und nachvollziehbar ist. Ebenfalls ist der client-seitige Code, der in ihrem Browser auf ihrem PC ausgeführt wird frei unter https://github.com/cgtuebingen/infomark-ui einsehbar.
+als Open-Source Projekt unter https://github.com/infomark-org/infomark-backend frei für jeden kostenlos einsehbar und nachvollziehbar ist. Ebenfalls ist der client-seitige Code, der in ihrem Browser auf ihrem PC ausgeführt wird frei unter https://github.com/infomark-org/infomark-ui einsehbar.
 
 ## Datenschutz und Datensicherheit
 
@@ -41,7 +41,7 @@ Personenbezogene Daten sind gemäß Art. 4 DSGVO alle Informationen, die sich au
 Sofern Sie uns Ihre Daten freiwillig zu den im Folgenden aufgeführten Zwecken mitteilen, verarbeiten und nutzen wir diese Daten ausschließlich für die Zwecke, für die Sie uns Ihre Daten zukommen lassen haben.
 
 Sofern Sie uns Ihre Daten über das Infomark-System zukommen lassen bzw. zum Abruf bereitstellen, verarbeiten und nutzen wir die von Ihnen zur Verfügung gestellten Daten ausschließlich zu den Zwecken, zu denen Sie uns die Daten zukommen lassen haben. Wir möchten Sie ausdrücklich darauf hinweisen, dass das Infomark-System ausschließlich auf Servern der Universität Tübingen betrieben wird und Ihre Daten nie diesen Server verlassen.
-Der Code zur Verarbeitung aller Daten ist als Open-Source Projekt unter https://github.com/cgtuebingen/infomark-backend frei einsehbar.
+Der Code zur Verarbeitung aller Daten ist als Open-Source Projekt unter https://github.com/infomark-org/infomark-backend frei einsehbar.
 
 Aus technischer Sicht müssen folgenden Informationen im Server verarbeitet werden
 

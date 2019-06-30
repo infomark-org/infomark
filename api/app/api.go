@@ -19,10 +19,10 @@
 package app
 
 import (
-	"github.com/cgtuebingen/infomark-backend/auth/authorize"
-	"github.com/cgtuebingen/infomark-backend/database"
-	"github.com/cgtuebingen/infomark-backend/model"
-	"github.com/cgtuebingen/infomark-backend/symbol"
+	"github.com/infomark-org/infomark-backend/auth/authorize"
+	"github.com/infomark-org/infomark-backend/database"
+	"github.com/infomark-org/infomark-backend/model"
+	"github.com/infomark-org/infomark-backend/symbol"
 	"github.com/jmoiron/sqlx"
 )
 

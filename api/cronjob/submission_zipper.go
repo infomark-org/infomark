@@ -24,9 +24,9 @@ import (
 	"io"
 	"os"
 
-	"github.com/cgtuebingen/infomark-backend/api/app"
-	"github.com/cgtuebingen/infomark-backend/api/helper"
-	"github.com/cgtuebingen/infomark-backend/email"
+	"github.com/infomark-org/infomark-backend/api/app"
+	"github.com/infomark-org/infomark-backend/api/helper"
+	"github.com/infomark-org/infomark-backend/email"
 	"github.com/jmoiron/sqlx"
 )
 

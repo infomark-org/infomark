@@ -114,8 +114,8 @@ func (ds *DockerService) Run(
 	// fmt.Println("submissionZipFile", submissionZipFile)
 	// fmt.Println("frameworkZipFile", frameworkZipFile)
 
-	// submissionZipFile := "/home/patwie/git/github.com/cgtuebingen/infomark/infomark-backend/.local/simple_ci_runner/submission.zip"
-	// frameworkZipFile := "/home/patwie/git/github.com/cgtuebingen/infomark/infomark-backend/.local/simple_ci_runner/unittest.zip"
+	// submissionZipFile := "/home/patwie/git/github.com/infomark-org/infomark/infomark-backend/.local/simple_ci_runner/submission.zip"
+	// frameworkZipFile := "/home/patwie/git/github.com/infomark-org/infomark/infomark-backend/.local/simple_ci_runner/unittest.zip"
 
 	cmds := []string{}
 

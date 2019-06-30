@@ -20,7 +20,7 @@
 
 package main
 
-import "github.com/cgtuebingen/infomark-backend/cmd"
+import "github.com/infomark-org/infomark-backend/cmd"
 
 func main() {
 	cmd.Execute()

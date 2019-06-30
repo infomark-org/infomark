@@ -21,7 +21,7 @@ package app
 import (
 	"net/http"
 
-	"github.com/cgtuebingen/infomark-backend/model"
+	"github.com/infomark-org/infomark-backend/model"
 )
 
 // TaskRatingResponse is the response payload for TaskRating management.

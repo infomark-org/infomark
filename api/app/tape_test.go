@@ -23,9 +23,9 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/cgtuebingen/infomark-backend/api/helper"
-	"github.com/cgtuebingen/infomark-backend/auth/authenticate"
-	otape "github.com/cgtuebingen/infomark-backend/tape"
+	"github.com/infomark-org/infomark-backend/api/helper"
+	"github.com/infomark-org/infomark-backend/auth/authenticate"
+	otape "github.com/infomark-org/infomark-backend/tape"
 	"github.com/jmoiron/sqlx"
 	"github.com/spf13/viper"
 )

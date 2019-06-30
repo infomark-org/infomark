@@ -27,7 +27,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cgtuebingen/infomark-backend/model"
+	"github.com/infomark-org/infomark-backend/model"
 	"github.com/lib/pq"
 	"github.com/spf13/cobra"
 )

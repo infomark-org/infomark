@@ -24,10 +24,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/cgtuebingen/infomark-backend/auth"
-	"github.com/cgtuebingen/infomark-backend/symbol"
 	"github.com/go-chi/jwtauth"
 	"github.com/go-chi/render"
+	"github.com/infomark-org/infomark-backend/auth"
+	"github.com/infomark-org/infomark-backend/symbol"
 	"github.com/spf13/viper"
 	"github.com/ulule/limiter/v3"
 

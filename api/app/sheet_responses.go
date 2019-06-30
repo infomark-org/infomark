@@ -24,9 +24,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/cgtuebingen/infomark-backend/auth/authorize"
-	"github.com/cgtuebingen/infomark-backend/model"
 	"github.com/go-chi/render"
+	"github.com/infomark-org/infomark-backend/auth/authorize"
+	"github.com/infomark-org/infomark-backend/model"
 )
 
 // SheetResponse is the response payload for Sheet management.

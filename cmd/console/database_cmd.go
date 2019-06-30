@@ -27,7 +27,7 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/cgtuebingen/infomark-backend/api/helper"
+	"github.com/infomark-org/infomark-backend/api/helper"
 	"github.com/lib/pq"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"

@@ -24,10 +24,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cgtuebingen/infomark-backend/api/helper"
-	"github.com/cgtuebingen/infomark-backend/email"
-	"github.com/cgtuebingen/infomark-backend/model"
 	"github.com/franela/goblin"
+	"github.com/infomark-org/infomark-backend/api/helper"
+	"github.com/infomark-org/infomark-backend/email"
+	"github.com/infomark-org/infomark-backend/model"
 )
 
 func DBGetInt(tape *Tape, stmt string, param1 int64) (int, error) {

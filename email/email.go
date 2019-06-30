@@ -25,7 +25,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/cgtuebingen/infomark-backend/model"
+	"github.com/infomark-org/infomark-backend/model"
 	"github.com/spf13/viper"
 )
 

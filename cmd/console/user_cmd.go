@@ -22,8 +22,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/cgtuebingen/infomark-backend/model"
 	"github.com/go-ozzo/ozzo-validation/is"
+	"github.com/infomark-org/infomark-backend/model"
 	"github.com/spf13/cobra"
 	null "gopkg.in/guregu/null.v3"
 )

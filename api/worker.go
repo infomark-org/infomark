@@ -22,8 +22,8 @@ import (
 	"os"
 	"os/signal"
 
-	background "github.com/cgtuebingen/infomark-backend/api/worker"
-	"github.com/cgtuebingen/infomark-backend/service"
+	background "github.com/infomark-org/infomark-backend/api/worker"
+	"github.com/infomark-org/infomark-backend/service"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )

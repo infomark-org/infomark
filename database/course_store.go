@@ -19,8 +19,8 @@
 package database
 
 import (
-	"github.com/cgtuebingen/infomark-backend/auth/authorize"
-	"github.com/cgtuebingen/infomark-backend/model"
+	"github.com/infomark-org/infomark-backend/auth/authorize"
+	"github.com/infomark-org/infomark-backend/model"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 )

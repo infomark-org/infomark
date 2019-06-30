@@ -18,7 +18,7 @@
 
 package app
 
-import "github.com/cgtuebingen/infomark-backend/auth/authenticate"
+import "github.com/infomark-org/infomark-backend/auth/authenticate"
 
 // H is a wrapper for convenience
 type H map[string]interface{}

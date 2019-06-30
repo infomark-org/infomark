@@ -1,4 +1,4 @@
-module github.com/cgtuebingen/infomark-backend
+module github.com/infomark-org/infomark-backend
 
 require (
 	github.com/BurntSushi/toml v0.3.1 // indirect
@@ -6,6 +6,7 @@ require (
 	github.com/Microsoft/go-winio v0.4.12 // indirect
 	github.com/alexedwards/scs v1.4.0
 	github.com/asaskevich/govalidator v0.0.0-20180720115003-f9ffefc3facf // indirect
+	github.com/coreos/go-semver v0.2.0
 	github.com/cpuguy83/go-md2man v1.0.10 // indirect
 	github.com/davecgh/go-spew v1.1.1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible

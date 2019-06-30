@@ -22,7 +22,7 @@ import (
 	"log"
 	"strconv"
 
-	"github.com/cgtuebingen/infomark-backend/api/app"
+	"github.com/infomark-org/infomark-backend/api/app"
 	"github.com/jmoiron/sqlx"
 	"github.com/spf13/viper"
 )

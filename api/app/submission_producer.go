@@ -19,7 +19,7 @@
 package app
 
 import (
-	"github.com/cgtuebingen/infomark-backend/service"
+	"github.com/infomark-org/infomark-backend/service"
 	"github.com/spf13/viper"
 )
 

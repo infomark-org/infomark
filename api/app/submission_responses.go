@@ -22,8 +22,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/cgtuebingen/infomark-backend/model"
 	"github.com/go-chi/render"
+	"github.com/infomark-org/infomark-backend/model"
 	"github.com/spf13/viper"
 )
 

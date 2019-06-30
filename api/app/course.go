@@ -25,14 +25,14 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/cgtuebingen/infomark-backend/api/helper"
-	"github.com/cgtuebingen/infomark-backend/auth/authenticate"
-	"github.com/cgtuebingen/infomark-backend/auth/authorize"
-	"github.com/cgtuebingen/infomark-backend/email"
-	"github.com/cgtuebingen/infomark-backend/model"
-	"github.com/cgtuebingen/infomark-backend/symbol"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
+	"github.com/infomark-org/infomark-backend/api/helper"
+	"github.com/infomark-org/infomark-backend/auth/authenticate"
+	"github.com/infomark-org/infomark-backend/auth/authorize"
+	"github.com/infomark-org/infomark-backend/email"
+	"github.com/infomark-org/infomark-backend/model"
+	"github.com/infomark-org/infomark-backend/symbol"
 )
 
 // CourseResource specifies course management handler.

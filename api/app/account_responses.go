@@ -21,8 +21,8 @@ package app
 import (
 	"net/http"
 
-	"github.com/cgtuebingen/infomark-backend/model"
 	"github.com/go-chi/render"
+	"github.com/infomark-org/infomark-backend/model"
 )
 
 // UserEnrollmentResponse is the response payload for account management.

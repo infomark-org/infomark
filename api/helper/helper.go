@@ -29,7 +29,7 @@ import (
 	"strings"
 
 	txdb "github.com/DATA-DOG/go-txdb"
-	"github.com/cgtuebingen/infomark-backend/auth/authenticate"
+	"github.com/infomark-org/infomark-backend/auth/authenticate"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq" // need for Postgres
 	"github.com/spf13/viper"

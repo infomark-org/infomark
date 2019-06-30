@@ -23,10 +23,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/cgtuebingen/infomark-backend/auth"
-	"github.com/cgtuebingen/infomark-backend/email"
 	"github.com/franela/goblin"
 	redis "github.com/go-redis/redis"
+	"github.com/infomark-org/infomark-backend/auth"
+	"github.com/infomark-org/infomark-backend/email"
 	"github.com/spf13/viper"
 	null "gopkg.in/guregu/null.v3"
 )
