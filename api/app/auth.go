@@ -50,7 +50,7 @@ func NewAuthResource(stores *Stores) *AuthResource {
 // METHOD: post
 // TAG: auth
 // REQUEST: loginRequest
-// RESPONSE: 201,authResponse
+// RESPONSE: 201,AuthResponse
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
 // RESPONSE: 403,Unauthorized
@@ -105,9 +105,8 @@ func (rs *AuthResource) RefreshAccessTokenHandler(w http.ResponseWriter, r *http
 			return
 		}
 
-		resp := &authResponse{
-			AccessToken: accessToken,
-		}
+		resp := &AuthResponse{}
+		resp.Access.Token = accessToken
 
 		// return access token only
 		if err := render.Render(w, r, resp); err != nil {
@@ -139,24 +138,25 @@ func (rs *AuthResource) RefreshAccessTokenHandler(w http.ResponseWriter, r *http
 			return
 		}
 
-		refreshToken, err := tokenManager.CreateRefreshJWT(authenticate.NewRefreshClaims(potentialUser.ID))
+		refreshClaims := authenticate.NewRefreshClaims(potentialUser.ID)
+		refreshToken, err := tokenManager.CreateRefreshJWT(refreshClaims)
 
 		if err != nil {
 			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
 			return
 		}
 
-		accessToken, err := tokenManager.CreateAccessJWT(authenticate.NewAccessClaims(potentialUser.ID, potentialUser.Root))
+		accessClaims := authenticate.NewAccessClaims(potentialUser.ID, potentialUser.Root)
+		accessToken, err := tokenManager.CreateAccessJWT(accessClaims)
 
 		if err != nil {
 			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
 			return
 		}
 
-		resp := &authResponse{
-			AccessToken:  accessToken,
-			RefreshToken: refreshToken,
-		}
+		resp := &AuthResponse{}
+		resp.Access.Token = accessToken
+		resp.Refresh.Token = refreshToken
 
 		// return user information of created entry
 		if err := render.Render(w, r, resp); err != nil {

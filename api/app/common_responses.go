@@ -24,19 +24,19 @@ import (
 	"github.com/cgtuebingen/infomark-backend/symbol"
 )
 
-// rawResponse is the response payload for course management.
-type rawResponse struct {
+// RawResponse is the response payload for course management.
+type RawResponse struct {
 	Text string `json:"text" example:"some text"`
 }
 
-// Render post-processes a rawResponse.
-func (body *rawResponse) Render(w http.ResponseWriter, r *http.Request) error {
+// Render post-processes a RawResponse.
+func (body *RawResponse) Render(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
 // newCourseResponse creates a response from a course model.
-func newRawResponse(text string) *rawResponse {
-	return &rawResponse{
+func newRawResponse(text string) *RawResponse {
+	return &RawResponse{
 		Text: text,
 	}
 }

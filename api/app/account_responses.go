@@ -25,22 +25,22 @@ import (
 	"github.com/go-chi/render"
 )
 
-// userEnrollmentResponse is the response payload for account management.
-type userEnrollmentResponse struct {
+// UserEnrollmentResponse is the response payload for account management.
+type UserEnrollmentResponse struct {
 	ID       int64 `json:"id" example:"31"`
 	CourseID int64 `json:"course_id" example:"1"`
 	Role     int64 `json:"role" example:"1"`
 }
 
 // Render post-processes a userAccountCreatedResponse.
-func (u *userEnrollmentResponse) Render(w http.ResponseWriter, r *http.Request) error {
+func (u *UserEnrollmentResponse) Render(w http.ResponseWriter, r *http.Request) error {
 	// nothing to hide
 	return nil
 }
 
 // newCourseResponse creates a response from a course model.
-func (rs *AccountResource) newUserEnrollmentResponse(p *model.Enrollment) *userEnrollmentResponse {
-	return &userEnrollmentResponse{
+func (rs *AccountResource) newUserEnrollmentResponse(p *model.Enrollment) *UserEnrollmentResponse {
+	return &UserEnrollmentResponse{
 		ID:       p.ID,
 		CourseID: p.CourseID,
 		Role:     p.Role,

@@ -91,7 +91,7 @@ func TestCourse(t *testing.T) {
 			w := tape.Get("/api/v1/courses/1", adminJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
-			courseActual := &courseResponse{}
+			courseActual := &CourseResponse{}
 			err := json.NewDecoder(w.Body).Decode(courseActual)
 			g.Assert(err).Equal(nil)
 
@@ -118,7 +118,7 @@ func TestCourse(t *testing.T) {
 			g.Assert(err).Equal(nil)
 
 			w := tape.Get("/api/v1/courses/1/enrollments", adminJWT)
-			enrollmentsActual := []enrollmentResponse{}
+			enrollmentsActual := []EnrollmentResponse{}
 			err = json.NewDecoder(w.Body).Decode(&enrollmentsActual)
 			g.Assert(err).Equal(nil)
 			g.Assert(len(enrollmentsActual)).Equal(numberEnrollmentsExpected)
@@ -136,7 +136,7 @@ func TestCourse(t *testing.T) {
 			g.Assert(err).Equal(nil)
 
 			w := tape.Get("/api/v1/courses/1/enrollments?roles=0", adminJWT)
-			enrollmentsActual := []enrollmentResponse{}
+			enrollmentsActual := []EnrollmentResponse{}
 			err = json.NewDecoder(w.Body).Decode(&enrollmentsActual)
 			g.Assert(err).Equal(nil)
 			g.Assert(len(enrollmentsActual)).Equal(numberEnrollmentsExpected)
@@ -152,7 +152,7 @@ func TestCourse(t *testing.T) {
 			g.Assert(err).Equal(nil)
 
 			w := tape.Get("/api/v1/courses/1/enrollments?q=chi", noAdminJWT)
-			enrollmentsActual := []enrollmentResponse{}
+			enrollmentsActual := []EnrollmentResponse{}
 			err = json.NewDecoder(w.Body).Decode(&enrollmentsActual)
 			g.Assert(err).Equal(nil)
 			g.Assert(len(enrollmentsActual)).Equal(len(enrollmentsExpected))
@@ -170,7 +170,7 @@ func TestCourse(t *testing.T) {
 			g.Assert(err).Equal(nil)
 
 			w := tape.Get("/api/v1/courses/1/enrollments?roles=1", noAdminJWT)
-			enrollmentsActual := []enrollmentResponse{}
+			enrollmentsActual := []EnrollmentResponse{}
 			err = json.NewDecoder(w.Body).Decode(&enrollmentsActual)
 			g.Assert(err).Equal(nil)
 			g.Assert(len(enrollmentsActual)).Equal(numberEnrollmentsExpected)
@@ -188,7 +188,7 @@ func TestCourse(t *testing.T) {
 			g.Assert(err).Equal(nil)
 
 			w := tape.Get("/api/v1/courses/1/enrollments?roles=0,1", noAdminJWT)
-			enrollmentsActual := []enrollmentResponse{}
+			enrollmentsActual := []EnrollmentResponse{}
 			err = json.NewDecoder(w.Body).Decode(&enrollmentsActual)
 			g.Assert(err).Equal(nil)
 			g.Assert(len(enrollmentsActual)).Equal(numberEnrollmentsExpected)
@@ -207,7 +207,7 @@ func TestCourse(t *testing.T) {
 
 			// 112 is a student
 			w := tape.Get("/api/v1/courses/1/enrollments?roles=0", studentJWT)
-			enrollmentsActual := []enrollmentResponse{}
+			enrollmentsActual := []EnrollmentResponse{}
 			err = json.NewDecoder(w.Body).Decode(&enrollmentsActual)
 			g.Assert(err).Equal(nil)
 			g.Assert(len(enrollmentsActual)).Equal(numberEnrollmentsExpected)
@@ -215,7 +215,7 @@ func TestCourse(t *testing.T) {
 
 		g.It("Should be able to filter enrollments (but not see field protected by privacy), when role=tutor,student", func() {
 			w := tape.Get("/api/v1/courses/1/enrollments?roles=0", studentJWT)
-			enrollmentsActual := []enrollmentResponse{}
+			enrollmentsActual := []EnrollmentResponse{}
 			err := json.NewDecoder(w.Body).Decode(&enrollmentsActual)
 			g.Assert(err).Equal(nil)
 
@@ -266,7 +266,7 @@ func TestCourse(t *testing.T) {
 			g.Assert(w.Code).Equal(http.StatusCreated)
 
 			// verify body
-			courseReturn := &courseResponse{}
+			courseReturn := &CourseResponse{}
 			err = json.NewDecoder(w.Body).Decode(&courseReturn)
 			g.Assert(err).Equal(nil)
 			g.Assert(courseReturn.Name).Equal(entrySent.Name)
@@ -520,7 +520,7 @@ func TestCourse(t *testing.T) {
 			w = tape.Get("/api/v1/courses/1/enrollments/2", NewJWTRequest(3, false))
 			g.Assert(w.Code).Equal(http.StatusForbidden)
 
-			result := enrollmentResponse{}
+			result := EnrollmentResponse{}
 
 			w = tape.Get("/api/v1/courses/1/enrollments/2", noAdminJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
@@ -552,7 +552,7 @@ func TestCourse(t *testing.T) {
 			w = tape.Get("/api/v1/courses/1/enrollments/112", noAdminJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
-			result := enrollmentResponse{}
+			result := EnrollmentResponse{}
 			err := json.NewDecoder(w.Body).Decode(&result)
 			g.Assert(err).Equal(nil)
 			g.Assert(result.User.ID).Equal(int64(112))

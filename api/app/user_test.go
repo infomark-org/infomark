@@ -76,7 +76,7 @@ func TestUser(t *testing.T) {
 			w := tape.Get("/api/v1/users/1", adminJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
-			userActual := &userResponse{}
+			userActual := &UserResponse{}
 			err = json.NewDecoder(w.Body).Decode(userActual)
 			g.Assert(err).Equal(nil)
 
@@ -161,7 +161,7 @@ func TestUser(t *testing.T) {
 			w := tape.Get("/api/v1/me", adminJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
-			userActual := &userResponse{}
+			userActual := &UserResponse{}
 			err = json.NewDecoder(w.Body).Decode(&userActual)
 			g.Assert(err).Equal(nil)
 

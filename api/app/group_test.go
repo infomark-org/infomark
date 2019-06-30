@@ -394,7 +394,7 @@ func TestGroup(t *testing.T) {
 			g.Assert(err).Equal(nil)
 
 			w := tape.Get("/api/v1/courses/1/groups/1/enrollments", adminJWT)
-			enrollmentsActual := []enrollmentResponse{}
+			enrollmentsActual := []EnrollmentResponse{}
 			err = json.NewDecoder(w.Body).Decode(&enrollmentsActual)
 			g.Assert(err).Equal(nil)
 			g.Assert(len(enrollmentsActual)).Equal(numberEnrollmentsExpected)

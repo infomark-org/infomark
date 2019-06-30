@@ -218,12 +218,12 @@ func newMissingGradeListResponse(Grades []model.MissingGrade) []render.Renderer 
 }
 
 // for the swagger build relying on go.ast we need to duplicate code here
-type sheetInfo struct {
+type SheetInfo struct {
 	ID   int64  `json:"id" example:"42"`
 	Name string `json:"name" example:"sheet 0"`
 }
 
-type userInfo struct {
+type UserInfo struct {
 	ID            int64  `json:"id" example:"42"`
 	FirstName     string `json:"first_name" example:"max"`
 	LastName      string `json:"last_name" example:"mustermensch"`
@@ -231,16 +231,16 @@ type userInfo struct {
 	Email         string `json:"email" example:"user@example.com"`
 }
 
-type achievementInfo struct {
-	User   userInfo `json:"user_info" example:""`
+type AchievementInfo struct {
+	User   UserInfo `json:"user_info" example:""`
 	Points []int    `json:"points" example:"4"`
 }
 
 // GradeOverviewResponse captures the summary for all grades over all sheets
 // for a subset of users.
 type GradeOverviewResponse struct {
-	Sheets       []sheetInfo       `json:"sheets" example:""`
-	Achievements []achievementInfo `json:"achievements" example:""`
+	Sheets       []SheetInfo       `json:"sheets" example:""`
+	Achievements []AchievementInfo `json:"achievements" example:""`
 }
 
 // newGradeOverviewResponse creates a response from a Material model.
@@ -251,12 +251,12 @@ func newGradeOverviewResponse(collection []model.OverviewGrade, sheets []model.S
 	// only do this once
 	sheet2pos := make(map[int64]int)
 	for k, s := range sheets {
-		obj.Sheets = append(obj.Sheets, sheetInfo{s.ID, s.Name})
+		obj.Sheets = append(obj.Sheets, SheetInfo{s.ID, s.Name})
 		sheet2pos[s.ID] = k
 	}
 
 	if len(collection) > 0 {
-		oldUser := userInfo{
+		oldUser := UserInfo{
 			ID:            collection[0].UserID,
 			FirstName:     collection[0].UserFirstName,
 			LastName:      collection[0].UserLastName,
@@ -279,12 +279,12 @@ func newGradeOverviewResponse(collection []model.OverviewGrade, sheets []model.S
 					oldUser.StudentNumber = ""
 				}
 
-				obj.Achievements = append(obj.Achievements, achievementInfo{oldUser, currentPoints})
+				obj.Achievements = append(obj.Achievements, AchievementInfo{oldUser, currentPoints})
 
 				// reset points
 				currentPoints = make([]int, len(sheets))
 
-				oldUser = userInfo{
+				oldUser = UserInfo{
 					ID:            entry.UserID,
 					FirstName:     entry.UserFirstName,
 					LastName:      entry.UserLastName,
@@ -298,7 +298,7 @@ func newGradeOverviewResponse(collection []model.OverviewGrade, sheets []model.S
 
 		// add the last student
 		if len(collection) > 0 {
-			obj.Achievements = append(obj.Achievements, achievementInfo{oldUser, currentPoints})
+			obj.Achievements = append(obj.Achievements, AchievementInfo{oldUser, currentPoints})
 		}
 	}
 

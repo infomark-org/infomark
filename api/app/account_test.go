@@ -66,7 +66,7 @@ func TestAccount(t *testing.T) {
 			w := tape.Get("/api/v1/account/enrollments", adminJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
-			enrollmentsActual := []userEnrollmentResponse{}
+			enrollmentsActual := []UserEnrollmentResponse{}
 			err = json.NewDecoder(w.Body).Decode(&enrollmentsActual)
 			g.Assert(err).Equal(nil)
 			g.Assert(len(enrollmentsActual)).Equal(len(enrollmentsExpected))
@@ -271,7 +271,7 @@ func TestAccount(t *testing.T) {
 			w := tape.Get("/api/v1/account", adminJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
-			userReturned := &userResponse{}
+			userReturned := &UserResponse{}
 			err := json.NewDecoder(w.Body).Decode(userReturned)
 			g.Assert(err).Equal(nil)
 			g.Assert(userReturned.AvatarURL.Valid).Equal(false)
@@ -314,7 +314,7 @@ func TestAccount(t *testing.T) {
 			w := tape.Get("/api/v1/account", adminJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
-			userReturned := &userResponse{}
+			userReturned := &UserResponse{}
 			err := json.NewDecoder(w.Body).Decode(userReturned)
 			g.Assert(err).Equal(nil)
 			g.Assert(userReturned.AvatarURL.Valid).Equal(false)
@@ -368,7 +368,7 @@ func TestAccount(t *testing.T) {
 			w := tape.Get("/api/v1/account", adminJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
-			userReturned := &userResponse{}
+			userReturned := &UserResponse{}
 			err = json.NewDecoder(w.Body).Decode(userReturned)
 			g.Assert(err).Equal(nil)
 			g.Assert(userReturned.AvatarURL.Valid).Equal(false)
@@ -398,7 +398,7 @@ func TestAccount(t *testing.T) {
 			w = tape.Get("/api/v1/account", noAdminJWT)
 			g.Assert(w.Code).Equal(http.StatusOK)
 
-			userReturned := &userResponse{}
+			userReturned := &UserResponse{}
 			err = json.NewDecoder(w.Body).Decode(userReturned)
 			g.Assert(err).Equal(nil)
 			g.Assert(userReturned.AvatarURL.Valid).Equal(true)

@@ -28,8 +28,8 @@ import (
 
 // .............................................................................
 
-// userResponse is the response payload for user management.
-type userResponse struct {
+// UserResponse is the response payload for user management.
+type UserResponse struct {
 	ID            int64       `json:"id" example:"1"`
 	FirstName     string      `json:"first_name" example:"Max"`
 	LastName      string      `json:"last_name" example:"Mustermensch"`
@@ -43,8 +43,8 @@ type userResponse struct {
 }
 
 // newUserResponse creates a response from a user model.
-func newUserResponse(p *model.User) *userResponse {
-	return &userResponse{
+func newUserResponse(p *model.User) *UserResponse {
+	return &UserResponse{
 		ID:            p.ID,
 		FirstName:     p.FirstName,
 		LastName:      p.LastName,
@@ -67,8 +67,8 @@ func newUserListResponse(users []model.User) []render.Renderer {
 	return list
 }
 
-// Render post-processes a userResponse.
-func (u *userResponse) Render(w http.ResponseWriter, r *http.Request) error {
+// Render post-processes a UserResponse.
+func (u *UserResponse) Render(w http.ResponseWriter, r *http.Request) error {
 	// nothing to hide
 	return nil
 }

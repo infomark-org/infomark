@@ -27,8 +27,8 @@ import (
 	null "gopkg.in/guregu/null.v3"
 )
 
-// courseResponse is the response payload for course management.
-type courseResponse struct {
+// CourseResponse is the response payload for course management.
+type CourseResponse struct {
 	ID                 int64     `json:"id" example:"1"`
 	Name               string    `json:"name" example:"Info2"`
 	Description        string    `json:"description" example:"Some course description here"`
@@ -37,14 +37,14 @@ type courseResponse struct {
 	RequiredPercentage int       `json:"required_percentage" example:"80"`
 }
 
-// Render post-processes a courseResponse.
-func (body *courseResponse) Render(w http.ResponseWriter, r *http.Request) error {
+// Render post-processes a CourseResponse.
+func (body *CourseResponse) Render(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
 // newCourseResponse creates a response from a course model.
-func (rs *CourseResource) newCourseResponse(p *model.Course) *courseResponse {
-	return &courseResponse{
+func (rs *CourseResource) newCourseResponse(p *model.Course) *CourseResponse {
+	return &CourseResponse{
 		ID:                 p.ID,
 		Name:               p.Name,
 		Description:        p.Description,
@@ -94,21 +94,21 @@ func newSheetPointsListResponse(collection []model.SheetPoints) []render.Rendere
 }
 
 // .............................................................................
-type groupBidsResponse struct {
+type GroupBidsResponse struct {
 	ID      int64 `json:"id" example:"512"`
 	UserID  int64 `json:"user_id" example:"112"`
 	GroupID int64 `json:"group_id" example:"2"`
 	Bid     int   `json:"bid" example:"6" minval:"0" maxval:"10"`
 }
 
-// Render postprocesses a groupBidsResponse before marshalling to JSON.
-func (body *groupBidsResponse) Render(w http.ResponseWriter, r *http.Request) error {
+// Render postprocesses a GroupBidsResponse before marshalling to JSON.
+func (body *GroupBidsResponse) Render(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
 // newCourseResponse creates a response from a course model.
-func newGroupBidsResponse(p *model.GroupBid) *groupBidsResponse {
-	return &groupBidsResponse{
+func newGroupBidsResponse(p *model.GroupBid) *GroupBidsResponse {
+	return &GroupBidsResponse{
 		ID:      p.ID,
 		UserID:  p.UserID,
 		GroupID: p.GroupID,
@@ -127,8 +127,8 @@ func newGroupBidsListResponse(collection []model.GroupBid) []render.Renderer {
 
 // .............................................................................
 
-// courseResponse is the response payload for course management.
-type enrollmentResponse struct {
+// CourseResponse is the response payload for course management.
+type EnrollmentResponse struct {
 	Role int64 `json:"role" example:"1"`
 	User *struct {
 		ID            int64       `json:"id" example:"13"`
@@ -143,13 +143,13 @@ type enrollmentResponse struct {
 	} `json:"user"`
 }
 
-// Render post-processes a courseResponse.
-func (body *enrollmentResponse) Render(w http.ResponseWriter, r *http.Request) error {
+// Render post-processes a CourseResponse.
+func (body *EnrollmentResponse) Render(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
 // newCourseResponse creates a response from a course model.
-func newEnrollmentResponse(p *model.UserCourse) *enrollmentResponse {
+func newEnrollmentResponse(p *model.UserCourse) *EnrollmentResponse {
 
 	user := struct {
 		ID            int64       `json:"id" example:"13"`
@@ -173,7 +173,7 @@ func newEnrollmentResponse(p *model.UserCourse) *enrollmentResponse {
 		Language:      p.Language,
 	}
 
-	return &enrollmentResponse{
+	return &EnrollmentResponse{
 		Role: p.Role,
 		User: &user,
 	}

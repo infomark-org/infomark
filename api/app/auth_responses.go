@@ -22,12 +22,16 @@ import (
 	"net/http"
 )
 
-type authResponse struct {
-	AccessToken  string `json:"access_token" example:"eyJhbGciOiJIUzI1...rZikwLEI7XhY"`
-	RefreshToken string `json:"refresh_token" example:"eyJhbGciOiJIUzI1...EYCBjslOydswU"`
+type AuthResponse struct {
+	Access struct {
+		Token string `json:"token" example:"eyJhbGciOiJIUzI1...rZikwLEI7XhY"`
+	} `json:"access"`
+	Refresh struct {
+		Token string `json:"token" example:"eyJhbGciOiJIUzI1...EYCBjslOydswU"`
+	} `json:"refresh"`
 }
 
-func (body *authResponse) Render(w http.ResponseWriter, r *http.Request) error {
+func (body *AuthResponse) Render(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
