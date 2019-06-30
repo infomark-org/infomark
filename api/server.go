@@ -60,6 +60,7 @@ type Server struct {
 func NewServer() (*Server, error) {
 	RunInit()
 	app.PrepareTokenManager()
+	app.InitSubmissionProducer()
 	log.Info("configuring server...")
 
 	if viper.GetString("sendmail_binary") != "" {

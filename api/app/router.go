@@ -135,7 +135,6 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 	helper.InitConfig()
 	authenticate.PrepareSessionManager()
 	InitPrometheus()
-	InitSubmissionProducer()
 
 	if err := db.Ping(); err != nil {
 		logger.WithField("module", "database").Error(err)

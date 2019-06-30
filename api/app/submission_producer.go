@@ -41,7 +41,6 @@ func (t *VoidProducer) Publish(body []byte) error { return nil }
 
 func InitSubmissionProducer() {
 	var err error
-
 	cfg := &service.Config{
 		Connection:   viper.GetString("rabbitmq_connection"),
 		Exchange:     "infomark-worker-exchange",
