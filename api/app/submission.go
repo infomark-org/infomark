@@ -275,16 +275,24 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
 	task := r.Context().Value(symbol.CtxKeyTask).(*model.Task)
 	sheet := r.Context().Value(symbol.CtxKeySheet).(*model.Sheet)
 	accessClaims := r.Context().Value(symbol.CtxKeyAccessClaims).(*authenticate.AccessClaims)
-	// todo create submission if not exists
 
-	if r.Context().Value(symbol.CtxKeyCourseRole).(authorize.CourseRole) == authorize.STUDENT && !PublicYet(sheet.PublishAt) {
+	course_role := r.Context().Value(symbol.CtxKeyCourseRole).(authorize.CourseRole)
+
+	if course_role == authorize.STUDENT && !PublicYet(sheet.PublishAt) {
 		render.Render(w, r, ErrBadRequestWithDetails(fmt.Errorf("sheet not published yet")))
 		return
 	}
 
-	if r.Context().Value(symbol.CtxKeyCourseRole).(authorize.CourseRole) == authorize.STUDENT && OverTime(sheet.DueAt) {
+	if course_role == authorize.STUDENT && OverTime(sheet.DueAt) {
 		render.Render(w, r, ErrBadRequestWithDetails(fmt.Errorf("too late deadline was %v but now it is %v", sheet.DueAt, NowUTC())))
 		return
+	}
+
+	usedUserID := accessClaims.LoginID
+	if r.FormValue("user_id") != "" && course_role == authorize.ADMIN {
+		// admins cannot upload solutions for students even after the deadline
+		requested_user_id, _ := strconv.Atoi(r.FormValue("user_id"))
+		usedUserID = int64(requested_user_id)
 	}
 
 	var grade *model.Grade
@@ -301,11 +309,11 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
 		defaultPrivateTestLog = "no unit tests for this task are available"
 	}
 
-	// create ssubmisison if not exists
-	submission, err := rs.Stores.Submission.GetByUserAndTask(accessClaims.LoginID, task.ID)
+	// create submisison if not exists
+	submission, err := rs.Stores.Submission.GetByUserAndTask(usedUserID, task.ID)
 	if err != nil {
 		// no such submission
-		submission, err = rs.Stores.Submission.Create(&model.Submission{UserID: accessClaims.LoginID, TaskID: task.ID})
+		submission, err = rs.Stores.Submission.Create(&model.Submission{UserID: usedUserID, TaskID: task.ID})
 		if err != nil {
 			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
 			return

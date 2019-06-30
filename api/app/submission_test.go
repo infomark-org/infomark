@@ -314,6 +314,61 @@ func TestSubmission(t *testing.T) {
 
 		})
 
+		g.It("Admins can upload solution for a student (even if it is too late)", func() {
+
+			studentJWT := NewJWTRequest(112, false)
+			adminJWT := NewJWTRequest(1, true)
+
+			deadlineAt := NowUTC().Add(-time.Hour)
+			publishedAt := NowUTC().Add(-2 * time.Hour)
+
+			// make sure the upload date is good
+			task, err := stores.Task.Get(1)
+			g.Assert(err).Equal(nil)
+			sheet, err := stores.Task.IdentifySheetOfTask(task.ID)
+			g.Assert(err).Equal(nil)
+
+			sheet.PublishAt = publishedAt
+			sheet.DueAt = deadlineAt
+			err = stores.Sheet.Update(sheet)
+			g.Assert(err).Equal(nil)
+
+			defer helper.NewSubmissionFileHandle(3001).Delete()
+
+			// no files so far
+			g.Assert(helper.NewSubmissionFileHandle(3001).Exists()).Equal(false)
+
+			// remove all submission from student
+			_, err = tape.DB.Exec("DELETE FROM submissions WHERE user_id = 112;")
+			g.Assert(err).Equal(nil)
+
+			w := tape.Get("/api/v1/courses/1/tasks/1/submission", studentJWT)
+			g.Assert(w.Code).Equal(http.StatusNotFound)
+
+			// upload
+			filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
+			params := map[string]string{
+				"user_id": "112",
+			}
+
+			// upload as admin
+			w, err = tape.UploadWithParameters("/api/v1/courses/1/tasks/1/submission", filename, "application/zip", params, adminJWT)
+			g.Assert(err).Equal(nil)
+			g.Assert(w.Code).Equal(http.StatusOK)
+
+			createdSubmission, err := stores.Submission.GetByUserAndTask(112, 1)
+			g.Assert(err).Equal(nil)
+			g.Assert(createdSubmission.UserID).Equal(int64(112))
+
+			g.Assert(helper.NewSubmissionFileHandle(createdSubmission.ID).Exists()).Equal(true)
+			defer helper.NewSubmissionFileHandle(createdSubmission.ID).Delete()
+
+			// files exists
+			w = tape.Get("/api/v1/courses/1/tasks/1/submission", studentJWT)
+			g.Assert(w.Code).Equal(http.StatusOK)
+
+		})
+
 		g.It("tutors/admins can filter submissions", func() {
 
 			w := tape.Get("/api/v1/courses/1/submissions")
