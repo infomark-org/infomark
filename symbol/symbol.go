@@ -36,6 +36,7 @@ const (
 	CtxKeySubmission   key = iota
 	CtxKeySheet        key = iota
 	CtxKeyGrade        key = iota
+	CtxKeyExam         key = iota
 	// ...
 )
 

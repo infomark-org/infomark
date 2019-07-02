@@ -38,6 +38,19 @@ type UserStore interface {
 	GetEnrollments(userID int64) ([]model.Enrollment, error)
 }
 
+// ExamStore defines exam related database queries
+type ExamStore interface {
+	Get(examID int64) (*model.Exam, error)
+	ExamsOfCourse(courseID int64) ([]model.Exam, error)
+	GetAll() ([]model.Exam, error)
+	Create(p *model.Exam) (*model.Exam, error)
+	Update(p *model.Exam) error
+	Delete(examID int64) error
+	Enroll(examID int64, userID int64) error
+	Disenroll(examID int64, userID int64) error
+	GetUserEnrollment(examID int64, userID int64) (*model.UserExamView, error)
+}
+
 // CourseStore defines course related database queries
 type CourseStore interface {
 	Get(courseID int64) (*model.Course, error)
@@ -189,6 +202,7 @@ type API struct {
 	Material   *MaterialResource
 	Grade      *GradeResource
 	Common     *CommonResource
+	Exam       *ExamResource
 }
 
 // Stores is the collection of stores. We use this struct to express a kind of
@@ -202,6 +216,7 @@ type Stores struct {
 	Submission SubmissionStore
 	Material   MaterialStore
 	Grade      GradeStore
+	Exam       ExamStore
 }
 
 // NewStores build all stores and connect them to a database.
@@ -215,6 +230,7 @@ func NewStores(db *sqlx.DB) *Stores {
 		Submission: database.NewSubmissionStore(db),
 		Material:   database.NewMaterialStore(db),
 		Grade:      database.NewGradeStore(db),
+		Exam:       database.NewExamStore(db),
 	}
 }
 
@@ -235,6 +251,7 @@ func NewAPI(db *sqlx.DB) (*API, error) {
 		Material:   NewMaterialResource(stores),
 		Grade:      NewGradeResource(stores),
 		Common:     NewCommonResource(stores),
+		Exam:       NewExamResource(stores),
 	}
 	return api, nil
 }

@@ -294,6 +294,34 @@ def create_material_course(material_id, course_id):
   ])
 
   return data
+
+
+def create_exam(fake, name, course_id):
+  data = OrderedDict([
+      ('id', VAL.DEFAULT),
+      ('created_at', VAL.TIMESTAMP),
+      ('updated_at', VAL.TIMESTAMP),
+
+      ('name', name),
+      ('description', fake.text()),
+      ('exam_time', time_stamp(datetime.datetime(2019, 2, 1, 1, 2, 3))),
+      ('course_id', course_id),
+  ])
+
+  return data
+
+
+def create_user_exam(user_id, exam_id, status, mark):
+  data = OrderedDict([
+      ('id', VAL.DEFAULT),
+      ('user_id', user_id),
+      ('exam_id', exam_id),
+      ('status', status),
+      ('mark', mark),
+  ])
+
+  return data
+
 # """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 # """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 # """"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -341,6 +369,7 @@ if __name__ == "__main__":
   admins[0]['email'] = 'test@uni-tuebingen.de'
 
   courses = [create_course(fake, 'Info2'), create_course(fake, 'Info3')]
+  exams = [create_exam(fake, 'main', 1), create_exam(fake, 'second', 1)]
 
   course_id = 1
 
@@ -508,5 +537,11 @@ if __name__ == "__main__":
     f.write('ALTER SEQUENCE material_course_id_seq RESTART WITH 1;\n')
     for t in material_course:
       f.write(to_statement('material_course', t))
+
+    # exams
+    f.write('DELETE FROM exams;\n')
+    f.write('ALTER SEQUENCE exams_id_seq RESTART WITH 1;\n')
+    for exam in exams:
+      f.write(to_statement('exams', exam))
 
     f.write('COMMIT;')

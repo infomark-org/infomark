@@ -100,10 +100,6 @@ func TestGroup(t *testing.T) {
 			g.Assert(w.Code).Equal(http.StatusUnauthorized)
 		})
 
-		g.Xit("Creating should require body", func() {
-			// TODO empty request with claims
-		})
-
 		g.It("Should create valid group", func() {
 			entriesBefore, err := stores.Group.GroupsOfCourse(1)
 			g.Assert(err).Equal(nil)

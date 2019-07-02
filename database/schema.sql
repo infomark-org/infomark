@@ -1,6 +1,7 @@
 -- http://localhost:8081/#
 BEGIN;
 drop table if exists material_course;
+drop table if exists user_exam;
 drop table if exists user_course;
 drop table if exists user_group;
 drop table if exists sheet_course;
@@ -13,6 +14,7 @@ drop table if exists task_ratings;
 drop table if exists materials;
 drop table if exists groups;
 drop table if exists grades;
+drop table if exists exams;
 drop table if exists submissions;
 drop table if exists tasks;
 drop table if exists sheets;

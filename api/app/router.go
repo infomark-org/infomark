@@ -300,6 +300,20 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 								})
 							})
 
+							r.Route("/exams", func(r chi.Router) {
+								r.Get("/", appAPI.Exam.IndexHandler)
+								r.With(authorize.RequiresAtLeastCourseRole(authorize.ADMIN)).Post("/", appAPI.Exam.CreateHandler)
+								r.Route("/{exam_id}", func(r chi.Router) {
+									r.Use(appAPI.Exam.Context)
+									r.Get("/", appAPI.Exam.GetHandler)
+									r.Route("/", func(r chi.Router) {
+										r.Use(authorize.RequiresAtLeastCourseRole(authorize.ADMIN))
+										r.Put("/", appAPI.Exam.EditHandler)
+										r.Delete("/", appAPI.Exam.DeleteHandler)
+									})
+								})
+							})
+
 							r.Route("/grades", func(r chi.Router) {
 
 								r.With(authorize.RequiresAtLeastCourseRole(authorize.TUTOR)).Get("/", appAPI.Grade.IndexHandler)

@@ -65,6 +65,7 @@ steps:
   - "PGPASSWORD=postgres psql -h 'database' -U 'postgres' -d 'infomark' -f schema.sql >/dev/null"
   - "PGPASSWORD=postgres psql -h 'database' -U 'postgres' -d 'infomark' -f migrations/0.0.1alpha14.sql >/dev/null"
   - "PGPASSWORD=postgres psql -h 'database' -U 'postgres' -d 'infomark' -f migrations/0.0.1alpha21.sql >/dev/null"
+  - "PGPASSWORD=postgres psql -h 'database' -U 'postgres' -d 'infomark' -f migrations/0.0.1beta4.sql >/dev/null"
   - "PGPASSWORD=postgres psql -h 'database' -U 'postgres' -d 'infomark' -f mock.sql >/dev/null"
 
 - name: test
@@ -126,6 +127,6 @@ services:
 
 ---
 kind: signature
-hmac: 820af159962c04baffb614c34ee517f1ff60c94a862f49bd02bdf189927cfd3c
+hmac: 27abc8cc22d8bd83ecf14117d7e9559fc04339cfe9fbff49c5c67b8e6179ea84
 
 ...
