@@ -244,7 +244,7 @@ func (rs *SheetResource) GetFileHandler(w http.ResponseWriter, r *http.Request) 
 // URLPARAM: sheet_id,integer
 // METHOD: post
 // TAG: sheets
-// REQUEST: zipfile
+// REQUEST: Zipfile
 // RESPONSE: 204,NoContent
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
@@ -267,7 +267,7 @@ func (rs *SheetResource) ChangeFileHandler(w http.ResponseWriter, r *http.Reques
 // URLPARAM: sheet_id,integer
 // METHOD: get
 // TAG: sheets
-// RESPONSE: 200,newTaskListResponseList
+// RESPONSE: 200,NewTaskListResponseList
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
 // RESPONSE: 403,Unauthorized

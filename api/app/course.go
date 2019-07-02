@@ -51,7 +51,7 @@ func NewCourseResource(stores *Stores) *CourseResource {
 // URL: /courses
 // METHOD: get
 // TAG: courses
-// RESPONSE: 200,courseResponseList
+// RESPONSE: 200,CourseResponseList
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
 // RESPONSE: 403,Unauthorized
@@ -75,8 +75,8 @@ func (rs *CourseResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 // URL: /courses
 // METHOD: post
 // TAG: courses
-// REQUEST: courseRequest
-// RESPONSE: 204,courseResponse
+// REQUEST: CourseRequest
+// RESPONSE: 204,CourseResponse
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
 // RESPONSE: 403,Unauthorized
@@ -120,7 +120,7 @@ func (rs *CourseResource) CreateHandler(w http.ResponseWriter, r *http.Request) 
 // URLPARAM: course_id,integer
 // METHOD: get
 // TAG: courses
-// RESPONSE: 200,courseResponse
+// RESPONSE: 200,CourseResponse
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
 // RESPONSE: 403,Unauthorized
@@ -147,7 +147,7 @@ func (rs *CourseResource) GetHandler(w http.ResponseWriter, r *http.Request) {
 // URLPARAM: course_id,integer
 // METHOD: put
 // TAG: courses
-// REQUEST: courseRequest
+// REQUEST: CourseRequest
 // RESPONSE: 204,NotContent
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
@@ -218,7 +218,7 @@ func (rs *CourseResource) DeleteHandler(w http.ResponseWriter, r *http.Request) 
 // QUERYPARAM: q,string
 // METHOD: get
 // TAG: enrollments
-// RESPONSE: 200,enrollmentResponseList
+// RESPONSE: 200,EnrollmentResponseList
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
 // RESPONSE: 403,Unauthorized
@@ -288,7 +288,7 @@ func (rs *CourseResource) IndexEnrollmentsHandler(w http.ResponseWriter, r *http
 // URLPARAM: user_id,integer
 // METHOD: get
 // TAG: enrollments
-// RESPONSE: 200,enrollmentResponse
+// RESPONSE: 200,EnrollmentResponse
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
 // RESPONSE: 403,Unauthorized
@@ -360,7 +360,7 @@ func (rs *CourseResource) DeleteUserEnrollmentHandler(w http.ResponseWriter, r *
 // URLPARAM: user_id,integer
 // METHOD: put
 // TAG: enrollments
-// REQUEST: changeRoleInCourseRequest
+// REQUEST: ChangeRoleInCourseRequest
 // RESPONSE: 204,NoContent
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
@@ -558,7 +558,7 @@ func (rs *CourseResource) PointsHandler(w http.ResponseWriter, r *http.Request) 
 // URLPARAM: course_id,integer
 // METHOD: get
 // TAG: courses
-// RESPONSE: 200,groupBidsResponseList
+// RESPONSE: 200,GroupBidsResponseList
 // RESPONSE: 401,Unauthenticated
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  get all bids for the request identity in a course

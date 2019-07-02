@@ -51,8 +51,8 @@ func NewAccountResource(stores *Stores) *AccountResource {
 // URL: /account
 // METHOD: post
 // TAG: account
-// REQUEST: createUserAccountRequest
-// RESPONSE: 201,userResponse
+// REQUEST: CreateUserAccountRequest
+// RESPONSE: 201,UserResponse
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
 // RESPONSE: 403,Unauthorized
@@ -137,7 +137,7 @@ func sendConfirmEmailForUser(user *model.User) error {
 // URL: /account
 // METHOD: patch
 // TAG: account
-// REQUEST: accountRequest
+// REQUEST: AccountRequest
 // RESPONSE: 204,NoContent
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
@@ -225,7 +225,7 @@ func (rs *AccountResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 // URL: /account
 // METHOD: get
 // TAG: account
-// RESPONSE: 200,userResponse
+// RESPONSE: 200,UserResponse
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
 // SUMMARY:  Retrieve the specific user account from the requesting identity.
@@ -277,7 +277,7 @@ func (rs *AccountResource) GetAvatarHandler(w http.ResponseWriter, r *http.Reque
 // URL: /account/avatar
 // METHOD: post
 // TAG: account
-// REQUEST: imagefile
+// REQUEST: Imagefile
 // RESPONSE: 204,NoContent
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
@@ -338,7 +338,7 @@ func (rs *AccountResource) DeleteAvatarHandler(w http.ResponseWriter, r *http.Re
 // URL: /account/enrollments
 // METHOD: get
 // TAG: account
-// RESPONSE: 200,userEnrollmentResponseList
+// RESPONSE: 200,UserEnrollmentResponseList
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
 // SUMMARY:  Retrieve the specific account avatar from the request identity

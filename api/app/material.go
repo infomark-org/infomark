@@ -269,7 +269,7 @@ func (rs *MaterialResource) GetFileHandler(w http.ResponseWriter, r *http.Reques
 // URLPARAM: material_id,integer
 // METHOD: post
 // TAG: materials
-// REQUEST: zipfile
+// REQUEST: Zipfile
 // RESPONSE: 204,NoContent
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated

@@ -41,21 +41,21 @@ func newRawResponse(text string) *RawResponse {
 	}
 }
 
-// versionResponse is the response payload for course management.
-type versionResponse struct {
+// VersionResponse is the response payload for course management.
+type VersionResponse struct {
 	Commit  string `json:"commit" example:"d725269a8a7498aae1dbb07786bed4c88b002661"`
 	Version string `json:"version" example:"1"`
 }
 
 // newVersionResponse creates a response from a course model.
-func newVersionResponse() *versionResponse {
-	return &versionResponse{
+func newVersionResponse() *VersionResponse {
+	return &VersionResponse{
 		Commit:  symbol.GitCommit,
 		Version: symbol.Version.String(),
 	}
 }
 
-// Render post-processes a versionResponse.
-func (body *versionResponse) Render(w http.ResponseWriter, r *http.Request) error {
+// Render post-processes a VersionResponse.
+func (body *VersionResponse) Render(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }

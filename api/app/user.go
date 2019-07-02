@@ -52,7 +52,7 @@ func NewUserResource(stores *Stores) *UserResource {
 // URL: /users
 // METHOD: get
 // TAG: users
-// RESPONSE: 200,userResponseList
+// RESPONSE: 200,UserResponseList
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
 // SUMMARY:  Get own user details (requires root)
@@ -83,7 +83,7 @@ func (rs *UserResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 // URL: /me
 // METHOD: get
 // TAG: users
-// RESPONSE: 200,userResponse
+// RESPONSE: 200,UserResponse
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
 // SUMMARY:  Get own user details
@@ -109,7 +109,7 @@ func (rs *UserResource) GetMeHandler(w http.ResponseWriter, r *http.Request) {
 // QUERYPARAM: query,string
 // METHOD: get
 // TAG: users
-// RESPONSE: 200,userResponseList
+// RESPONSE: 200,UserResponseList
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
 // SUMMARY:  Query a specific user
@@ -135,7 +135,7 @@ func (rs *UserResource) Find(w http.ResponseWriter, r *http.Request) {
 // URLPARAM: user_id,integer
 // METHOD: get
 // TAG: users
-// RESPONSE: 200,userResponse
+// RESPONSE: 200,UserResponse
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
 // SUMMARY:  Get user details
@@ -164,7 +164,7 @@ func (rs *UserResource) GetHandler(w http.ResponseWriter, r *http.Request) {
 // URLPARAM: user_id,integer
 // METHOD: get
 // TAG: users
-// RESPONSE: 200,userResponse
+// RESPONSE: 200,UserResponse
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
 // SUMMARY:  Get user details
@@ -188,7 +188,7 @@ func (rs *UserResource) GetAvatarHandler(w http.ResponseWriter, r *http.Request)
 // URL: /me
 // METHOD: put
 // TAG: users
-// REQUEST: userMeRequest
+// REQUEST: UserMeRequest
 // RESPONSE: 204,NoContent
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
@@ -234,7 +234,7 @@ func (rs *UserResource) EditMeHandler(w http.ResponseWriter, r *http.Request) {
 // URLPARAM: user_id,integer
 // METHOD: put
 // TAG: users
-// REQUEST: userRequest
+// REQUEST: UserRequest
 // RESPONSE: 204,NoContent
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
@@ -327,7 +327,7 @@ func (rs *UserResource) SendEmailHandler(w http.ResponseWriter, r *http.Request)
 // URLPARAM: user_id,integer
 // METHOD: delete
 // TAG: users
-// REQUEST: userRequest
+// REQUEST: UserRequest
 // RESPONSE: 204,NoContent
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated

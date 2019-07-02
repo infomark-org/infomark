@@ -298,7 +298,7 @@ func (rs *TaskResource) GetPrivateTestFileHandler(w http.ResponseWriter, r *http
 // URLPARAM: task_id,integer
 // METHOD: post
 // TAG: tasks
-// REQUEST: zipfile
+// REQUEST: Zipfile
 // RESPONSE: 204,NoContent
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
@@ -322,7 +322,7 @@ func (rs *TaskResource) ChangePublicTestFileHandler(w http.ResponseWriter, r *ht
 // URLPARAM: task_id,integer
 // METHOD: post
 // TAG: tasks
-// REQUEST: zipfile
+// REQUEST: Zipfile
 // RESPONSE: 204,NoContent
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated

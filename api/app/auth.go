@@ -49,7 +49,7 @@ func NewAuthResource(stores *Stores) *AuthResource {
 // URL: /auth/token
 // METHOD: post
 // TAG: auth
-// REQUEST: loginRequest
+// REQUEST: LoginRequest
 // RESPONSE: 201,AuthResponse
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
@@ -172,8 +172,8 @@ func (rs *AuthResource) RefreshAccessTokenHandler(w http.ResponseWriter, r *http
 // URL: /auth/sessions
 // METHOD: post
 // TAG: auth
-// REQUEST: loginRequest
-// RESPONSE: 200,loginResponse
+// REQUEST: LoginRequest
+// RESPONSE: 200,LoginResponse
 // RESPONSE: 400,BadRequest
 // SUMMARY:  Start a session
 // DESCRIPTION:
@@ -250,7 +250,7 @@ func (rs *AuthResource) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 // URL: /auth/request_password_reset
 // METHOD: post
 // TAG: auth
-// REQUEST: resetPasswordRequest
+// REQUEST: ResetPasswordRequest
 // RESPONSE: 200,OK
 // RESPONSE: 400,BadRequest
 // SUMMARY:  will send an email with password reset link
@@ -302,7 +302,7 @@ func (rs *AuthResource) RequestPasswordResetHandler(w http.ResponseWriter, r *ht
 // URL: /auth/update_password
 // METHOD: post
 // TAG: auth
-// REQUEST: updatePasswordRequest
+// REQUEST: UpdatePasswordRequest
 // RESPONSE: 200,OK
 // RESPONSE: 400,BadRequest
 // SUMMARY:  sets a new password
@@ -348,7 +348,7 @@ func (rs *AuthResource) UpdatePasswordHandler(w http.ResponseWriter, r *http.Req
 // URL: /auth/confirm_email
 // METHOD: post
 // TAG: auth
-// REQUEST: confirmEmailRequest
+// REQUEST: ConfirmEmailRequest
 // RESPONSE: 200,OK
 // RESPONSE: 400,BadRequest
 // SUMMARY:  handles the confirmation link and activate an account

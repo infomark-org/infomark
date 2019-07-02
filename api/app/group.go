@@ -85,7 +85,7 @@ func (rs *GroupResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 // URLPARAM: course_id,integer
 // METHOD: post
 // TAG: groups
-// REQUEST: groupRequest
+// REQUEST: GroupRequest
 // RESPONSE: 204,SheetResponse
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
@@ -229,7 +229,7 @@ func (rs *GroupResource) GetMineHandler(w http.ResponseWriter, r *http.Request) 
 // URLPARAM: group_id,integer
 // METHOD: put
 // TAG: groups
-// REQUEST: groupRequest
+// REQUEST: GroupRequest
 // RESPONSE: 204,NotContent
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
@@ -293,7 +293,7 @@ func (rs *GroupResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 // QUERYPARAM: language,string
 // METHOD: get
 // TAG: enrollments
-// RESPONSE: 200,enrollmentResponseList
+// RESPONSE: 200,EnrollmentResponseList
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
 // RESPONSE: 403,Unauthorized
@@ -344,7 +344,7 @@ func (rs *GroupResource) IndexEnrollmentsHandler(w http.ResponseWriter, r *http.
 // URLPARAM: group_id,integer
 // METHOD: post
 // TAG: groups
-// REQUEST: groupEnrollmentRequest
+// REQUEST: GroupEnrollmentRequest
 // RESPONSE: 204,NotContent
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
@@ -397,7 +397,7 @@ func (rs *GroupResource) EditGroupEnrollmentHandler(w http.ResponseWriter, r *ht
 // URLPARAM: group_id,integer
 // METHOD: post
 // TAG: groups
-// REQUEST: groupBidRequest
+// REQUEST: GroupBidRequest
 // RESPONSE: 204,NoContent
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated

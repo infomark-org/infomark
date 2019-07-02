@@ -264,7 +264,7 @@ func (rs *SubmissionResource) GetFileByIDHandler(w http.ResponseWriter, r *http.
 // URLPARAM: task_id,integer
 // METHOD: post
 // TAG: submissions
-// REQUEST: zipfile
+// REQUEST: Zipfile
 // RESPONSE: 204,NoContent
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated

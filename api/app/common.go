@@ -46,7 +46,7 @@ func NewCommonResource(stores *Stores) *CommonResource {
 // URL: /ping
 // METHOD: get
 // TAG: common
-// RESPONSE: 200,pongResponse
+// RESPONSE: 200,PongResponse
 // SUMMARY:  heartbeat of backend
 func (rs *CommonResource) PingHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("pong"))
@@ -56,7 +56,7 @@ func (rs *CommonResource) PingHandler(w http.ResponseWriter, r *http.Request) {
 // URL: /version
 // METHOD: get
 // TAG: common
-// RESPONSE: 200,versionResponse
+// RESPONSE: 200,VersionResponse
 // SUMMARY:  all version information
 func (rs *CommonResource) VersionHandler(w http.ResponseWriter, r *http.Request) {
 	// render JSON reponse
@@ -72,7 +72,7 @@ func (rs *CommonResource) VersionHandler(w http.ResponseWriter, r *http.Request)
 // URL: /privacy_statement
 // METHOD: get
 // TAG: common
-// RESPONSE: 200,rawResponse
+// RESPONSE: 200,RawResponse
 // SUMMARY:  the privacy statement
 func (rs *CommonResource) PrivacyStatementHandler(w http.ResponseWriter, r *http.Request) {
 
