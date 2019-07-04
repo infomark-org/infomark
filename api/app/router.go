@@ -286,7 +286,6 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 								r.With(authorize.RequiresAtLeastCourseRole(authorize.ADMIN)).Post("/", appAPI.Group.CreateHandler)
 								r.Route("/{group_id}", func(r chi.Router) {
 									r.Use(appAPI.Group.Context)
-									r.Use(appAPI.Course.RoleContext)
 
 									// ensures user is enrolled in the associated course
 
@@ -327,7 +326,6 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 								r.Get("/missing", appAPI.Grade.IndexMissingHandler)
 								r.Route("/{grade_id}", func(r chi.Router) {
 									r.Use(appAPI.Grade.Context)
-									r.Use(appAPI.Course.RoleContext)
 
 									// ensures user is enrolled in the associated course
 									r.Use(authorize.RequiresAtLeastCourseRole(authorize.TUTOR))
@@ -347,7 +345,6 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 
 								r.Route("/{material_id}", func(r chi.Router) {
 									r.Use(appAPI.Material.Context)
-									r.Use(appAPI.Course.RoleContext)
 
 									// ensures user is enrolled in the associated course
 									r.Get("/", appAPI.Material.GetHandler)
@@ -368,7 +365,7 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 
 								r.Route("/{submission_id}", func(r chi.Router) {
 									r.Use(appAPI.Submission.Context)
-									r.Use(appAPI.Course.RoleContext)
+
 									r.Get("/file", appAPI.Submission.GetFileByIDHandler)
 								})
 							})
@@ -378,7 +375,6 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 								r.Get("/missing", appAPI.Task.MissingIndexHandler)
 								r.Route("/{task_id}", func(r chi.Router) {
 									r.Use(appAPI.Task.Context)
-									r.Use(appAPI.Course.RoleContext)
 
 									// ensures user is enrolled in the associated course
 
