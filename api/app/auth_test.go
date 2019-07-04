@@ -46,6 +46,7 @@ func TestAuth(t *testing.T) {
 		panic(err)
 	}
 	redisClient := redis.NewClient(option)
+	defer redisClient.Close()
 
 	g.Describe("Auth", func() {
 

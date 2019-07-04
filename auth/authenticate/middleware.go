@@ -103,6 +103,7 @@ type LoginLimiter struct {
 	Store  *limiter.Store
 	Rate   *limiter.Rate
 	Prefix string
+	Redis  *redis.Client
 }
 
 type LoginLimiterKeyFromIP struct {
@@ -148,9 +149,7 @@ func NewLoginLimiter(prefix string, limit string, redisURL string) (*LoginLimite
 		return nil, err
 	}
 
-	// store := memory.NewStore()
-
-	return &LoginLimiter{Store: &store, Rate: &rate, Prefix: prefix}, nil
+	return &LoginLimiter{Store: &store, Rate: &rate, Prefix: prefix, Redis: client}, nil
 }
 
 func (ll *LoginLimiter) Get(r *http.Request, KeyFunc LoginLimiterKey) (limiter.Context, error) {
@@ -170,13 +169,9 @@ func (ll *LoginLimiter) WriteHeaders(w http.ResponseWriter, context limiter.Cont
 	w.Header().Add("X-RateLimit-Reset", strconv.FormatInt(context.Reset, 10))
 }
 
-func RateLimitMiddleware(prefix string, limit string, redisURL string) func(h http.Handler) http.Handler {
+// func RateLimitMiddleware(prefix string, limit string, redisURL string) func(h http.Handler) http.Handler {
+func RateLimitMiddleware(ll *LoginLimiter) func(h http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
-		ll, err := NewLoginLimiter(prefix, limit, redisURL)
-
-		if err != nil {
-			panic(err)
-		}
 
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
@@ -189,7 +184,6 @@ func RateLimitMiddleware(prefix string, limit string, redisURL string) func(h ht
 			}
 
 			ll.WriteHeaders(w, context)
-
 			if context.Reached {
 				http.Error(w, "Limit exceeded", http.StatusTooManyRequests)
 				return

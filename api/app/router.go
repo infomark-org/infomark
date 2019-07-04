@@ -147,6 +147,14 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 		return nil, err
 	}
 
+	loginLimiter, err := authenticate.NewLoginLimiter("infomark-logins",
+		fmt.Sprintf("%d-M", viper.GetInt64("auth_total_requests_per_minute")),
+		viper.GetString("redis_url"))
+	if err != nil {
+		logger.WithField("module", "app").Error(err)
+		return nil, err
+	}
+
 	r := chi.NewRouter()
 	r.Use(VersionMiddleware)
 	r.Use(SecureMiddleware)
@@ -169,10 +177,7 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 
 				// we assume 600 students
 				// so we reset to 600 request per minute here
-				r.Use(authenticate.RateLimitMiddleware("infomark-logins",
-					fmt.Sprintf("%d-M", viper.GetInt64("auth_total_requests_per_minute")),
-					viper.GetString("redis_url"),
-				))
+				r.Use(authenticate.RateLimitMiddleware(loginLimiter))
 
 				r.Post("/auth/token", appAPI.Auth.RefreshAccessTokenHandler)
 				r.Post("/auth/sessions", appAPI.Auth.LoginHandler)
