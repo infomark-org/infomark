@@ -271,6 +271,35 @@ func TestExam(t *testing.T) {
 
 		})
 
+		g.It("Admins scan update mark and status", func() {
+			// remove all enrollments from student
+
+			exam, err := stores.Exam.GetEnrollmentOfUser(int64(1), studentJWT.Claims.LoginID)
+			g.Assert(err).Equal(nil)
+			g.Assert(exam.Status).Equal(0)
+
+			entrySent := helper.H{
+				"user_id": studentJWT.Claims.LoginID,
+				"mark":    "passed very good",
+				"status":  3,
+			}
+
+			w := tape.Put("/api/v1/courses/1/exams/1/enrollments", entrySent, studentJWT)
+			g.Assert(w.Code).Equal(http.StatusForbidden)
+
+			w = tape.Put("/api/v1/courses/1/exams/1/enrollments", entrySent, tutorJWT)
+			g.Assert(w.Code).Equal(http.StatusForbidden)
+
+			w = tape.Put("/api/v1/courses/1/exams/1/enrollments", entrySent, adminJWT)
+			g.Assert(w.Code).Equal(http.StatusOK)
+
+			examAfter, err := stores.Exam.GetEnrollmentOfUser(int64(1), studentJWT.Claims.LoginID)
+			g.Assert(err).Equal(nil)
+			g.Assert(examAfter.Mark).Equal("passed very good")
+			g.Assert(examAfter.Status).Equal(3)
+
+		})
+
 		g.It("Students should not be able to disenroll from exam when status has changed", func() {
 			// remove all enrollments from student
 

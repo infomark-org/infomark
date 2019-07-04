@@ -316,6 +316,7 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 									r.Route("/enrollments", func(r chi.Router) {
 										r.Post("/", appAPI.Exam.EnrollExamHandler)
 										r.Delete("/", appAPI.Exam.DisenrollExamHandler)
+										r.With(authorize.RequiresAtLeastCourseRole(authorize.ADMIN)).Put("/", appAPI.Exam.UpdateEnrollExamHandler)
 										r.With(authorize.RequiresAtLeastCourseRole(authorize.ADMIN)).Get("/", appAPI.Exam.GetExamEnrollmentsHandler)
 									})
 

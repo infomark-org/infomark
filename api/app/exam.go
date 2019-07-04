@@ -262,13 +262,13 @@ func (rs *ExamResource) DisenrollExamHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	requestedExam, err := rs.Stores.Exam.GetEnrollmentOfUser(exam.ID, accessClaims.LoginID)
+	requestedExamUser, err := rs.Stores.Exam.GetEnrollmentOfUser(exam.ID, accessClaims.LoginID)
 	if err != nil {
 		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
 		return
 	}
 
-	if requestedExam.Status != 0 {
+	if requestedExamUser.Status != 0 {
 		render.Render(w, r, ErrBadRequestWithDetails(errors.New("Status has been already changed, cannot disenroll")))
 		return
 	}
@@ -309,6 +309,46 @@ func (rs *ExamResource) GetExamEnrollmentsHandler(w http.ResponseWriter, r *http
 		render.Render(w, r, ErrRender(err))
 		return
 	}
+}
+
+// UpdateEnrollExamHandler is public endpoint for
+// URL: /courses/{course_id}/exams/{exam_id}/enrollments
+// URLPARAM: course_id,integer
+// URLPARAM: exam_id,integer
+// METHOD: put
+// TAG: exams
+// REQUEST: Empty
+// RESPONSE: 204,NoContent
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  enroll a user into a exam
+func (rs *ExamResource) UpdateEnrollExamHandler(w http.ResponseWriter, r *http.Request) {
+	// start from empty Request
+	data := &UserExamRequest{}
+
+	// parse JSON request into struct
+	if err := render.Bind(r, data); err != nil {
+		render.Render(w, r, ErrBadRequestWithDetails(err))
+		return
+	}
+
+	exam := r.Context().Value(symbol.CtxKeyExam).(*model.Exam)
+	requestedExamUser, err := rs.Stores.Exam.GetEnrollmentOfUser(exam.ID, data.UserID)
+	if err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
+	requestedExamUser.Status = data.Status
+	requestedExamUser.Mark = data.Mark
+
+	// update database entry
+	if err := rs.Stores.Exam.UpdateUserExam(requestedExamUser); err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
+
+	render.Status(r, http.StatusNoContent)
 }
 
 // Context middleware is used to load an Exam object from

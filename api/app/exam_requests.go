@@ -58,24 +58,23 @@ func (body *ExamRequest) Validate() error {
 	)
 }
 
-// // ExamRequest is the request payload for exam management.
-// type ExamEnrollmentRequest struct {
-// 	UserID int64 `json:"user_id" example:"15"`
-// }
+// ExamRequest is the request payload for exam management.
+type UserExamRequest struct {
+	Status int    `json:"status" example:"1"`
+	Mark   string `json:"mark" example:"1"`
+	UserID int64  `json:"user_id" example:"42"`
+}
 
-// // Bind preprocesses a ExamRequest.
-// func (body *ExamEnrollmentRequest) Bind(r *http.Request) error {
-// 	if body == nil {
-// 		return errors.New("missing \"exam\" data")
-// 	}
-// 	return body.Validate()
-// }
+// Bind preprocesses a ExamRequest.
+func (body *UserExamRequest) Bind(r *http.Request) error {
+	return nil
+}
 
-// func (body *ExamEnrollmentRequest) Validate() error {
-// 	return validation.ValidateStruct(body,
-// 		validation.Field(
-// 			&body.UserID,
-// 			validation.Required,
-// 		),
-// 	)
-// }
+func (body *UserExamRequest) Validate() error {
+	return validation.ValidateStruct(body,
+		validation.Field(
+			&body.UserID,
+			validation.Required,
+		),
+	)
+}
