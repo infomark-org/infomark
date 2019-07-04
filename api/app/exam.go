@@ -196,8 +196,8 @@ func (rs *ExamResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 	render.Status(r, http.StatusNoContent)
 }
 
-// EnrollHandler is public endpoint for
-// URL: /courses/{course_id}/exams/exams/{exam_id}/enrollments
+// EnrollExamHandler is public endpoint for
+// URL: /courses/{course_id}/exams/{exam_id}/enrollments
 // URLPARAM: course_id,integer
 // URLPARAM: exam_id,integer
 // METHOD: post
@@ -208,7 +208,7 @@ func (rs *ExamResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 // RESPONSE: 401,Unauthenticated
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  enroll a user into a exam
-func (rs *ExamResource) EnrollHandler(w http.ResponseWriter, r *http.Request) {
+func (rs *ExamResource) EnrollExamHandler(w http.ResponseWriter, r *http.Request) {
 	exam := r.Context().Value(symbol.CtxKeyExam).(*model.Exam)
 	accessClaims := r.Context().Value(symbol.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 	givenRole := r.Context().Value(symbol.CtxKeyCourseRole).(authorize.CourseRole)
@@ -240,8 +240,8 @@ func (rs *ExamResource) EnrollHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// DisenrollHandler is public endpoint for
-// URL: /courses/{course_id}/exams/exams/{exam_id}/enrollments
+// DisenrollExamHandler is public endpoint for
+// URL: /courses/{course_id}/exams/{exam_id}/enrollments
 // URLPARAM: course_id,integer
 // URLPARAM: exam_id,integer
 // METHOD: delete
@@ -251,7 +251,7 @@ func (rs *ExamResource) EnrollHandler(w http.ResponseWriter, r *http.Request) {
 // RESPONSE: 401,Unauthenticated
 // RESPONSE: 403,Unauthorized
 // SUMMARY:  disenroll a user from a exam
-func (rs *ExamResource) DisenrollHandler(w http.ResponseWriter, r *http.Request) {
+func (rs *ExamResource) DisenrollExamHandler(w http.ResponseWriter, r *http.Request) {
 	exam := r.Context().Value(symbol.CtxKeyExam).(*model.Exam)
 	accessClaims := r.Context().Value(symbol.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 

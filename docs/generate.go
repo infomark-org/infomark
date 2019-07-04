@@ -103,10 +103,12 @@ func main() {
 	routes := GetAllRoutes()
 	for _, route := range routes {
 		found := false
+		fmt.Println("Verify documentation for", route.Path)
 		for url := range endpoints {
 			if route.Path == url {
 
 				for _, action := range endpoints[url] {
+					// fmt.Println(action.Details.URL, action.Details.Method)
 					if action.Details.Method == route.Method {
 						found = true
 						break
@@ -118,8 +120,10 @@ func main() {
 					for _, action := range endpoints[url] {
 						candidates = append(candidates, fmt.Sprintf("%v", action.Position))
 					}
+					fmt.Printf("  - The documentation for the route '%s:%s' has mistakes and cannot be found.\n", route.Method, route.Path)
+					fmt.Println("  - Is the url and method in the comment correct")
 
-					panic(fmt.Sprintf("found '%s' but not the correct method want '%s' \n candiates are %v", url, route.Method, candidates))
+					panic(fmt.Sprintf("found '%s' but not the correct method want '%s' for route %v \n candiates are %v", url, route.Method, route, candidates))
 				}
 			}
 			if found {
