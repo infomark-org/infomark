@@ -137,6 +137,7 @@ func TestCourse(t *testing.T) {
 			g.Assert(err).Equal(nil)
 
 			w := tape.Get("/api/v1/courses/1/enrollments?roles=0", adminJWT)
+			g.Assert(w.Code).Equal(http.StatusOK)
 			enrollmentsActual := []EnrollmentResponse{}
 			err = json.NewDecoder(w.Body).Decode(&enrollmentsActual)
 			g.Assert(err).Equal(nil)
@@ -153,6 +154,7 @@ func TestCourse(t *testing.T) {
 			g.Assert(err).Equal(nil)
 
 			w := tape.Get("/api/v1/courses/1/enrollments?q=chi", noAdminJWT)
+			g.Assert(w.Code).Equal(http.StatusOK)
 			enrollmentsActual := []EnrollmentResponse{}
 			err = json.NewDecoder(w.Body).Decode(&enrollmentsActual)
 			g.Assert(err).Equal(nil)
@@ -171,6 +173,7 @@ func TestCourse(t *testing.T) {
 			g.Assert(err).Equal(nil)
 
 			w := tape.Get("/api/v1/courses/1/enrollments?roles=1", noAdminJWT)
+			g.Assert(w.Code).Equal(http.StatusOK)
 			enrollmentsActual := []EnrollmentResponse{}
 			err = json.NewDecoder(w.Body).Decode(&enrollmentsActual)
 			g.Assert(err).Equal(nil)
@@ -189,6 +192,7 @@ func TestCourse(t *testing.T) {
 			g.Assert(err).Equal(nil)
 
 			w := tape.Get("/api/v1/courses/1/enrollments?roles=0,1", noAdminJWT)
+			g.Assert(w.Code).Equal(http.StatusOK)
 			enrollmentsActual := []EnrollmentResponse{}
 			err = json.NewDecoder(w.Body).Decode(&enrollmentsActual)
 			g.Assert(err).Equal(nil)
@@ -208,6 +212,7 @@ func TestCourse(t *testing.T) {
 
 			// 112 is a student
 			w := tape.Get("/api/v1/courses/1/enrollments?roles=0", studentJWT)
+			g.Assert(w.Code).Equal(http.StatusOK)
 			enrollmentsActual := []EnrollmentResponse{}
 			err = json.NewDecoder(w.Body).Decode(&enrollmentsActual)
 			g.Assert(err).Equal(nil)
@@ -216,6 +221,7 @@ func TestCourse(t *testing.T) {
 
 		g.It("Should be able to filter enrollments (but not see field protected by privacy), when role=tutor,student", func() {
 			w := tape.Get("/api/v1/courses/1/enrollments?roles=0", studentJWT)
+			g.Assert(w.Code).Equal(http.StatusOK)
 			enrollmentsActual := []EnrollmentResponse{}
 			err := json.NewDecoder(w.Body).Decode(&enrollmentsActual)
 			g.Assert(err).Equal(nil)
