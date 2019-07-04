@@ -119,7 +119,7 @@ func TestUser(t *testing.T) {
 			userDb, err := stores.User.Get(1)
 			g.Assert(err).Equal(nil)
 
-			userSent := &userRequest{
+			userSent := &UserRequest{
 				FirstName: "Info2_update",
 				LastName:  "Lorem Ipsum_update",
 				Email:     "new@mail.com",
@@ -210,7 +210,7 @@ func TestUser(t *testing.T) {
 
 			// this is NOT the /me enpoint, we can update the user here
 
-			userSent := &userRequest{
+			userSent := &UserRequest{
 				FirstName: "Info2_update",
 				LastName:  "Lorem Ipsum_update",
 				Email:     "new@mail.com",

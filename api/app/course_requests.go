@@ -26,8 +26,8 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation"
 )
 
-// courseRequest is the request payload for course management.
-type courseRequest struct {
+// CourseRequest is the request payload for course management.
+type CourseRequest struct {
 	Name               string    `json:"name" example:"Info 2"`
 	Description        string    `json:"description" example:"An example course."`
 	BeginsAt           time.Time `json:"begins_at" example:"auto"`
@@ -35,8 +35,8 @@ type courseRequest struct {
 	RequiredPercentage int       `json:"required_percentage" example:"80"`
 }
 
-// Bind preprocesses a courseRequest.
-func (body *courseRequest) Bind(r *http.Request) error {
+// Bind preprocesses a CourseRequest.
+func (body *CourseRequest) Bind(r *http.Request) error {
 
 	if body == nil {
 		return errors.New("missing \"course\" data")
@@ -46,7 +46,7 @@ func (body *courseRequest) Bind(r *http.Request) error {
 
 }
 
-func (body *courseRequest) Validate() error {
+func (body *CourseRequest) Validate() error {
 	if body.EndsAt.Sub(body.BeginsAt).Seconds() < 0 {
 		return errors.New("ends_at should be later than begins_at")
 	}
@@ -75,10 +75,10 @@ func (body *courseRequest) Validate() error {
 	)
 }
 
-type changeRoleInCourseRequest struct {
+type ChangeRoleInCourseRequest struct {
 	Role int `json:"role" example:"0"`
 }
 
-func (body *changeRoleInCourseRequest) Bind(r *http.Request) error {
+func (body *ChangeRoleInCourseRequest) Bind(r *http.Request) error {
 	return nil
 }

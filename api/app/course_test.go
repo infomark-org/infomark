@@ -240,7 +240,7 @@ func TestCourse(t *testing.T) {
 			coursesBefore, err := stores.Course.GetAll()
 			g.Assert(err).Equal(nil)
 
-			entrySent := courseRequest{
+			entrySent := CourseRequest{
 				Name:               "Info2_new",
 				Description:        "Lorem Ipsum_new",
 				BeginsAt:           helper.Time(time.Now()),
@@ -305,7 +305,7 @@ func TestCourse(t *testing.T) {
 
 		g.It("Should perform updates", func() {
 
-			entrySent := courseRequest{
+			entrySent := CourseRequest{
 				Name:               "Info2_update",
 				Description:        "Lorem Ipsum_update",
 				BeginsAt:           helper.Time(time.Now()),

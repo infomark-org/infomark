@@ -27,8 +27,8 @@ import (
 	"github.com/go-ozzo/ozzo-validation/is"
 )
 
-// userRequest is the request payload for user management.
-type userRequest struct {
+// UserRequest is the request payload for user management.
+type UserRequest struct {
 	FirstName     string `json:"first_name" example:"Max"`
 	LastName      string `json:"last_name" example:"Mustermensch"`
 	Email         string `json:"email" example:"test@unit-tuebingen.de"`
@@ -39,8 +39,8 @@ type userRequest struct {
 	PlainPassword string `json:"plain_password" example:"new_password" required:"false"`
 }
 
-// Bind preprocesses a userRequest.
-func (body *userRequest) Bind(r *http.Request) error {
+// Bind preprocesses a UserRequest.
+func (body *UserRequest) Bind(r *http.Request) error {
 
 	if body == nil {
 		return errors.New("missing \"user\" data")
@@ -50,7 +50,7 @@ func (body *userRequest) Bind(r *http.Request) error {
 
 }
 
-func (body *userRequest) Validate() error {
+func (body *UserRequest) Validate() error {
 
 	body.FirstName = strings.TrimSpace(body.FirstName)
 	body.LastName = strings.TrimSpace(body.LastName)
@@ -95,8 +95,8 @@ func (body *userRequest) Validate() error {
 
 }
 
-// userMeRequest is the request payload for user management.
-type userMeRequest struct {
+// UserMeRequest is the request payload for user management.
+type UserMeRequest struct {
 	FirstName string `json:"first_name" example:"Max"`
 	LastName  string `json:"last_name" example:"Mustermensch"`
 	// Email         string `json:"email" example:"test@unit-tuebingen.de"`
@@ -107,8 +107,8 @@ type userMeRequest struct {
 	// PlainPassword string `json:"plain_password" example:"new_password"`
 }
 
-// Bind preprocesses a userRequest.
-func (body *userMeRequest) Bind(r *http.Request) error {
+// Bind preprocesses a UserMeRequest.
+func (body *UserMeRequest) Bind(r *http.Request) error {
 
 	if body == nil {
 		return errors.New("missing \"user\" data")
@@ -118,7 +118,7 @@ func (body *userMeRequest) Bind(r *http.Request) error {
 
 }
 
-func (body *userMeRequest) Validate() error {
+func (body *UserMeRequest) Validate() error {
 
 	body.FirstName = strings.TrimSpace(body.FirstName)
 	body.LastName = strings.TrimSpace(body.LastName)

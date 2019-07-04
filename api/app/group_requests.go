@@ -25,8 +25,8 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation"
 )
 
-// groupRequest is the request payload for course management.
-type groupRequest struct {
+// GroupRequest is the request payload for course management.
+type GroupRequest struct {
 	// note, we will only use the id
 	Tutor *struct {
 		ID int64 `json:"id" example:"1"`
@@ -35,8 +35,8 @@ type groupRequest struct {
 	Description string `json:"description" example:"Gruppe fuer ersties am Montag im Raum C25435"`
 }
 
-// Bind preprocesses a groupRequest.
-func (body *groupRequest) Bind(r *http.Request) error {
+// Bind preprocesses a GroupRequest.
+func (body *GroupRequest) Bind(r *http.Request) error {
 
 	if body == nil {
 		return errors.New("missing \"group\" data")
@@ -50,7 +50,7 @@ func (body *groupRequest) Bind(r *http.Request) error {
 
 }
 
-func (body *groupRequest) Validate() error {
+func (body *GroupRequest) Validate() error {
 
 	err := validation.ValidateStruct(body,
 		validation.Field(
@@ -70,16 +70,16 @@ func (body *groupRequest) Validate() error {
 	)
 }
 
-type groupBidRequest struct {
+type GroupBidRequest struct {
 	Bid int `json:"bid" example:"5" minval:"0" maxval:"10"`
 }
 
-// Bind preprocesses a groupRequest.
-func (body *groupBidRequest) Bind(r *http.Request) error {
+// Bind preprocesses a GroupBidRequest.
+func (body *GroupBidRequest) Bind(r *http.Request) error {
 	return body.Validate()
 }
 
-func (body *groupBidRequest) Validate() error {
+func (body *GroupBidRequest) Validate() error {
 	return validation.ValidateStruct(body,
 		validation.Field(
 			&body.Bid,
@@ -90,20 +90,20 @@ func (body *groupBidRequest) Validate() error {
 	)
 }
 
-// groupRequest is the request payload for course management.
-type groupEnrollmentRequest struct {
+// GroupRequest is the request payload for course management.
+type GroupEnrollmentRequest struct {
 	UserID int64 `json:"user_id" example:"15"`
 }
 
-// Bind preprocesses a groupRequest.
-func (body *groupEnrollmentRequest) Bind(r *http.Request) error {
+// Bind preprocesses a GroupRequest.
+func (body *GroupEnrollmentRequest) Bind(r *http.Request) error {
 	if body == nil {
 		return errors.New("missing \"group\" data")
 	}
 	return body.Validate()
 }
 
-func (body *groupEnrollmentRequest) Validate() error {
+func (body *GroupEnrollmentRequest) Validate() error {
 	return validation.ValidateStruct(body,
 		validation.Field(
 			&body.UserID,

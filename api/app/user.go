@@ -197,7 +197,7 @@ func (rs *UserResource) EditMeHandler(w http.ResponseWriter, r *http.Request) {
 
 	accessClaims := r.Context().Value(symbol.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 
-	data := &userMeRequest{}
+	data := &UserMeRequest{}
 
 	// parse JSON request into struct
 	if err := render.Bind(r, data); err != nil {
@@ -248,7 +248,7 @@ func (rs *UserResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := &userRequest{}
+	data := &UserRequest{}
 
 	// parse JSON request into struct
 	if err := render.Bind(r, data); err != nil {

@@ -69,7 +69,7 @@ func (rs *ExamResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 // URLPARAM: course_id,integer
 // METHOD: post
 // TAG: exams
-// REQUEST: examRequest
+// REQUEST: ExamRequest
 // RESPONSE: 204,ExamResponse
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
@@ -77,7 +77,7 @@ func (rs *ExamResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 // SUMMARY:  create a new exam
 func (rs *ExamResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
 	// start from empty Request
-	data := &examRequest{}
+	data := &ExamRequest{}
 
 	// parse JSON request into struct
 	if err := render.Bind(r, data); err != nil {
@@ -148,7 +148,7 @@ func (rs *ExamResource) GetHandler(w http.ResponseWriter, r *http.Request) {
 // SUMMARY:  update a specific exam
 func (rs *ExamResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 	// start from empty Request
-	data := &examRequest{}
+	data := &ExamRequest{}
 
 	// parse JSON request into struct
 	if err := render.Bind(r, data); err != nil {

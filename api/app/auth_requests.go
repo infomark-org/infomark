@@ -26,15 +26,15 @@ import (
 	"github.com/go-ozzo/ozzo-validation/is"
 )
 
-// loginRequest is the request for the login process containing the password
+// LoginRequest is the request for the login process containing the password
 // and email as identifiers.
-type loginRequest struct {
+type LoginRequest struct {
 	Email         string `json:"email" example:"test@uni-tuebingen.de"`
 	PlainPassword string `json:"plain_password" example:"test"`
 }
 
 // Bind preprocesses a loginRequest.
-func (body *loginRequest) Bind(r *http.Request) error {
+func (body *LoginRequest) Bind(r *http.Request) error {
 	body.Email = strings.TrimSpace(body.Email)
 	body.Email = strings.ToLower(body.Email)
 
@@ -45,13 +45,13 @@ func (body *loginRequest) Bind(r *http.Request) error {
 }
 
 // -----------------------------------------------------------------------------
-// resetPasswordRequest is the request whenever a user forgot his password and wants
+// ResetPasswordRequest is the request whenever a user forgot his password and wants
 // to receive an email with a new one.
-type resetPasswordRequest struct {
+type ResetPasswordRequest struct {
 	Email string `json:"email" example:"test@uni-tuebingen.de"`
 }
 
-func (body *resetPasswordRequest) Bind(r *http.Request) error {
+func (body *ResetPasswordRequest) Bind(r *http.Request) error {
 	body.Email = strings.TrimSpace(body.Email)
 	body.Email = strings.ToLower(body.Email)
 
@@ -61,13 +61,13 @@ func (body *resetPasswordRequest) Bind(r *http.Request) error {
 }
 
 // -----------------------------------------------------------------------------
-type updatePasswordRequest struct {
+type UpdatePasswordRequest struct {
 	Email              string `json:"email" example:"test@uni-tuebingen.de"`
 	ResetPasswordToken string `json:"reset_password_token" example:"SDFOI34FZH4HUFH"`
 	PlainPassword      string `json:"plain_password" example:"test"`
 }
 
-func (body *updatePasswordRequest) Bind(r *http.Request) error {
+func (body *UpdatePasswordRequest) Bind(r *http.Request) error {
 	body.Email = strings.TrimSpace(body.Email)
 	body.Email = strings.ToLower(body.Email)
 
@@ -79,12 +79,12 @@ func (body *updatePasswordRequest) Bind(r *http.Request) error {
 }
 
 // -----------------------------------------------------------------------------
-type confirmEmailRequest struct {
+type ConfirmEmailRequest struct {
 	Email             string `json:"email" example:"test@uni-tuebingen.de"`
 	ConfirmEmailToken string `json:"confirmation_token" example:"SDFOI34FZH4HUFH"`
 }
 
-func (body *confirmEmailRequest) Bind(r *http.Request) error {
+func (body *ConfirmEmailRequest) Bind(r *http.Request) error {
 	body.Email = strings.TrimSpace(body.Email)
 	body.Email = strings.ToLower(body.Email)
 

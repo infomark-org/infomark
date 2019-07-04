@@ -26,22 +26,22 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation"
 )
 
-// examRequest is the request payload for exam management.
-type examRequest struct {
+// ExamRequest is the request payload for exam management.
+type ExamRequest struct {
 	Name        string    `json:"name" example:"Info 2"`
 	Description string    `json:"description" example:"An example exam."`
 	ExamTime    time.Time `json:"exam_time" example:"auto"`
 }
 
-// Bind preprocesses a examRequest.
-func (body *examRequest) Bind(r *http.Request) error {
+// Bind preprocesses a ExamRequest.
+func (body *ExamRequest) Bind(r *http.Request) error {
 	if body == nil {
 		return errors.New("missing \"exam\" data")
 	}
 	return body.Validate()
 }
 
-func (body *examRequest) Validate() error {
+func (body *ExamRequest) Validate() error {
 	return validation.ValidateStruct(body,
 		validation.Field(
 			&body.Name,
@@ -58,20 +58,20 @@ func (body *examRequest) Validate() error {
 	)
 }
 
-// // examRequest is the request payload for exam management.
-// type examEnrollmentRequest struct {
+// // ExamRequest is the request payload for exam management.
+// type ExamEnrollmentRequest struct {
 // 	UserID int64 `json:"user_id" example:"15"`
 // }
 
-// // Bind preprocesses a examRequest.
-// func (body *examEnrollmentRequest) Bind(r *http.Request) error {
+// // Bind preprocesses a ExamRequest.
+// func (body *ExamEnrollmentRequest) Bind(r *http.Request) error {
 // 	if body == nil {
 // 		return errors.New("missing \"exam\" data")
 // 	}
 // 	return body.Validate()
 // }
 
-// func (body *examEnrollmentRequest) Validate() error {
+// func (body *ExamEnrollmentRequest) Validate() error {
 // 	return validation.ValidateStruct(body,
 // 		validation.Field(
 // 			&body.UserID,

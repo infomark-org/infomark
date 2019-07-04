@@ -117,7 +117,7 @@ func (rs *AuthResource) RefreshAccessTokenHandler(w http.ResponseWriter, r *http
 	} else {
 
 		// we are given email-password credentials
-		data := &loginRequest{}
+		data := &LoginRequest{}
 
 		// parse JSON request into struct
 		if err := render.Bind(r, data); err != nil {
@@ -182,7 +182,7 @@ func (rs *AuthResource) RefreshAccessTokenHandler(w http.ResponseWriter, r *http
 func (rs *AuthResource) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	// we are given email-password credentials
 
-	data := &loginRequest{}
+	data := &LoginRequest{}
 
 	// parse JSON request into struct
 	if err := render.Bind(r, data); err != nil {
@@ -255,7 +255,7 @@ func (rs *AuthResource) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 // RESPONSE: 400,BadRequest
 // SUMMARY:  will send an email with password reset link
 func (rs *AuthResource) RequestPasswordResetHandler(w http.ResponseWriter, r *http.Request) {
-	data := &resetPasswordRequest{}
+	data := &ResetPasswordRequest{}
 	if err := render.Bind(r, data); err != nil {
 		render.Render(w, r, ErrBadRequestWithDetails(err))
 		return
@@ -307,7 +307,7 @@ func (rs *AuthResource) RequestPasswordResetHandler(w http.ResponseWriter, r *ht
 // RESPONSE: 400,BadRequest
 // SUMMARY:  sets a new password
 func (rs *AuthResource) UpdatePasswordHandler(w http.ResponseWriter, r *http.Request) {
-	data := &updatePasswordRequest{}
+	data := &UpdatePasswordRequest{}
 	if err := render.Bind(r, data); err != nil {
 		render.Render(w, r, ErrBadRequestWithDetails(err))
 		return
@@ -353,7 +353,7 @@ func (rs *AuthResource) UpdatePasswordHandler(w http.ResponseWriter, r *http.Req
 // RESPONSE: 400,BadRequest
 // SUMMARY:  handles the confirmation link and activate an account
 func (rs *AuthResource) ConfirmEmailHandler(w http.ResponseWriter, r *http.Request) {
-	data := &confirmEmailRequest{}
+	data := &ConfirmEmailRequest{}
 	if err := render.Bind(r, data); err != nil {
 		render.Render(w, r, ErrBadRequestWithDetails(err))
 		return

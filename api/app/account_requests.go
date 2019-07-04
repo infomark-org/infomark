@@ -31,7 +31,7 @@ import (
 
 // -----------------------------------------------------------------------------
 
-type createUserAccountRequest struct {
+type CreateUserAccountRequest struct {
 	User *struct {
 		FirstName     string `json:"first_name" example:"Max"`
 		LastName      string `json:"last_name" example:"Mustermensch"`
@@ -48,7 +48,7 @@ type createUserAccountRequest struct {
 	} `json:"account" required:"true"`
 }
 
-func (body *createUserAccountRequest) Validate() error {
+func (body *CreateUserAccountRequest) Validate() error {
 
 	body.User.FirstName = strings.TrimSpace(body.User.FirstName)
 	body.User.LastName = strings.TrimSpace(body.User.LastName)
@@ -93,8 +93,8 @@ func (body *createUserAccountRequest) Validate() error {
 
 }
 
-// Bind preprocesses a createUserAccountRequest.
-func (body *createUserAccountRequest) Bind(r *http.Request) (err error) {
+// Bind preprocesses a CreateUserAccountRequest.
+func (body *CreateUserAccountRequest) Bind(r *http.Request) (err error) {
 	// sending the id via request is invalid as the id should be submitted in the url
 	if body.User == nil {
 		return errors.New("missing \"user\" data")
@@ -128,7 +128,7 @@ func (body *createUserAccountRequest) Bind(r *http.Request) (err error) {
 	return body.Validate()
 }
 
-type accountRequest struct {
+type AccountRequest struct {
 	Account *struct {
 		Email             string `json:"email" required:"false" example:"other@example.com"`
 		PlainPassword     string `json:"plain_password" required:"false" example:"new_password"`
@@ -137,8 +137,8 @@ type accountRequest struct {
 	OldPlainPassword string `json:"old_plain_password" example:"old_password"`
 }
 
-// Bind preprocesses a accountRequest.
-func (body *accountRequest) Bind(r *http.Request) error {
+// Bind preprocesses a AccountRequest.
+func (body *AccountRequest) Bind(r *http.Request) error {
 	// this is the only patch function
 	// sending the id via request is invalid as the id should be submitted in the url
 	if body.Account == nil {

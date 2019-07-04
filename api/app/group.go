@@ -94,7 +94,7 @@ func (rs *GroupResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 func (rs *GroupResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
 
 	// start from empty Request
-	data := &groupRequest{}
+	data := &GroupRequest{}
 	// parse JSON request into struct
 	if err := render.Bind(r, data); err != nil {
 		render.Render(w, r, ErrBadRequestWithDetails(err))
@@ -237,7 +237,7 @@ func (rs *GroupResource) GetMineHandler(w http.ResponseWriter, r *http.Request) 
 // SUMMARY:  update a specific group
 func (rs *GroupResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 	// start from empty Request
-	data := &groupRequest{}
+	data := &GroupRequest{}
 
 	// parse JSON request into struct
 	if err := render.Bind(r, data); err != nil {
@@ -352,7 +352,7 @@ func (rs *GroupResource) IndexEnrollmentsHandler(w http.ResponseWriter, r *http.
 // SUMMARY:  will assign a given user to a group or change the group assignment
 func (rs *GroupResource) EditGroupEnrollmentHandler(w http.ResponseWriter, r *http.Request) {
 	// start from empty Request
-	data := &groupEnrollmentRequest{}
+	data := &GroupEnrollmentRequest{}
 
 	// parse JSON request into struct
 	if err := render.Bind(r, data); err != nil {
@@ -417,7 +417,7 @@ func (rs *GroupResource) ChangeBidHandler(w http.ResponseWriter, r *http.Request
 	// start from empty Request
 	group := r.Context().Value(symbol.CtxKeyGroup).(*model.Group)
 
-	data := &groupBidRequest{}
+	data := &GroupBidRequest{}
 
 	// parse JSON request into struct
 	if err := render.Bind(r, data); err != nil {

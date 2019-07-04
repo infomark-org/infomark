@@ -107,7 +107,7 @@ func TestExam(t *testing.T) {
 			entriesBefore, err := stores.Exam.ExamsOfCourse(1)
 			g.Assert(err).Equal(nil)
 
-			entrySent := examRequest{
+			entrySent := ExamRequest{
 				Name:        "Exam_new",
 				Description: "blah blahe",
 				ExamTime:    helper.Time(time.Now()),
@@ -143,7 +143,7 @@ func TestExam(t *testing.T) {
 		})
 
 		g.It("Should update a group", func() {
-			entrySent := examRequest{
+			entrySent := ExamRequest{
 				Name:        "Exam_new_updated",
 				Description: "blah blahe_updated",
 				ExamTime:    helper.Time(time.Now()),

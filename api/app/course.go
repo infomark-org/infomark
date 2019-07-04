@@ -83,7 +83,7 @@ func (rs *CourseResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 // SUMMARY:  create a new course
 func (rs *CourseResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
 	// start from empty Request
-	data := &courseRequest{}
+	data := &CourseRequest{}
 
 	// parse JSON request into struct
 	if err := render.Bind(r, data); err != nil {
@@ -155,7 +155,7 @@ func (rs *CourseResource) GetHandler(w http.ResponseWriter, r *http.Request) {
 // SUMMARY:  update a specific course
 func (rs *CourseResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 	// start from empty Request
-	data := &courseRequest{}
+	data := &CourseRequest{}
 
 	// parse JSON request into struct
 	if err := render.Bind(r, data); err != nil {
@@ -372,7 +372,7 @@ func (rs *CourseResource) ChangeRole(w http.ResponseWriter, r *http.Request) {
 	course := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
 	user := r.Context().Value(symbol.CtxKeyUser).(*model.User)
 
-	data := &changeRoleInCourseRequest{}
+	data := &ChangeRoleInCourseRequest{}
 	// parse JSON request into struct
 	if err := render.Bind(r, data); err != nil {
 		render.Render(w, r, ErrBadRequestWithDetails(err))

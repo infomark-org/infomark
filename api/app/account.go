@@ -62,7 +62,7 @@ func NewAccountResource(stores *Stores) *AccountResource {
 // There is no way to set an avatar here and root will be false by default.
 func (rs *AccountResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
 	// start from empty Request
-	data := &createUserAccountRequest{}
+	data := &CreateUserAccountRequest{}
 
 	// parse JSON request into struct
 	if err := render.Bind(r, data); err != nil {
@@ -159,7 +159,7 @@ func (rs *AccountResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// start from database data
-	data := &accountRequest{}
+	data := &AccountRequest{}
 
 	// update struct from JSON request
 	if err := render.Bind(r, data); err != nil {
