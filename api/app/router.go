@@ -199,8 +199,10 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 
 				r.Route("/users", func(r chi.Router) {
 					r.Get("/", appAPI.User.IndexHandler)
+
 					r.Route("/{user_id}", func(r chi.Router) {
 						r.Use(appAPI.User.Context)
+
 						r.Get("/", appAPI.User.GetHandler)
 						r.Get("/avatar", appAPI.User.GetAvatarHandler)
 						r.Put("/", appAPI.User.EditHandler)
@@ -217,35 +219,34 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 					r.Route("/{course_id}", func(r chi.Router) {
 						r.Use(appAPI.Course.Context)
 						r.Use(appAPI.Course.RoleContext)
+
 						r.Post("/enrollments", appAPI.Course.EnrollHandler)
 
 						r.Route("/", func(r chi.Router) {
 							r.Use(authorize.RequiresAtLeastCourseRole(authorize.STUDENT))
 
 							r.Get("/", appAPI.Course.GetHandler)
+
 							r.Route("/", func(r chi.Router) {
 								r.Use(authorize.RequiresAtLeastCourseRole(authorize.ADMIN))
 
 								r.Post("/emails", appAPI.Course.SendEmailHandler)
-
 								r.Put("/", appAPI.Course.EditHandler)
 								r.Delete("/", appAPI.Course.DeleteHandler)
 							})
 
 							r.Get("/enrollments", appAPI.Course.IndexEnrollmentsHandler)
 							r.Delete("/enrollments", appAPI.Course.DisenrollHandler)
-
 							r.Get("/points", appAPI.Course.PointsHandler)
 							r.Get("/bids", appAPI.Course.BidsHandler)
 
 							r.Route("/enrollments/{user_id}", func(r chi.Router) {
 								r.Use(authorize.RequiresAtLeastCourseRole(authorize.ADMIN))
-
 								r.Use(appAPI.User.Context)
+
 								r.Get("/", appAPI.Course.GetUserEnrollmentHandler)
 								r.Delete("/", appAPI.Course.DeleteUserEnrollmentHandler)
 								r.Put("/", appAPI.Course.ChangeRole)
-
 							})
 
 							r.Route("/sheets", func(r chi.Router) {
@@ -255,14 +256,10 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 								r.Route("/{sheet_id}", func(r chi.Router) {
 									r.Use(appAPI.Sheet.Context)
 
-									// ensures user is enrolled in the associated course
-
 									r.Get("/", appAPI.Sheet.GetHandler)
-
 									r.Route("/tasks", func(r chi.Router) {
 										r.Get("/", appAPI.Task.IndexHandler)
 										r.With(authorize.RequiresAtLeastCourseRole(authorize.ADMIN)).Post("/", appAPI.Task.CreateHandler)
-
 									})
 
 									r.Get("/file", appAPI.Sheet.GetFileHandler)
@@ -273,31 +270,28 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 
 										r.Put("/", appAPI.Sheet.EditHandler)
 										r.Delete("/", appAPI.Sheet.DeleteHandler)
-
 										r.Post("/file", appAPI.Sheet.ChangeFileHandler)
 									})
-
-								}) // sheet_id
+								})
 							})
 
 							r.Route("/groups", func(r chi.Router) {
 								r.Get("/own", appAPI.Group.GetMineHandler)
 								r.Get("/", appAPI.Group.IndexHandler)
 								r.With(authorize.RequiresAtLeastCourseRole(authorize.ADMIN)).Post("/", appAPI.Group.CreateHandler)
+
 								r.Route("/{group_id}", func(r chi.Router) {
 									r.Use(appAPI.Group.Context)
-
-									// ensures user is enrolled in the associated course
 
 									r.Post("/bids", appAPI.Group.ChangeBidHandler)
 									r.With(authorize.RequiresAtLeastCourseRole(authorize.TUTOR)).Post("/emails", appAPI.Group.SendEmailHandler)
 									r.Get("/enrollments", appAPI.Group.IndexEnrollmentsHandler)
 									r.With(authorize.RequiresAtLeastCourseRole(authorize.ADMIN)).Post("/enrollments", appAPI.Group.EditGroupEnrollmentHandler)
-
 									r.Get("/", appAPI.Group.GetHandler)
 
 									r.Route("/", func(r chi.Router) {
 										r.Use(authorize.RequiresAtLeastCourseRole(authorize.ADMIN))
+
 										r.Put("/", appAPI.Group.EditHandler)
 										r.Delete("/", appAPI.Group.DeleteHandler)
 									})
@@ -307,11 +301,14 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 							r.Route("/exams", func(r chi.Router) {
 								r.Get("/", appAPI.Exam.IndexHandler)
 								r.With(authorize.RequiresAtLeastCourseRole(authorize.ADMIN)).Post("/", appAPI.Exam.CreateHandler)
+
 								r.Route("/{exam_id}", func(r chi.Router) {
 									r.Use(appAPI.Exam.Context)
+
 									r.Get("/", appAPI.Exam.GetHandler)
 									r.Route("/", func(r chi.Router) {
 										r.Use(authorize.RequiresAtLeastCourseRole(authorize.ADMIN))
+
 										r.Put("/", appAPI.Exam.EditHandler)
 										r.Delete("/", appAPI.Exam.DeleteHandler)
 									})
@@ -319,34 +316,28 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 							})
 
 							r.Route("/grades", func(r chi.Router) {
-
 								r.With(authorize.RequiresAtLeastCourseRole(authorize.TUTOR)).Get("/", appAPI.Grade.IndexHandler)
 								r.With(authorize.RequiresAtLeastCourseRole(authorize.TUTOR)).Get("/summary", appAPI.Grade.IndexSummaryHandler)
-								// does not require a role
 								r.Get("/missing", appAPI.Grade.IndexMissingHandler)
+
 								r.Route("/{grade_id}", func(r chi.Router) {
 									r.Use(appAPI.Grade.Context)
-
-									// ensures user is enrolled in the associated course
 									r.Use(authorize.RequiresAtLeastCourseRole(authorize.TUTOR))
 
 									r.Put("/", appAPI.Grade.EditHandler)
 									r.Get("/", appAPI.Grade.GetByIDHandler)
 									r.With(authorize.RequiresAtLeastCourseRole(authorize.ADMIN)).Post("/public_result", appAPI.Grade.PublicResultEditHandler)
 									r.With(authorize.RequiresAtLeastCourseRole(authorize.ADMIN)).Post("/private_result", appAPI.Grade.PrivateResultEditHandler)
-
 								})
 							})
 
 							r.Route("/materials", func(r chi.Router) {
-
 								r.Get("/", appAPI.Material.IndexHandler)
 								r.With(authorize.RequiresAtLeastCourseRole(authorize.ADMIN)).Post("/", appAPI.Material.CreateHandler)
 
 								r.Route("/{material_id}", func(r chi.Router) {
 									r.Use(appAPI.Material.Context)
 
-									// ensures user is enrolled in the associated course
 									r.Get("/", appAPI.Material.GetHandler)
 									r.Get("/file", appAPI.Material.GetFileHandler)
 
@@ -371,20 +362,16 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 							})
 
 							r.Route("/tasks", func(r chi.Router) {
-
 								r.Get("/missing", appAPI.Task.MissingIndexHandler)
+
 								r.Route("/{task_id}", func(r chi.Router) {
 									r.Use(appAPI.Task.Context)
-
-									// ensures user is enrolled in the associated course
 
 									r.Get("/", appAPI.Task.GetHandler)
 									r.Get("/ratings", appAPI.TaskRating.GetHandler)
 									r.Post("/ratings", appAPI.TaskRating.ChangeHandler)
-
 									r.Get("/submission", appAPI.Submission.GetFileHandler)
 									r.Post("/submission", appAPI.Submission.UploadFileHandler)
-
 									r.Get("/result", appAPI.Task.GetSubmissionResultHandler)
 
 									r.Route("/", func(r chi.Router) {
@@ -392,10 +379,8 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 
 										r.Put("/", appAPI.Task.EditHandler)
 										r.Delete("/", appAPI.Task.DeleteHandler)
-
 										r.Get("/public_file", appAPI.Task.GetPublicTestFileHandler)
 										r.Get("/private_file", appAPI.Task.GetPrivateTestFileHandler)
-
 										r.Post("/public_file", appAPI.Task.ChangePublicTestFileHandler)
 										r.Post("/private_file", appAPI.Task.ChangePrivateTestFileHandler)
 									})
@@ -403,19 +388,15 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 									r.Route("/groups/{group_id}", func(r chi.Router) {
 										r.Use(authorize.RequiresAtLeastCourseRole(authorize.TUTOR))
 										r.Use(appAPI.Group.Context)
+
 										r.Get("/file", appAPI.Submission.GetCollectionFileHandler)
 										r.Get("/", appAPI.Submission.GetCollectionHandler)
-
 									})
-
 								})
-
-							}) // tasks
-
-						})
-
-					}) // course_id
-				}) // course
+							})
+						}) // at least required authorize.STUDENT
+					})
+				})
 
 				r.Get("/account", appAPI.Account.GetHandler)
 				r.Get("/account/enrollments", appAPI.Account.GetEnrollmentsHandler)
