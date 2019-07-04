@@ -544,4 +544,12 @@ if __name__ == "__main__":
     for exam in exams:
       f.write(to_statement('exams', exam))
 
+    for cid in [1, 2]:
+      # enrollments
+      for k, student in enumerate(students):
+        k += 1
+        k += len(admins)
+        k += len(tutors)
+        f.write(to_statement('user_exam', create_user_exam(k, cid, 0, 'mark')))
+
     f.write('COMMIT;')

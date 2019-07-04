@@ -359,3 +359,29 @@ func (rs *AccountResource) GetEnrollmentsHandler(w http.ResponseWriter, r *http.
 		return
 	}
 }
+
+// GetExamEnrollmentsHandler is public endpoint for
+// URL: /account/exams/enrollments
+// METHOD: get
+// TAG: account
+// RESPONSE: 200,ExamEnrollmentResponseList
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// SUMMARY:  Retrieve the specific account avatar from the request identity
+// This lists all course enrollments of the request identity including role.
+func (rs *AccountResource) GetExamEnrollmentsHandler(w http.ResponseWriter, r *http.Request) {
+	accessClaims := r.Context().Value(symbol.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+
+	// get enrollments
+	enrollments, err := rs.Stores.Exam.GetEnrollmentsOfUser(accessClaims.LoginID)
+	if err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
+
+	// render JSON reponse
+	if err = render.RenderList(w, r, newExamEnrollmentListResponse(enrollments)); err != nil {
+		render.Render(w, r, ErrRender(err))
+		return
+	}
+}

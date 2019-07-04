@@ -36,16 +36,11 @@ type Exam struct {
 
 // Enrollment represents a an enrollment-type of a given user
 type UserExam struct {
-	ID     int64 `db:"id"`
-	UserID int64 `db:"user_id"`
-	ExamID int64 `db:"exam_id"`
+	ID       int64 `db:"id"`
+	UserID   int64 `db:"user_id"`
+	ExamID   int64 `db:"exam_id"`
+	CourseID int64 `db:"course_id,readonly"`
 
-	Status int `db:"status"`
-	Mark   int `db:"mark"`
-}
-
-// UserExamView gives enrollment information for multiple users with user information
-type UserExamView struct {
-	UserExam
-	User
+	Status int    `db:"status"`
+	Mark   string `db:"mark"`
 }

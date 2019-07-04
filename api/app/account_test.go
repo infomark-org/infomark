@@ -43,6 +43,7 @@ func TestAccount(t *testing.T) {
 	var stores *Stores
 	adminJWT := NewJWTRequest(1, true)
 	noAdminJWT := NewJWTRequest(1, false)
+	studentJWT := NewJWTRequest(112, false)
 
 	g.Describe("Account", func() {
 
@@ -76,6 +77,26 @@ func TestAccount(t *testing.T) {
 				g.Assert(enrollmentsActual[j].Role).Equal(enrollmentsExpected[j].Role)
 				g.Assert(enrollmentsActual[j].CourseID).Equal(enrollmentsExpected[j].CourseID)
 				g.Assert(enrollmentsActual[j].ID).Equal(int64(0))
+			}
+		})
+
+		g.It("Should get all own exam enrollments", func() {
+			userID := studentJWT.Claims.LoginID
+			enrollmentsExpected, err := stores.Exam.GetEnrollmentsOfUser(userID)
+			g.Assert(err).Equal(nil)
+
+			w := tape.Get("/api/v1/account/exams/enrollments", studentJWT)
+			g.Assert(w.Code).Equal(http.StatusOK)
+
+			enrollmentsActual := []ExamEnrollmentResponse{}
+			err = json.NewDecoder(w.Body).Decode(&enrollmentsActual)
+			g.Assert(err).Equal(nil)
+			g.Assert(len(enrollmentsActual)).Equal(len(enrollmentsExpected))
+
+			for j := 0; j < len(enrollmentsExpected); j++ {
+				g.Assert(enrollmentsActual[j].ExamID).Equal(enrollmentsExpected[j].ExamID)
+				g.Assert(enrollmentsActual[j].CourseID).Equal(enrollmentsExpected[j].CourseID)
+				g.Assert(enrollmentsActual[j].UserID).Equal(userID)
 			}
 		})
 

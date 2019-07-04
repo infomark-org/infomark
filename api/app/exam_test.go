@@ -200,6 +200,106 @@ func TestExam(t *testing.T) {
 			g.Assert(len(entriesAfter)).Equal(len(entriesBefore) - 1)
 		})
 
+		g.It("Should be able to fetch enrollments", func() {
+			examActive, err := stores.Exam.Get(1)
+			g.Assert(err).Equal(nil)
+
+			w := tape.Get("/api/v1/courses/1/exams/1/enrollments", studentJWT)
+			g.Assert(w.Code).Equal(http.StatusForbidden)
+
+			w = tape.Get("/api/v1/courses/1/exams/1/enrollments", tutorJWT)
+			g.Assert(w.Code).Equal(http.StatusForbidden)
+
+			numberEnrollmentsExpected, err := DBGetInt(
+				tape,
+				"SELECT count(*) FROM user_exam WHERE exam_id = $1",
+				examActive.ID,
+			)
+			g.Assert(err).Equal(nil)
+
+			w = tape.Get("/api/v1/courses/1/exams/1/enrollments", adminJWT)
+			g.Assert(w.Code).Equal(http.StatusOK)
+			enrollmentsActual := []ExamEnrollmentResponse{}
+			err = json.NewDecoder(w.Body).Decode(&enrollmentsActual)
+			g.Assert(err).Equal(nil)
+			g.Assert(len(enrollmentsActual)).Equal(numberEnrollmentsExpected)
+		})
+
+		g.It("Students should be able to enroll into exam", func() {
+			// remove all enrollments from student
+			_, err := tape.DB.Exec("DELETE FROM user_exam WHERE user_id = 112;")
+			g.Assert(err).Equal(nil)
+
+			examsBefore, err := stores.Exam.GetEnrollmentsOfUser(studentJWT.Claims.LoginID)
+			g.Assert(err).Equal(nil)
+			g.Assert(len(examsBefore)).Equal(0)
+
+			w := tape.Post("/api/v1/courses/1/exams/1/enrollments", helper.H{}, adminJWT)
+			g.Assert(w.Code).Equal(http.StatusBadRequest)
+
+			w = tape.Post("/api/v1/courses/1/exams/1/enrollments", helper.H{}, tutorJWT)
+			g.Assert(w.Code).Equal(http.StatusBadRequest)
+
+			w = tape.Post("/api/v1/courses/1/exams/1/enrollments", helper.H{}, studentJWT)
+			g.Assert(w.Code).Equal(http.StatusCreated)
+
+			examsAfter, err := stores.Exam.GetEnrollmentsOfUser(studentJWT.Claims.LoginID)
+			g.Assert(err).Equal(nil)
+			g.Assert(len(examsAfter)).Equal(1)
+
+		})
+
+		g.It("Students should be able to disenroll from exam", func() {
+			// remove all enrollments from student
+
+			examsBefore, err := stores.Exam.GetEnrollmentsOfUser(studentJWT.Claims.LoginID)
+			g.Assert(err).Equal(nil)
+			g.Assert(len(examsBefore)).Equal(2)
+
+			w := tape.Delete("/api/v1/courses/1/exams/1/enrollments", adminJWT)
+			g.Assert(w.Code).Equal(http.StatusBadRequest)
+
+			w = tape.Delete("/api/v1/courses/1/exams/1/enrollments", tutorJWT)
+			g.Assert(w.Code).Equal(http.StatusBadRequest)
+
+			w = tape.Delete("/api/v1/courses/1/exams/1/enrollments", studentJWT)
+			g.Assert(w.Code).Equal(http.StatusOK)
+
+			examsAfter, err := stores.Exam.GetEnrollmentsOfUser(studentJWT.Claims.LoginID)
+			g.Assert(err).Equal(nil)
+			g.Assert(len(examsAfter)).Equal(len(examsBefore) - 1)
+
+		})
+
+		g.It("Students should not be able to disenroll from exam when status has changed", func() {
+			// remove all enrollments from student
+
+			examsBefore, err := stores.Exam.GetEnrollmentsOfUser(studentJWT.Claims.LoginID)
+			g.Assert(err).Equal(nil)
+			g.Assert(len(examsBefore)).Equal(2)
+
+			exam, err := stores.Exam.GetEnrollmentOfUser(int64(1), studentJWT.Claims.LoginID)
+			g.Assert(err).Equal(nil)
+
+			exam.Status = 2
+			stores.Exam.UpdateUserExam(exam)
+			g.Assert(err).Equal(nil)
+
+			w := tape.Delete("/api/v1/courses/1/exams/1/enrollments", adminJWT)
+			g.Assert(w.Code).Equal(http.StatusBadRequest)
+
+			w = tape.Delete("/api/v1/courses/1/exams/1/enrollments", tutorJWT)
+			g.Assert(w.Code).Equal(http.StatusBadRequest)
+
+			w = tape.Delete("/api/v1/courses/1/exams/1/enrollments", studentJWT)
+			g.Assert(w.Code).Equal(http.StatusBadRequest)
+
+			examsAfter, err := stores.Exam.GetEnrollmentsOfUser(studentJWT.Claims.LoginID)
+			g.Assert(err).Equal(nil)
+			g.Assert(len(examsAfter)).Equal(len(examsBefore))
+
+		})
+
 		g.AfterEach(func() {
 			tape.AfterEach()
 		})

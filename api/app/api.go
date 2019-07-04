@@ -48,7 +48,10 @@ type ExamStore interface {
 	Delete(examID int64) error
 	Enroll(examID int64, userID int64) error
 	Disenroll(examID int64, userID int64) error
-	GetUserEnrollment(examID int64, userID int64) (*model.UserExamView, error)
+	GetEnrollmentsOfUser(userID int64) ([]model.UserExam, error)
+	GetEnrollmentsInCourseOfExam(courseID int64, examID int64) ([]model.UserExam, error)
+	GetEnrollmentOfUser(examID int64, userID int64) (*model.UserExam, error)
+	UpdateUserExam(p *model.UserExam) error
 }
 
 // CourseStore defines course related database queries

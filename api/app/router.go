@@ -312,6 +312,13 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 										r.Put("/", appAPI.Exam.EditHandler)
 										r.Delete("/", appAPI.Exam.DeleteHandler)
 									})
+
+									r.Route("/enrollments", func(r chi.Router) {
+										r.Post("/", appAPI.Exam.EnrollHandler)
+										r.Delete("/", appAPI.Exam.DisenrollHandler)
+										r.With(authorize.RequiresAtLeastCourseRole(authorize.ADMIN)).Get("/", appAPI.Exam.GetExamEnrollmentsHandler)
+									})
+
 								})
 							})
 
@@ -400,6 +407,7 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 
 				r.Get("/account", appAPI.Account.GetHandler)
 				r.Get("/account/enrollments", appAPI.Account.GetEnrollmentsHandler)
+				r.Get("/account/exams/enrollments", appAPI.Account.GetExamEnrollmentsHandler)
 				r.Get("/account/avatar", appAPI.Account.GetAvatarHandler)
 				r.Post("/account/avatar", appAPI.Account.ChangeAvatarHandler)
 				r.Delete("/account/avatar", appAPI.Account.DeleteAvatarHandler)

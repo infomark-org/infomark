@@ -90,29 +90,75 @@ AND
 	return err
 }
 
-func (s *ExamStore) GetUserEnrollment(examID int64, userID int64) (*model.UserExamView, error) {
-	p := model.UserExamView{}
+func (s *ExamStore) GetEnrollmentsOfUser(userID int64) ([]model.UserExam, error) {
+	p := []model.UserExam{}
+
+	// , u.avatar_path
+	err := s.db.Select(&p, `
+SELECT
+  ue.status,
+  ue.mark,
+  ue.user_id,
+  ue.exam_id,
+  e.course_id,
+  ue.id
+FROM
+  user_exam ue
+INNER JOIN exams e ON ue.exam_id = e.id
+WHERE
+  ue.user_id = $1`, userID,
+	)
+	return p, err
+}
+
+func (s *ExamStore) GetEnrollmentOfUser(examID int64, userID int64) (*model.UserExam, error) {
+	p := model.UserExam{}
 
 	// , u.avatar_path
 	err := s.db.Get(&p, `
 SELECT
   ue.status,
   ue.mark,
-  u.id,
-  u.first_name,
-  u.last_name,
-  u.email,
-  u.student_number,
-  u.semester,
-  u.subject,
-  u.language
+  ue.user_id,
+  ue.exam_id,
+  e.course_id,
+  ue.id
 FROM
   user_exam ue
-INNER JOIN users u ON ue.user_id = u.id
+INNER JOIN exams e ON ue.exam_id = e.id
+WHERE
+  ue.user_id = $1
+AND
+  ue.exam_id = $2
+LIMIT 1`, userID, examID,
+	)
+	return &p, err
+}
+
+func (s *ExamStore) UpdateUserExam(p *model.UserExam) error {
+
+	return Update(s.db, "user_exam", p.ID, p)
+}
+
+func (s *ExamStore) GetEnrollmentsInCourseOfExam(courseID int64, examID int64) ([]model.UserExam, error) {
+	p := []model.UserExam{}
+
+	// , u.avatar_path
+	err := s.db.Select(&p, `
+SELECT
+  ue.status,
+  ue.mark,
+  ue.user_id,
+  ue.exam_id,
+  e.course_id,
+  ue.id
+FROM
+  user_exam ue
+INNER JOIN exams e ON ue.exam_id = e.id
 WHERE
   ue.exam_id = $1
 AND
-  u.id = $2`, examID, userID,
+  e.course_id = $2`, examID, courseID,
 	)
-	return &p, err
+	return p, err
 }

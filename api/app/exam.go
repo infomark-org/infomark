@@ -19,11 +19,14 @@ package app
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"strconv"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
+	"github.com/infomark-org/infomark-backend/auth/authenticate"
+	"github.com/infomark-org/infomark-backend/auth/authorize"
 	"github.com/infomark-org/infomark-backend/model"
 	"github.com/infomark-org/infomark-backend/symbol"
 )
@@ -191,6 +194,121 @@ func (rs *ExamResource) DeleteHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render.Status(r, http.StatusNoContent)
+}
+
+// EnrollHandler is public endpoint for
+// URL: /courses/{course_id}/exams/exams/{exam_id}/enrollments
+// URLPARAM: course_id,integer
+// URLPARAM: exam_id,integer
+// METHOD: post
+// TAG: exams
+// REQUEST: Empty
+// RESPONSE: 204,NoContent
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  enroll a user into a exam
+func (rs *ExamResource) EnrollHandler(w http.ResponseWriter, r *http.Request) {
+	exam := r.Context().Value(symbol.CtxKeyExam).(*model.Exam)
+	accessClaims := r.Context().Value(symbol.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+	givenRole := r.Context().Value(symbol.CtxKeyCourseRole).(authorize.CourseRole)
+
+	if givenRole != authorize.STUDENT {
+		render.Render(w, r, ErrBadRequestWithDetails(errors.New("non-students cannot enroll into an exam")))
+		return
+	}
+
+	// update database entry
+	if err := rs.Stores.Exam.Enroll(exam.ID, accessClaims.LoginID); err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
+
+	// TODO(same as in account.go:GetExamEnrollmentsHandler)
+	// get enrollments
+	enrollments, err := rs.Stores.Exam.GetEnrollmentsOfUser(accessClaims.LoginID)
+	if err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
+	render.Status(r, http.StatusCreated)
+
+	// render JSON reponse
+	if err = render.RenderList(w, r, newExamEnrollmentListResponse(enrollments)); err != nil {
+		render.Render(w, r, ErrRender(err))
+		return
+	}
+}
+
+// DisenrollHandler is public endpoint for
+// URL: /courses/{course_id}/exams/exams/{exam_id}/enrollments
+// URLPARAM: course_id,integer
+// URLPARAM: exam_id,integer
+// METHOD: delete
+// TAG: exams
+// RESPONSE: 204,NoContent
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  disenroll a user from a exam
+func (rs *ExamResource) DisenrollHandler(w http.ResponseWriter, r *http.Request) {
+	exam := r.Context().Value(symbol.CtxKeyExam).(*model.Exam)
+	accessClaims := r.Context().Value(symbol.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+
+	givenRole := r.Context().Value(symbol.CtxKeyCourseRole).(authorize.CourseRole)
+
+	if givenRole != authorize.STUDENT {
+		render.Render(w, r, ErrBadRequestWithDetails(errors.New("non-students cannot enroll into an exam")))
+		return
+	}
+
+	requestedExam, err := rs.Stores.Exam.GetEnrollmentOfUser(exam.ID, accessClaims.LoginID)
+	if err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
+
+	if requestedExam.Status != 0 {
+		render.Render(w, r, ErrBadRequestWithDetails(errors.New("Status has been already changed, cannot disenroll")))
+		return
+	}
+
+	// update database entry
+	if err := rs.Stores.Exam.Disenroll(exam.ID, accessClaims.LoginID); err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
+
+	render.Status(r, http.StatusNoContent)
+}
+
+// GetExamEnrollmentsHandler is public endpoint for
+// URL: /courses/{course_id}/exams/{exam_id}/enrollments
+// URLPARAM: course_id,integer
+// URLPARAM: exam_id,integer
+// METHOD: get
+// TAG: exams
+// RESPONSE: 200,ExamEnrollmentResponseList
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// SUMMARY:  Retrieve the specific account avatar from the request identity
+// This lists all course enrollments of the request identity including role.
+func (rs *ExamResource) GetExamEnrollmentsHandler(w http.ResponseWriter, r *http.Request) {
+	course := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
+	exam := r.Context().Value(symbol.CtxKeyExam).(*model.Exam)
+
+	// get enrollments
+	enrollments, err := rs.Stores.Exam.GetEnrollmentsInCourseOfExam(course.ID, exam.ID)
+	if err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
+
+	// render JSON reponse
+	if err = render.RenderList(w, r, newExamEnrollmentListResponse(enrollments)); err != nil {
+		render.Render(w, r, ErrRender(err))
+		return
+	}
 }
 
 // Context middleware is used to load an Exam object from
