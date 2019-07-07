@@ -317,7 +317,7 @@ func (rs *ExamResource) GetExamEnrollmentsHandler(w http.ResponseWriter, r *http
 // URLPARAM: exam_id,integer
 // METHOD: put
 // TAG: exams
-// REQUEST: Empty
+// REQUEST: UserExamRequest
 // RESPONSE: 204,NoContent
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
