@@ -44,7 +44,7 @@ func RequiredValidAccessClaims(next http.Handler) http.Handler {
 
 		accessClaims := &AccessClaims{}
 
-		if viper.GetInt64("debug_user_id") == 0 {
+		if !viper.GetBool("debug_user_enabled") {
 			// first we test the JWT autorization
 			if HasHeaderToken(r) {
 
@@ -85,7 +85,7 @@ func RequiredValidAccessClaims(next http.Handler) http.Handler {
 			}
 		} else {
 			accessClaims.LoginID = viper.GetInt64("debug_user_id")
-			accessClaims.Root = true
+			accessClaims.Root = viper.GetBool("debug_user_is_root")
 		}
 
 		// nothing given

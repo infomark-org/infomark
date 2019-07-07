@@ -225,7 +225,6 @@ func TestGroup(t *testing.T) {
 		})
 
 		g.It("Find my group when being a student", func() {
-			// a random student (checked via pgweb)
 			w := tape.Get("/api/v1/courses/1/groups/own")
 			g.Assert(w.Code).Equal(http.StatusUnauthorized)
 

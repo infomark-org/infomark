@@ -50,7 +50,9 @@ max_request_json_bytes: 2097152       # 2 * 1024 * 1024 = 2097152
 max_request_avatar_bytes: 1048576     # 1 * 1024 * 1024 = 1048576
 max_request_submission_bytes: 4194304 # 4 * 1024 * 1024 = 4194304
 
-debug_user_id: 0
+debug_user_enabled: false
+debug_user_id: 1
+debug_user_is_root: false
 
 # worker
 # ------------------------------------------------------------------------------
