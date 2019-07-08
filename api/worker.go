@@ -35,6 +35,7 @@ type Worker struct {
 
 // NewWorker creates and configures an background worker
 func NewWorker(numInstances int) (*Worker, error) {
+	RunInit()
 	log.Println("configuring worker...")
 	return &Worker{NumInstances: numInstances}, nil
 }
