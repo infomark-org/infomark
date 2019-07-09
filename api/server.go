@@ -65,6 +65,7 @@ func NewServer() (*Server, error) {
 
 	if viper.GetString("sendmail_binary") != "" {
 		log.WithFields(logrus.Fields{"path": viper.GetString("sendmail_binary")}).Info("found sendmail")
+		email.SendMail = email.NewSendMailer(viper.GetString("sendmail_binary"))
 		email.DefaultMail = email.SendMail
 	}
 

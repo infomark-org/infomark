@@ -89,8 +89,7 @@ type TerminalMailer struct{}
 type VoidMailer struct{}
 
 // NewSendMailer creates an object that will send emails over sendmail
-func NewSendMailer() *SendMailer {
-	sendmailBinary := viper.GetString("sendmail_binary")
+func NewSendMailer(sendmailBinary string) *SendMailer {
 	return &SendMailer{Binary: sendmailBinary}
 }
 
@@ -105,7 +104,7 @@ func NewVoidMailer() *VoidMailer {
 }
 
 // SendMail is ready-to-use instance for sendmail
-var SendMail = NewSendMailer()
+var SendMail *SendMailer
 
 // TerminalMail is ready-to-use instance for displaying emails in the terminal
 var TerminalMail = NewTerminalMailer()
