@@ -268,6 +268,21 @@ func TestSubmission(t *testing.T) {
 			w := tape.Get("/api/v1/courses/1/tasks/1/submission", studentJWT)
 			g.Assert(w.Code).Equal(http.StatusNotFound)
 
+			// avoid too late deadline
+			deadlineAt := NowUTC().Add(time.Hour)
+			publishedAt := NowUTC().Add(-time.Hour)
+
+			// make sure the upload date is good
+			task, err := stores.Task.Get(1)
+			g.Assert(err).Equal(nil)
+			sheet, err := stores.Task.IdentifySheetOfTask(task.ID)
+			g.Assert(err).Equal(nil)
+
+			sheet.PublishAt = publishedAt
+			sheet.DueAt = deadlineAt
+			err = stores.Sheet.Update(sheet)
+			g.Assert(err).Equal(nil)
+
 			// upload
 			filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
 			w, err = tape.Upload("/api/v1/courses/1/tasks/1/submission", filename, "application/zip", studentJWT)
@@ -297,6 +312,21 @@ func TestSubmission(t *testing.T) {
 
 			// no files so far
 			g.Assert(helper.NewSubmissionFileHandle(3001).Exists()).Equal(false)
+
+			// avoid too late deadline
+			deadlineAt := NowUTC().Add(time.Hour)
+			publishedAt := NowUTC().Add(-time.Hour)
+
+			// make sure the upload date is good
+			task, err := stores.Task.Get(1)
+			g.Assert(err).Equal(nil)
+			sheet, err := stores.Task.IdentifySheetOfTask(task.ID)
+			g.Assert(err).Equal(nil)
+
+			sheet.PublishAt = publishedAt
+			sheet.DueAt = deadlineAt
+			err = stores.Sheet.Update(sheet)
+			g.Assert(err).Equal(nil)
 
 			// upload
 			filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
