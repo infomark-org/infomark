@@ -1,0 +1,78 @@
+server:
+  version: 1.0.0
+  debugging:
+    enabled: false
+    user_id: 1
+    user_is_root: false
+    log_level: debug
+  http:
+    use_https: false
+    host: localhost
+    port: 3000
+    domain: sub.domain.com
+    timeouts:
+      read: 30s
+      write: 30s
+    limits:
+      max_header: 1048576
+      max_request_json: 2097152
+      max_submission: 4194304
+  distribute_jobs: true
+  authentication:
+    jwt:
+      secret: a88938917314301f9ed4b1395acccfef925168307fcabff368e949303a91dd22
+      access_expiry: 15m0s
+      refresh_expiry: 10h0m0s
+    session:
+      secret: 6ae95c238972ef94e1aac2eb5684924e27d85b040eb59f3b254398a808dd8c13
+      cookies:
+        secure: false
+        lifetime: 24h0m0s
+        idle_timeout: 1h0m0s
+    password:
+      min_length: 7
+    total_requests_per_minute: 100
+  cronjobs:
+    zip_submissions_intervall: 5m0s
+  email:
+    send: true
+    sendmail_binary: /usr/sbin/sendmail
+    from: no-reply@sub.domain.com
+    channel_size: 300
+  services:
+    redis:
+      host: redis_service
+      port: 6379
+      database: 0
+    rabbit_mq:
+      host: rabbitmq_service
+      port: 5672
+      user: rabbitmq_user
+      password: 6276d369a1ad92f7616d904c1d5f3c4c7b86a5b45114f4b024552c36f57458d3
+      key: rabbitmq_key
+    database:
+      host: postgres_service
+      port: 5432
+      database: infomark
+      user: database_user
+      password: 706a8e46b399acceb76bd1065c00b9724523aad0b647c93e1e211ca1790ffca7
+      debug: false
+  paths:
+    uploads: /path/to/uploads
+    common: /path/to/common
+    generated_files: /path/to/generated_files
+    fixtures: /path/to/fixtures
+worker:
+  version: 1.0.0
+  services:
+    rabbit_mq:
+      host: rabbitmq_service
+      port: 5672
+      user: rabbitmq_user
+      password: 6276d369a1ad92f7616d904c1d5f3c4c7b86a5b45114f4b024552c36f57458d3
+      key: rabbitmq_key
+  workdir: /tmp
+  void: false
+  docker:
+    max_memory: 524288000
+
