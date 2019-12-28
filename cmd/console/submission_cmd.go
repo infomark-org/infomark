@@ -27,11 +27,11 @@ import (
 	"github.com/infomark-org/infomark-backend/api/helper"
 	"github.com/infomark-org/infomark-backend/api/shared"
 	"github.com/infomark-org/infomark-backend/auth/authenticate"
+	"github.com/infomark-org/infomark-backend/configuration"
 	"github.com/infomark-org/infomark-backend/model"
 	"github.com/infomark-org/infomark-backend/service"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 func init() {
@@ -52,6 +52,9 @@ var SubmissionTriggerCmd = &cobra.Command{
 	Long:  `will enqueue a submission again into the testing queue`,
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+
+		configuration.MustFindAndReadConfiguration()
+
 		submissionID := MustInt64Parameter(args[0], "submissionID")
 
 		_, stores := MustConnectAndStores()
@@ -73,34 +76,27 @@ var SubmissionTriggerCmd = &cobra.Command{
 
 		log.Println("starting producer...")
 
-		cfg := &service.Config{
-			Connection:   viper.GetString("rabbitmq_connection"),
-			Exchange:     "infomark-worker-exchange",
-			ExchangeType: "direct",
-			Queue:        "infomark-worker-submissions",
-			Key:          viper.GetString("rabbitmq_key"),
-			Tag:          "SimpleSubmission",
-		}
+		cfg := service.NewConfig(&configuration.Configuration.Server.Services.RabbitMQ)
 
 		sha256, err := helper.NewSubmissionFileHandle(submission.ID).Sha256()
 		failWhenSmallestWhiff(err)
 
-		tokenManager, err := authenticate.NewTokenAuth()
-		failWhenSmallestWhiff(err)
+		tokenManager := authenticate.NewTokenAuth(&configuration.Configuration.Server.Authentication)
+
 		accessToken, err := tokenManager.CreateAccessJWT(
 			authenticate.NewAccessClaims(1, true))
 		failWhenSmallestWhiff(err)
 
 		bodyPublic, err := json.Marshal(shared.NewSubmissionAMQPWorkerRequest(
 			course.ID, task.ID, submission.ID, grade.ID,
-			accessToken, viper.GetString("url"), task.PublicDockerImage.String, sha256, "public"))
+			accessToken, configuration.Configuration.Server.URL(), task.PublicDockerImage.String, sha256, "public"))
 		if err != nil {
 			log.Fatalf("json.Marshal: %s", err)
 		}
 
 		bodyPrivate, err := json.Marshal(shared.NewSubmissionAMQPWorkerRequest(
 			course.ID, task.ID, submission.ID, grade.ID,
-			accessToken, viper.GetString("url"), task.PrivateDockerImage.String, sha256, "private"))
+			accessToken, configuration.Configuration.Server.URL(), task.PrivateDockerImage.String, sha256, "private"))
 		if err != nil {
 			log.Fatalf("json.Marshal: %s", err)
 		}
@@ -121,6 +117,7 @@ var SubmissionRunCmd = &cobra.Command{
 
 		submissionID := MustInt64Parameter(args[0], "submissionID")
 
+		configuration.MustFindAndReadConfiguration()
 		_, stores := MustConnectAndStores()
 
 		submission, err := stores.Submission.Get(submissionID)
@@ -153,7 +150,7 @@ var SubmissionRunCmd = &cobra.Command{
 					task.PublicDockerImage.String,
 					submissionHnd.Path(),
 					frameworkHnd.Path(),
-					viper.GetInt64("worker_docker_memory_bytes"),
+					int64(configuration.Configuration.Worker.Docker.MaxMemory),
 				)
 				if err != nil {
 					log.Fatal(err)
@@ -183,7 +180,7 @@ var SubmissionRunCmd = &cobra.Command{
 					task.PrivateDockerImage.String,
 					submissionHnd.Path(),
 					frameworkHnd.Path(),
-					viper.GetInt64("worker_docker_memory_bytes"),
+					int64(configuration.Configuration.Worker.Docker.MaxMemory),
 				)
 				if err != nil {
 					log.Fatal(err)
@@ -219,6 +216,8 @@ This triggers all [kind]-tests again (private, public).
 	Args: cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 
+		configuration.MustFindAndReadConfiguration()
+
 		taskID := MustInt64Parameter(args[0], "taskID")
 
 		switch args[1] {
@@ -240,14 +239,7 @@ This triggers all [kind]-tests again (private, public).
 
 		log.Println("starting producer...")
 
-		cfg := &service.Config{
-			Connection:   viper.GetString("rabbitmq_connection"),
-			Exchange:     "infomark-worker-exchange",
-			ExchangeType: "direct",
-			Queue:        "infomark-worker-submissions",
-			Key:          viper.GetString("rabbitmq_key"),
-			Tag:          "SimpleSubmission",
-		}
+		cfg := service.NewConfig(&configuration.Configuration.Server.Services.RabbitMQ)
 
 		submissions := []SubmissionWithGradeID{}
 		err = db.Select(&submissions, `
@@ -283,8 +275,8 @@ WHERE task_id = $1
 				sublog.Warn("Skip as sha cannot be computed")
 			}
 
-			tokenManager, err := authenticate.NewTokenAuth()
-			failWhenSmallestWhiff(err)
+			tokenManager := authenticate.NewTokenAuth(&configuration.Configuration.Server.Authentication)
+
 			accessToken, err := tokenManager.CreateAccessJWT(
 				authenticate.NewAccessClaims(1, true))
 			failWhenSmallestWhiff(err)
@@ -297,12 +289,12 @@ WHERE task_id = $1
 			if args[1] == "public" {
 				body, merr = json.Marshal(shared.NewSubmissionAMQPWorkerRequest(
 					course.ID, taskID, submissionWithGrade.ID, submissionWithGrade.GradeID,
-					accessToken, viper.GetString("url"), task.PublicDockerImage.String, sha256, "public"))
+					accessToken, configuration.Configuration.Server.URL(), task.PublicDockerImage.String, sha256, "public"))
 
 			} else {
 				body, merr = json.Marshal(shared.NewSubmissionAMQPWorkerRequest(
 					course.ID, taskID, submissionWithGrade.ID, submissionWithGrade.GradeID,
-					accessToken, viper.GetString("url"), task.PrivateDockerImage.String, sha256, "private"))
+					accessToken, configuration.Configuration.Server.URL(), task.PrivateDockerImage.String, sha256, "private"))
 			}
 			if merr != nil {
 				log.Fatalf("json.Marshal: %s", merr)

@@ -22,6 +22,8 @@ import (
 	"log"
 
 	"github.com/infomark-org/infomark-backend/api"
+	background "github.com/infomark-org/infomark-backend/api/worker"
+	"github.com/infomark-org/infomark-backend/configuration"
 
 	"github.com/spf13/cobra"
 )
@@ -35,6 +37,14 @@ var workCmd = &cobra.Command{
 Can be used with the flag "-n" to start multiple workers within one process.
 `,
 	Run: func(cmd *cobra.Command, args []string) {
+
+		configuration.MustFindAndReadConfiguration()
+
+		if configuration.Configuration.Worker.Void {
+			background.DefaultSubmissionHandler = &background.DummySubmissionHandler{}
+		} else {
+			background.DefaultSubmissionHandler = &background.RealSubmissionHandler{}
+		}
 
 		worker, err := api.NewWorker(numWorkers)
 		if err != nil {

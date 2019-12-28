@@ -23,7 +23,7 @@ import (
 	"time"
 
 	"github.com/go-chi/jwtauth"
-	"github.com/spf13/viper"
+	"github.com/infomark-org/infomark-backend/configuration"
 )
 
 // TokenAuth implements JWT authentication flow.
@@ -34,16 +34,13 @@ type TokenAuth struct {
 }
 
 // NewTokenAuth configures and returns a JWT authentication instance.
-func NewTokenAuth() (*TokenAuth, error) {
-	secret := viper.GetString("auth_jwt_secret")
-
-	a := &TokenAuth{
-		JwtAuth:          jwtauth.New("HS256", []byte(secret), nil),
-		JwtAccessExpiry:  viper.GetDuration("auth_jwt_access_expiry"),
-		JwtRefreshExpiry: viper.GetDuration("auth_jwt_refresh_expiry"),
+func NewTokenAuth(config *configuration.AuthenticationConfiguration) *TokenAuth {
+	return &TokenAuth{
+		JwtAuth:          jwtauth.New("HS256", []byte(config.JWT.Secret), nil),
+		JwtAccessExpiry:  config.JWT.AccessExpiry,
+		JwtRefreshExpiry: config.JWT.RefreshExpiry,
 	}
 
-	return a, nil
 }
 
 // Verifier http middleware will verify a jwt string from a http request.

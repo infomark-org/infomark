@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/infomark-org/infomark-backend/configuration"
 	"github.com/spf13/cobra"
 )
 
@@ -55,6 +56,8 @@ var UserEnrollInCourse = &cobra.Command{
 		default:
 			log.Fatalf("role '%s' must be one of 'student', 'tutor', 'admin'\n", args[2])
 		}
+
+		configuration.MustFindAndReadConfiguration()
 
 		_, stores := MustConnectAndStores()
 

@@ -24,11 +24,12 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/alexedwards/scs"
 	"github.com/go-chi/jwtauth"
 	"github.com/go-chi/render"
 	"github.com/infomark-org/infomark-backend/auth"
+	"github.com/infomark-org/infomark-backend/configuration"
 	"github.com/infomark-org/infomark-backend/symbol"
-	"github.com/spf13/viper"
 	"github.com/ulule/limiter/v3"
 
 	// "github.com/ulule/limiter/v3/drivers/store/memory"
@@ -39,60 +40,62 @@ import (
 // RequiredValidAccessClaimsMiddleware tries to get information about the identity which
 // issues a request by looking into the authorization header and then into
 // the cookie.
-func RequiredValidAccessClaims(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+func RequiredValidAccessClaims(manager *scs.Manager, config *configuration.ServerConfigurationSchema) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 
-		accessClaims := &AccessClaims{}
+			accessClaims := &AccessClaims{}
 
-		if !viper.GetBool("debug_user_enabled") {
-			// first we test the JWT autorization
-			if HasHeaderToken(r) {
+			if !config.Debugging.Enabled {
+				// first we test the JWT autorization
+				if HasHeaderToken(r) {
 
-				// parse token from from header
-				tokenStr := jwtauth.TokenFromHeader(r)
+					// parse token from from header
+					tokenStr := jwtauth.TokenFromHeader(r)
 
-				// ok, there is a access token in the header
-				err := accessClaims.ParseAccessClaimsFromToken(tokenStr)
-				if err != nil {
-					// fmt.Println(err)
-					render.Render(w, r, auth.ErrUnauthorized)
-					return
-				}
-
-			} else {
-				// fmt.Println("no token, try session")
-				if HasSessionToken(r) {
-					// fmt.Println("found session")
-
-					// session data is stored in cookie
-					err := accessClaims.ParseRefreshClaimsFromSession(r)
+					// ok, there is a access token in the header
+					err := accessClaims.ParseAccessClaimsFromToken(config.Authentication.JWT.Secret, tokenStr)
 					if err != nil {
 						// fmt.Println(err)
 						render.Render(w, r, auth.ErrUnauthorized)
 						return
 					}
 
-					// session is valid --> we will extend the session
-					w = accessClaims.UpdateSession(w, r)
 				} else {
-					// fmt.Println("NO session found")
+					// fmt.Println("no token, try session")
+					if HasSessionToken(manager, r) {
+						// fmt.Println("found session")
 
-					render.Render(w, r, auth.ErrUnauthenticated)
-					return
+						// session data is stored in cookie
+						err := accessClaims.ParseRefreshClaimsFromSession(manager, r)
+						if err != nil {
+							// fmt.Println(err)
+							render.Render(w, r, auth.ErrUnauthorized)
+							return
+						}
+
+						// session is valid --> we will extend the session
+						w = accessClaims.UpdateSession(manager, w, r)
+					} else {
+						// fmt.Println("NO session found")
+
+						render.Render(w, r, auth.ErrUnauthenticated)
+						return
+
+					}
 
 				}
-
+			} else {
+				accessClaims.LoginID = config.Debugging.LoginID
+				accessClaims.Root = config.Debugging.LoginIsRoot
 			}
-		} else {
-			accessClaims.LoginID = viper.GetInt64("debug_user_id")
-			accessClaims.Root = viper.GetBool("debug_user_is_root")
-		}
 
-		// nothing given
-		// serve next
-		ctx := context.WithValue(r.Context(), symbol.CtxKeyAccessClaims, accessClaims)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
+			// nothing given
+			// serve next
+			ctx := context.WithValue(r.Context(), symbol.CtxKeyAccessClaims, accessClaims)
+			next.ServeHTTP(w, r.WithContext(ctx))
+		})
+	}
 }
 
 type LoginLimiterKey interface {

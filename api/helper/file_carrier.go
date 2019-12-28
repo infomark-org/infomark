@@ -30,7 +30,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/spf13/viper"
+	"github.com/infomark-org/infomark-backend/configuration"
+	"github.com/infomark-org/infomark-backend/configuration/bytefmt"
 )
 
 // FaileCarrier is a unified way to handle uploads and downloads of different
@@ -64,9 +65,9 @@ type FileManager interface {
 // FileHandle represents all information for file being uploaded or downloaded.
 type FileHandle struct {
 	Category   FileCategory
-	ID         int64    // an unique identifier (e.g. from database)
-	Extensions []string //
-	MaxBytes   int64    // 0 means no limit
+	ID         int64            // an unique identifier (e.g. from database)
+	Extensions []string         //
+	MaxBytes   bytefmt.ByteSize // 0 means no limit
 	Infos      []int64
 }
 
@@ -76,7 +77,7 @@ func NewAvatarFileHandle(userID int64) *FileHandle {
 		Category:   AvatarCategory,
 		ID:         userID,
 		Extensions: []string{"jpg", "jpeg", "png"},
-		MaxBytes:   viper.GetInt64("max_request_avatar_bytes"),
+		MaxBytes:   configuration.Configuration.Server.HTTP.Limits.MaxAvatar,
 	}
 }
 
@@ -128,12 +129,13 @@ func NewSubmissionFileHandle(ID int64) *FileHandle {
 		Category:   SubmissionCategory,
 		ID:         ID,
 		Extensions: []string{"zip"},
-		MaxBytes:   viper.GetInt64("max_request_submission_bytes"),
+		MaxBytes:   configuration.Configuration.Server.HTTP.Limits.MaxSubmission,
 	}
 }
 
 // NewSubmissionsCollectionFileHandle will handle a collection of submissions.
-func NewSubmissionsCollectionFileHandle(courseID int64, sheetID int64, taskID int64, groupID int64) *FileHandle {
+func NewSubmissionsCollectionFileHandle(courseID int64, sheetID int64,
+	taskID int64, groupID int64) *FileHandle {
 	return &FileHandle{
 		Category:   SubmissionsCollectionCategory,
 		ID:         0,
@@ -167,7 +169,7 @@ func (f *FileHandle) Path() string {
 	case AvatarCategory:
 
 		for _, ext := range f.Extensions {
-			path := fmt.Sprintf("%s/avatars/%d.%s", viper.GetString("uploads_dir"), f.ID, ext)
+			path := fmt.Sprintf("%s/avatars/%d.%s", configuration.Configuration.Server.Paths.Uploads, f.ID, ext)
 			if FileExists(path) {
 				return path
 			}
@@ -175,18 +177,18 @@ func (f *FileHandle) Path() string {
 		return ""
 
 	case SheetCategory:
-		return fmt.Sprintf("%s/sheets/%d.zip", viper.GetString("uploads_dir"), f.ID)
+		return fmt.Sprintf("%s/sheets/%d.zip", configuration.Configuration.Server.Paths.Uploads, f.ID)
 
 	case PublicTestCategory:
-		return fmt.Sprintf("%s/tasks/%d-public.zip", viper.GetString("uploads_dir"), f.ID)
+		return fmt.Sprintf("%s/tasks/%d-public.zip", configuration.Configuration.Server.Paths.Uploads, f.ID)
 
 	case PrivateTestCategory:
-		return fmt.Sprintf("%s/tasks/%d-private.zip", viper.GetString("uploads_dir"), f.ID)
+		return fmt.Sprintf("%s/tasks/%d-private.zip", configuration.Configuration.Server.Paths.Uploads, f.ID)
 
 	case MaterialCategory:
 
 		for _, ext := range f.Extensions {
-			path := fmt.Sprintf("%s/materials/%d.%s", viper.GetString("uploads_dir"), f.ID, ext)
+			path := fmt.Sprintf("%s/materials/%d.%s", configuration.Configuration.Server.Paths.Uploads, f.ID, ext)
 			if FileExists(path) {
 				return path
 			}
@@ -194,10 +196,10 @@ func (f *FileHandle) Path() string {
 		return ""
 
 	case SubmissionCategory:
-		return fmt.Sprintf("%s/submissions/%d.zip", viper.GetString("uploads_dir"), f.ID)
+		return fmt.Sprintf("%s/submissions/%d.zip", configuration.Configuration.Server.Paths.Uploads, f.ID)
 	case SubmissionsCollectionCategory:
 		return fmt.Sprintf("%s/collection-course%d-sheet%d-task%d-group%d.zip",
-			viper.GetString("generated_files_dir"), f.Infos[0], f.Infos[1], f.Infos[2], f.Infos[3])
+			configuration.Configuration.Server.Paths.GeneratedFiles, f.Infos[0], f.Infos[1], f.Infos[2], f.Infos[3])
 	}
 	return ""
 }
@@ -376,7 +378,7 @@ func (f *FileHandle) WriteToDisk(r *http.Request, fieldName string) (string, err
 	w := DummyWriter{}
 
 	if f.MaxBytes != 0 {
-		r.Body = http.MaxBytesReader(w, r.Body, f.MaxBytes)
+		r.Body = http.MaxBytesReader(w, r.Body, int64(f.MaxBytes))
 	}
 
 	// receive data from post request
@@ -404,14 +406,14 @@ func (f *FileHandle) WriteToDisk(r *http.Request, fieldName string) (string, err
 
 	switch f.Category {
 	case AvatarCategory:
-		pathToDelete := fmt.Sprintf("%s/avatars/%s.png", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
+		pathToDelete := fmt.Sprintf("%s/avatars/%s.png", configuration.Configuration.Server.Paths.Uploads, strconv.FormatInt(f.ID, 10))
 		FileDelete(pathToDelete)
-		pathToDelete = fmt.Sprintf("%s/avatars/%s.jpg", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
+		pathToDelete = fmt.Sprintf("%s/avatars/%s.jpg", configuration.Configuration.Server.Paths.Uploads, strconv.FormatInt(f.ID, 10))
 		FileDelete(pathToDelete)
 		if IsJpegFile(fileMagic) {
-			path = fmt.Sprintf("%s/avatars/%s.jpg", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
+			path = fmt.Sprintf("%s/avatars/%s.jpg", configuration.Configuration.Server.Paths.Uploads, strconv.FormatInt(f.ID, 10))
 		} else if IsPngFile(fileMagic) {
-			path = fmt.Sprintf("%s/avatars/%s.png", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
+			path = fmt.Sprintf("%s/avatars/%s.png", configuration.Configuration.Server.Paths.Uploads, strconv.FormatInt(f.ID, 10))
 		} else {
 			return "", errors.New("We support JPG/JPEG/PNG files only")
 		}
@@ -426,15 +428,15 @@ func (f *FileHandle) WriteToDisk(r *http.Request, fieldName string) (string, err
 	case MaterialCategory:
 		// delete both possible files
 		// ids are unique. Hence we only delete the file associated with the id
-		pathToDelete := fmt.Sprintf("%s/materials/%s.zip", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
+		pathToDelete := fmt.Sprintf("%s/materials/%s.zip", configuration.Configuration.Server.Paths.Uploads, strconv.FormatInt(f.ID, 10))
 		FileDelete(pathToDelete)
-		pathToDelete = fmt.Sprintf("%s/materials/%s.pdf", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
+		pathToDelete = fmt.Sprintf("%s/materials/%s.pdf", configuration.Configuration.Server.Paths.Uploads, strconv.FormatInt(f.ID, 10))
 		FileDelete(pathToDelete)
 
 		if IsPdfFile(fileMagic) {
-			path = fmt.Sprintf("%s/materials/%s.pdf", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
+			path = fmt.Sprintf("%s/materials/%s.pdf", configuration.Configuration.Server.Paths.Uploads, strconv.FormatInt(f.ID, 10))
 		} else if IsZipFile(fileMagic) {
-			path = fmt.Sprintf("%s/materials/%s.zip", viper.GetString("uploads_dir"), strconv.FormatInt(f.ID, 10))
+			path = fmt.Sprintf("%s/materials/%s.zip", configuration.Configuration.Server.Paths.Uploads, strconv.FormatInt(f.ID, 10))
 		} else {
 			return "", errors.New("Only PDF and ZIP files are allowed")
 		}

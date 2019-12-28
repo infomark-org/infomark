@@ -1,0 +1,63 @@
+
+server:
+  addr: 0.0.0.0:3000
+  url: http://info2.informatik.uni-tuebingen.de
+  debugging:
+    enabled: false
+    user_id: 1
+    is_root: false
+    log_level: debug
+  distribute_jobs: true
+  authentication:
+    jwt:
+      secret: fffff
+      access_expiry: 15m
+      refresh_expiry: 10h
+    session:
+      secret: u46IpCV9y5Vlur8YvODJEhgOY8m9JVE4sdfdfsdf
+      cookies:
+        secure: false
+        lifetime: 24h
+        idle_timeout: 60m
+    Password:
+      min_length: 7
+    total_requests_per_minute: 10
+  cronjobs:
+    zip_submissions_intervall : every 5s
+  email:
+    sendmail_binary: /usr/sbin/sendmail
+    from: no-reply@info2.informatik.uni-tuebingen.de
+    channel_size: 300
+  timeouts:
+    read: 30sec
+    write: 30sec
+  limits:
+    max_header: 1mb
+    max_request_json: 2mb
+    max_submission: 4mb
+  services:
+    redis:
+      connection: redis://redis_service:6379/0
+    rabbitmq:
+      connection: amqp://user:password@localhost:5672/
+      key: test-key
+    database:
+      connection: host=database user=postgres dbname=infomark password=postgres sslmode=disable
+      debug: false
+  paths:
+    uploads: /var/www/infomark-staging/app/files/uploads
+    common: /var/www/infomark-staging/app/files/common
+    generated_files: /var/www/infomark-staging/app/files/generated_files
+    fixtures: /var/www/infomark-staging/app/files/fixtures
+
+worker:
+  services:
+    rabbitmq:
+      connection: amqp://user:password@localhost:5672/
+      key: test-key
+  workdir: /tmp
+  void: true
+  docker_memory_bytes: 200mb
+
+
+

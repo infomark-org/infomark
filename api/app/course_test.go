@@ -43,21 +43,20 @@ func DBGetInt2(tape *Tape, stmt string, param1 int64, param2 int64) (int, error)
 }
 
 func TestCourse(t *testing.T) {
-	PrepareTests()
 
 	g := goblin.Goblin(t)
 	email.DefaultMail = email.VoidMail
 	// email.DefaultMail = email.TerminalMail
 	go email.BackgroundSend(email.OutgoingEmailsChannel)
 
-	tape := &Tape{}
+	tape := NewTape()
 
 	var stores *Stores
 
-	studentJWT := NewJWTRequest(112, false)
-	tutorJWT := NewJWTRequest(2, false)
-	adminJWT := NewJWTRequest(1, true)
-	noAdminJWT := NewJWTRequest(1, false)
+	studentJWT := tape.NewJWTRequest(112, false)
+	tutorJWT := tape.NewJWTRequest(2, false)
+	adminJWT := tape.NewJWTRequest(1, true)
+	noAdminJWT := tape.NewJWTRequest(1, false)
 
 	g.Describe("Course", func() {
 
@@ -392,7 +391,7 @@ func TestCourse(t *testing.T) {
 		g.It("Global root enroll as admins", func() {
 
 			courseID := int64(1)
-			localAdminJWT := NewJWTRequest(112, true)
+			localAdminJWT := tape.NewJWTRequest(112, true)
 
 			w := tape.Post("/api/v1/courses/1/enrollments", helper.H{}, localAdminJWT)
 			g.Assert(w.Code).Equal(http.StatusCreated)
@@ -521,10 +520,10 @@ func TestCourse(t *testing.T) {
 
 		g.It("Show user enrollement info", func() {
 
-			w := tape.Get("/api/v1/courses/1/enrollments/2", NewJWTRequest(122, false))
+			w := tape.Get("/api/v1/courses/1/enrollments/2", tape.NewJWTRequest(122, false))
 			g.Assert(w.Code).Equal(http.StatusForbidden)
 
-			w = tape.Get("/api/v1/courses/1/enrollments/2", NewJWTRequest(3, false))
+			w = tape.Get("/api/v1/courses/1/enrollments/2", tape.NewJWTRequest(3, false))
 			g.Assert(w.Code).Equal(http.StatusForbidden)
 
 			result := EnrollmentResponse{}

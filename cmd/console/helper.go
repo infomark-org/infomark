@@ -23,8 +23,8 @@ import (
 	"strconv"
 
 	"github.com/infomark-org/infomark-backend/api/app"
+	"github.com/infomark-org/infomark-backend/configuration"
 	"github.com/jmoiron/sqlx"
-	"github.com/spf13/viper"
 )
 
 func failWhenSmallestWhiff(err error) {
@@ -35,7 +35,7 @@ func failWhenSmallestWhiff(err error) {
 
 func ConnectAndStores() (*sqlx.DB, *app.Stores, error) {
 
-	db, err := sqlx.Connect("postgres", viper.GetString("database_connection"))
+	db, err := sqlx.Connect("postgres", configuration.Configuration.Server.PostgresURL())
 	if err != nil {
 		return nil, nil, err
 	}

@@ -26,8 +26,8 @@ import (
 
 	"github.com/go-chi/render"
 	"github.com/infomark-org/infomark-backend/auth/authorize"
+	"github.com/infomark-org/infomark-backend/configuration"
 	"github.com/infomark-org/infomark-backend/model"
-	"github.com/spf13/viper"
 )
 
 // CommonResource specifies user management handler.
@@ -76,7 +76,7 @@ func (rs *CommonResource) VersionHandler(w http.ResponseWriter, r *http.Request)
 // SUMMARY:  the privacy statement
 func (rs *CommonResource) PrivacyStatementHandler(w http.ResponseWriter, r *http.Request) {
 
-	buf, err := ioutil.ReadFile(fmt.Sprintf("%s/privacy_statement.md", viper.GetString("common_dir"))) // just pass the file name
+	buf, err := ioutil.ReadFile(fmt.Sprintf("%s/privacy_statement.md", configuration.Configuration.Server.Paths.Common)) // just pass the file name
 	if err != nil {
 		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
 		return

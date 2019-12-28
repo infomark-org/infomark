@@ -21,6 +21,8 @@ package service
 import (
 	"os"
 
+	"github.com/infomark-org/infomark-backend/configuration"
+
 	"github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"
 )
@@ -40,6 +42,18 @@ type Config struct {
 	ExchangeType string
 	Queue        string
 	Key          string
+}
+
+func NewConfig(config *configuration.RabbitMQConfiguration) *Config {
+	return &Config{
+
+		Tag:          "SimpleSubmission",
+		Connection:   config.RabbitMQURL(),
+		Exchange:     "infomark-worker-exchange",
+		ExchangeType: "direct",
+		Queue:        "infomark-worker-submissions",
+		Key:          config.Key,
+	}
 }
 
 var log = logrus.New()

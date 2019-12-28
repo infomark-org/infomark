@@ -27,6 +27,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/infomark-org/infomark-backend/configuration"
 	"github.com/infomark-org/infomark-backend/model"
 	"github.com/lib/pq"
 	"github.com/spf13/cobra"
@@ -62,8 +63,9 @@ var GroupLocate = &cobra.Command{
 		courseID := MustInt64Parameter(args[0], "courseID")
 		userID := MustInt64Parameter(args[1], "userID")
 
-		_, stores := MustConnectAndStores()
+		configuration.MustFindAndReadConfiguration()
 
+		_, stores := MustConnectAndStores()
 		user, err := stores.User.Get(userID)
 		if err != nil {
 			log.Fatalf("user with id %v not found\n", userID)
@@ -100,6 +102,8 @@ number of assigned students`,
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		courseID := MustInt64Parameter(args[0], "courseID")
+
+		configuration.MustFindAndReadConfiguration()
 
 		db, _ := MustConnectAndStores()
 
@@ -141,6 +145,8 @@ already enrolled in another group`,
 
 		// same as POST "/courses/{course_id}/groups/{group_id}/enrollments"
 		// TODO(patwie): good candidate for a remote cli
+
+		configuration.MustFindAndReadConfiguration()
 
 		_, stores := MustConnectAndStores()
 
@@ -208,6 +214,8 @@ var GroupUserBids = &cobra.Command{
 		// same as POST "/courses/{course_id}/groups/{group_id}/enrollments"
 		// TODO(patwie): good candidate for a remote cli
 
+		configuration.MustFindAndReadConfiguration()
+
 		db, stores := MustConnectAndStores()
 
 		user, err := stores.User.Get(userID)
@@ -268,6 +276,8 @@ var GroupReadBids = &cobra.Command{
 		f, err := os.Create(fmt.Sprintf("%s.dat", args[1]))
 		failWhenSmallestWhiff(err)
 		defer f.Close()
+
+		configuration.MustFindAndReadConfiguration()
 
 		db, stores := MustConnectAndStores()
 
@@ -419,6 +429,8 @@ var GroupParseBidsSolution = &cobra.Command{
 		}
 
 		courseID := MustInt64Parameter(args[0], "courseID")
+
+		configuration.MustFindAndReadConfiguration()
 
 		db, stores := MustConnectAndStores()
 

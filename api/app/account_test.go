@@ -29,21 +29,20 @@ import (
 	"github.com/franela/goblin"
 	"github.com/infomark-org/infomark-backend/api/helper"
 	"github.com/infomark-org/infomark-backend/auth"
+	"github.com/infomark-org/infomark-backend/configuration"
 	"github.com/infomark-org/infomark-backend/email"
-	"github.com/spf13/viper"
 )
 
 func TestAccount(t *testing.T) {
-	PrepareTests()
 	g := goblin.Goblin(t)
 	email.DefaultMail = email.VoidMail
 
-	tape := &Tape{}
+	tape := NewTape()
 
 	var stores *Stores
-	adminJWT := NewJWTRequest(1, true)
-	noAdminJWT := NewJWTRequest(1, false)
-	studentJWT := NewJWTRequest(112, false)
+	adminJWT := tape.NewJWTRequest(1, true)
+	noAdminJWT := tape.NewJWTRequest(1, false)
+	studentJWT := tape.NewJWTRequest(112, false)
 
 	g.Describe("Account", func() {
 
@@ -116,7 +115,7 @@ func TestAccount(t *testing.T) {
 
 		g.It("Should not create accounts with too short password", func() {
 
-			minLen := viper.GetInt("min_password_length")
+			minLen := configuration.Configuration.Server.Authentication.Password.MinLength
 			tooShortPassword := auth.GenerateToken(minLen - 1)
 
 			w := tape.Post("/api/v1/account",
@@ -134,7 +133,7 @@ func TestAccount(t *testing.T) {
 
 		g.It("Should create valid accounts", func() {
 
-			minLen := viper.GetInt("min_password_length")
+			minLen := configuration.Configuration.Server.Authentication.Password.MinLength
 			validPassword := auth.GenerateToken(minLen)
 
 			request := H{
@@ -299,7 +298,7 @@ func TestAccount(t *testing.T) {
 			g.Assert(userReturned.AvatarURL.Valid).Equal(false)
 
 			// upload avatar
-			avatarFilename := fmt.Sprintf("%s/default-avatar.jpg", viper.GetString("fixtures_dir"))
+			avatarFilename := fmt.Sprintf("%s/default-avatar.jpg", configuration.Configuration.Server.Paths.Fixtures)
 			w, err = tape.Upload("/api/v1/account/avatar", avatarFilename, "image/jpg", adminJWT)
 			g.Assert(err).Equal(nil)
 			g.Assert(w.Code).Equal(http.StatusOK)
@@ -342,7 +341,7 @@ func TestAccount(t *testing.T) {
 			g.Assert(userReturned.AvatarURL.Valid).Equal(false)
 
 			// upload avatar
-			avatarFilename := fmt.Sprintf("%s/default-avatar.png", viper.GetString("fixtures_dir"))
+			avatarFilename := fmt.Sprintf("%s/default-avatar.png", configuration.Configuration.Server.Paths.Fixtures)
 			w, err = tape.Upload("/api/v1/account/avatar", avatarFilename, "image/png", adminJWT)
 			g.Assert(err).Equal(nil)
 			g.Assert(w.Code).Equal(http.StatusOK)
@@ -410,7 +409,7 @@ func TestAccount(t *testing.T) {
 			g.Assert(helper.NewAvatarFileHandle(1).Exists()).Equal(false)
 
 			// upload avatar
-			avatarFilename := fmt.Sprintf("%s/default-avatar.jpg", viper.GetString("fixtures_dir"))
+			avatarFilename := fmt.Sprintf("%s/default-avatar.jpg", configuration.Configuration.Server.Paths.Fixtures)
 			w, err := tape.Upload("/api/v1/account/avatar", avatarFilename, "image/jpg", noAdminJWT)
 			g.Assert(err).Equal(nil)
 			g.Assert(w.Code).Equal(http.StatusOK)

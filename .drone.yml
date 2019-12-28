@@ -14,10 +14,10 @@ steps:
   - "[ 0 -eq `goimports -l . | wc -l` ]"
 
 - name: lint
-  image: golangci/golangci-lint:v1.16
+  image: golangci/golangci-lint:v1.21
   pull: true
   commands:
-    - golangci-lint run -D errcheck --deadline=10m
+    - golangci-lint run -D errcheck
 
 - name: build
   pull: default
@@ -27,7 +27,7 @@ steps:
   - go version
   - go build infomark.go
   environment:
-    GOPROXY: https://gomods.patwie.com/
+    GOPROXY: https://proxy.golang.org
 
 - name: ping_db
   pull: default
@@ -72,19 +72,19 @@ steps:
   pull: default
   image: golang
   commands:
-  - cp .infomark.yml.ci .infomark.yml
-  - export INFOMARK_CONFIG_DIR=`pwd`
+  - export INFOMARK_CONFIG_FILE=`realpath .infomark.yml.ci`
   - go test ./... -cover -v --goblin.timeout 15s
   environment:
-    GOPROXY: https://gomods.patwie.com/
+    GOPROXY: https://proxy.golang.org
 
 - name: docs
   pull: default
   image: golang
   commands:
+  - export INFOMARK_CONFIG_FILE=`realpath .infomark.yml.ci`
   - go generate
   environment:
-    GOPROXY: https://gomods.patwie.com/
+    GOPROXY: https://proxy.golang.org
 
 - name: create_release
   pull: default
@@ -127,6 +127,6 @@ services:
 
 ---
 kind: signature
-hmac: 2da97b4a19ca599761509122217144e52865d9aec3a84814fdbe05fbf484dc7a
+hmac: b6f7ef1a750edd029c92f896f10613534713601e0cf934177422380e99a0d511
 
 ...

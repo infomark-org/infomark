@@ -31,20 +31,22 @@ import (
 	"github.com/infomark-org/infomark-backend/api/shared"
 	"github.com/infomark-org/infomark-backend/auth/authenticate"
 	"github.com/infomark-org/infomark-backend/auth/authorize"
+	"github.com/infomark-org/infomark-backend/configuration"
 	"github.com/infomark-org/infomark-backend/model"
 	"github.com/infomark-org/infomark-backend/symbol"
-	"github.com/spf13/viper"
 )
 
 // SubmissionResource specifies Submission management handler.
 type SubmissionResource struct {
-	Stores *Stores
+	Stores    *Stores
+	TokenAuth *authenticate.TokenAuth
 }
 
 // NewSubmissionResource create and returns a SubmissionResource.
-func NewSubmissionResource(stores *Stores) *SubmissionResource {
+func NewSubmissionResource(stores *Stores, tokenAuth *authenticate.TokenAuth) *SubmissionResource {
 	return &SubmissionResource{
-		Stores: stores,
+		Stores:    stores,
+		TokenAuth: tokenAuth,
 	}
 }
 
@@ -144,7 +146,7 @@ func (rs *SubmissionResource) GetCollectionHandler(w http.ResponseWriter, r *htt
 	text := ""
 	if hnd.Exists() {
 		text = fmt.Sprintf("%s/courses/%d/tasks/%d/groups/%d/file",
-			viper.GetString("url"),
+			configuration.Configuration.Server.URL(),
 			course.ID, task.ID, group.ID,
 		)
 	}
@@ -376,7 +378,7 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
 
 	// enqueue file into testing queue
 	// By definition user with id 1 is the system itself with root access
-	tokenManager, err := authenticate.NewTokenAuth()
+	tokenManager := rs.TokenAuth
 	if err != nil {
 		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
 		return
@@ -393,7 +395,7 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
 
 		request := shared.NewSubmissionAMQPWorkerRequest(
 			course.ID, task.ID, submission.ID, grade.ID,
-			accessToken, viper.GetString("url"), task.PublicDockerImage.String, sha256, "public")
+			accessToken, configuration.Configuration.Server.URL(), task.PublicDockerImage.String, sha256, "public")
 
 		body, err := json.Marshal(request)
 		if err != nil {
@@ -420,7 +422,7 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
 
 		request := shared.NewSubmissionAMQPWorkerRequest(
 			course.ID, task.ID, submission.ID, grade.ID,
-			accessToken, viper.GetString("url"), task.PrivateDockerImage.String, sha256, "private")
+			accessToken, configuration.Configuration.Server.URL(), task.PrivateDockerImage.String, sha256, "private")
 
 		body, err := json.Marshal(request)
 		if err != nil {

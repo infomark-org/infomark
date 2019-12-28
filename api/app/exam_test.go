@@ -29,17 +29,17 @@ import (
 )
 
 func TestExam(t *testing.T) {
-	PrepareTests()
+
 	g := goblin.Goblin(t)
 	email.DefaultMail = email.VoidMail
 
-	tape := &Tape{}
+	tape := NewTape()
 
 	var stores *Stores
 
-	studentJWT := NewJWTRequest(112, false)
-	tutorJWT := NewJWTRequest(2, false)
-	adminJWT := NewJWTRequest(1, true)
+	studentJWT := tape.NewJWTRequest(112, false)
+	tutorJWT := tape.NewJWTRequest(2, false)
+	adminJWT := tape.NewJWTRequest(1, true)
 
 	g.Describe("Exam", func() {
 

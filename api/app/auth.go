@@ -23,25 +23,30 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/alexedwards/scs"
 	"github.com/go-chi/jwtauth"
 	"github.com/go-chi/render"
 	"github.com/infomark-org/infomark-backend/auth"
 	"github.com/infomark-org/infomark-backend/auth/authenticate"
+	"github.com/infomark-org/infomark-backend/configuration"
 	"github.com/infomark-org/infomark-backend/email"
 	"github.com/infomark-org/infomark-backend/symbol"
-	"github.com/spf13/viper"
 	null "gopkg.in/guregu/null.v3"
 )
 
 // AuthResource specifies user management handler.
 type AuthResource struct {
-	Stores *Stores
+	Stores      *Stores
+	TokenAuth   *authenticate.TokenAuth
+	SessionAuth *scs.Manager
 }
 
 // NewAuthResource create and returns a AuthResource.
-func NewAuthResource(stores *Stores) *AuthResource {
+func NewAuthResource(stores *Stores, tokenAuth *authenticate.TokenAuth, sessionAuth *scs.Manager) *AuthResource {
 	return &AuthResource{
-		Stores: stores,
+		Stores:      stores,
+		TokenAuth:   tokenAuth,
+		SessionAuth: sessionAuth,
 	}
 }
 
@@ -65,11 +70,7 @@ func (rs *AuthResource) RefreshAccessTokenHandler(w http.ResponseWriter, r *http
 	// This is a corner case, so we do not rely on middleware here
 
 	// access the underlying JWT functions
-	tokenManager, err := authenticate.NewTokenAuth()
-	if err != nil {
-		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-		return
-	}
+	tokenManager := rs.TokenAuth
 
 	// we test wether there is already a JWT Token
 	if authenticate.HasHeaderToken(r) {
@@ -79,7 +80,10 @@ func (rs *AuthResource) RefreshAccessTokenHandler(w http.ResponseWriter, r *http
 
 		// ok, there is a token in the header
 		refreshClaims := &authenticate.RefreshClaims{}
-		err := refreshClaims.ParseRefreshClaimsFromToken(tokenStr)
+		err := refreshClaims.ParseRefreshClaimsFromToken(
+			configuration.Configuration.Server.Authentication.JWT.Secret,
+			tokenStr,
+		)
 
 		if err != nil {
 			// something went wrong during getting the claims
@@ -222,7 +226,7 @@ func (rs *AuthResource) LoginHandler(w http.ResponseWriter, r *http.Request) {
 	// fmt.Println("WRITE accessClaims.LoginID", accessClaims.LoginID)
 	// fmt.Println("WRITE accessClaims.Root", accessClaims.Root)
 
-	w = accessClaims.WriteToSession(w, r)
+	w = accessClaims.WriteToSession(rs.SessionAuth, w, r)
 
 	resp := &loginResponse{Root: potentialUser.Root}
 	// return access token only
@@ -243,7 +247,7 @@ func (rs *AuthResource) LoginHandler(w http.ResponseWriter, r *http.Request) {
 // SUMMARY:  Destroy a session
 func (rs *AuthResource) LogoutHandler(w http.ResponseWriter, r *http.Request) {
 	accessClaims := r.Context().Value(symbol.CtxKeyAccessClaims).(*authenticate.AccessClaims)
-	accessClaims.DestroyInSession(w, r)
+	accessClaims.DestroyInSession(rs.SessionAuth, w, r)
 }
 
 // RequestPasswordResetHandler is public endpoint for
@@ -274,6 +278,7 @@ func (rs *AuthResource) RequestPasswordResetHandler(w http.ResponseWriter, r *ht
 	// Send Email to User
 	// https://infomark-staging.informatik.uni-tuebingen.de/#/password_reset/example@uni-tuebingen.de/af1ecf6f
 	msg, err := email.NewEmailFromTemplate(
+		configuration.Configuration.Server.Email.From,
 		user.Email,
 		"Password Reset Instructions",
 		email.RequestPasswordTokenTemailTemplateEN,
@@ -281,7 +286,7 @@ func (rs *AuthResource) RequestPasswordResetHandler(w http.ResponseWriter, r *ht
 			"first_name":           user.FirstName,
 			"last_name":            user.LastName,
 			"email_address":        user.Email,
-			"reset_password_url":   fmt.Sprintf("%s/#/password_reset", viper.GetString("url")),
+			"reset_password_url":   fmt.Sprintf("%s/#/password_reset", configuration.Configuration.Server.URL()),
 			"reset_password_token": user.ResetPasswordToken.String,
 		})
 	if err != nil {

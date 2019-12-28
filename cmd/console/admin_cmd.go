@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/infomark-org/infomark-backend/configuration"
 	"github.com/spf13/cobra"
 )
 
@@ -43,6 +44,8 @@ var AdminAddCmd = &cobra.Command{
 	Args: cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		userID := MustInt64Parameter(args[0], "userID")
+
+		configuration.MustFindAndReadConfiguration()
 
 		_, stores := MustConnectAndStores()
 
@@ -68,6 +71,8 @@ var AdminRemoveCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		userID := MustInt64Parameter(args[0], "userID")
+
+		configuration.MustFindAndReadConfiguration()
 
 		_, stores := MustConnectAndStores()
 

@@ -20,21 +20,19 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
-	"strings"
-	"time"
 
 	"github.com/infomark-org/infomark-backend/api/app"
 	"github.com/infomark-org/infomark-backend/api/cronjob"
+	"github.com/infomark-org/infomark-backend/auth/authenticate"
+	"github.com/infomark-org/infomark-backend/configuration"
 	"github.com/infomark-org/infomark-backend/email"
 	"github.com/jmoiron/sqlx"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/robfig/cron"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 )
 
 var log *logrus.Logger
@@ -52,24 +50,28 @@ func RunInit() {
 
 // Server provides an http.Server.
 type Server struct {
-	HTTP *http.Server
-	Cron *cron.Cron
+	HTTP           *http.Server
+	Cron           *cron.Cron
+	Configuration  *configuration.ServerConfigurationSchema
+	Authentication *authenticate.TokenAuth
 }
 
 // NewServer creates and configures an APIServer serving all application routes.
-func NewServer() (*Server, error) {
+func NewServer(config *configuration.ServerConfigurationSchema) (*Server, error) {
 	RunInit()
-	app.PrepareTokenManager()
+
 	app.InitSubmissionProducer()
 	log.Info("configuring server...")
 
-	if viper.GetString("sendmail_binary") != "" {
-		log.WithFields(logrus.Fields{"path": viper.GetString("sendmail_binary")}).Info("found sendmail")
-		email.SendMail = email.NewSendMailer(viper.GetString("sendmail_binary"))
+	if config.SendEmail() {
+		log.WithFields(logrus.Fields{"path": config.Email.SendmailBinary}).Info("found sendmail")
+		email.SendMail = email.NewSendMailer(config.Email.SendmailBinary)
 		email.DefaultMail = email.SendMail
+	} else {
+		email.DefaultMail = email.TerminalMail
 	}
 
-	db, err := sqlx.Connect("postgres", viper.GetString("database_connection"))
+	db, err := sqlx.Connect("postgres", config.PostgresURL())
 	if err != nil {
 		log.WithField("module", "database").Error(err)
 		return nil, err
@@ -82,32 +84,26 @@ func NewServer() (*Server, error) {
 
 	handler.Handle("/metrics", promhttp.Handler())
 
-	var addr string
-	port := viper.GetString("port")
-
-	// allow port to be set as localhost:3000 in env during development to avoid "accept incoming network connection" request on restarts
-	if strings.Contains(port, ":") {
-		addr = port
-	} else {
-		addr = ":" + port
-	}
-
 	srv := http.Server{
-		Addr:           addr,
+		Addr:           config.HTTPAddr(),
 		Handler:        handler,
-		ReadTimeout:    time.Duration(viper.GetInt64("server_read_timeout_sec")) * time.Second,
-		WriteTimeout:   time.Duration(viper.GetInt64("server_write_timeout_sec")) * time.Second,
-		MaxHeaderBytes: viper.GetInt("server_write_timeout_sec"),
+		ReadTimeout:    config.HTTP.Timeouts.Read,
+		WriteTimeout:   config.HTTP.Timeouts.Write,
+		MaxHeaderBytes: int(config.HTTP.Limits.MaxHeader),
 	}
 
 	c := cron.New()
-	c.AddJob(fmt.Sprintf("@%s", viper.GetString("cronjob_intervall_submission_zip")), &cronjob.SubmissionFileZipper{
+	c.AddJob(config.CronjobsZipSubmissionsIntervall(), &cronjob.SubmissionFileZipper{
 		Stores:    app.NewStores(db),
 		DB:        db,
-		Directory: viper.GetString("generated_files_dir"),
+		Directory: config.Paths.GeneratedFiles,
 	})
 
-	return &Server{HTTP: &srv, Cron: c}, nil
+	return &Server{
+		HTTP:           &srv,
+		Cron:           c,
+		Configuration:  config,
+		Authentication: authenticate.NewTokenAuth(&config.Authentication)}, nil
 }
 
 // Start runs ListenAndServe on the http.Server with graceful shutdown.

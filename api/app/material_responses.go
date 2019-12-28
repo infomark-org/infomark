@@ -25,8 +25,8 @@ import (
 
 	"github.com/go-chi/render"
 	"github.com/infomark-org/infomark-backend/auth/authorize"
+	"github.com/infomark-org/infomark-backend/configuration"
 	"github.com/infomark-org/infomark-backend/model"
-	"github.com/spf13/viper"
 )
 
 // MaterialResponse is the response payload for Material management.
@@ -50,7 +50,7 @@ func (rs *MaterialResource) newMaterialResponse(p *model.Material, courseID int6
 		LectureAt:    p.LectureAt,
 		RequiredRole: p.RequiredRole,
 		FileURL: fmt.Sprintf("%s/api/v1/courses/%d/materials/%d/file",
-			viper.GetString("url"),
+			configuration.Configuration.Server.URL(),
 			courseID,
 			p.ID,
 		),

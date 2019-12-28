@@ -4,17 +4,16 @@ import (
 	"fmt"
 	"go/parser"
 	"go/token"
-	"log"
 	"net/http"
 	"os"
 	"strings"
 
 	"github.com/go-chi/chi"
 	"github.com/infomark-org/infomark-backend/api/app"
+	"github.com/infomark-org/infomark-backend/configuration"
 	"github.com/infomark-org/infomark-backend/docs/swagger"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
-	"github.com/spf13/viper"
 )
 
 type Routes struct {
@@ -55,43 +54,12 @@ func GetAllRoutes() []*Routes {
 	return routes
 }
 
-var cfgFile = ""
-
-func SetConfigFile() {
-	if cfgFile != "" {
-		// Use config file from the flag.
-		viper.SetConfigFile(cfgFile)
-	} else {
-		var err error
-		// Find home directory.
-		home := os.Getenv("INFOMARK_CONFIG_DIR")
-
-		if home == "" {
-			home, err = os.Getwd()
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
-
-		// Search config in home directory with name ".go-base" (without extension).
-		viper.AddConfigPath(home)
-		viper.SetConfigName(".infomark")
-	}
-
-}
-
 // Main docs
 func main() {
 
-	SetConfigFile()
-	viper.AutomaticEnv()
-
-	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err != nil {
-		panic(err)
-	}
-
 	fset := token.NewFileSet() // positions are relative to fset
+
+	configuration.MustFindAndReadConfiguration()
 
 	pkgs, err := parser.ParseDir(fset, "./api/app/", nil, parser.ParseComments)
 	if err != nil {

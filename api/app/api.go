@@ -19,6 +19,8 @@
 package app
 
 import (
+	"github.com/alexedwards/scs"
+	"github.com/infomark-org/infomark-backend/auth/authenticate"
 	"github.com/infomark-org/infomark-backend/auth/authorize"
 	"github.com/infomark-org/infomark-backend/database"
 	"github.com/infomark-org/infomark-backend/model"
@@ -238,19 +240,19 @@ func NewStores(db *sqlx.DB) *Stores {
 }
 
 // NewAPI configures and returns application API.
-func NewAPI(db *sqlx.DB) (*API, error) {
+func NewAPI(db *sqlx.DB, tokenAuth *authenticate.TokenAuth, sessionAuth *scs.Manager) (*API, error) {
 	stores := NewStores(db)
 
 	api := &API{
 		Account:    NewAccountResource(stores),
-		Auth:       NewAuthResource(stores),
+		Auth:       NewAuthResource(stores, tokenAuth, sessionAuth),
 		User:       NewUserResource(stores),
 		Course:     NewCourseResource(stores),
 		Sheet:      NewSheetResource(stores),
 		Task:       NewTaskResource(stores),
 		Group:      NewGroupResource(stores),
 		TaskRating: NewTaskRatingResource(stores),
-		Submission: NewSubmissionResource(stores),
+		Submission: NewSubmissionResource(stores, tokenAuth),
 		Material:   NewMaterialResource(stores),
 		Grade:      NewGradeResource(stores),
 		Common:     NewCommonResource(stores),

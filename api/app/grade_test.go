@@ -29,9 +29,10 @@ import (
 
 	"github.com/franela/goblin"
 	"github.com/infomark-org/infomark-backend/api/helper"
+	"github.com/infomark-org/infomark-backend/configuration"
 	"github.com/infomark-org/infomark-backend/email"
 	"github.com/infomark-org/infomark-backend/model"
-	"github.com/spf13/viper"
+
 	null "gopkg.in/guregu/null.v3"
 )
 
@@ -61,18 +62,18 @@ func copyFile(src, dst string) (int64, error) {
 }
 
 func TestGrade(t *testing.T) {
-	PrepareTests()
+
 	g := goblin.Goblin(t)
 	email.DefaultMail = email.VoidMail
 
-	tape := &Tape{}
+	tape := NewTape()
 
 	var stores *Stores
 
-	studentJWT := NewJWTRequest(112, false)
-	tutorJWT := NewJWTRequest(2, false)
-	adminJWT := NewJWTRequest(1, true)
-	noAdminJWT := NewJWTRequest(1, false)
+	studentJWT := tape.NewJWTRequest(112, false)
+	tutorJWT := tape.NewJWTRequest(2, false)
+	adminJWT := tape.NewJWTRequest(1, true)
+	noAdminJWT := tape.NewJWTRequest(1, false)
 
 	g.Describe("Grade", func() {
 
@@ -124,8 +125,8 @@ func TestGrade(t *testing.T) {
 
 			defer hnd.Delete()
 			// now file exists
-			src := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
-			dest := fmt.Sprintf("%s/submissions/%s.zip", viper.GetString("uploads_dir"), strconv.FormatInt(gradeActual.SubmissionID, 10))
+			src := fmt.Sprintf("%s/empty.zip", configuration.Configuration.Server.Paths.Fixtures)
+			dest := fmt.Sprintf("%s/submissions/%s.zip", configuration.Configuration.Server.Paths.Uploads, strconv.FormatInt(gradeActual.SubmissionID, 10))
 			copyFile(src, dest)
 
 			g.Assert(hnd.Exists()).Equal(true)
@@ -152,7 +153,7 @@ func TestGrade(t *testing.T) {
 			g.Assert(gradeActual.User.Email).Equal(gradeExpected.UserEmail)
 			g.Assert(gradeActual.SubmissionID).Equal(gradeExpected.SubmissionID)
 
-			url := viper.GetString("url")
+			url := configuration.Configuration.Server.URL()
 
 			g.Assert(gradeActual.FileURL).Equal(fmt.Sprintf("%s/api/v1/courses/1/submissions/1/file", url))
 

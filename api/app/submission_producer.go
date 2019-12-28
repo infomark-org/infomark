@@ -19,8 +19,8 @@
 package app
 
 import (
+	"github.com/infomark-org/infomark-backend/configuration"
 	"github.com/infomark-org/infomark-backend/service"
-	"github.com/spf13/viper"
 )
 
 // Producer is interface to pipe the workload over AMPQ to the backend workers
@@ -41,16 +41,10 @@ func (t *VoidProducer) Publish(body []byte) error { return nil }
 
 func InitSubmissionProducer() {
 	var err error
-	cfg := &service.Config{
-		Connection:   viper.GetString("rabbitmq_connection"),
-		Exchange:     "infomark-worker-exchange",
-		ExchangeType: "direct",
-		Queue:        "infomark-worker-submissions",
-		Key:          viper.GetString("rabbitmq_key"),
-		Tag:          "SimpleSubmission",
-	}
 
-	if viper.GetBool("use_backend_worker") {
+	cfg := service.NewConfig(&configuration.Configuration.Server.Services.RabbitMQ)
+
+	if configuration.Configuration.Server.DistributeJobs {
 		DefaultSubmissionProducer, err = service.NewProducer(cfg)
 		if err != nil {
 			panic(err)

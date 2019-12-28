@@ -27,24 +27,24 @@ import (
 
 	"github.com/franela/goblin"
 	"github.com/infomark-org/infomark-backend/api/helper"
+	"github.com/infomark-org/infomark-backend/configuration"
 	"github.com/infomark-org/infomark-backend/email"
-	"github.com/spf13/viper"
 )
 
 func TestSubmission(t *testing.T) {
-	PrepareTests()
+
 	g := goblin.Goblin(t)
 	email.DefaultMail = email.VoidMail
 	// DefaultSubmissionProducer = &VoidProducer{}
 
-	tape := &Tape{}
+	tape := NewTape()
 
 	var stores *Stores
 
-	studentJWT := NewJWTRequest(112, false)
-	otherStudentJWT := NewJWTRequest(113, false)
-	tutorJWT := NewJWTRequest(2, false)
-	adminJWT := NewJWTRequest(1, true)
+	studentJWT := tape.NewJWTRequest(112, false)
+	otherStudentJWT := tape.NewJWTRequest(113, false)
+	tutorJWT := tape.NewJWTRequest(2, false)
+	adminJWT := tape.NewJWTRequest(1, true)
 
 	g.Describe("Submission", func() {
 
@@ -79,7 +79,7 @@ func TestSubmission(t *testing.T) {
 			// no files so far
 			g.Assert(hnd.Exists()).Equal(false)
 
-			src := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
+			src := fmt.Sprintf("%s/empty.zip", configuration.Configuration.Server.Paths.Fixtures)
 			copyFile(src, hnd.Path())
 
 			g.Assert(hnd.Exists()).Equal(true)
@@ -127,7 +127,7 @@ func TestSubmission(t *testing.T) {
 			g.Assert(w.Code).Equal(http.StatusNotFound)
 
 			// upload
-			filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
+			filename := fmt.Sprintf("%s/empty.zip", configuration.Configuration.Server.Paths.Fixtures)
 			w, err = tape.Upload("/api/v1/courses/1/tasks/1/submission", filename, "application/zip", studentJWT)
 			g.Assert(err).Equal(nil)
 			g.Assert(w.Code).Equal(http.StatusOK)
@@ -173,7 +173,7 @@ func TestSubmission(t *testing.T) {
 			g.Assert(w.Code).Equal(http.StatusNotFound)
 
 			// upload
-			filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
+			filename := fmt.Sprintf("%s/empty.zip", configuration.Configuration.Server.Paths.Fixtures)
 			w, err = tape.Upload("/api/v1/courses/1/tasks/1/submission", filename, "application/zip", studentJWT)
 
 			g.Assert(err).Equal(nil)
@@ -207,7 +207,7 @@ func TestSubmission(t *testing.T) {
 			g.Assert(helper.NewSubmissionFileHandle(3001).Exists()).Equal(false)
 
 			// upload
-			filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
+			filename := fmt.Sprintf("%s/empty.zip", configuration.Configuration.Server.Paths.Fixtures)
 			w, err := tape.Upload("/api/v1/courses/1/tasks/1/submission", filename, "application/zip", studentJWT)
 			g.Assert(err).Equal(nil)
 			g.Assert(w.Code).Equal(http.StatusOK)
@@ -241,7 +241,7 @@ func TestSubmission(t *testing.T) {
 			g.Assert(helper.NewSubmissionFileHandle(3001).Exists()).Equal(false)
 
 			// upload
-			filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
+			filename := fmt.Sprintf("%s/empty.zip", configuration.Configuration.Server.Paths.Fixtures)
 			w, err := tape.Upload("/api/v1/courses/1/tasks/1/submission", filename, "application/zip", studentJWT)
 			g.Assert(err).Equal(nil)
 			g.Assert(w.Code).Equal(http.StatusBadRequest)
@@ -284,7 +284,7 @@ func TestSubmission(t *testing.T) {
 			g.Assert(err).Equal(nil)
 
 			// upload
-			filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
+			filename := fmt.Sprintf("%s/empty.zip", configuration.Configuration.Server.Paths.Fixtures)
 			w, err = tape.Upload("/api/v1/courses/1/tasks/1/submission", filename, "application/zip", studentJWT)
 			g.Assert(err).Equal(nil)
 			g.Assert(w.Code).Equal(http.StatusOK)
@@ -329,7 +329,7 @@ func TestSubmission(t *testing.T) {
 			g.Assert(err).Equal(nil)
 
 			// upload
-			filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
+			filename := fmt.Sprintf("%s/empty.zip", configuration.Configuration.Server.Paths.Fixtures)
 			w, err := tape.Upload("/api/v1/courses/1/tasks/1/submission", filename, "application/zip", studentJWT)
 			g.Assert(err).Equal(nil)
 			g.Assert(w.Code).Equal(http.StatusOK)
@@ -347,8 +347,8 @@ func TestSubmission(t *testing.T) {
 
 		g.It("Admins can upload solution for a student (even if it is too late)", func() {
 
-			studentJWT := NewJWTRequest(112, false)
-			adminJWT := NewJWTRequest(1, true)
+			studentJWT := tape.NewJWTRequest(112, false)
+			adminJWT := tape.NewJWTRequest(1, true)
 
 			deadlineAt := NowUTC().Add(-time.Hour)
 			publishedAt := NowUTC().Add(-2 * time.Hour)
@@ -377,7 +377,7 @@ func TestSubmission(t *testing.T) {
 			g.Assert(w.Code).Equal(http.StatusNotFound)
 
 			// upload
-			filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
+			filename := fmt.Sprintf("%s/empty.zip", configuration.Configuration.Server.Paths.Fixtures)
 			params := map[string]string{
 				"user_id": "112",
 			}

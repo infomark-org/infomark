@@ -20,6 +20,7 @@ package configuration
 
 import (
 	"testing"
+	"time"
 
 	"github.com/franela/goblin"
 )
@@ -37,9 +38,41 @@ func TestConfiguration(t *testing.T) {
 			g.Assert(config.Server.HTTP.Domain).Equal("sub.domain.com")
 
 			g.Assert(config.Server.Debugging.Enabled).Equal(false)
-			g.Assert(config.Server.Debugging.UserID).Equal(int64(1))
-			g.Assert(config.Server.Debugging.UserIsRoot).Equal(false)
+			g.Assert(config.Server.Debugging.LoginID).Equal(int64(1))
+			g.Assert(config.Server.Debugging.LoginIsRoot).Equal(false)
 			g.Assert(config.Server.Debugging.LogLevel).Equal("debug")
+
+		})
+
+		g.It("Should have correct intervall", func() {
+
+			config := &ServerConfigurationSchema{}
+			config.Cronjobs.ZipSubmissionsIntervall = 4 * time.Second
+			g.Assert(config.CronjobsZipSubmissionsIntervall()).Equal("@ every 4s")
+
+		})
+
+		g.It("Should have correct postgres url", func() {
+
+			config := &ServerConfigurationSchema{}
+			config.Services.Postgres.User = "user"
+			config.Services.Postgres.Password = "pass"
+			config.Services.Postgres.Host = "1.2.3.4"
+			config.Services.Postgres.Port = 5678
+			config.Services.Postgres.Database = "dbname"
+
+			g.Assert(config.PostgresURL()).Equal("postgres://user:pass@1.2.3.4:5678/dbname?sslmode=disable&connect_timeout=1")
+
+		})
+
+		g.It("Should have correct redis url", func() {
+
+			config := &ServerConfigurationSchema{}
+			config.Services.Redis.Host = "1.2.3.4"
+			config.Services.Redis.Port = 5678
+			config.Services.Redis.Database = 0
+
+			g.Assert(config.RedisURL()).Equal("redis://1.2.3.4:5678/0")
 
 		})
 

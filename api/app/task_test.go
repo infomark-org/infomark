@@ -26,23 +26,23 @@ import (
 
 	"github.com/franela/goblin"
 	"github.com/infomark-org/infomark-backend/api/helper"
+	"github.com/infomark-org/infomark-backend/configuration"
 	"github.com/infomark-org/infomark-backend/email"
-	"github.com/spf13/viper"
 )
 
 func TestTask(t *testing.T) {
-	PrepareTests()
+
 	g := goblin.Goblin(t)
 	email.DefaultMail = email.VoidMail
 
-	tape := &Tape{}
+	tape := NewTape()
 
 	var stores *Stores
 
-	studentJWT := NewJWTRequest(112, false)
-	tutorJWT := NewJWTRequest(2, false)
-	adminJWT := NewJWTRequest(1, true)
-	noAdminJWT := NewJWTRequest(1, false)
+	studentJWT := tape.NewJWTRequest(112, false)
+	tutorJWT := tape.NewJWTRequest(2, false)
+	adminJWT := tape.NewJWTRequest(1, true)
+	noAdminJWT := tape.NewJWTRequest(1, false)
 
 	g.Describe("Task", func() {
 
@@ -168,7 +168,7 @@ func TestTask(t *testing.T) {
 			g.Assert(w.Code).Equal(http.StatusNotFound)
 
 			// public test
-			filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
+			filename := fmt.Sprintf("%s/empty.zip", configuration.Configuration.Server.Paths.Fixtures)
 			w, err := tape.Upload("/api/v1/courses/1/tasks/1/public_file", filename, "application/zip", adminJWT)
 			g.Assert(err).Equal(nil)
 			g.Assert(w.Code).Equal(http.StatusOK)
@@ -199,7 +199,7 @@ func TestTask(t *testing.T) {
 			g.Assert(w.Code).Equal(http.StatusNotFound)
 
 			// public test
-			filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
+			filename := fmt.Sprintf("%s/empty.zip", configuration.Configuration.Server.Paths.Fixtures)
 			w, err := tape.Upload("/api/v1/courses/1/tasks/1/private_file", filename, "application/zip", adminJWT)
 			g.Assert(err).Equal(nil)
 			g.Assert(w.Code).Equal(http.StatusOK)

@@ -22,6 +22,7 @@ import (
 	"log"
 
 	"github.com/infomark-org/infomark-backend/api"
+	"github.com/infomark-org/infomark-backend/configuration"
 	"github.com/spf13/cobra"
 )
 
@@ -31,7 +32,10 @@ var serveCmd = &cobra.Command{
 	Short: "start the infomark RESTful JSON backend server with configured api",
 	Long:  `Starts a http server and serves the configured api`,
 	Run: func(cmd *cobra.Command, args []string) {
-		server, err := api.NewServer()
+
+		configuration.MustFindAndReadConfiguration()
+
+		server, err := api.NewServer(&configuration.Configuration.Server)
 		if err != nil {
 			log.Fatal(err)
 		}

@@ -1,9 +1,9 @@
 server:
-  version: 1.0.0
+  version: 1
   debugging:
     enabled: false
-    user_id: 1
-    user_is_root: false
+    login_id: 1
+    login_is_root: false
     log_level: debug
   http:
     use_https: false
@@ -63,7 +63,7 @@ server:
     generated_files: /path/to/generated_files
     fixtures: /path/to/fixtures
 worker:
-  version: 1.0.0
+  version: 1
   services:
     rabbit_mq:
       host: rabbitmq_service

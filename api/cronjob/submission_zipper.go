@@ -26,6 +26,7 @@ import (
 
 	"github.com/infomark-org/infomark-backend/api/app"
 	"github.com/infomark-org/infomark-backend/api/helper"
+	"github.com/infomark-org/infomark-backend/configuration"
 	"github.com/infomark-org/infomark-backend/email"
 	"github.com/jmoiron/sqlx"
 )
@@ -195,7 +196,9 @@ func (job *SubmissionFileZipper) Run() {
 							// notify the tutor
 							tutor, _ := job.Stores.User.Get(group.TutorID)
 
-							email.DefaultMail.Send(email.NewEmail(tutor.Email, "Submission-Zip", fmt.Sprintf(`Hi %s,
+							from := configuration.Configuration.Server.Email.From
+
+							email.DefaultMail.Send(email.NewEmail(from, tutor.Email, "Submission-Zip", fmt.Sprintf(`Hi %s,
 the deadline for the exercise sheet '%s' is over. We have collected all submissions in a single zip file.
 Please log in to grade these solutions.
 `, tutor.FullName(), sheet.Name)))

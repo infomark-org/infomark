@@ -26,7 +26,6 @@ import (
 	"os/exec"
 
 	"github.com/infomark-org/infomark-backend/model"
-	"github.com/spf13/viper"
 )
 
 // Email contains all information to use sendmail
@@ -41,9 +40,9 @@ type Email struct {
 var OutgoingEmailsChannel chan *Email
 
 // NewEmail creates a new email structure
-func NewEmail(toEmail string, subject string, body string) *Email {
+func NewEmail(from string, toEmail string, subject string, body string) *Email {
 	email := &Email{
-		From:    viper.GetString("email_from"),
+		From:    from,
 		To:      toEmail,
 		Subject: subject,
 		Body:    body,
@@ -52,9 +51,9 @@ func NewEmail(toEmail string, subject string, body string) *Email {
 }
 
 // NewEmailFromUser creates a new email structure and appends the sender information
-func NewEmailFromUser(toEmail string, subject string, body string, user *model.User) *Email {
+func NewEmailFromUser(from string, toEmail string, subject string, body string, user *model.User) *Email {
 	email := &Email{
-		From:    viper.GetString("email_from"),
+		From:    from,
 		To:      toEmail,
 		Subject: subject,
 		Body:    fmt.Sprintf("%s\n\n----------\nSender is %s\nSent via InfoMark\n", body, user.FullName()),
@@ -63,12 +62,12 @@ func NewEmailFromUser(toEmail string, subject string, body string, user *model.U
 }
 
 // NewEmailFromTemplate creates a new email structure filling a template file
-func NewEmailFromTemplate(toEmail string, subject string, tpl *template.Template, data map[string]string) (*Email, error) {
+func NewEmailFromTemplate(from string, toEmail string, subject string, tpl *template.Template, data map[string]string) (*Email, error) {
 	body, err := FillTemplate(tpl, data)
 	if err != nil {
 		return nil, err
 	}
-	return NewEmail(toEmail, subject, body), nil
+	return NewEmail(from, toEmail, subject, body), nil
 }
 
 // Emailer any object that can send
@@ -176,18 +175,6 @@ func (sm *SendMailer) Send(e *Email) error {
 	}
 
 	return nil
-}
-
-// LoadAndFillTemplate loads a template and fills out the placeholders.
-func LoadAndFillTemplate(file string, data map[string]string) (string, error) {
-	rootDir := viper.GetString("email_templates_dir")
-	t, err := template.ParseFiles(fmt.Sprintf("%s/%s", rootDir, file))
-	if err != nil {
-		return "", err
-	}
-	var tpl bytes.Buffer
-	err = t.Execute(&tpl, data)
-	return tpl.String(), err
 }
 
 // FillTemplate loads a template and fills out the placeholders.

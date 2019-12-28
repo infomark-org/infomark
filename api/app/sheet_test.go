@@ -27,23 +27,23 @@ import (
 
 	"github.com/franela/goblin"
 	"github.com/infomark-org/infomark-backend/api/helper"
+	"github.com/infomark-org/infomark-backend/configuration"
 	"github.com/infomark-org/infomark-backend/email"
-	"github.com/spf13/viper"
 )
 
 func TestSheet(t *testing.T) {
-	PrepareTests()
+
 	g := goblin.Goblin(t)
 	email.DefaultMail = email.VoidMail
 
-	tape := &Tape{}
+	tape := NewTape()
 
 	var stores *Stores
 
-	studentJWT := NewJWTRequest(112, false)
-	tutorJWT := NewJWTRequest(2, false)
-	adminJWT := NewJWTRequest(1, true)
-	noAdminJWT := NewJWTRequest(1, false)
+	studentJWT := tape.NewJWTRequest(112, false)
+	tutorJWT := tape.NewJWTRequest(2, false)
+	adminJWT := tape.NewJWTRequest(1, true)
+	noAdminJWT := tape.NewJWTRequest(1, false)
 
 	g.Describe("Sheet", func() {
 
@@ -167,7 +167,7 @@ func TestSheet(t *testing.T) {
 
 			// no file so far
 			g.Assert(helper.NewSheetFileHandle(1).Exists()).Equal(false)
-			filename := fmt.Sprintf("%s/empty.zip", viper.GetString("fixtures_dir"))
+			filename := fmt.Sprintf("%s/empty.zip", configuration.Configuration.Server.Paths.Fixtures)
 
 			// students
 			w, err := tape.Upload("/api/v1/courses/1/sheets/1/file", filename, "application/zip", studentJWT)

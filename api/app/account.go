@@ -28,10 +28,10 @@ import (
 	"github.com/infomark-org/infomark-backend/api/helper"
 	"github.com/infomark-org/infomark-backend/auth"
 	"github.com/infomark-org/infomark-backend/auth/authenticate"
+	"github.com/infomark-org/infomark-backend/configuration"
 	"github.com/infomark-org/infomark-backend/email"
 	"github.com/infomark-org/infomark-backend/model"
 	"github.com/infomark-org/infomark-backend/symbol"
-	"github.com/spf13/viper"
 	null "gopkg.in/guregu/null.v3"
 )
 
@@ -98,7 +98,7 @@ func (rs *AccountResource) CreateHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	err = sendConfirmEmailForUser(newUser)
+	err = sendConfirmEmailForUser(configuration.Configuration.Server.Email.From, newUser)
 	if err != nil {
 		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
 		return
@@ -107,17 +107,17 @@ func (rs *AccountResource) CreateHandler(w http.ResponseWriter, r *http.Request)
 }
 
 // sendConfirmEmailForUser will send the confirmation email to activate the account.
-func sendConfirmEmailForUser(user *model.User) error {
+func sendConfirmEmailForUser(from string, user *model.User) error {
 	// send email
 	// Send Email to User
-	msg, err := email.NewEmailFromTemplate(
+	msg, err := email.NewEmailFromTemplate(from,
 		user.Email,
 		"Confirm Account Instructions",
 		email.ConfirmEmailTemplateEN,
 		map[string]string{
 			"first_name":            user.FirstName,
 			"last_name":             user.LastName,
-			"confirm_email_url":     fmt.Sprintf("%s/#/confirmation", viper.GetString("url")),
+			"confirm_email_url":     fmt.Sprintf("%s/#/confirmation", configuration.Configuration.Server.URL()),
 			"confirm_email_address": user.Email,
 			"confirm_email_token":   user.ConfirmEmailToken.String,
 		})
@@ -205,7 +205,7 @@ func (rs *AccountResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 
 	// make sure email is valid
 	if emailHasChanged {
-		err = sendConfirmEmailForUser(user)
+		err = sendConfirmEmailForUser(configuration.Configuration.Server.Email.From, user)
 		if err != nil {
 			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
 			return

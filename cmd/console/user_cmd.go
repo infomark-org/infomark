@@ -23,6 +23,7 @@ import (
 	"log"
 
 	"github.com/go-ozzo/ozzo-validation/is"
+	"github.com/infomark-org/infomark-backend/configuration"
 	"github.com/infomark-org/infomark-backend/model"
 	"github.com/spf13/cobra"
 	null "gopkg.in/guregu/null.v3"
@@ -45,6 +46,8 @@ var UserFindCmd = &cobra.Command{
 	Long:  `List all users matching the query`,
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+		configuration.MustFindAndReadConfiguration()
+
 		db, _ := MustConnectAndStores()
 
 		query := fmt.Sprintf("%%%s%%", args[0])
@@ -82,6 +85,8 @@ var UserConfirmCmd = &cobra.Command{
 	Long:  `Will run confirmation procedure for an user `,
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
+		configuration.MustFindAndReadConfiguration()
+
 		_, stores := MustConnectAndStores()
 
 		email := args[0]
@@ -115,6 +120,8 @@ var UserSetEmailCmd = &cobra.Command{
 		if err := is.Email.Validate(email); err != nil {
 			log.Fatalf("email '%s' is not a valid email\n", email)
 		}
+
+		configuration.MustFindAndReadConfiguration()
 
 		_, stores := MustConnectAndStores()
 

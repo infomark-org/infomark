@@ -23,8 +23,8 @@ import (
 	"net/http"
 
 	"github.com/go-chi/render"
+	"github.com/infomark-org/infomark-backend/configuration"
 	"github.com/infomark-org/infomark-backend/model"
-	"github.com/spf13/viper"
 )
 
 // .............................................................................
@@ -41,7 +41,7 @@ type SubmissionResponse struct {
 func newSubmissionResponse(p *model.Submission, courseID int64) *SubmissionResponse {
 	// this does always exists
 	fileURL := fmt.Sprintf("%s/api/v1/courses/%d/submissions/%d/file",
-		viper.GetString("url"),
+		configuration.Configuration.Server.URL(),
 		courseID,
 		p.ID,
 	)

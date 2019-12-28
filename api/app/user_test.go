@@ -30,15 +30,15 @@ import (
 )
 
 func TestUser(t *testing.T) {
-	PrepareTests()
+
 	g := goblin.Goblin(t)
 	email.DefaultMail = email.VoidMail
 
-	tape := &Tape{}
+	tape := NewTape()
 
 	var stores *Stores
 
-	adminJWT := NewJWTRequest(1, true)
+	adminJWT := tape.NewJWTRequest(1, true)
 
 	g.Describe("User", func() {
 

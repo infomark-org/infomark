@@ -21,14 +21,23 @@ package cmd
 import (
 	"bytes"
 	"fmt"
+	"log"
+
+	"github.com/franela/goblin"
 	"github.com/infomark-org/infomark-backend/auth"
 	"github.com/infomark-org/infomark-backend/configuration"
 	"github.com/infomark-org/infomark-backend/configuration/bytefmt"
+	"github.com/infomark-org/infomark-backend/configuration/fs"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
-	"log"
+
+	// "os"
 	"text/template"
 	"time"
+
+	redis "github.com/go-redis/redis"
+	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
 )
 
 // ConfigurationCmd starts the infomark configuration
@@ -39,8 +48,10 @@ var ConfigurationCmd = &cobra.Command{
 
 func init() {
 	ConfigurationCmd.AddCommand(CreateConfiguration)
+	ConfigurationCmd.AddCommand(TestConfiguration)
 	ConfigurationCmd.AddCommand(CreateDockercompose)
 	RootCmd.AddCommand(ConfigurationCmd)
+
 }
 
 func DurationFromString(dur string) time.Duration {
@@ -59,24 +70,25 @@ func ByteFromString(str string) bytefmt.ByteSize {
 	return d
 }
 
-func GenerateExampleConfiguration(domain string, root_path string) *configuration.Configuration {
-	config := &configuration.Configuration{}
+func GenerateExampleConfiguration(domain string, root_path string) *configuration.ConfigurationSchema {
+	config := &configuration.ConfigurationSchema{}
 
-	config.Server.Version = "1.0.0"
+	config.Server.Version = 1
 
 	config.Server.HTTP.UseHTTPS = false
-	config.Server.HTTP.Host = "localhost"
+	// config.Server.HTTP.Host = "localhost"
 	config.Server.HTTP.Port = 3000
 	config.Server.HTTP.Domain = domain
 	config.Server.HTTP.Timeouts.Read = DurationFromString("30s")
 	config.Server.HTTP.Timeouts.Write = DurationFromString("30s")
 	config.Server.HTTP.Limits.MaxHeader = ByteFromString("1mb")
 	config.Server.HTTP.Limits.MaxRequestJSON = ByteFromString("2mb")
+	config.Server.HTTP.Limits.MaxAvatar = ByteFromString("2mb")
 	config.Server.HTTP.Limits.MaxSubmission = ByteFromString("4mb")
 
 	config.Server.Debugging.Enabled = false
-	config.Server.Debugging.UserID = int64(1)
-	config.Server.Debugging.UserIsRoot = false
+	config.Server.Debugging.LoginID = int64(1)
+	config.Server.Debugging.LoginIsRoot = false
 	config.Server.Debugging.LogLevel = "debug"
 
 	config.Server.DistributeJobs = true
@@ -141,8 +153,65 @@ var CreateConfiguration = &cobra.Command{
 	},
 }
 
+func showResult(report goblin.DetailedReporter, err error, text string) {
+	if err != nil {
+		report.ItFailed(text)
+	} else {
+		report.ItPassed(text)
+	}
+}
+
+var TestConfiguration = &cobra.Command{
+	Use:   "test [configfile]",
+	Short: "will create and print a configuration to stdout",
+	Args:  cobra.ExactArgs(1),
+	Run: func(cmd *cobra.Command, args []string) {
+
+		report := goblin.DetailedReporter{}
+		report.SetTextFancier(&goblin.TerminalFancier{})
+		report.BeginDescribe("Test configuration services")
+
+		config, err := configuration.ParseConfiguration(args[0])
+		showResult(report, err, "read configuration from file")
+
+		// Try to connect to postgres
+		db, err := sqlx.Connect("postgres", config.Server.PostgresURL())
+		showResult(report, err, "connect to postgres db")
+		if err == nil {
+			db.Close()
+		}
+
+		// Try Redis
+		option, err := redis.ParseURL(config.Server.RedisURL())
+		showResult(report, err, "test redis url")
+
+		if err == nil {
+			redisClient := redis.NewClient(option)
+			_, err := redisClient.Ping().Result()
+			showResult(report, err, "ping redis")
+
+			if err == nil {
+				redisClient.Close()
+			}
+		}
+
+		report.EndDescribe()
+		report.BeginDescribe("Test configuration paths")
+		err = fs.DirExists(config.Server.Paths.Common)
+		showResult(report, err, "common path readable")
+
+		err = fs.IsDirWriteable(config.Server.Paths.Uploads)
+		showResult(report, err, "upload path writeable")
+
+		err = fs.IsDirWriteable(config.Server.Paths.GeneratedFiles)
+		showResult(report, err, "generated_files path writeable")
+
+		report.EndDescribe()
+	},
+}
+
 var CreateDockercompose = &cobra.Command{
-	Use:   "create-compose",
+	Use:   "create-compose [configfile]",
 	Short: "create docker-compose file from config",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
@@ -182,6 +251,10 @@ services:
 volumes:
   rabbitmq_volume:
   postgres_volume:`)
+
+		if err != nil {
+			log.Fatalf("error: %v", err)
+		}
 
 		var tpl bytes.Buffer
 		err = docker_compose.Execute(&tpl, config)

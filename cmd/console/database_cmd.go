@@ -28,9 +28,9 @@ import (
 	"strings"
 
 	"github.com/infomark-org/infomark-backend/api/helper"
+	"github.com/infomark-org/infomark-backend/configuration"
 	"github.com/lib/pq"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 func parseConnectionString(conn string) map[string]string {
@@ -74,7 +74,8 @@ var DatabaseRunCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		sql := args[0]
 
-		infoMap := parseConnectionString(viper.GetString("database_connection"))
+		configuration.MustFindAndReadConfiguration()
+		infoMap := parseConnectionString(configuration.Configuration.Server.PostgresURL())
 
 		// PGPASSWORD=pass psql -hlocalhost -Uuser -p5433 -d db -c "..."
 		shell := exec.Command("psql",
@@ -106,7 +107,8 @@ var DatabaseRestoreCmd = &cobra.Command{
 			log.Fatalf("The file %s does not exists!\n", file)
 		}
 
-		infoMap := parseConnectionString(viper.GetString("database_connection"))
+		configuration.MustFindAndReadConfiguration()
+		infoMap := parseConnectionString(configuration.Configuration.Server.PostgresURL())
 
 		// // dbname := args[1]
 
@@ -183,7 +185,8 @@ var DatabaseBackupCmd = &cobra.Command{
 			log.Fatalf("The file %s does exists! Will not override!\n", file)
 		}
 
-		infoMap := parseConnectionString(viper.GetString("database_connection"))
+		configuration.MustFindAndReadConfiguration()
+		infoMap := parseConnectionString(configuration.Configuration.Server.PostgresURL())
 
 		// export backup_filename="infomark_$(date +'%Y_%m_%dT%H_%M_%S').sql.gz"
 		// pg_dump -h ${POSTGRES_HOST} -U ${POSTGRES_USER} -d ${POSTGRES_DB} -p ${POSTGRES_PORT} | gzip > ${backup_filename}

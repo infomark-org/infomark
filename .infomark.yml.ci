@@ -1,61 +1,77 @@
-# shared configuration for both
-# ------------------------------------------------------------------------------
+server:
+  version: 1
+  debugging:
+    enabled: false
+    user_id: 1
+    user_is_root: false
+    log_level: debug
+  http:
+    use_https: false
+    port: 3000
+    domain: sub.domain.com
+    timeouts:
+      read: 30s
+      write: 30s
+    limits:
+      max_header: 1048576
+      max_request_json: 2097152
+      max_submission: 4194304
+  distribute_jobs: true
+  authentication:
+    jwt:
+      secret: 4b86a7b05ddf6c8f27ca57078b02c086e5ecdb7737c019c8286c7f71e86e4fbe
+      access_expiry: 15m0s
+      refresh_expiry: 10h0m0s
+    session:
+      secret: d28a1b649f96340c6831d198e78ea08894c30aaa32fccc02e35c1ac32eff908a
+      cookies:
+        secure: false
+        lifetime: 24h0m0s
+        idle_timeout: 1h0m0s
+    password:
+      min_length: 7
+    total_requests_per_minute: 10
+  cronjobs:
+    zip_submissions_intervall: 5m0s
+  email:
+    send: true
+    sendmail_binary: /usr/sbin/sendmail
+    from: no-reply@sub.domain.com
+    channel_size: 300
+  services:
+    redis:
+      host: redis_service
+      port: 6379
+      database: 0
+    rabbit_mq:
+      host: localhost
+      port: 5672
+      user: user
+      password: password
+      key: rabbitmq_key
+    database:
+      host: database
+      port: 5432
+      database: infomark
+      user: postgres
+      password: postgres
+      debug: false
+  paths:
+    uploads: /drone/src/files/uploads
+    common: /drone/src/files/common
+    generated_files: /drone/src/files/generated_files
+    fixtures: /drone/src/files/fixtures
+worker:
+  version: 1
+  services:
+    rabbit_mq:
+      host: localhost
+      port: 5672
+      user: rabbitmq_user
+      password: password
+      key: rabbitmq_key
+  workdir: /tmp
+  void: false
+  docker:
+    max_memory: 524288000
 
-rabbitmq_connection: amqp://user:password@localhost:5672/
-rabbitmq_key: test-key
-
-
-
-# backend
-# ------------------------------------------------------------------------------
-url: http://info2.informatik.uni-tuebingen.de
-log_level: debug
-port: 0.0.0.0:3000
-redis_url: redis://redis_service:6379/0
-
-# authentication
-auth_jwt_secret: fffff
-auth_jwt_access_expiry: 15m
-auth_jwt_refresh_expiry: 10h
-auth_session_secret: u46IpCV9y5Vlur8YvODJEhgOY8m9JVE4sdfdfsdf
-min_password_length: 7
-auth_total_requests_per_minute: 10
-auth_secure_cookie: false
-
-# database
-database_connection: host=database user=postgres dbname=infomark password=postgres sslmode=disable
-db_debug: false
-
-# email
-email_from: no-reply@info2.informatik.uni-tuebingen.de
-sendmail_binary: /usr/sbin/sendmail
-email_channel_size: 300
-
-cronjob_intervall_submission_zip: every 5s
-
-uploads_dir: /drone/src/files/uploads
-generated_files_dir: /drone/src/files/generated_files
-fixtures_dir: /drone/src/files/fixtures
-
-use_backend_worker: false
-
-server_read_timeout_sec: 30
-server_write_timeout_sec: 30
-# default is 1MB = 1048576 bytes
-server_max_header_bytes: 1048576
-
-# 2 * 1024 * 1024 = 2097152
-max_request_json_bytes: 2097152
-# 1 * 1024 * 1024 = 1048576
-max_request_avatar_bytes: 1048576
-# 4 * 1024 * 1024 = 4194304
-max_request_submission_bytes: 4194304
-
-debug_user_id: 0
-
-# worker
-# ------------------------------------------------------------------------------
-worker_workdir: /tmp
-worker_void: true
-# 200 * 1024 * 1024 = 209715200
-worker_docker_memory_bytes: 209715200

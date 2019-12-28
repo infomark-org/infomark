@@ -32,11 +32,11 @@ import (
 	"github.com/infomark-org/infomark-backend/api/app"
 	"github.com/infomark-org/infomark-backend/api/helper"
 	"github.com/infomark-org/infomark-backend/api/shared"
+	"github.com/infomark-org/infomark-backend/configuration"
 	"github.com/infomark-org/infomark-backend/service"
 	"github.com/infomark-org/infomark-backend/symbol"
 	"github.com/infomark-org/infomark-backend/tape"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 )
 
 // SubmissionHandler is any handler capable to work on submissions
@@ -57,13 +57,6 @@ var DefaultSubmissionHandler SubmissionHandler
 var DefaultLogger *logrus.Logger
 
 func init() {
-	// fmt.Println(viper.GetString("rabbitmq_connection"))
-	// fmt.Println("worker_void", viper.GetBool("worker_void"))
-	if viper.GetBool("worker_void") {
-		DefaultSubmissionHandler = &DummySubmissionHandler{}
-	} else {
-		DefaultSubmissionHandler = &RealSubmissionHandler{}
-	}
 
 	DefaultLogger = logrus.StandardLogger()
 	DefaultLogger.SetFormatter(&logrus.TextFormatter{
@@ -203,8 +196,8 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
 		DefaultLogger.Printf("error: %v\n", err)
 		return err
 	}
-	submissionPath := fmt.Sprintf("%s/%s-submission.zip", viper.GetString("worker_workdir"), uuid)
-	frameworkPath := fmt.Sprintf("%s/%s-framework.zip", viper.GetString("worker_workdir"), uuid)
+	submissionPath := fmt.Sprintf("%s/%s-submission.zip", configuration.Configuration.Worker.Workdir, uuid)
+	frameworkPath := fmt.Sprintf("%s/%s-framework.zip", configuration.Configuration.Worker.Workdir, uuid)
 
 	// 2. fetch submission file from server
 	r, err := http.NewRequest("GET", msg.SubmissionFileURL, nil)
@@ -280,7 +273,7 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
 		msg.DockerImage,
 		submissionPath,
 		frameworkPath,
-		viper.GetInt64("worker_docker_memory_bytes"),
+		int64(configuration.Configuration.Worker.Docker.MaxMemory),
 	)
 	if err != nil {
 		DefaultLogger.WithFields(logrus.Fields{

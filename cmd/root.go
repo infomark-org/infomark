@@ -20,11 +20,9 @@ package cmd
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 )
 
 // RootCmd represents the base command when called without any subcommands
@@ -40,55 +38,11 @@ Complete documentation is available at https://infomark.org/.
 	`,
 }
 
-var cfgFile = ""
-
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	if err := RootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
-	}
-}
-
-func init() {
-	cobra.OnInitialize(InitConfig)
-	// RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is infomark.yaml)")
-}
-
-// SetConfigFile searchs for a config file named ".informark.yml"
-// which is located in the home-directory if the flag "--config" is not present.
-func SetConfigFile() {
-	if cfgFile != "" {
-		// Use config file from the flag.
-		viper.SetConfigFile(cfgFile)
-	} else {
-		var err error
-		// Find home directory.
-		home := os.Getenv("INFOMARK_CONFIG_DIR")
-
-		if home == "" {
-			home, err = os.Getwd()
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
-
-		// Search config in home directory with name ".go-base" (without extension).
-		viper.AddConfigPath(home)
-		viper.SetConfigName(".infomark")
-	}
-
-}
-
-// initConfig reads in config file and ENV variables if set.
-func InitConfig() {
-
-	SetConfigFile()
-	viper.AutomaticEnv()
-
-	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err != nil {
-		panic(err)
 	}
 }

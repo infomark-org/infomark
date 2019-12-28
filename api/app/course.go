@@ -30,6 +30,7 @@ import (
 	"github.com/infomark-org/infomark-backend/api/helper"
 	"github.com/infomark-org/infomark-backend/auth/authenticate"
 	"github.com/infomark-org/infomark-backend/auth/authorize"
+	"github.com/infomark-org/infomark-backend/configuration"
 	"github.com/infomark-org/infomark-backend/email"
 	"github.com/infomark-org/infomark-backend/model"
 	"github.com/infomark-org/infomark-backend/symbol"
@@ -513,6 +514,7 @@ func (rs *CourseResource) SendEmailHandler(w http.ResponseWriter, r *http.Reques
 	for _, recipient := range recipients {
 		// add sender identity
 		msg := email.NewEmailFromUser(
+			configuration.Configuration.Server.Email.From,
 			recipient.Email,
 			data.Subject,
 			data.Body,

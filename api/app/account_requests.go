@@ -26,7 +26,7 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/go-ozzo/ozzo-validation/is"
 	"github.com/infomark-org/infomark-backend/auth"
-	"github.com/spf13/viper"
+	"github.com/infomark-org/infomark-backend/configuration"
 )
 
 // -----------------------------------------------------------------------------
@@ -105,7 +105,7 @@ func (body *CreateUserAccountRequest) Bind(r *http.Request) (err error) {
 	}
 
 	// check password length
-	if len(body.Account.PlainPassword) < viper.GetInt("min_password_length") {
+	if len(body.Account.PlainPassword) < configuration.Configuration.Server.Authentication.Password.MinLength {
 		return errors.New("password too short")
 	}
 

@@ -22,8 +22,8 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/alexedwards/scs"
 	jwt "github.com/dgrijalva/jwt-go"
-	"github.com/spf13/viper"
 )
 
 // AccessClaims represent the claims parsed from JWT access token.
@@ -57,9 +57,7 @@ func NewRefreshClaims(loginId int64) RefreshClaims {
 }
 
 // Parse refresh claims from a token string
-func (ret *RefreshClaims) ParseRefreshClaimsFromToken(tokenStr string) error {
-
-	secret := viper.GetString("auth_jwt_secret")
+func (ret *RefreshClaims) ParseRefreshClaimsFromToken(secret string, tokenStr string) error {
 
 	// verify the token
 	token, err := jwt.ParseWithClaims(tokenStr, &RefreshClaims{}, func(token *jwt.Token) (interface{}, error) {
@@ -87,9 +85,7 @@ func (ret *RefreshClaims) ParseRefreshClaimsFromToken(tokenStr string) error {
 }
 
 // Parse access claims from a JWT token string
-func (ret *AccessClaims) ParseAccessClaimsFromToken(tokenStr string) error {
-
-	secret := viper.GetString("auth_jwt_secret")
+func (ret *AccessClaims) ParseAccessClaimsFromToken(secret string, tokenStr string) error {
 
 	// verify the token
 	token, err := jwt.ParseWithClaims(tokenStr, &AccessClaims{}, func(token *jwt.Token) (interface{}, error) {
@@ -118,9 +114,8 @@ func (ret *AccessClaims) ParseAccessClaimsFromToken(tokenStr string) error {
 }
 
 // Parse access claims from a cookie
-func (ret *AccessClaims) ParseRefreshClaimsFromSession(r *http.Request) error {
-
-	session := SessionManager.Load(r)
+func (ret *AccessClaims) ParseRefreshClaimsFromSession(manager *scs.Manager, r *http.Request) error {
+	session := manager.Load(r)
 
 	loginId, err := session.GetInt64("login_id")
 	if err != nil {
@@ -138,8 +133,8 @@ func (ret *AccessClaims) ParseRefreshClaimsFromSession(r *http.Request) error {
 	return nil
 }
 
-func (ret *AccessClaims) WriteToSession(w http.ResponseWriter, r *http.Request) http.ResponseWriter {
-	session := SessionManager.Load(r)
+func (ret *AccessClaims) WriteToSession(manager *scs.Manager, w http.ResponseWriter, r *http.Request) http.ResponseWriter {
+	session := manager.Load(r)
 
 	err := session.PutInt64(w, "login_id", ret.LoginID)
 	if err != nil {
@@ -155,8 +150,8 @@ func (ret *AccessClaims) WriteToSession(w http.ResponseWriter, r *http.Request) 
 	return w
 }
 
-func (ret *AccessClaims) UpdateSession(w http.ResponseWriter, r *http.Request) http.ResponseWriter {
-	session := SessionManager.Load(r)
+func (ret *AccessClaims) UpdateSession(manager *scs.Manager, w http.ResponseWriter, r *http.Request) http.ResponseWriter {
+	session := manager.Load(r)
 
 	err := session.Touch(w)
 	if err != nil {
@@ -166,7 +161,7 @@ func (ret *AccessClaims) UpdateSession(w http.ResponseWriter, r *http.Request) h
 	return w
 }
 
-func (ret *AccessClaims) DestroyInSession(w http.ResponseWriter, r *http.Request) error {
-	session := SessionManager.Load(r)
+func (ret *AccessClaims) DestroyInSession(manager *scs.Manager, w http.ResponseWriter, r *http.Request) error {
+	session := manager.Load(r)
 	return session.Destroy(w)
 }

@@ -23,9 +23,9 @@ import (
 	"os/signal"
 
 	background "github.com/infomark-org/infomark-backend/api/worker"
+	"github.com/infomark-org/infomark-backend/configuration"
 	"github.com/infomark-org/infomark-backend/service"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 )
 
 // Worker provides a background worker
@@ -44,14 +44,7 @@ func NewWorker(numInstances int) (*Worker, error) {
 func (srv *Worker) Start() {
 	log.Println("starting Worker...")
 
-	cfg := &service.Config{
-		Connection:   viper.GetString("rabbitmq_connection"),
-		Exchange:     "infomark-worker-exchange",
-		ExchangeType: "direct",
-		Queue:        "infomark-worker-submissions",
-		Key:          viper.GetString("rabbitmq_key"),
-		Tag:          "SimpleSubmission",
-	}
+	cfg := service.NewConfig(&configuration.Configuration.Server.Services.RabbitMQ)
 
 	consumers := []*service.Consumer{}
 

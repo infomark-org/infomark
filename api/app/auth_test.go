@@ -26,22 +26,23 @@ import (
 	"github.com/franela/goblin"
 	redis "github.com/go-redis/redis"
 	"github.com/infomark-org/infomark-backend/auth"
+	"github.com/infomark-org/infomark-backend/configuration"
 	"github.com/infomark-org/infomark-backend/email"
-	"github.com/spf13/viper"
+
 	null "gopkg.in/guregu/null.v3"
 )
 
 func TestAuth(t *testing.T) {
-	PrepareTests()
+
 	g := goblin.Goblin(t)
 	email.DefaultMail = email.VoidMail
 
-	tape := &Tape{}
+	tape := NewTape()
 
 	var w *httptest.ResponseRecorder
 	var stores *Stores
 
-	option, err := redis.ParseURL(viper.GetString("redis_url"))
+	option, err := redis.ParseURL(configuration.Configuration.Server.RedisURL())
 	if err != nil {
 		panic(err)
 	}

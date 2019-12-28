@@ -20,19 +20,11 @@ package helper
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
-	"os"
 	"strconv"
 	"time"
 
 	"strings"
-
-	txdb "github.com/DATA-DOG/go-txdb"
-	"github.com/infomark-org/infomark-backend/auth/authenticate"
-	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq" // need for Postgres
-	"github.com/spf13/viper"
 )
 
 // StringArrayToIntArray converts a list of strings into a list of int or failes
@@ -110,67 +102,4 @@ func Time(t time.Time) time.Time {
 	format := "2006-01-02 15:04:05 +0000 CET"
 	R, _ := time.Parse(format, t.Format(format))
 	return R
-}
-
-// SetConfigFile will search the homedirectoy for a custom config file.
-func SetConfigFile() {
-	home := os.Getenv("INFOMARK_CONFIG_DIR")
-	var err error
-	if home == "" {
-
-		// Find home directory.
-		home, err = os.Getwd()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-
-	// Search config in home directory with name ".go-base" (without extension).
-	viper.AddConfigPath(home)
-	viper.SetConfigName(".infomark")
-}
-
-// InitConfig will search for the config file in the home directory and
-// read it.
-func InitConfig() {
-	SetConfigFile()
-	viper.AutomaticEnv()
-
-	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err != nil {
-		panic(err)
-	}
-}
-
-var isInit = false
-
-func FakeDatabase() {
-	if !isInit {
-		// read config to get the database information
-		InitConfig()
-		authenticate.PrepareSessionManager()
-		// we register an sql driver named "txdb"
-		// This allows to run all tests as transaction in isolated environemnts to make sure
-		// we do not accidentially alter the database in a persistent way. Hence,  all tests can run
-		// in an arbitrary order.
-		txdb.Register("psql_txdb", "postgres", viper.GetString("database_connection"))
-		isInit = true
-	}
-}
-
-// TransactionDB creates a sql-driver which seemlessly supports transactions.
-// This is used for running the unit tests.
-func TransactionDB() (*sqlx.DB, error) {
-	db, err := sqlx.Connect("psql_txdb", "identifier")
-
-	if err != nil {
-		return nil, err
-	}
-
-	err = db.Ping()
-	if err != nil {
-		return nil, err
-	}
-
-	return db, err
 }

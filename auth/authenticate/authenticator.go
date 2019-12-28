@@ -23,23 +23,23 @@ import (
 
 	"github.com/alexedwards/scs"
 	"github.com/go-chi/jwtauth"
-	"github.com/spf13/viper"
+	"github.com/infomark-org/infomark-backend/configuration"
 )
 
-var SessionManager *scs.Manager
+// var SessionManager *scs.Manager
 
-func PrepareSessionManager() {
-	SessionManager = createSessionManager()
-}
+// func PrepareSessionManager(config *configuration.AuthenticationConfiguration) {
+// 	SessionManager = createSessionManager(config)
+// }
 
 // createSessionManager starts a web session and stores the information into a
 // http-only cookie. This is the prefered way when using a SPA.
-func createSessionManager() *scs.Manager {
-	sessionManager := scs.NewCookieManager(viper.GetString("auth_session_secret"))
-	sessionManager.Lifetime(viper.GetDuration("auth_cookie_lifetime"))        // Set the maximum session lifetime to 1 hour.
-	sessionManager.IdleTimeout(viper.GetDuration("auth_cookie_idle_timeout")) // Set the maximum session lifetime without actions.
-	sessionManager.Persist(true)                                              // Persist the session after a user has closed their browser.
-	sessionManager.Secure(viper.GetBool("auth_secure_cookie"))                // Set the Secure flag on the session cookie.
+func NewSessionAuth(config *configuration.AuthenticationConfiguration) *scs.Manager {
+	sessionManager := scs.NewCookieManager(config.Session.Secret)
+	sessionManager.Lifetime(config.Session.Cookies.Lifetime)       // Set the maximum session lifetime to 1 hour.
+	sessionManager.IdleTimeout(config.Session.Cookies.IdleTimeout) // Set the maximum session lifetime without actions.
+	sessionManager.Persist(true)                                   // Persist the session after a user has closed their browser.
+	sessionManager.Secure(config.Session.Cookies.Secure)           // Set the Secure flag on the session cookie.
 	return sessionManager
 }
 
@@ -52,8 +52,8 @@ func HasHeaderToken(r *http.Request) bool {
 
 // HasSessionToken tests if the request header has the http-only cookies
 // containing session informations.
-func HasSessionToken(r *http.Request) bool {
-	session := SessionManager.Load(r)
+func HasSessionToken(manager *scs.Manager, r *http.Request) bool {
+	session := manager.Load(r)
 
 	// try to extract the login_id which is the identifier of the request identity.
 	loginID, err := session.GetInt64("login_id")

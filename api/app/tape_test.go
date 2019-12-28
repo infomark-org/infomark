@@ -19,23 +19,24 @@
 package app
 
 import (
-	olog "log"
 	"net/http"
-	"os"
 
-	"github.com/infomark-org/infomark-backend/api/helper"
+	txdb "github.com/DATA-DOG/go-txdb"
+
 	"github.com/infomark-org/infomark-backend/auth/authenticate"
+	"github.com/infomark-org/infomark-backend/configuration"
 	otape "github.com/infomark-org/infomark-backend/tape"
 	"github.com/jmoiron/sqlx"
-	"github.com/spf13/viper"
+	_ "github.com/lib/pq" // need for Postgres
 )
 
 type JWTRequest struct {
-	Claims authenticate.AccessClaims
+	Claims    authenticate.AccessClaims
+	TokenAuth *authenticate.TokenAuth
 }
 
 func (t JWTRequest) Modify(r *http.Request) {
-	accessToken, err := tokenManager.CreateAccessJWT(t.Claims)
+	accessToken, err := t.TokenAuth.CreateAccessJWT(t.Claims)
 	if err != nil {
 		panic(err)
 	}
@@ -43,64 +44,60 @@ func (t JWTRequest) Modify(r *http.Request) {
 	r.Header.Add("Authorization", "Bearer "+accessToken)
 }
 
-func NewJWTRequest(loginID int64, root bool) JWTRequest {
+func (t *Tape) NewJWTRequest(loginID int64, root bool) JWTRequest {
 	return JWTRequest{
-		Claims: authenticate.NewAccessClaims(loginID, root),
+		Claims:    authenticate.NewAccessClaims(loginID, root),
+		TokenAuth: t.TokenAuth,
 	}
-}
-
-func SetConfigFile() {
-	var err error
-	home := os.Getenv("INFOMARK_CONFIG_DIR")
-
-	if home == "" {
-		// Find home directory.
-		home, err = os.Getwd()
-		if err != nil {
-			olog.Fatal(err)
-		}
-	}
-
-	viper.AddConfigPath(home)
-	viper.SetConfigName(".infomark")
-}
-
-func InitConfig() {
-	SetConfigFile()
-	viper.AutomaticEnv()
-
-	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err != nil {
-		panic(err)
-	}
-}
-
-func PrepareTests() {
-	helper.FakeDatabase()
-	PrepareTokenManager()
-	InitConfig()
-
 }
 
 type Tape struct {
 	otape.Tape
-	DB *sqlx.DB
+	DB        *sqlx.DB
+	TokenAuth *authenticate.TokenAuth
 }
+
+var registered_txdb = false
 
 func NewTape() *Tape {
 
-	t := &Tape{}
-	return t
+	configuration.MustFindAndReadConfiguration()
+	// Ensure transaction between tests
+	if !registered_txdb {
+		txdb.Register("psql_txdb", "postgres", configuration.Configuration.Server.PostgresURL())
+		registered_txdb = true
+	}
+
+	return &Tape{
+		TokenAuth: authenticate.NewTokenAuth(&configuration.Configuration.Server.Authentication),
+	}
 }
 
 func (t *Tape) AfterEach() {
 	t.DB.Close()
 }
 
+// TransactionDB creates a sql-driver which seemlessly supports transactions.
+// This is used for running the unit tests.
+func transactionDB() (*sqlx.DB, error) {
+	db, err := sqlx.Connect("psql_txdb", "identifier")
+
+	if err != nil {
+		return nil, err
+	}
+
+	err = db.Ping()
+	if err != nil {
+		return nil, err
+	}
+
+	return db, err
+}
+
 func (t *Tape) BeforeEach() {
 	var err error
 
-	t.DB, err = helper.TransactionDB()
+	t.DB, err = transactionDB()
 	if err != nil {
 		panic(err)
 	}

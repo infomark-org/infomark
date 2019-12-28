@@ -32,13 +32,12 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
 	"github.com/go-chi/render"
-	"github.com/infomark-org/infomark-backend/api/helper"
 	"github.com/infomark-org/infomark-backend/auth/authenticate"
 	"github.com/infomark-org/infomark-backend/auth/authorize"
+	"github.com/infomark-org/infomark-backend/configuration"
 	"github.com/infomark-org/infomark-backend/symbol"
 	"github.com/jmoiron/sqlx"
 	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 )
 
 // LimitedDecoder limits the amount of data a client can send in a JSON data request.
@@ -50,7 +49,7 @@ func LimitedDecoder(r *http.Request, v interface{}) error {
 
 	switch render.GetRequestContentType(r) {
 	case render.ContentTypeJSON:
-		body := io.LimitReader(r.Body, viper.GetInt64("max_request_json_bytes"))
+		body := io.LimitReader(r.Body, int64(configuration.Configuration.Server.HTTP.Limits.MaxRequestJSON))
 		err = render.DecodeJSON(body, v)
 	default:
 		err = errors.New("render: unable to automatically decode the request content type")
@@ -132,24 +131,27 @@ func NoCache(next http.Handler) http.Handler {
 func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 	logger := logrus.StandardLogger()
 
-	helper.InitConfig()
-	authenticate.PrepareSessionManager()
+	config := &configuration.Configuration.Server
+
 	InitPrometheus()
+
+	tokenAuth := authenticate.NewTokenAuth(&config.Authentication)
+	sessionAuth := authenticate.NewSessionAuth(&config.Authentication)
 
 	if err := db.Ping(); err != nil {
 		logger.WithField("module", "database").Error(err)
 		return nil, err
 	}
 
-	appAPI, err := NewAPI(db)
+	appAPI, err := NewAPI(db, tokenAuth, sessionAuth)
 	if err != nil {
 		logger.WithField("module", "app").Error(err)
 		return nil, err
 	}
 
 	loginLimiter, err := authenticate.NewLoginLimiter("infomark-logins",
-		fmt.Sprintf("%d-M", viper.GetInt64("auth_total_requests_per_minute")),
-		viper.GetString("redis_url"))
+		fmt.Sprintf("%d-M", config.Authentication.TotalRequestsPerMinute),
+		config.RedisURL())
 	if err != nil {
 		logger.WithField("module", "app").Error(err)
 		return nil, err
@@ -192,7 +194,7 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 
 			// protected routes
 			r.Group(func(r chi.Router) {
-				r.Use(authenticate.RequiredValidAccessClaims)
+				r.Use(authenticate.RequiredValidAccessClaims(sessionAuth, config))
 
 				r.Get("/me", appAPI.User.GetMeHandler)
 				r.Put("/me", appAPI.User.EditMeHandler)

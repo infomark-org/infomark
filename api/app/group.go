@@ -30,6 +30,7 @@ import (
 	"github.com/infomark-org/infomark-backend/api/helper"
 	"github.com/infomark-org/infomark-backend/auth/authenticate"
 	"github.com/infomark-org/infomark-backend/auth/authorize"
+	"github.com/infomark-org/infomark-backend/configuration"
 	"github.com/infomark-org/infomark-backend/email"
 	"github.com/infomark-org/infomark-backend/model"
 	"github.com/infomark-org/infomark-backend/symbol"
@@ -489,6 +490,7 @@ func (rs *GroupResource) SendEmailHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	msgOwn := email.NewEmailFromUser(
+		configuration.Configuration.Server.Email.From,
 		accessUser.Email,
 		data.Subject,
 		data.Body,
@@ -498,6 +500,7 @@ func (rs *GroupResource) SendEmailHandler(w http.ResponseWriter, r *http.Request
 
 	for _, recipient := range recipients {
 		msg := email.NewEmailFromUser(
+			configuration.Configuration.Server.Email.From,
 			recipient.Email,
 			data.Subject,
 			data.Body,

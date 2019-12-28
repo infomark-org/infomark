@@ -19,10 +19,14 @@
 package configuration
 
 import (
+	"fmt"
+	"io/ioutil"
+	"log"
+	"os"
+	"time"
+
 	"github.com/infomark-org/infomark-backend/configuration/bytefmt"
 	"gopkg.in/yaml.v2"
-	"io/ioutil"
-	"time"
 )
 
 type RabbitMQConfiguration struct {
@@ -33,17 +37,58 @@ type RabbitMQConfiguration struct {
 	Key      string `yaml:"key"`
 }
 
-type ServerConfiguration struct {
-	Version   string `json:"version"`
+func (config *RabbitMQConfiguration) RabbitMQURL() string {
+	return fmt.Sprintf("amqp://%s:%s@%s:%v/", config.User, config.Password, config.Host, config.Port)
+}
+
+type AuthenticationConfiguration struct {
+	JWT struct {
+		Secret        string        `yaml:"secret"`
+		AccessExpiry  time.Duration `yaml:"access_expiry"`
+		RefreshExpiry time.Duration `yaml:"refresh_expiry"`
+	} `yaml:"jwt"`
+	Session struct {
+		Secret  string `yaml:"secret"`
+		Cookies struct {
+			Secure      bool          `yaml:"secure"`
+			Lifetime    time.Duration `yaml:"lifetime"`
+			IdleTimeout time.Duration `yaml:"idle_timeout"`
+		} `yaml:"cookies"`
+	} `yaml:"session"`
+	Password struct {
+		MinLength int `yaml:"min_length"`
+	} `yaml:"password"`
+	TotalRequestsPerMinute int64 `yaml:"total_requests_per_minute"`
+}
+
+func (config *ServerConfigurationSchema) URL() string {
+	// TODO(patwie): When hosted in a sub-path, this will not work.
+	//  In this case, consider to add an URL field.
+	protocoll := "http"
+	if config.HTTP.UseHTTPS {
+		protocoll = "https"
+	}
+	return fmt.Sprintf("%s://%v", protocoll, config.HTTP.Domain)
+}
+
+type PathsConfiguration struct {
+	Uploads        string `yaml:"uploads"`
+	Common         string `yaml:"common"`
+	GeneratedFiles string `yaml:"generated_files"`
+	Fixtures       string `yaml:"fixtures"`
+}
+
+type ServerConfigurationSchema struct {
+	Version   int `json:"version"`
 	Debugging struct {
-		Enabled    bool   `yaml:"enabled"`
-		UserID     int64  `yaml:"user_id"`
-		UserIsRoot bool   `yaml:"user_is_root"`
-		LogLevel   string `yaml:"log_level"`
+		Enabled     bool   `yaml:"enabled"`
+		LoginID     int64  `yaml:"login_id"`
+		LoginIsRoot bool   `yaml:"login_is_root"`
+		LogLevel    string `yaml:"log_level"`
 	} `yaml:"debugging"`
 	HTTP struct {
-		UseHTTPS bool   `yaml:"use_https"`
-		Host     string `yaml:"host"`
+		UseHTTPS bool `yaml:"use_https"`
+		// Host     string `yaml:"host"`
 		Port     int    `yaml:"port"`
 		Domain   string `yaml:"domain"`
 		Timeouts struct {
@@ -53,30 +98,13 @@ type ServerConfiguration struct {
 		Limits struct {
 			MaxHeader      bytefmt.ByteSize `yaml:"max_header"`
 			MaxRequestJSON bytefmt.ByteSize `yaml:"max_request_json"`
+			MaxAvatar      bytefmt.ByteSize `yaml:"max_avatar"`
 			MaxSubmission  bytefmt.ByteSize `yaml:"max_submission"`
 		} `yaml:"limits"`
 	} `yaml:"http"`
-	DistributeJobs bool `yaml:"distribute_jobs"`
-	Authentication struct {
-		JWT struct {
-			Secret        string        `yaml:"secret"`
-			AccessExpiry  time.Duration `yaml:"access_expiry"`
-			RefreshExpiry time.Duration `yaml:"refresh_expiry"`
-		} `yaml:"jwt"`
-		Session struct {
-			Secret  string `yaml:"secret"`
-			Cookies struct {
-				Secure      bool          `yaml:"secure"`
-				Lifetime    time.Duration `yaml:"lifetime"`
-				IdleTimeout time.Duration `yaml:"idle_timeout"`
-			} `yaml:"cookies"`
-		} `yaml:"session"`
-		Password struct {
-			MinLength int `yaml:"min_length"`
-		} `yaml:"password"`
-		TotalRequestsPerMinute int `yaml:"total_requests_per_minute"`
-	} `yaml:"authentication"`
-	Cronjobs struct {
+	DistributeJobs bool                        `yaml:"distribute_jobs"`
+	Authentication AuthenticationConfiguration `yaml:"authentication"`
+	Cronjobs       struct {
 		ZipSubmissionsIntervall time.Duration `yaml:"zip_submissions_intervall"`
 	} `yaml:"cronjobs"`
 	Email struct {
@@ -103,16 +131,41 @@ type ServerConfiguration struct {
 			Debug    bool   `yaml:"debug"`
 		} `yaml:"database"`
 	} `yaml:"services"`
-	Paths struct {
-		Uploads        string `yaml:"uploads"`
-		Common         string `yaml:"common"`
-		GeneratedFiles string `yaml:"generated_files"`
-		Fixtures       string `yaml:"fixtures"`
-	} `yaml:"paths"`
+	Paths PathsConfiguration `yaml:"paths"`
 }
 
-type WorkerConfiguration struct {
-	Version  string `json:"version"`
+func (config *ServerConfigurationSchema) SendEmail() bool {
+	return (config.Email.Send && config.Email.SendmailBinary != "")
+}
+
+func (config *ServerConfigurationSchema) PostgresURL() string {
+	return fmt.Sprintf("postgres://%s:%s@%s:%v/%s?sslmode=disable&connect_timeout=1",
+		config.Services.Postgres.User,
+		config.Services.Postgres.Password,
+		config.Services.Postgres.Host,
+		config.Services.Postgres.Port,
+		config.Services.Postgres.Database,
+	)
+}
+
+func (config *ServerConfigurationSchema) RedisURL() string {
+	return fmt.Sprintf("redis://%s:%v/%v",
+		config.Services.Redis.Host,
+		config.Services.Redis.Port,
+		config.Services.Redis.Database,
+	)
+}
+
+func (config *ServerConfigurationSchema) HTTPAddr() string {
+	return fmt.Sprintf(":%v", config.HTTP.Port)
+}
+func (config *ServerConfigurationSchema) CronjobsZipSubmissionsIntervall() string {
+	secs := config.Cronjobs.ZipSubmissionsIntervall
+	return fmt.Sprintf("@ every %s", secs)
+}
+
+type WorkerConfigurationSchema struct {
+	Version  int `json:"version"`
 	Services struct {
 		RabbitMQ RabbitMQConfiguration `yaml:"rabbit_mq"`
 	} `yaml:"services"`
@@ -123,18 +176,36 @@ type WorkerConfiguration struct {
 	} `yaml:"docker"`
 }
 
-type Configuration struct {
-	Server ServerConfiguration `yaml:"server"`
-	Worker WorkerConfiguration `yaml:"worker"`
+type ConfigurationSchema struct {
+	Server ServerConfigurationSchema `yaml:"server"`
+	Worker WorkerConfigurationSchema `yaml:"worker"`
 }
 
-func ParseConfiguration(filename string) (*Configuration, error) {
+var Configuration *ConfigurationSchema
+
+func ParseConfiguration(filename string) (*ConfigurationSchema, error) {
 	yamlFile, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
 
-	cfg := &Configuration{}
+	cfg := &ConfigurationSchema{}
 	err = yaml.Unmarshal(yamlFile, cfg)
 	return cfg, err
+}
+
+func MustFindAndReadConfiguration() {
+	config_filename := os.Getenv("INFOMARK_CONFIG_FILE")
+
+	if config_filename == "" {
+		log.Fatalf("Env-var INFOMARK_CONFIG_FILE not given")
+	}
+	var err error
+
+	Configuration, err = ParseConfiguration(config_filename)
+
+	if err != nil {
+		panic(err)
+	}
+
 }

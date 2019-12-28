@@ -29,15 +29,15 @@ import (
 )
 
 func TestTaskRating(t *testing.T) {
-	PrepareTests()
+
 	g := goblin.Goblin(t)
 	email.DefaultMail = email.VoidMail
 
-	tape := &Tape{}
+	tape := NewTape()
 
 	var stores *Stores
 
-	studentJWT := NewJWTRequest(112, false)
+	studentJWT := tape.NewJWTRequest(112, false)
 
 	g.Describe("TaskRating", func() {
 
