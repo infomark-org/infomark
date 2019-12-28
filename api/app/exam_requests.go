@@ -1,6 +1,7 @@
 // InfoMark - a platform for managing exams with
 //            distributing exercise sheets and testing exercise submissions
-// Copyright (C) 2019  ComputerGraphics Tuebingen
+// Copyright (C) 2019 ComputerGraphics Tuebingen
+//               2020-present InfoMark.org
 // Authors: Patrick Wieschollek
 //
 // This program is free software: you can redistribute it and/or modify
