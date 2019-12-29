@@ -82,13 +82,34 @@ steps:
   environment:
     GOPROXY: https://proxy.golang.org
 
-- name: coverage
-  image: plugins/codecov
-  settings:
-    files:
-        - coverage.out
-    token:
-      from_secret: codecov_token
+# - name: coverage
+#   image: plugins/codecov
+#   settings:
+#     files:
+#         - coverage.out
+#     token:
+#       from_secret: codecov_token
+
+- name: embed_files
+  pull: default
+  image: golang
+  commands:
+  - cd /tmp
+  - wget -qO-  https://github.com/infomark-org/infomark-ui/releases/download/0.0.4/infomark-ui.tar.gz | tar -xvz
+  - cd /drone/src
+  - cp -r /tmp/build/* /drone/src/infomark/static
+  - ls /drone/src/
+  - ls /drone/src/infomark
+  - ls /drone/src/infomark/static
+  - cp -r ./build/* $${WORK_DIR}/infomark/static
+  - pkger list
+  - pkger
+  - ls -lart
+  - rm infomark-backend
+  - go build
+  - ls -lart
+  environment:
+    GOPROXY: https://proxy.golang.org
 
 - name: docs
   pull: default
@@ -103,7 +124,7 @@ steps:
   pull: default
   image: patwie/tar
   commands:
-    - tar -czvf infomark-backend.tar.gz api.yaml infomark README.md LICENSE files/uploads/ files/generated_files/ files/common/
+    - tar -czvf infomark.tar.gz api.yaml infomark README.md LICENSE files/uploads/ files/generated_files/ files/common/
 
 - name: publish_release
   image: plugins/github-release
@@ -111,7 +132,7 @@ steps:
     api_key:
       from_secret: github_token
     files:
-      - infomark-backend.tar.gz
+      - infomark.tar.gz
     checksum:
       - md5
       - sha256
@@ -142,6 +163,6 @@ services:
 
 ---
 kind: signature
-hmac: 89b2e92205fce2bb691338c5ee8203bd60333cd185bda02221b48a2ceb5bd671
+hmac: 5afb68c82e9ba3ab1c0554663d2b45c3149de4ca86f94a128ef84a2248d7aeb1
 
 ...
