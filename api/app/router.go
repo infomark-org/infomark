@@ -25,7 +25,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -38,6 +37,7 @@ import (
 	"github.com/infomark-org/infomark-backend/configuration"
 	"github.com/infomark-org/infomark-backend/symbol"
 	"github.com/jmoiron/sqlx"
+	"github.com/markbates/pkger"
 	"github.com/sirupsen/logrus"
 )
 
@@ -423,9 +423,7 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 		})
 	})
 
-	workDir, _ := os.Getwd()
-	filesDir := filepath.Join(workDir, "static")
-	FileServer(r, "/", http.Dir(filesDir))
+	FileServer(r, "/", pkger.Dir("/static"))
 
 	return r, nil
 }

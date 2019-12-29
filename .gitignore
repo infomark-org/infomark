@@ -23,7 +23,8 @@ infomark
 local/
 database/mock.sql
 database/query.sql
-static/
+static/*
+!static/.keep
 
 
 
@@ -54,8 +55,8 @@ api.yaml
 *.tar.gz
 docker-compose.yml
 
-static/
-static
+# static/
+# static
 
 
 pkged.go
