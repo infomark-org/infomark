@@ -74,7 +74,7 @@ func (rs *UserResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// render JSON reponse
+	// render JSON response
 	if err = render.RenderList(w, r, newUserListResponse(users)); err != nil {
 		render.Render(w, r, ErrRender(err))
 		return
@@ -99,7 +99,7 @@ func (rs *UserResource) GetMeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// render JSON reponse
+	// render JSON response
 	if err := render.Render(w, r, newUserResponse(user)); err != nil {
 		render.Render(w, r, ErrRender(err))
 		return
@@ -125,7 +125,7 @@ func (rs *UserResource) Find(w http.ResponseWriter, r *http.Request) {
 		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
 		return
 	}
-	// render JSON reponse
+	// render JSON response
 	if err = render.RenderList(w, r, newUserListResponse(users)); err != nil {
 		render.Render(w, r, ErrRender(err))
 		return
@@ -154,7 +154,7 @@ func (rs *UserResource) GetHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// render JSON reponse
+	// render JSON response
 	if err := render.Render(w, r, newUserResponse(user)); err != nil {
 		render.Render(w, r, ErrRender(err))
 		return

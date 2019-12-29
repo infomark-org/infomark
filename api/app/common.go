@@ -60,7 +60,7 @@ func (rs *CommonResource) PingHandler(w http.ResponseWriter, r *http.Request) {
 // RESPONSE: 200,VersionResponse
 // SUMMARY:  all version information
 func (rs *CommonResource) VersionHandler(w http.ResponseWriter, r *http.Request) {
-	// render JSON reponse
+	// render JSON response
 	if err := render.Render(w, r, newVersionResponse()); err != nil {
 		render.Render(w, r, ErrRender(err))
 		return

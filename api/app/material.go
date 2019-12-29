@@ -72,7 +72,7 @@ func (rs *MaterialResource) IndexHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// render JSON reponse
+	// render JSON response
 	if err = render.RenderList(w, r, rs.newMaterialListResponse(givenRole, course.ID, materials)); err != nil {
 		render.Render(w, r, ErrRender(err))
 		return
@@ -159,7 +159,7 @@ func (rs *MaterialResource) GetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// render JSON reponse
+	// render JSON response
 	if err := render.Render(w, r, rs.newMaterialResponse(material, course.ID)); err != nil {
 		render.Render(w, r, ErrRender(err))
 		return

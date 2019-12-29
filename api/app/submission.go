@@ -478,7 +478,7 @@ func (rs *SubmissionResource) IndexHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// render JSON reponse
+	// render JSON response
 	if err = render.RenderList(w, r, newSubmissionListResponse(submissions, course.ID)); err != nil {
 		render.Render(w, r, ErrRender(err))
 		return

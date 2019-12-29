@@ -75,7 +75,7 @@ func (rs *GroupResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// render JSON reponse
+	// render JSON response
 	if err = render.RenderList(w, r, rs.newGroupListResponse(groups)); err != nil {
 		render.Render(w, r, ErrRender(err))
 		return
@@ -154,7 +154,7 @@ func (rs *GroupResource) GetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// render JSON reponse
+	// render JSON response
 	if err := render.Render(w, r, rs.newGroupResponse(group, tutor)); err != nil {
 		render.Render(w, r, ErrRender(err))
 		return
@@ -215,7 +215,7 @@ func (rs *GroupResource) GetMineHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// render JSON reponse
+	// render JSON response
 	if err := render.RenderList(w, r, rs.newGroupListResponse(groups)); err != nil {
 		render.Render(w, r, ErrRender(err))
 		return
@@ -331,7 +331,7 @@ func (rs *GroupResource) IndexEnrollmentsHandler(w http.ResponseWriter, r *http.
 
 	enrolledUsers = EnsurePrivacyInEnrollments(enrolledUsers, givenRole)
 
-	// render JSON reponse
+	// render JSON response
 	if err = render.RenderList(w, r, newEnrollmentListResponse(enrolledUsers)); err != nil {
 		render.Render(w, r, ErrRender(err))
 		return

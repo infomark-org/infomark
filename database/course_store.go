@@ -75,7 +75,7 @@ AND
 
 func (s *CourseStore) Delete(courseID int64) error {
 
-	// we handle the deletion iwth cascade foreign keys.
+	// we handle the deletion with cascade foreign keys.
 	// This is just here in case we need again more complex logic.
 	// tx, err := s.db.Begin()
 

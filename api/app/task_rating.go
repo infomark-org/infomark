@@ -74,7 +74,7 @@ func (rs *TaskRatingResource) GetHandler(w http.ResponseWriter, r *http.Request)
 		}
 	}
 
-	// render JSON reponse
+	// render JSON response
 	if err := render.Render(w, r, rs.newTaskRatingResponse(taskRating, averageRating)); err != nil {
 		render.Render(w, r, ErrRender(err))
 		return

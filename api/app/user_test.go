@@ -146,7 +146,7 @@ func TestUser(t *testing.T) {
 
 		})
 
-		g.It("Should delete whith claims", func() {
+		g.It("Should delete with claims", func() {
 			usersBefore, err := stores.User.GetAll()
 			g.Assert(err).Equal(nil)
 

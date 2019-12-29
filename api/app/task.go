@@ -69,7 +69,7 @@ func (rs *TaskResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// render JSON reponse
+	// render JSON response
 	if err = render.RenderList(w, r, newTaskListResponse(tasks)); err != nil {
 		render.Render(w, r, ErrRender(err))
 		return
@@ -99,7 +99,7 @@ func (rs *TaskResource) MissingIndexHandler(w http.ResponseWriter, r *http.Reque
 
 	givenRole := r.Context().Value(symbol.CtxKeyCourseRole).(authorize.CourseRole)
 
-	// render JSON reponse
+	// render JSON response
 	if err = render.RenderList(w, r, newMissingTaskListResponse(tasks, givenRole)); err != nil {
 		render.Render(w, r, ErrRender(err))
 		return
@@ -170,7 +170,7 @@ func (rs *TaskResource) GetHandler(w http.ResponseWriter, r *http.Request) {
 	// `Task` is retrieved via middle-ware
 	task := r.Context().Value(symbol.CtxKeyTask).(*model.Task)
 
-	// render JSON reponse
+	// render JSON response
 	if err := render.Render(w, r, newTaskResponse(task)); err != nil {
 		render.Render(w, r, ErrRender(err))
 		return
@@ -380,7 +380,7 @@ func (rs *TaskResource) GetSubmissionResultHandler(w http.ResponseWriter, r *htt
 	grade.PrivateTestStatus = -1
 	grade.PrivateTestLog = ""
 
-	// render JSON reponse
+	// render JSON response
 	if err := render.Render(w, r, newGradeResponse(grade, course.ID)); err != nil {
 		render.Render(w, r, ErrRender(err))
 		return

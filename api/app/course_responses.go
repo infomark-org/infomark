@@ -64,7 +64,7 @@ func (rs *CourseResource) newCourseListResponse(courses []model.Course) []render
 	return list
 }
 
-// SheetPointsResponse is reponse for performance on a specific exercise sheet
+// SheetPointsResponse is response for performance on a specific exercise sheet
 type SheetPointsResponse struct {
 	AquiredPoints int `json:"acquired_points" example:"58"`
 	MaxPoints     int `json:"max_points" example:"90"`

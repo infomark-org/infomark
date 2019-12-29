@@ -60,7 +60,7 @@ func (rs *ExamResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// render JSON reponse
+	// render JSON response
 	if err = render.RenderList(w, r, rs.newExamListResponse(exams)); err != nil {
 		render.Render(w, r, ErrRender(err))
 		return
@@ -128,7 +128,7 @@ func (rs *ExamResource) GetHandler(w http.ResponseWriter, r *http.Request) {
 	// `Task` is retrieved via middle-ware
 	exam := r.Context().Value(symbol.CtxKeyExam).(*model.Exam)
 
-	// render JSON reponse
+	// render JSON response
 	if err := render.Render(w, r, rs.newExamResponse(exam)); err != nil {
 		render.Render(w, r, ErrRender(err))
 		return
@@ -233,7 +233,7 @@ func (rs *ExamResource) EnrollExamHandler(w http.ResponseWriter, r *http.Request
 	}
 	render.Status(r, http.StatusCreated)
 
-	// render JSON reponse
+	// render JSON response
 	if err = render.RenderList(w, r, newExamEnrollmentListResponse(enrollments)); err != nil {
 		render.Render(w, r, ErrRender(err))
 		return
@@ -304,7 +304,7 @@ func (rs *ExamResource) GetExamEnrollmentsHandler(w http.ResponseWriter, r *http
 		return
 	}
 
-	// render JSON reponse
+	// render JSON response
 	if err = render.RenderList(w, r, newExamEnrollmentListResponse(enrollments)); err != nil {
 		render.Render(w, r, ErrRender(err))
 		return

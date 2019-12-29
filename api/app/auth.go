@@ -130,7 +130,7 @@ func (rs *AuthResource) RefreshAccessTokenHandler(w http.ResponseWriter, r *http
 			return
 		}
 
-		// does such a user exists with request email adress?
+		// does such a user exists with request email address?
 		potentialUser, err := rs.Stores.User.FindByEmail(data.Email)
 		if err != nil {
 			render.Render(w, r, ErrNotFound)
@@ -195,7 +195,7 @@ func (rs *AuthResource) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// does such a user exists with request email adress?
+	// does such a user exists with request email address?
 	potentialUser, err := rs.Stores.User.FindByEmail(data.Email)
 	if err != nil {
 		render.Render(w, r, ErrBadRequest)
@@ -266,7 +266,7 @@ func (rs *AuthResource) RequestPasswordResetHandler(w http.ResponseWriter, r *ht
 		return
 	}
 
-	// does such a user exists with request email adress?
+	// does such a user exists with request email address?
 	user, err := rs.Stores.User.FindByEmail(data.Email)
 	if err != nil {
 		render.Render(w, r, ErrBadRequest)
@@ -319,7 +319,7 @@ func (rs *AuthResource) UpdatePasswordHandler(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	// does such a user exists with request email adress?
+	// does such a user exists with request email address?
 	user, err := rs.Stores.User.FindByEmail(data.Email)
 	if err != nil {
 		render.Render(w, r, ErrNotFound)
@@ -365,7 +365,7 @@ func (rs *AuthResource) ConfirmEmailHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// does such a user exists with request email adress?
+	// does such a user exists with request email address?
 	user, err := rs.Stores.User.FindByEmail(data.Email)
 	if err != nil {
 		render.Render(w, r, ErrBadRequest)

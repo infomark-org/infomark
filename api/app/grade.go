@@ -77,7 +77,7 @@ func (rs *GradeResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if data.AcquiredPoints > task.MaxPoints {
-		render.Render(w, r, ErrBadRequestWithDetails(fmt.Errorf("aquired points is larger than max-points %v is more than %v", data.AcquiredPoints, task.MaxPoints)))
+		render.Render(w, r, ErrBadRequestWithDetails(fmt.Errorf("acquired points is larger than max-points %v is more than %v", data.AcquiredPoints, task.MaxPoints)))
 		return
 	}
 
@@ -333,7 +333,7 @@ func (rs *GradeResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// render JSON reponse
+	// render JSON response
 	if err = render.RenderList(w, r, newGradeListResponse(submissions, course.ID)); err != nil {
 		render.Render(w, r, ErrRender(err))
 		return
@@ -374,7 +374,7 @@ func (rs *GradeResource) IndexSummaryHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	// render JSON reponse
+	// render JSON response
 	if err = render.Render(w, r, newGradeOverviewResponse(grades, sheets, givenRole)); err != nil {
 		render.Render(w, r, ErrRender(err))
 		return
@@ -407,7 +407,7 @@ func (rs *GradeResource) IndexMissingHandler(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	// render JSON reponse
+	// render JSON response
 	if err = render.RenderList(w, r, newMissingGradeListResponse(grades)); err != nil {
 		render.Render(w, r, ErrRender(err))
 		return

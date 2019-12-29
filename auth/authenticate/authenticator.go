@@ -34,7 +34,7 @@ import (
 // }
 
 // createSessionManager starts a web session and stores the information into a
-// http-only cookie. This is the prefered way when using a SPA.
+// http-only cookie. This is the preferred way when using a SPA.
 func NewSessionAuth(config *configuration.AuthenticationConfiguration) *scs.Manager {
 	sessionManager := scs.NewCookieManager(config.Session.Secret)
 	sessionManager.Lifetime(config.Session.Cookies.Lifetime)       // Set the maximum session lifetime to 1 hour.

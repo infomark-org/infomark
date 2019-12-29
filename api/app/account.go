@@ -354,7 +354,7 @@ func (rs *AccountResource) GetEnrollmentsHandler(w http.ResponseWriter, r *http.
 		return
 	}
 
-	// render JSON reponse
+	// render JSON response
 	if err = render.RenderList(w, r, rs.newUserEnrollmentsResponse(enrollments)); err != nil {
 		render.Render(w, r, ErrRender(err))
 		return
@@ -380,7 +380,7 @@ func (rs *AccountResource) GetExamEnrollmentsHandler(w http.ResponseWriter, r *h
 		return
 	}
 
-	// render JSON reponse
+	// render JSON response
 	if err = render.RenderList(w, r, newExamEnrollmentListResponse(enrollments)); err != nil {
 		render.Render(w, r, ErrRender(err))
 		return

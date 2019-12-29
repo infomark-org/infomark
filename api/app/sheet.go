@@ -73,7 +73,7 @@ func (rs *SheetResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 
 	givenRole := r.Context().Value(symbol.CtxKeyCourseRole).(authorize.CourseRole)
 
-	// render JSON reponse
+	// render JSON response
 	if err = render.RenderList(w, r, rs.newSheetListResponse(givenRole, sheets)); err != nil {
 		render.Render(w, r, ErrRender(err))
 		return
@@ -142,7 +142,7 @@ func (rs *SheetResource) GetHandler(w http.ResponseWriter, r *http.Request) {
 	// `Sheet` is retrieved via middle-ware
 	Sheet := r.Context().Value(symbol.CtxKeySheet).(*model.Sheet)
 
-	// render JSON reponse
+	// render JSON response
 	if err := render.Render(w, r, rs.newSheetResponse(Sheet)); err != nil {
 		render.Render(w, r, ErrRender(err))
 		return

@@ -90,7 +90,7 @@ var DatabaseRunCmd = &cobra.Command{
 		out, err := shell.CombinedOutput()
 		fmt.Printf("%s", out)
 		if err != nil {
-			log.Fatal("executing SQL-statement was not successfull")
+			log.Fatal("executing SQL-statement was not successful")
 		}
 
 	},
@@ -125,7 +125,7 @@ var DatabaseRestoreCmd = &cobra.Command{
 		out, err := shell.CombinedOutput()
 		fmt.Printf("%s", out)
 		if err != nil {
-			log.Fatal("dropping db was not successfull")
+			log.Fatal("dropping db was not successful")
 		}
 
 		// createdb  -h ${POSTGRES_HOST} -p ${POSTGRES_PORT} -U ${POSTGRES_USER} --owner="${POSTGRES_USER}" ${POSTGRES_DB}
@@ -141,7 +141,7 @@ var DatabaseRestoreCmd = &cobra.Command{
 		out, err = shell.CombinedOutput()
 		fmt.Printf("%s", out)
 		if err != nil {
-			log.Fatal("creating db was not successfull")
+			log.Fatal("creating db was not successful")
 		}
 
 		// gunzip -c "${backup_filename}" | psql -h ${POSTGRES_HOST} -p ${POSTGRES_PORT} -U ${POSTGRES_USER} "${POSTGRES_DB}"
@@ -169,7 +169,7 @@ var DatabaseRestoreCmd = &cobra.Command{
 		err = shell2.Wait()
 		// io.Copy(os.Stdout, &b2)
 		if err != nil {
-			log.Fatalf("load db from was not successfull\n %s", err)
+			log.Fatalf("load db from was not successful\n %s", err)
 		}
 	},
 }
@@ -226,7 +226,7 @@ var DatabaseBackupCmd = &cobra.Command{
 		defer destination.Close()
 		_, err = io.Copy(destination, &b2)
 		if err != nil {
-			log.Fatalf("storing snapshot was not successfull\n %s", err)
+			log.Fatalf("storing snapshot was not successful\n %s", err)
 		}
 
 	},

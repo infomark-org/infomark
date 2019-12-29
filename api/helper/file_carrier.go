@@ -283,7 +283,7 @@ func (h DummyWriter) Write([]byte) (int, error) {
 // WriteHeader does nothing
 func (h DummyWriter) WriteHeader(statusCode int) {}
 
-// WriteToBody will write a file from disk to the http reponse (download process)
+// WriteToBody will write a file from disk to the http response (download process)
 func (f *FileHandle) WriteToBody(w http.ResponseWriter) error {
 
 	// check if file exists
