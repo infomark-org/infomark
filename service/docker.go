@@ -169,13 +169,15 @@ func (ds *DockerService) Run(
 		return "", 0, err
 	}
 
-	exitCode, err := ds.Client.ContainerWait(ds.Context, resp.ID)
+	_, errC := ds.Client.ContainerWait(ds.Context, resp.ID, "")
+
+	err = <-errC
 	if err != nil {
 		if errors.Is(err, context.DeadlineExceeded) {
-			return "Execution took to long", exitCode, nil
+			return "Execution took to long", 0, nil
 
 		}
-		return err.Error(), exitCode, err
+		return err.Error(), 0, err
 	}
 
 	outputReader, err := ds.Client.ContainerLogs(ds.Context, resp.ID, types.ContainerLogsOptions{ShowStdout: true})
@@ -187,5 +189,5 @@ func (ds *DockerService) Run(
 	buf.ReadFrom(outputReader)
 
 	// io.Copy(os.Stdout, outputReader)
-	return buf.String(), exitCode, nil
+	return buf.String(), 0, nil
 }
