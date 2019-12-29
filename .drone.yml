@@ -78,9 +78,17 @@ steps:
   image: golang
   commands:
   - export INFOMARK_CONFIG_FILE=`realpath .infomark-ci.yml`
-  - go test ./... -cover -v --goblin.timeout 15s
+  - go test ./... -cover -v --goblin.timeout 15s -coverprofile coverage.out
   environment:
     GOPROXY: https://proxy.golang.org
+
+- name: coverage
+  image: plugins/codecov
+  settings:
+    files:
+        - coverage.out
+    token:
+      from_secret: codecov_token
 
 - name: docs
   pull: default
@@ -130,8 +138,10 @@ services:
   pull: default
   image: redis:5.0.4-alpine
 
+
+
 ---
 kind: signature
-hmac: e6a70095c957b8ac37f7412298196d9ad916d0587a0592d0a3885c3e53114d4f
+hmac: 89b2e92205fce2bb691338c5ee8203bd60333cd185bda02221b48a2ceb5bd671
 
 ...
