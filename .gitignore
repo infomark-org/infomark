@@ -56,3 +56,8 @@ docker-compose.yml
 
 static/
 static
+
+
+pkged.go
+migration/mock/mock.sql
+migration/mock/mock.sql

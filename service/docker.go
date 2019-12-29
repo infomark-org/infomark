@@ -45,7 +45,7 @@ func NewDockerServiceWithTimeout(timeout time.Duration) *DockerService {
 	// ctx := context.Background()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	// defer cancel()
-	cli, err := client.NewClientWithOpts(client.WithVersion("1.40"))
+	cli, err := client.NewClientWithOpts(client.WithAPIVersionNegotiation())
 	if err != nil {
 		panic(err)
 	}

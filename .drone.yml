@@ -25,6 +25,8 @@ steps:
   commands:
   - sed -i 's/"YXZ"/"${DRONE_COMMIT_SHA}"/g' symbol/version.go
   - go version
+  - go get github.com/markbates/pkger/cmd/pkger
+  - pkger
   - go build infomark.go
   environment:
     GOPROXY: https://proxy.golang.org
@@ -53,19 +55,22 @@ steps:
   pull: default
   image: python:3
   commands:
-  - cd database
+  - cd migration/mock
   - pip3 install -r requirements.txt
   - python3 mock.py
+
+- name: migrate
+  pull: default
+  image: golang
+  commands:
+  - export INFOMARK_CONFIG_FILE=`realpath .infomark-ci.yml`
+  - ./infomark console database migrate
 
 - name: seed
   pull: default
   image: postgres:11.2-alpine
   commands:
-  - cd database
-  - "PGPASSWORD=postgres psql -h 'database' -U 'postgres' -d 'infomark' -f schema.sql >/dev/null"
-  - "PGPASSWORD=postgres psql -h 'database' -U 'postgres' -d 'infomark' -f migrations/0.0.1alpha14.sql >/dev/null"
-  - "PGPASSWORD=postgres psql -h 'database' -U 'postgres' -d 'infomark' -f migrations/0.0.1alpha21.sql >/dev/null"
-  - "PGPASSWORD=postgres psql -h 'database' -U 'postgres' -d 'infomark' -f migrations/0.0.1beta4.sql >/dev/null"
+  - cd migration/mock
   - "PGPASSWORD=postgres psql -h 'database' -U 'postgres' -d 'infomark' -f mock.sql >/dev/null"
 
 - name: test
@@ -90,7 +95,7 @@ steps:
   pull: default
   image: patwie/tar
   commands:
-    - tar -czvf infomark-backend.tar.gz api.yaml infomark README.md LICENSE docker-compose.example.yml database/schema.sql files/uploads/ files/generated_files/ files/common/ database/migrations
+    - tar -czvf infomark-backend.tar.gz api.yaml infomark README.md LICENSE files/uploads/ files/generated_files/ files/common/
 
 - name: publish_release
   image: plugins/github-release
@@ -127,6 +132,6 @@ services:
 
 ---
 kind: signature
-hmac: 2a0cfb038308e3215ded1c33fe213491341736e36f3bffbf3e582756ea7bd401
+hmac: e6a70095c957b8ac37f7412298196d9ad916d0587a0592d0a3885c3e53114d4f
 
 ...
