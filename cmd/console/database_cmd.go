@@ -30,7 +30,10 @@ import (
 
 	"github.com/infomark-org/infomark-backend/api/helper"
 	"github.com/infomark-org/infomark-backend/configuration"
+	"github.com/infomark-org/infomark-backend/migration"
+	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -60,6 +63,7 @@ func init() {
 	DatabaseCmd.AddCommand(DatabaseRunCmd)
 	DatabaseCmd.AddCommand(DatabaseRestoreCmd)
 	DatabaseCmd.AddCommand(DatabaseBackupCmd)
+	DatabaseCmd.AddCommand(DatabaseMigrateCmd)
 }
 
 var DatabaseCmd = &cobra.Command{
@@ -228,6 +232,31 @@ var DatabaseBackupCmd = &cobra.Command{
 		if err != nil {
 			log.Fatalf("storing snapshot was not successful\n %s", err)
 		}
+
+	},
+}
+
+var DatabaseMigrateCmd = &cobra.Command{
+	Use:   "migrate",
+	Short: "migrate database to latest version",
+	Long:  `manually run database migration`,
+	Args:  cobra.ExactArgs(0),
+	Run: func(cmd *cobra.Command, args []string) {
+		log := logrus.New()
+		log.SetFormatter(&logrus.TextFormatter{
+			DisableColors: false,
+			FullTimestamp: true,
+		})
+		log.Out = os.Stdout
+
+		configuration.MustFindAndReadConfiguration()
+
+		db, err := sqlx.Connect("postgres", configuration.Configuration.Server.PostgresURL())
+		if err != nil {
+			log.WithField("module", "database").Error(err)
+		}
+
+		migration.UpdateDatabase(db, log)
 
 	},
 }

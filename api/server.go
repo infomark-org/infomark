@@ -30,6 +30,7 @@ import (
 	"github.com/infomark-org/infomark-backend/auth/authenticate"
 	"github.com/infomark-org/infomark-backend/configuration"
 	"github.com/infomark-org/infomark-backend/email"
+	"github.com/infomark-org/infomark-backend/migration"
 	"github.com/jmoiron/sqlx"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/robfig/cron"
@@ -77,6 +78,8 @@ func NewServer(config *configuration.ServerConfigurationSchema) (*Server, error)
 		log.WithField("module", "database").Error(err)
 		return nil, err
 	}
+
+	migration.UpdateDatabase(db, log)
 
 	handler, err := app.New(db, true)
 	if err != nil {
