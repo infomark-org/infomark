@@ -82,13 +82,32 @@ steps:
   environment:
     GOPROXY: https://proxy.golang.org
 
-- name: coverage
-  image: plugins/codecov
-  settings:
-    files:
-        - coverage.out
-    token:
-      from_secret: codecov_token
+# - name: coverage
+#   image: plugins/codecov
+#   settings:
+#     files:
+#         - coverage.out
+#     token:
+#       from_secret: codecov_token
+
+- name: embed_files
+  pull: default
+  image: golang
+  commands:
+  - go get github.com/markbates/pkger/cmd/pkger
+  - cd /tmp
+  - wget -qO-  https://github.com/infomark-org/infomark-ui/releases/download/0.0.4/infomark-ui.tar.gz | tar -xvz
+  - cd /drone/src
+  - cp -r /tmp/build/* /drone/src/static
+  - pkger list
+  - pkger
+  - ls infomark -larth
+  - rm infomark
+  - go build
+  - mv infomark-backend infomark
+  - ls infomark -larth
+  environment:
+    GOPROXY: https://proxy.golang.org
 
 - name: docs
   pull: default
@@ -103,7 +122,7 @@ steps:
   pull: default
   image: patwie/tar
   commands:
-    - tar -czvf infomark-backend.tar.gz api.yaml infomark README.md LICENSE files/uploads/ files/generated_files/ files/common/
+    - tar -czvf infomark.tar.gz api.yaml infomark README.md LICENSE files/uploads/ files/generated_files/ files/common/
 
 - name: publish_release
   image: plugins/github-release
@@ -111,7 +130,7 @@ steps:
     api_key:
       from_secret: github_token
     files:
-      - infomark-backend.tar.gz
+      - infomark.tar.gz
     checksum:
       - md5
       - sha256
@@ -142,6 +161,6 @@ services:
 
 ---
 kind: signature
-hmac: 89b2e92205fce2bb691338c5ee8203bd60333cd185bda02221b48a2ceb5bd671
+hmac: 8e162f17b9cbf528d133679bb2a3b04a6ce434dd6c75d947ff6f281d4eee45d7
 
 ...
