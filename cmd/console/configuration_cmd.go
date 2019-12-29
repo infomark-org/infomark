@@ -17,7 +17,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package cmd
+package console
 
 import (
 	"bytes"
@@ -51,7 +51,6 @@ func init() {
 	ConfigurationCmd.AddCommand(CreateConfiguration)
 	ConfigurationCmd.AddCommand(TestConfiguration)
 	ConfigurationCmd.AddCommand(CreateDockercompose)
-	RootCmd.AddCommand(ConfigurationCmd)
 
 }
 

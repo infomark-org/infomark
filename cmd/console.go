@@ -46,6 +46,7 @@ func init() {
 	ConsoleCmd.AddCommand(console.SubmissionCmd)
 	ConsoleCmd.AddCommand(console.GroupCmd)
 	ConsoleCmd.AddCommand(console.DatabaseCmd)
+	ConsoleCmd.AddCommand(console.ConfigurationCmd)
 
 	UtilsCmd.AddCommand(UtilsCompletionCmd)
 	UtilsCmd.AddCommand(UtilsDocCmd)
