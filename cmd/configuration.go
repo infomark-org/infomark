@@ -82,10 +82,10 @@ func GenerateExampleConfiguration(domain string, root_path string) *configuratio
 	config.Server.HTTP.Domain = domain
 	config.Server.HTTP.Timeouts.Read = DurationFromString("30s")
 	config.Server.HTTP.Timeouts.Write = DurationFromString("30s")
-	config.Server.HTTP.Limits.MaxHeader = ByteFromString("1mb")
-	config.Server.HTTP.Limits.MaxRequestJSON = ByteFromString("2mb")
-	config.Server.HTTP.Limits.MaxAvatar = ByteFromString("2mb")
-	config.Server.HTTP.Limits.MaxSubmission = ByteFromString("4mb")
+	config.Server.HTTP.Limits.MaxHeader = 1 * bytefmt.MEGABYTE
+	config.Server.HTTP.Limits.MaxRequestJSON = 2 * bytefmt.MEGABYTE
+	config.Server.HTTP.Limits.MaxAvatar = 2 * bytefmt.MEGABYTE
+	config.Server.HTTP.Limits.MaxSubmission = 4 * bytefmt.MEGABYTE
 
 	config.Server.Debugging.Enabled = false
 	config.Server.Debugging.LoginID = int64(1)
@@ -95,7 +95,7 @@ func GenerateExampleConfiguration(domain string, root_path string) *configuratio
 	config.Server.DistributeJobs = true
 
 	config.Server.Authentication.JWT.Secret = auth.GenerateToken(32)
-	config.Server.Authentication.JWT.AccessExpiry = DurationFromString("15m")
+	config.Server.Authentication.JWT.AccessExpiry = 15 * time.Minute
 	config.Server.Authentication.JWT.RefreshExpiry = DurationFromString("10h")
 	config.Server.Authentication.Session.Secret = auth.GenerateToken(32)
 	config.Server.Authentication.Session.Cookies.Secure = config.Server.HTTP.UseHTTPS
@@ -111,17 +111,17 @@ func GenerateExampleConfiguration(domain string, root_path string) *configuratio
 	config.Server.Email.From = fmt.Sprintf("no-reply@%s", config.Server.HTTP.Domain)
 	config.Server.Email.ChannelSize = 300
 
-	config.Server.Services.Redis.Host = "redis_service"
+	config.Server.Services.Redis.Host = "localhost"
 	config.Server.Services.Redis.Port = 6379
 	config.Server.Services.Redis.Database = 0
 
-	config.Server.Services.RabbitMQ.Host = "rabbitmq_service"
+	config.Server.Services.RabbitMQ.Host = "localhost"
 	config.Server.Services.RabbitMQ.Port = 5672
 	config.Server.Services.RabbitMQ.User = "rabbitmq_user"
 	config.Server.Services.RabbitMQ.Password = auth.GenerateToken(32)
 	config.Server.Services.RabbitMQ.Key = "rabbitmq_key"
 
-	config.Server.Services.Postgres.Host = "postgres_service"
+	config.Server.Services.Postgres.Host = "localhost"
 	config.Server.Services.Postgres.Port = 5432
 	config.Server.Services.Postgres.User = "database_user"
 	config.Server.Services.Postgres.Database = "infomark"
@@ -136,7 +136,7 @@ func GenerateExampleConfiguration(domain string, root_path string) *configuratio
 	config.Worker.Services.RabbitMQ = config.Server.Services.RabbitMQ
 	config.Worker.Workdir = "/tmp"
 	config.Worker.Void = false
-	config.Worker.Docker.MaxMemory = ByteFromString("500mb")
+	config.Worker.Docker.MaxMemory = 500 * bytefmt.MEGABYTE
 	return config
 }
 
@@ -221,10 +221,10 @@ var CreateDockercompose = &cobra.Command{
 			log.Fatalf("error: %v", err)
 		}
 
-		docker_compose, err := template.New("test").Parse(
+		docker_compose, err := template.New("docker-compose").Parse(
 			`version: "3"
 services:
-  {{.Server.Services.RabbitMQ.Host}}:
+  rabbitmq_host:
     image: rabbitmq:3.7.3-management-alpine
     environment:
       - RABBITMQ_DEFAULT_USER={{.Server.Services.RabbitMQ.User}}
@@ -234,7 +234,7 @@ services:
       - 127.0.0.1:15672:15672
     volumes:
       - rabbitmq_volume:/data
-  {{.Server.Services.Postgres.Host}}:
+  postgres_host:
     image: postgres:11.2-alpine
     environment:
       - POSTGRES_DB={{.Server.Services.Postgres.Database}}
@@ -245,7 +245,7 @@ services:
       - 127.0.0.1:{{.Server.Services.Postgres.Port}}:5432
     volumes:
       - postgres_volume:/var/lib/postgresql/data
-  {{.Server.Services.Redis.Host}}:
+  redis_host:
     image: redis:5.0.4-alpine
     ports:
       - 127.0.0.1:{{.Server.Services.Redis.Port}}:6379

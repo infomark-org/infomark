@@ -72,7 +72,7 @@ steps:
   pull: default
   image: golang
   commands:
-  - export INFOMARK_CONFIG_FILE=`realpath .infomark.yml.ci`
+  - export INFOMARK_CONFIG_FILE=`realpath .infomark-ci.yml`
   - go test ./... -cover -v --goblin.timeout 15s
   environment:
     GOPROXY: https://proxy.golang.org
@@ -81,7 +81,7 @@ steps:
   pull: default
   image: golang
   commands:
-  - export INFOMARK_CONFIG_FILE=`realpath .infomark.yml.ci`
+  - export INFOMARK_CONFIG_FILE=`realpath .infomark-ci.yml`
   - go generate
   environment:
     GOPROXY: https://proxy.golang.org
@@ -90,7 +90,7 @@ steps:
   pull: default
   image: patwie/tar
   commands:
-    - tar -czvf infomark-backend.tar.gz api.yaml infomark README.md LICENSE .infomark.example.yml docker-compose.example.yml database/schema.sql files/uploads/ files/generated_files/ files/common/ database/migrations
+    - tar -czvf infomark-backend.tar.gz api.yaml infomark README.md LICENSE docker-compose.example.yml database/schema.sql files/uploads/ files/generated_files/ files/common/ database/migrations
 
 - name: publish_release
   image: plugins/github-release
@@ -127,6 +127,6 @@ services:
 
 ---
 kind: signature
-hmac: b6f7ef1a750edd029c92f896f10613534713601e0cf934177422380e99a0d511
+hmac: 2a0cfb038308e3215ded1c33fe213491341736e36f3bffbf3e582756ea7bd401
 
 ...

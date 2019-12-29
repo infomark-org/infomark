@@ -312,7 +312,7 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
 		defaultPrivateTestLog = "no unit tests for this task are available"
 	}
 
-	// create submisison if not exists
+	// create submission if not exists
 	submission, err := rs.Stores.Submission.GetByUserAndTask(usedUserID, task.ID)
 	if err != nil {
 		// no such submission

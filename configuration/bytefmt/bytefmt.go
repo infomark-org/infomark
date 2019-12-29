@@ -27,7 +27,8 @@ import (
 
 type ByteSize int64
 
-// ToBytes parses a string formatted by ByteSize as bytes. Note binary-prefixed and SI prefixed units both mean a base-2 units
+// ToBytes parses a string formatted by ByteSize as bytes.
+// Note, this is based on the basis of 2 (no KiB, ...).
 func FromString(s string) (ByteSize, error) {
 	s = strings.TrimSpace(s)
 	s = strings.ToLower(s)
@@ -84,7 +85,7 @@ const (
 	EXABYTE  = 1024 * 1024 * 1024 * 1024 * 1024 * 1024
 )
 
-var invalidByteQuantityError = errors.New("byte quantity must be a positive integer with a unit of measurement like M, MB, MiB, G, GiB, or GB")
+var invalidByteQuantityError = errors.New("byte quantity must be a positive integer with a unit of measurement like b, kb, mb, gb, tb, pb or eb")
 
 // ByteSize returns a human-readable byte string of the form 10M, 12.5K, and so forth.  The following units are available:
 // The unit that results in the smallest number greater than or equal to 1 is always chosen.
@@ -120,4 +121,18 @@ func ToString(bytes ByteSize) string {
 	result := strconv.FormatFloat(value, 'f', 1, 64)
 	result = strings.TrimSuffix(result, ".0")
 	return result + unit
+}
+
+func (t ByteSize) MarshalYAML() (interface{}, error) {
+	return ToString(t), nil
+}
+
+func (f *ByteSize) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var fm string
+	var err error
+	if err := unmarshal(&fm); err != nil {
+		return err
+	}
+	*f, err = FromString(fm)
+	return err
 }

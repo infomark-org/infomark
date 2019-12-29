@@ -14,9 +14,9 @@ server:
       read: 30s
       write: 30s
     limits:
-      max_header: 1048576
-      max_request_json: 2097152
-      max_submission: 4194304
+      max_header: 1mb
+      max_request_json: 2mb
+      max_submission: 4mb
   distribute_jobs: true
   authentication:
     jwt:
@@ -74,5 +74,5 @@ worker:
   workdir: /tmp
   void: false
   docker:
-    max_memory: 524288000
+    max_memory: 500mb
 

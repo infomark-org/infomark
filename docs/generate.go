@@ -209,7 +209,7 @@ func main() {
 	f.WriteString(fmt.Sprintf("            type: string\n"))
 	f.WriteString(fmt.Sprintf("            format: binary\n"))
 	f.WriteString(fmt.Sprintf("    OK:\n"))
-	f.WriteString(fmt.Sprintf("      description: Post successfuly delivered.\n"))
+	f.WriteString(fmt.Sprintf("      description: Post successfully delivered.\n"))
 	f.WriteString(fmt.Sprintf("    NoContent:\n"))
 	f.WriteString(fmt.Sprintf("      description: Update was successful.\n"))
 	f.WriteString(fmt.Sprintf("    BadRequest:\n"))
