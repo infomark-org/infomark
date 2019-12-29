@@ -47,17 +47,17 @@ func FromString(s string) (ByteSize, error) {
 
 	switch unit {
 	case "eb":
-		return ByteSize(bytes * EXABYTE), nil
+		return ByteSize(bytes * Exabyte), nil
 	case "pb":
-		return ByteSize(bytes * PETABYTE), nil
+		return ByteSize(bytes * Petabyte), nil
 	case "tb":
-		return ByteSize(bytes * TERABYTE), nil
+		return ByteSize(bytes * Terabyte), nil
 	case "gb":
-		return ByteSize(bytes * GIGABYTE), nil
+		return ByteSize(bytes * Gigabyte), nil
 	case "mb":
-		return ByteSize(bytes * MEGABYTE), nil
+		return ByteSize(bytes * Megabyte), nil
 	case "kb":
-		return ByteSize(bytes * KILOBYTE), nil
+		return ByteSize(bytes * Kilobyte), nil
 	case "b":
 		return ByteSize(bytes), nil
 	default:
@@ -66,23 +66,23 @@ func FromString(s string) (ByteSize, error) {
 }
 
 const (
-	BYTE_UNIT     = "b"
-	KILOBYTE_UNIT = "kb"
-	MEGABYTE_UNIT = "mb"
-	GIGABYTE_UNIT = "gb"
-	TERABYTE_UNIT = "tb"
-	PETABYTE_UNIT = "pb"
-	EXABYTE_UNIT  = "eb"
+	ByteUnit     = "b"
+	KilobyteUnit = "kb"
+	MegabyteUnit = "mb"
+	GigabyteUnit = "gb"
+	TerabyteUnit = "tb"
+	PetabyteUnit = "pb"
+	ExabyteUnit  = "eb"
 )
 
 const (
-	BYTE     = 1
-	KILOBYTE = 1024
-	MEGABYTE = 1024 * 1024
-	GIGABYTE = 1024 * 1024 * 1024
-	TERABYTE = 1024 * 1024 * 1024 * 1024
-	PETABYTE = 1024 * 1024 * 1024 * 1024 * 1024
-	EXABYTE  = 1024 * 1024 * 1024 * 1024 * 1024 * 1024
+	Byte     = 1
+	Kilobyte = 1024
+	Megabyte = 1024 * 1024
+	Gigabyte = 1024 * 1024 * 1024
+	Terabyte = 1024 * 1024 * 1024 * 1024
+	Petabyte = 1024 * 1024 * 1024 * 1024 * 1024
+	Exabyte  = 1024 * 1024 * 1024 * 1024 * 1024 * 1024
 )
 
 var invalidByteQuantityError = errors.New("byte quantity must be a positive integer with a unit of measurement like b, kb, mb, gb, tb, pb or eb")
@@ -94,26 +94,26 @@ func ToString(bytes ByteSize) string {
 	value := float64(bytes)
 
 	switch {
-	case bytes >= EXABYTE:
-		unit = EXABYTE_UNIT
-		value = value / EXABYTE
-	case bytes >= PETABYTE:
-		unit = PETABYTE_UNIT
-		value = value / PETABYTE
-	case bytes >= TERABYTE:
-		unit = TERABYTE_UNIT
-		value = value / TERABYTE
-	case bytes >= GIGABYTE:
-		unit = GIGABYTE_UNIT
-		value = value / GIGABYTE
-	case bytes >= MEGABYTE:
-		unit = MEGABYTE_UNIT
-		value = value / MEGABYTE
-	case bytes >= KILOBYTE:
-		unit = KILOBYTE_UNIT
-		value = value / KILOBYTE
-	case bytes >= BYTE:
-		unit = BYTE_UNIT
+	case bytes >= Exabyte:
+		unit = ExabyteUnit
+		value = value / Exabyte
+	case bytes >= Petabyte:
+		unit = PetabyteUnit
+		value = value / Petabyte
+	case bytes >= Terabyte:
+		unit = TerabyteUnit
+		value = value / Terabyte
+	case bytes >= Gigabyte:
+		unit = GigabyteUnit
+		value = value / Gigabyte
+	case bytes >= Megabyte:
+		unit = MegabyteUnit
+		value = value / Megabyte
+	case bytes >= Kilobyte:
+		unit = KilobyteUnit
+		value = value / Kilobyte
+	case bytes >= Byte:
+		unit = ByteUnit
 	case bytes == 0:
 		return "0b"
 	}

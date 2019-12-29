@@ -74,4 +74,5 @@ worker:
   void: false
   docker:
     max_memory: 500mb
+    timeout: 5m0s
 

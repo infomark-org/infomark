@@ -260,7 +260,7 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
 	}
 
 	// 5. run docker test
-	ds := service.NewDockerService()
+	ds := service.NewDockerServiceWithTimeout(configuration.Configuration.Worker.Docker.Timeout)
 	defer ds.Client.Close()
 
 	var exit int64

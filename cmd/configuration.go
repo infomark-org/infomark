@@ -82,10 +82,10 @@ func GenerateExampleConfiguration(domain string, root_path string) *configuratio
 	config.Server.HTTP.Domain = domain
 	config.Server.HTTP.Timeouts.Read = DurationFromString("30s")
 	config.Server.HTTP.Timeouts.Write = DurationFromString("30s")
-	config.Server.HTTP.Limits.MaxHeader = 1 * bytefmt.MEGABYTE
-	config.Server.HTTP.Limits.MaxRequestJSON = 2 * bytefmt.MEGABYTE
-	config.Server.HTTP.Limits.MaxAvatar = 2 * bytefmt.MEGABYTE
-	config.Server.HTTP.Limits.MaxSubmission = 4 * bytefmt.MEGABYTE
+	config.Server.HTTP.Limits.MaxHeader = 1 * bytefmt.Megabyte
+	config.Server.HTTP.Limits.MaxRequestJSON = 2 * bytefmt.Megabyte
+	config.Server.HTTP.Limits.MaxAvatar = 2 * bytefmt.Megabyte
+	config.Server.HTTP.Limits.MaxSubmission = 4 * bytefmt.Megabyte
 
 	config.Server.Debugging.Enabled = false
 	config.Server.Debugging.LoginID = int64(1)
@@ -136,7 +136,8 @@ func GenerateExampleConfiguration(domain string, root_path string) *configuratio
 	config.Worker.Services.RabbitMQ = config.Server.Services.RabbitMQ
 	config.Worker.Workdir = "/tmp"
 	config.Worker.Void = false
-	config.Worker.Docker.MaxMemory = 500 * bytefmt.MEGABYTE
+	config.Worker.Docker.MaxMemory = 500 * bytefmt.Megabyte
+	config.Worker.Docker.Timeout = 5 * time.Second
 	return config
 }
 

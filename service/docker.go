@@ -22,7 +22,9 @@ package service
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
+	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -36,11 +38,13 @@ type DockerService struct {
 	Context context.Context
 	// client is the interface to the docker runtime
 	Client *client.Client
+	Cancel context.CancelFunc
 }
 
-// NewDockerService creates a new docker client
-func NewDockerService() *DockerService {
-	ctx := context.Background()
+func NewDockerServiceWithTimeout(timeout time.Duration) *DockerService {
+	// ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	// defer cancel()
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		panic(err)
@@ -49,6 +53,7 @@ func NewDockerService() *DockerService {
 	return &DockerService{
 		Context: ctx,
 		Client:  cli,
+		Cancel:  cancel,
 	}
 }
 
@@ -117,7 +122,7 @@ func (ds *DockerService) Run(
 
 	// submissionZipFile := "/home/patwie/git/github.com/infomark-org/infomark/infomark-backend/.local/simple_ci_runner/submission.zip"
 	// frameworkZipFile := "/home/patwie/git/github.com/infomark-org/infomark/infomark-backend/.local/simple_ci_runner/unittest.zip"
-
+	defer ds.Cancel()
 	cmds := []string{}
 
 	cfg := &container.Config{
@@ -166,7 +171,11 @@ func (ds *DockerService) Run(
 
 	exitCode, err := ds.Client.ContainerWait(ds.Context, resp.ID)
 	if err != nil {
-		return "", exitCode, err
+		if errors.Is(err, context.DeadlineExceeded) {
+			return "Execution took to long", exitCode, nil
+
+		}
+		return err.Error(), exitCode, err
 	}
 
 	outputReader, err := ds.Client.ContainerLogs(ds.Context, resp.ID, types.ContainerLogsOptions{ShowStdout: true})
@@ -180,20 +189,3 @@ func (ds *DockerService) Run(
 	// io.Copy(os.Stdout, outputReader)
 	return buf.String(), exitCode, nil
 }
-
-// func main() {
-
-//   ds := NewDockerService()
-
-//   // ds.ListImages()
-
-//   output, exitCode, err := ds.Run("test_java_submission:v1", []string{""})
-//   fmt.Println(output)
-//   fmt.Println(exitCode)
-//   fmt.Println(err)
-
-//   // output, exitCode, err = ds.Run("alpine", []string{"cat", "x"})
-//   // fmt.Println(output)
-//   // fmt.Println(exitCode)
-//   // fmt.Println(err)
-// }

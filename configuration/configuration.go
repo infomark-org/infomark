@@ -173,6 +173,7 @@ type WorkerConfigurationSchema struct {
 	Void    bool   `yaml:"void"`
 	Docker  struct {
 		MaxMemory bytefmt.ByteSize `yaml:"max_memory"`
+		Timeout   time.Duration    `yaml:"timeout"`
 	} `yaml:"docker"`
 }
 
