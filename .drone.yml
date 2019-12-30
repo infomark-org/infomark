@@ -88,7 +88,7 @@ steps:
   commands:
   - go get github.com/markbates/pkger/cmd/pkger
   - cd /tmp
-  - wget -qO-  https://github.com/infomark-org/infomark-ui/releases/download/0.0.5/infomark-ui.tar.gz | tar -xvz
+  - wget -qO-  https://github.com/infomark-org/infomark-ui/releases/download/0.0.6/infomark-ui.tar.gz | tar -xvz
   - cd /drone/src
   - cp -r /tmp/build/* /drone/src/static
   - pkger list
@@ -152,6 +152,6 @@ services:
 
 ---
 kind: signature
-hmac: 29e24a3bd0b40cc6c07dc57cb59a6e13f43e867dc2e26eaf72f4a258bb5ed18f
+hmac: ce28f37ef529c27f24b637883e261322b11bedaf4b5ba27c046f553342ccf991
 
 ...
