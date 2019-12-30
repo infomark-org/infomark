@@ -105,7 +105,7 @@ func GenerateExampleConfiguration(domain string, root_path string) *configuratio
 	config.Server.Authentication.TotalRequestsPerMinute = 100
 	config.Server.Cronjobs.ZipSubmissionsIntervall = DurationFromString("5m")
 
-	config.Server.Email.Send = true
+	config.Server.Email.Send = false
 	config.Server.Email.SendmailBinary = "/usr/sbin/sendmail"
 	config.Server.Email.From = fmt.Sprintf("no-reply@%s", config.Server.HTTP.Domain)
 	config.Server.Email.ChannelSize = 300
