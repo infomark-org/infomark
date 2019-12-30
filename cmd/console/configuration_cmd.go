@@ -83,7 +83,7 @@ func GenerateExampleConfiguration(domain string, root_path string) *configuratio
 	config.Server.HTTP.Timeouts.Write = DurationFromString("30s")
 	config.Server.HTTP.Limits.MaxHeader = 1 * bytefmt.Megabyte
 	config.Server.HTTP.Limits.MaxRequestJSON = 2 * bytefmt.Megabyte
-	config.Server.HTTP.Limits.MaxAvatar = 2 * bytefmt.Megabyte
+	config.Server.HTTP.Limits.MaxAvatar = 1 * bytefmt.Megabyte
 	config.Server.HTTP.Limits.MaxSubmission = 4 * bytefmt.Megabyte
 
 	config.Server.Debugging.Enabled = false

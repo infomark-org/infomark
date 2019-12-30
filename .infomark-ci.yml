@@ -17,6 +17,7 @@ server:
       max_header: 1mb
       max_request_json: 2mb
       max_submission: 4mb
+      max_avatar: 1mb
   distribute_jobs: true
   authentication:
     jwt:
