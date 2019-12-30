@@ -8,7 +8,7 @@ mittels dieser Datenschutzerklärung möchten wir Sie im Folgenden über die Dat
 Wir bitten Sie, diese Datenschutzerklärung sorgfältig durchzulesen, bevor Sie unsere Webseiten weiter besuchen oder die auf den Webseiten enthaltenen Funktionen nutzen. Mit dem Besuch unserer Webseiten stimmen Sie den im Folgenden beschriebenen Verarbeitungen und Nutzungen Ihrer Daten zu. Unsere Datenschutzerklärung ist nur für unsere Webseiten gültig und nicht für die Webseiten Dritter.
 
 Grundsätzlich möchten wir darauf hinweisen, dass der Code für jegliche Verarbeitungsschritte
-als Open-Source Projekt unter https://github.com/infomark-org/infomark-backend frei für jeden kostenlos einsehbar und nachvollziehbar ist. Ebenfalls ist der client-seitige Code, der in ihrem Browser auf ihrem PC ausgeführt wird frei unter https://github.com/infomark-org/infomark-ui einsehbar.
+als Open-Source Projekt unter https://github.com/infomark-org/infomark frei für jeden kostenlos einsehbar und nachvollziehbar ist. Ebenfalls ist der client-seitige Code, der in ihrem Browser auf ihrem PC ausgeführt wird frei unter https://github.com/infomark-org/infomark-ui einsehbar.
 
 ## Datenschutz und Datensicherheit
 
@@ -16,14 +16,11 @@ Der Schutz Ihrer Privatsphäre ist uns ein wichtiges Anliegen. Zum Schutz Ihrer 
 
 Die von uns ergriffenen Maßnahmen unterliegen dabei der stetigen Aktualisierung. Wir orientieren uns dabei an den gesetzlichen Vorgaben, Best-Practice-Ansätzen sowie technischen Entwicklungen.
 
-Im Folgenden unterrichten wir Sie über Art, Umfang und Zweck der Erhebung, Verarbeitung und Nutzung Ihrer Daten durch die Universität Tübingen, sofern dies aus dem Besuch oder der Nutzung der Funktionen unserer Webseiten resultiert.
+Im Folgenden unterrichten wir Sie über Art, Umfang und Zweck der Erhebung, Verarbeitung und Nutzung Ihrer Daten durch die [FILLME], sofern dies aus dem Besuch oder der Nutzung der Funktionen unserer Webseiten resultiert.
 
 Ansprechpartner für den Datenschutz
 ```
-Geschwister-Scholl-Platz
-72074 Tübingen
-E-Mail: datenschutz@uni-tuebingen.de
-Telefon: +49 70 71 29-0
+FILL ME
 ```
 
 
@@ -32,7 +29,7 @@ Grundsätzlich verfolgen wir das Ziel, die Erhebung, Verarbeitung und Nutzung vo
 
 Ebenfalls erheben wir wissentlich keine personenbezogenen Daten von Minderjährigen (= Personen unter 18 Jahren). In Fällen, in denen wir feststellen, dass uns personenbezogene Daten durch Minderjährige zur Verfügung gestellt wurden, löschen wir diese Daten umgehend, wenn sich kein nachgelagerter Prozess anschließt. Erziehungsberechtigten empfehlen wir, auf die Internet-Aktivitäten der in ihrer Obhut befindlichen Minderjährigen zu achten.
 
-Alle eingegebenen Daten werden ausschließlich auf Server der Universität Tübingen gespeichert bzw. verarbeitet.
+Alle eingegebenen Daten werden ausschließlich auf Server der [FILLME] gespeichert bzw. verarbeitet.
 
 ## Personenbezogene Daten
 Personenbezogene Daten sind gemäß Art. 4 DSGVO alle Informationen, die sich auf eine identifizierte oder identifizierbare natürliche Person beziehen. Dies sind z. B. Angaben wie der Vor- und Nachname, die Anschrift, die E-Mail-Adresse, die Telefon- oder Mobilfunknummer, aber i.d.R. auch die IP-Adresse.
@@ -40,8 +37,8 @@ Personenbezogene Daten sind gemäß Art. 4 DSGVO alle Informationen, die sich au
 ## Zweck der Datenverarbeitungen
 Sofern Sie uns Ihre Daten freiwillig zu den im Folgenden aufgeführten Zwecken mitteilen, verarbeiten und nutzen wir diese Daten ausschließlich für die Zwecke, für die Sie uns Ihre Daten zukommen lassen haben.
 
-Sofern Sie uns Ihre Daten über das Infomark-System zukommen lassen bzw. zum Abruf bereitstellen, verarbeiten und nutzen wir die von Ihnen zur Verfügung gestellten Daten ausschließlich zu den Zwecken, zu denen Sie uns die Daten zukommen lassen haben. Wir möchten Sie ausdrücklich darauf hinweisen, dass das Infomark-System ausschließlich auf Servern der Universität Tübingen betrieben wird und Ihre Daten nie diesen Server verlassen.
-Der Code zur Verarbeitung aller Daten ist als Open-Source Projekt unter https://github.com/infomark-org/infomark-backend frei einsehbar.
+Sofern Sie uns Ihre Daten über das Infomark-System zukommen lassen bzw. zum Abruf bereitstellen, verarbeiten und nutzen wir die von Ihnen zur Verfügung gestellten Daten ausschließlich zu den Zwecken, zu denen Sie uns die Daten zukommen lassen haben. Wir möchten Sie ausdrücklich darauf hinweisen, dass das Infomark-System ausschließlich auf Servern der [FILLME] betrieben wird und Ihre Daten nie diesen Server verlassen.
+Der Code zur Verarbeitung aller Daten ist als Open-Source Projekt unter https://github.com/infomark-org/infomark frei einsehbar.
 
 Aus technischer Sicht müssen folgenden Informationen im Server verarbeitet werden
 
@@ -59,7 +56,7 @@ Zur Überprüfung der Zulassungsberechtigung wird am Ende ihrere erreichbar Gesa
 
 Das Infomark-System verwendet die gespeicherten Zugriffs-Protokolldaten zur Identifikation und Nachverfolgung unzulässiger Zugriffsversuche und Zugriffe auf die Website. Die Server-Logfiles werden für die Dauer von 14 Tagen gespeichert und dann gelöscht.
 
-Wir erheben, verarbeiten und nutzen diese Daten ausschließlich zu den zuvor benannten statistischen und nicht kommerziellen Zwecken in anonymisierter oder pseudonymisierter Form, sodass ein Rückschluss auf Ihre Person verhindert wird. Zu keinem Zeitpunkt wird Material Dritter in die Webseite eingebunden, sodass erhobene Daten ausschließlich auf den Servern der Universität Tübingen gespeichert werden.
+Wir erheben, verarbeiten und nutzen diese Daten ausschließlich zu den zuvor benannten statistischen und nicht kommerziellen Zwecken in anonymisierter oder pseudonymisierter Form, sodass ein Rückschluss auf Ihre Person verhindert wird. Zu keinem Zeitpunkt wird Material Dritter in die Webseite eingebunden, sodass erhobene Daten ausschließlich auf den Servern der [FILLME] gespeichert werden.
 
 ## Cookies
 Das Infomark-System verwendet so genannte Sessions, welche Cookies benötigen. Cookies richten auf Ihrem Rechner keinen Schaden an und enthalten keine Viren. Cookies dienen dazu, den Login-Prozess sicherer zu machen. Cookies sind kleine Textdateien, die auf Ihrem Rechner abgelegt werden und die Ihr Browser speichert.
