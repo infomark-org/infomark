@@ -25,8 +25,8 @@ import (
 	"testing"
 
 	"github.com/franela/goblin"
-	"github.com/infomark-org/infomark-backend/database"
-	"github.com/infomark-org/infomark-backend/email"
+	"github.com/infomark-org/infomark/database"
+	"github.com/infomark-org/infomark/email"
 )
 
 func TestTaskRating(t *testing.T) {

@@ -25,7 +25,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/infomark-org/infomark-backend/configuration/bytefmt"
+	"github.com/infomark-org/infomark/configuration/bytefmt"
 	"gopkg.in/yaml.v2"
 )
 

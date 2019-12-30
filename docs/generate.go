@@ -9,9 +9,9 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi"
-	"github.com/infomark-org/infomark-backend/api/app"
-	"github.com/infomark-org/infomark-backend/configuration"
-	"github.com/infomark-org/infomark-backend/docs/swagger"
+	"github.com/infomark-org/infomark/api/app"
+	"github.com/infomark-org/infomark/configuration"
+	"github.com/infomark-org/infomark/docs/swagger"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 )

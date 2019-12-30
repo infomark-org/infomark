@@ -27,13 +27,13 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
-	"github.com/infomark-org/infomark-backend/api/helper"
-	"github.com/infomark-org/infomark-backend/auth"
-	"github.com/infomark-org/infomark-backend/auth/authenticate"
-	"github.com/infomark-org/infomark-backend/configuration"
-	"github.com/infomark-org/infomark-backend/email"
-	"github.com/infomark-org/infomark-backend/model"
-	"github.com/infomark-org/infomark-backend/symbol"
+	"github.com/infomark-org/infomark/api/helper"
+	"github.com/infomark-org/infomark/auth"
+	"github.com/infomark-org/infomark/auth/authenticate"
+	"github.com/infomark-org/infomark/configuration"
+	"github.com/infomark-org/infomark/email"
+	"github.com/infomark-org/infomark/model"
+	"github.com/infomark-org/infomark/symbol"
 )
 
 // UserResource specifies user management handler.

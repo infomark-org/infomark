@@ -26,9 +26,9 @@ import (
 
 	"github.com/franela/goblin"
 	redis "github.com/go-redis/redis"
-	"github.com/infomark-org/infomark-backend/auth"
-	"github.com/infomark-org/infomark-backend/configuration"
-	"github.com/infomark-org/infomark-backend/email"
+	"github.com/infomark-org/infomark/auth"
+	"github.com/infomark-org/infomark/configuration"
+	"github.com/infomark-org/infomark/email"
 
 	null "gopkg.in/guregu/null.v3"
 )

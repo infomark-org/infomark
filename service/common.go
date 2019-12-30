@@ -22,7 +22,7 @@ package service
 import (
 	"os"
 
-	"github.com/infomark-org/infomark-backend/configuration"
+	"github.com/infomark-org/infomark/configuration"
 
 	"github.com/sirupsen/logrus"
 	"github.com/streadway/amqp"

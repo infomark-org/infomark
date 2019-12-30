@@ -31,8 +31,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/infomark-org/infomark-backend/configuration"
-	"github.com/infomark-org/infomark-backend/configuration/bytefmt"
+	"github.com/infomark-org/infomark/configuration"
+	"github.com/infomark-org/infomark/configuration/bytefmt"
 )
 
 // FaileCarrier is a unified way to handle uploads and downloads of different

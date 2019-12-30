@@ -25,10 +25,10 @@ import (
 	"log"
 
 	"github.com/franela/goblin"
-	"github.com/infomark-org/infomark-backend/auth"
-	"github.com/infomark-org/infomark-backend/configuration"
-	"github.com/infomark-org/infomark-backend/configuration/bytefmt"
-	"github.com/infomark-org/infomark-backend/configuration/fs"
+	"github.com/infomark-org/infomark/auth"
+	"github.com/infomark-org/infomark/configuration"
+	"github.com/infomark-org/infomark/configuration/bytefmt"
+	"github.com/infomark-org/infomark/configuration/fs"
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v2"
 

@@ -23,7 +23,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/infomark-org/infomark-backend/configuration"
+	"github.com/infomark-org/infomark/configuration"
 	"github.com/spf13/cobra"
 )
 

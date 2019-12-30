@@ -30,13 +30,13 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/infomark-org/infomark-backend/api/app"
-	"github.com/infomark-org/infomark-backend/api/helper"
-	"github.com/infomark-org/infomark-backend/api/shared"
-	"github.com/infomark-org/infomark-backend/configuration"
-	"github.com/infomark-org/infomark-backend/service"
-	"github.com/infomark-org/infomark-backend/symbol"
-	"github.com/infomark-org/infomark-backend/tape"
+	"github.com/infomark-org/infomark/api/app"
+	"github.com/infomark-org/infomark/api/helper"
+	"github.com/infomark-org/infomark/api/shared"
+	"github.com/infomark-org/infomark/configuration"
+	"github.com/infomark-org/infomark/service"
+	"github.com/infomark-org/infomark/symbol"
+	"github.com/infomark-org/infomark/tape"
 	"github.com/sirupsen/logrus"
 )
 

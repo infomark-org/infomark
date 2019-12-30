@@ -23,7 +23,7 @@ import (
 	"net/http"
 
 	"github.com/go-chi/render"
-	"github.com/infomark-org/infomark-backend/model"
+	"github.com/infomark-org/infomark/model"
 )
 
 // UserEnrollmentResponse is the response payload for account management.

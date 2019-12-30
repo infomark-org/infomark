@@ -26,7 +26,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/infomark-org/infomark-backend/model"
+	"github.com/infomark-org/infomark/model"
 )
 
 // Email contains all information to use sendmail

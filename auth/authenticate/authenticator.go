@@ -24,7 +24,7 @@ import (
 
 	"github.com/alexedwards/scs"
 	"github.com/go-chi/jwtauth"
-	"github.com/infomark-org/infomark-backend/configuration"
+	"github.com/infomark-org/infomark/configuration"
 )
 
 // var SessionManager *scs.Manager

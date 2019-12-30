@@ -25,12 +25,12 @@ import (
 	"log"
 	"os"
 
-	"github.com/infomark-org/infomark-backend/api/helper"
-	"github.com/infomark-org/infomark-backend/api/shared"
-	"github.com/infomark-org/infomark-backend/auth/authenticate"
-	"github.com/infomark-org/infomark-backend/configuration"
-	"github.com/infomark-org/infomark-backend/model"
-	"github.com/infomark-org/infomark-backend/service"
+	"github.com/infomark-org/infomark/api/helper"
+	"github.com/infomark-org/infomark/api/shared"
+	"github.com/infomark-org/infomark/auth/authenticate"
+	"github.com/infomark-org/infomark/configuration"
+	"github.com/infomark-org/infomark/model"
+	"github.com/infomark-org/infomark/service"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )

@@ -21,11 +21,11 @@ package app
 
 import (
 	"github.com/alexedwards/scs"
-	"github.com/infomark-org/infomark-backend/auth/authenticate"
-	"github.com/infomark-org/infomark-backend/auth/authorize"
-	"github.com/infomark-org/infomark-backend/database"
-	"github.com/infomark-org/infomark-backend/model"
-	"github.com/infomark-org/infomark-backend/symbol"
+	"github.com/infomark-org/infomark/auth/authenticate"
+	"github.com/infomark-org/infomark/auth/authorize"
+	"github.com/infomark-org/infomark/database"
+	"github.com/infomark-org/infomark/model"
+	"github.com/infomark-org/infomark/symbol"
 	"github.com/jmoiron/sqlx"
 )
 

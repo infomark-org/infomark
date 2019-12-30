@@ -21,7 +21,7 @@
 
 package main
 
-import "github.com/infomark-org/infomark-backend/cmd"
+import "github.com/infomark-org/infomark/cmd"
 
 func main() {
 	cmd.Execute()

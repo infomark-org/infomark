@@ -24,8 +24,8 @@ import (
 	"log"
 
 	"github.com/go-ozzo/ozzo-validation/is"
-	"github.com/infomark-org/infomark-backend/configuration"
-	"github.com/infomark-org/infomark-backend/model"
+	"github.com/infomark-org/infomark/configuration"
+	"github.com/infomark-org/infomark/model"
 	"github.com/spf13/cobra"
 	null "gopkg.in/guregu/null.v3"
 )

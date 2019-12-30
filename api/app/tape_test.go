@@ -24,9 +24,9 @@ import (
 
 	txdb "github.com/DATA-DOG/go-txdb"
 
-	"github.com/infomark-org/infomark-backend/auth/authenticate"
-	"github.com/infomark-org/infomark-backend/configuration"
-	otape "github.com/infomark-org/infomark-backend/tape"
+	"github.com/infomark-org/infomark/auth/authenticate"
+	"github.com/infomark-org/infomark/configuration"
+	otape "github.com/infomark-org/infomark/tape"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq" // need for Postgres
 )

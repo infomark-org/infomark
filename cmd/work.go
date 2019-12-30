@@ -22,9 +22,9 @@ package cmd
 import (
 	"log"
 
-	"github.com/infomark-org/infomark-backend/api"
-	background "github.com/infomark-org/infomark-backend/api/worker"
-	"github.com/infomark-org/infomark-backend/configuration"
+	"github.com/infomark-org/infomark/api"
+	background "github.com/infomark-org/infomark/api/worker"
+	"github.com/infomark-org/infomark/configuration"
 
 	"github.com/spf13/cobra"
 )

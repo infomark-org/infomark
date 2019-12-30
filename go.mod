@@ -1,4 +1,4 @@
-module github.com/infomark-org/infomark-backend
+module github.com/infomark-org/infomark
 
 require (
 	github.com/DATA-DOG/go-txdb v0.1.2

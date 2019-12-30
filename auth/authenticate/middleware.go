@@ -28,9 +28,9 @@ import (
 	"github.com/alexedwards/scs"
 	"github.com/go-chi/jwtauth"
 	"github.com/go-chi/render"
-	"github.com/infomark-org/infomark-backend/auth"
-	"github.com/infomark-org/infomark-backend/configuration"
-	"github.com/infomark-org/infomark-backend/symbol"
+	"github.com/infomark-org/infomark/auth"
+	"github.com/infomark-org/infomark/configuration"
+	"github.com/infomark-org/infomark/symbol"
 	"github.com/ulule/limiter/v3"
 
 	// "github.com/ulule/limiter/v3/drivers/store/memory"

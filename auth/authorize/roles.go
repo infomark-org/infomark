@@ -23,9 +23,9 @@ import (
 	"net/http"
 
 	"github.com/go-chi/render"
-	"github.com/infomark-org/infomark-backend/auth"
-	"github.com/infomark-org/infomark-backend/auth/authenticate"
-	"github.com/infomark-org/infomark-backend/symbol"
+	"github.com/infomark-org/infomark/auth"
+	"github.com/infomark-org/infomark/auth/authenticate"
+	"github.com/infomark-org/infomark/symbol"
 )
 
 type CourseRole int32

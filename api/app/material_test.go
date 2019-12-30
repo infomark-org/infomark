@@ -28,10 +28,10 @@ import (
 	"time"
 
 	"github.com/franela/goblin"
-	"github.com/infomark-org/infomark-backend/api/helper"
-	"github.com/infomark-org/infomark-backend/auth/authorize"
-	"github.com/infomark-org/infomark-backend/configuration"
-	"github.com/infomark-org/infomark-backend/email"
+	"github.com/infomark-org/infomark/api/helper"
+	"github.com/infomark-org/infomark/auth/authorize"
+	"github.com/infomark-org/infomark/configuration"
+	"github.com/infomark-org/infomark/email"
 )
 
 func TestMaterial(t *testing.T) {

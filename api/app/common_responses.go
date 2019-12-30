@@ -22,7 +22,7 @@ package app
 import (
 	"net/http"
 
-	"github.com/infomark-org/infomark-backend/symbol"
+	"github.com/infomark-org/infomark/symbol"
 )
 
 // RawResponse is the response payload for course management.

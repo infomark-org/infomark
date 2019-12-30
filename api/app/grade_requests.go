@@ -24,7 +24,7 @@ import (
 	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation"
-	"github.com/infomark-org/infomark-backend/symbol"
+	"github.com/infomark-org/infomark/symbol"
 )
 
 // GradeRequest is the request payload for submission management.

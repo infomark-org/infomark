@@ -25,10 +25,10 @@ import (
 	"strconv"
 
 	"github.com/go-chi/render"
-	"github.com/infomark-org/infomark-backend/api/helper"
-	"github.com/infomark-org/infomark-backend/auth/authorize"
-	"github.com/infomark-org/infomark-backend/configuration"
-	"github.com/infomark-org/infomark-backend/model"
+	"github.com/infomark-org/infomark/api/helper"
+	"github.com/infomark-org/infomark/auth/authorize"
+	"github.com/infomark-org/infomark/configuration"
+	"github.com/infomark-org/infomark/model"
 )
 
 // .............................................................................

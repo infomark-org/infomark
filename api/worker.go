@@ -23,9 +23,9 @@ import (
 	"os"
 	"os/signal"
 
-	background "github.com/infomark-org/infomark-backend/api/worker"
-	"github.com/infomark-org/infomark-backend/configuration"
-	"github.com/infomark-org/infomark-backend/service"
+	background "github.com/infomark-org/infomark/api/worker"
+	"github.com/infomark-org/infomark/configuration"
+	"github.com/infomark-org/infomark/service"
 	"github.com/sirupsen/logrus"
 )
 

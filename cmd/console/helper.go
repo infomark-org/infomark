@@ -23,8 +23,8 @@ import (
 	"log"
 	"strconv"
 
-	"github.com/infomark-org/infomark-backend/api/app"
-	"github.com/infomark-org/infomark-backend/configuration"
+	"github.com/infomark-org/infomark/api/app"
+	"github.com/infomark-org/infomark/configuration"
 	"github.com/jmoiron/sqlx"
 )
 

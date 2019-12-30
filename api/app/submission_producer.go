@@ -20,8 +20,8 @@
 package app
 
 import (
-	"github.com/infomark-org/infomark-backend/configuration"
-	"github.com/infomark-org/infomark-backend/service"
+	"github.com/infomark-org/infomark/configuration"
+	"github.com/infomark-org/infomark/service"
 )
 
 // Producer is interface to pipe the workload over AMPQ to the backend workers

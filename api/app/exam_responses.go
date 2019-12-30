@@ -22,7 +22,7 @@ import (
 	"time"
 
 	"github.com/go-chi/render"
-	"github.com/infomark-org/infomark-backend/model"
+	"github.com/infomark-org/infomark/model"
 )
 
 // ExamResponse is the response payload for course management.

@@ -25,9 +25,9 @@ import (
 	"testing"
 
 	"github.com/franela/goblin"
-	"github.com/infomark-org/infomark-backend/api/helper"
-	"github.com/infomark-org/infomark-backend/email"
-	"github.com/infomark-org/infomark-backend/model"
+	"github.com/infomark-org/infomark/api/helper"
+	"github.com/infomark-org/infomark/email"
+	"github.com/infomark-org/infomark/model"
 )
 
 func TestUser(t *testing.T) {

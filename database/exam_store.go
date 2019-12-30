@@ -18,7 +18,7 @@
 package database
 
 import (
-	"github.com/infomark-org/infomark-backend/model"
+	"github.com/infomark-org/infomark/model"
 	"github.com/jmoiron/sqlx"
 )
 

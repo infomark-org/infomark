@@ -28,8 +28,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/infomark-org/infomark-backend/configuration"
-	"github.com/infomark-org/infomark-backend/model"
+	"github.com/infomark-org/infomark/configuration"
+	"github.com/infomark-org/infomark/model"
 	"github.com/lib/pq"
 	"github.com/spf13/cobra"
 )

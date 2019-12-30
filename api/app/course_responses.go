@@ -24,7 +24,7 @@ import (
 	"time"
 
 	"github.com/go-chi/render"
-	"github.com/infomark-org/infomark-backend/model"
+	"github.com/infomark-org/infomark/model"
 	null "gopkg.in/guregu/null.v3"
 )
 

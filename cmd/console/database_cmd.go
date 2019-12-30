@@ -28,9 +28,9 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/infomark-org/infomark-backend/api/helper"
-	"github.com/infomark-org/infomark-backend/configuration"
-	"github.com/infomark-org/infomark-backend/migration"
+	"github.com/infomark-org/infomark/api/helper"
+	"github.com/infomark-org/infomark/configuration"
+	"github.com/infomark-org/infomark/migration"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 	"github.com/sirupsen/logrus"

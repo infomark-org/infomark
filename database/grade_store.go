@@ -20,8 +20,8 @@
 package database
 
 import (
-	"github.com/infomark-org/infomark-backend/model"
-	"github.com/infomark-org/infomark-backend/symbol"
+	"github.com/infomark-org/infomark/model"
+	"github.com/infomark-org/infomark/symbol"
 	"github.com/jmoiron/sqlx"
 )
 

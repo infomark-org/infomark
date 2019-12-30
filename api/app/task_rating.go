@@ -23,9 +23,9 @@ import (
 	"net/http"
 
 	"github.com/go-chi/render"
-	"github.com/infomark-org/infomark-backend/auth/authenticate"
-	"github.com/infomark-org/infomark-backend/model"
-	"github.com/infomark-org/infomark-backend/symbol"
+	"github.com/infomark-org/infomark/auth/authenticate"
+	"github.com/infomark-org/infomark/model"
+	"github.com/infomark-org/infomark/symbol"
 )
 
 // TaskRatingResource specifies TaskRating management handler.

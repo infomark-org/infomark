@@ -26,8 +26,8 @@ import (
 	"time"
 
 	"github.com/go-chi/render"
-	"github.com/infomark-org/infomark-backend/auth/authorize"
-	"github.com/infomark-org/infomark-backend/model"
+	"github.com/infomark-org/infomark/auth/authorize"
+	"github.com/infomark-org/infomark/model"
 )
 
 // SheetResponse is the response payload for Sheet management.
