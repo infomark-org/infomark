@@ -75,7 +75,6 @@ type PathsConfiguration struct {
 	Uploads        string `yaml:"uploads"`
 	Common         string `yaml:"common"`
 	GeneratedFiles string `yaml:"generated_files"`
-	Fixtures       string `yaml:"fixtures"`
 }
 
 type ServerConfigurationSchema struct {
@@ -85,6 +84,7 @@ type ServerConfigurationSchema struct {
 		LoginID     int64  `yaml:"login_id"`
 		LoginIsRoot bool   `yaml:"login_is_root"`
 		LogLevel    string `yaml:"log_level"`
+		Fixtures    string `yaml:"fixtures"`
 	} `yaml:"debugging"`
 	HTTP struct {
 		UseHTTPS bool `yaml:"use_https"`

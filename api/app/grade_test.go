@@ -126,7 +126,7 @@ func TestGrade(t *testing.T) {
 
 			defer hnd.Delete()
 			// now file exists
-			src := fmt.Sprintf("%s/empty.zip", configuration.Configuration.Server.Paths.Fixtures)
+			src := fmt.Sprintf("%s/empty.zip", configuration.Configuration.Server.Debugging.Fixtures)
 			dest := fmt.Sprintf("%s/submissions/%s.zip", configuration.Configuration.Server.Paths.Uploads, strconv.FormatInt(gradeActual.SubmissionID, 10))
 			copyFile(src, dest)
 

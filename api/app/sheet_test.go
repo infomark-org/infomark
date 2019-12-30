@@ -168,7 +168,7 @@ func TestSheet(t *testing.T) {
 
 			// no file so far
 			g.Assert(helper.NewSheetFileHandle(1).Exists()).Equal(false)
-			filename := fmt.Sprintf("%s/empty.zip", configuration.Configuration.Server.Paths.Fixtures)
+			filename := fmt.Sprintf("%s/empty.zip", configuration.Configuration.Server.Debugging.Fixtures)
 
 			// students
 			w, err := tape.Upload("/api/v1/courses/1/sheets/1/file", filename, "application/zip", studentJWT)

@@ -310,7 +310,7 @@ func TestMaterial(t *testing.T) {
 
 			// no file so far
 			g.Assert(helper.NewMaterialFileHandle(1).Exists()).Equal(false)
-			filename := fmt.Sprintf("%s/empty.zip", configuration.Configuration.Server.Paths.Fixtures)
+			filename := fmt.Sprintf("%s/empty.zip", configuration.Configuration.Server.Debugging.Fixtures)
 
 			// students
 			w, err := tape.Upload("/api/v1/courses/1/materials/1/file", filename, "application/zip", studentJWT)
@@ -338,7 +338,7 @@ func TestMaterial(t *testing.T) {
 
 		g.It("Should upload material file (zip)", func() {
 			defer helper.NewMaterialFileHandle(1).Delete()
-			filename := fmt.Sprintf("%s/empty.zip", configuration.Configuration.Server.Paths.Fixtures)
+			filename := fmt.Sprintf("%s/empty.zip", configuration.Configuration.Server.Debugging.Fixtures)
 			// admin
 			w, err := tape.Upload("/api/v1/courses/1/materials/1/file", filename, "application/zip", noAdminJWT)
 			g.Assert(err).Equal(nil)
@@ -363,7 +363,7 @@ func TestMaterial(t *testing.T) {
 
 		g.It("Should upload material file (pdf)", func() {
 			defer helper.NewMaterialFileHandle(1).Delete()
-			filename := fmt.Sprintf("%s/empty.pdf", configuration.Configuration.Server.Paths.Fixtures)
+			filename := fmt.Sprintf("%s/empty.pdf", configuration.Configuration.Server.Debugging.Fixtures)
 			// admin
 			w, err := tape.Upload("/api/v1/courses/1/materials/1/file", filename, "application/pdf", noAdminJWT)
 			g.Assert(err).Equal(nil)

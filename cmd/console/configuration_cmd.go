@@ -90,6 +90,7 @@ func GenerateExampleConfiguration(domain string, root_path string) *configuratio
 	config.Server.Debugging.LoginID = int64(1)
 	config.Server.Debugging.LoginIsRoot = false
 	config.Server.Debugging.LogLevel = "debug"
+	config.Server.Debugging.Fixtures = root_path + "/fixtures"
 
 	config.Server.DistributeJobs = true
 
@@ -129,7 +130,6 @@ func GenerateExampleConfiguration(domain string, root_path string) *configuratio
 	config.Server.Paths.Uploads = root_path + "/uploads"
 	config.Server.Paths.Common = root_path + "/common"
 	config.Server.Paths.GeneratedFiles = root_path + "/generated_files"
-	config.Server.Paths.Fixtures = root_path + "/fixtures"
 
 	config.Worker.Version = config.Server.Version
 	config.Worker.Services.RabbitMQ = config.Server.Services.RabbitMQ
@@ -182,7 +182,7 @@ var TestConfiguration = &cobra.Command{
 			db.Close()
 		}
 
-		// Try Redis
+		// Try to connect to Redis
 		option, err := redis.ParseURL(config.Server.RedisURL())
 		showResult(report, err, "test redis url")
 
@@ -195,8 +195,8 @@ var TestConfiguration = &cobra.Command{
 				redisClient.Close()
 			}
 		}
-
 		report.EndDescribe()
+
 		report.BeginDescribe("Test configuration paths")
 		err = fs.DirExists(config.Server.Paths.Common)
 		showResult(report, err, "common path readable")
@@ -207,6 +207,9 @@ var TestConfiguration = &cobra.Command{
 		err = fs.IsDirWriteable(config.Server.Paths.GeneratedFiles)
 		showResult(report, err, "generated_files path writeable")
 
+		privacyFile := fmt.Sprintf("%s/privacy_statement.md", config.Server.Paths.Common)
+		err = fs.FileExists(privacyFile)
+		showResult(report, err, fmt.Sprintf("Read privacy Statement from %s", privacyFile))
 		report.EndDescribe()
 	},
 }

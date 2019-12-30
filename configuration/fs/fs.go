@@ -45,6 +45,18 @@ func DirExists(dir string) error {
 	}
 }
 
+func FileExists(file string) error {
+	if stat, err := os.Stat(file); err != nil {
+		return err
+	} else {
+		if !stat.IsDir() {
+			return nil
+		}
+		return fmt.Errorf("File %v does not exists", file)
+
+	}
+}
+
 func IsDirWriteable(dir string) error {
 	f := filepath.Join(dir, ".check_if_writeable")
 	if err := ioutil.WriteFile(f, []byte(""), PrivateFileMode); err != nil {

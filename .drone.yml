@@ -96,7 +96,6 @@ steps:
   - ls infomark -larth
   - rm infomark
   - go build
-  - mv infomark-backend infomark
   - ls infomark -larth
   environment:
     GOPROXY: https://proxy.golang.org
@@ -153,6 +152,6 @@ services:
 
 ---
 kind: signature
-hmac: cf27858f6349bb3df9711f0dcd1abe40d859ba3e2c2f153e6a405c8742dacd65
+hmac: 29e24a3bd0b40cc6c07dc57cb59a6e13f43e867dc2e26eaf72f4a258bb5ed18f
 
 ...

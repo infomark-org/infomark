@@ -299,7 +299,7 @@ func TestAccount(t *testing.T) {
 			g.Assert(userReturned.AvatarURL.Valid).Equal(false)
 
 			// upload avatar
-			avatarFilename := fmt.Sprintf("%s/default-avatar.jpg", configuration.Configuration.Server.Paths.Fixtures)
+			avatarFilename := fmt.Sprintf("%s/default-avatar.jpg", configuration.Configuration.Server.Debugging.Fixtures)
 			w, err = tape.Upload("/api/v1/account/avatar", avatarFilename, "image/jpg", adminJWT)
 			g.Assert(err).Equal(nil)
 			g.Assert(w.Code).Equal(http.StatusOK)
@@ -342,7 +342,7 @@ func TestAccount(t *testing.T) {
 			g.Assert(userReturned.AvatarURL.Valid).Equal(false)
 
 			// upload avatar
-			avatarFilename := fmt.Sprintf("%s/default-avatar.png", configuration.Configuration.Server.Paths.Fixtures)
+			avatarFilename := fmt.Sprintf("%s/default-avatar.png", configuration.Configuration.Server.Debugging.Fixtures)
 			w, err = tape.Upload("/api/v1/account/avatar", avatarFilename, "image/png", adminJWT)
 			g.Assert(err).Equal(nil)
 			g.Assert(w.Code).Equal(http.StatusOK)
@@ -410,7 +410,7 @@ func TestAccount(t *testing.T) {
 			g.Assert(helper.NewAvatarFileHandle(1).Exists()).Equal(false)
 
 			// upload avatar
-			avatarFilename := fmt.Sprintf("%s/default-avatar.jpg", configuration.Configuration.Server.Paths.Fixtures)
+			avatarFilename := fmt.Sprintf("%s/default-avatar.jpg", configuration.Configuration.Server.Debugging.Fixtures)
 			w, err := tape.Upload("/api/v1/account/avatar", avatarFilename, "image/jpg", noAdminJWT)
 			g.Assert(err).Equal(nil)
 			g.Assert(w.Code).Equal(http.StatusOK)

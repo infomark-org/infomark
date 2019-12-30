@@ -5,6 +5,7 @@ server:
     login_id: 1
     login_is_root: false
     log_level: debug
+    fixtures: /path/to/fixtures
   http:
     use_https: false
     host: localhost
@@ -61,7 +62,6 @@ server:
     uploads: /path/to/uploads
     common: /path/to/common
     generated_files: /path/to/generated_files
-    fixtures: /path/to/fixtures
 worker:
   version: 1
   services:

@@ -80,7 +80,7 @@ func TestSubmission(t *testing.T) {
 			// no files so far
 			g.Assert(hnd.Exists()).Equal(false)
 
-			src := fmt.Sprintf("%s/empty.zip", configuration.Configuration.Server.Paths.Fixtures)
+			src := fmt.Sprintf("%s/empty.zip", configuration.Configuration.Server.Debugging.Fixtures)
 			copyFile(src, hnd.Path())
 
 			g.Assert(hnd.Exists()).Equal(true)
@@ -128,7 +128,7 @@ func TestSubmission(t *testing.T) {
 			g.Assert(w.Code).Equal(http.StatusNotFound)
 
 			// upload
-			filename := fmt.Sprintf("%s/empty.zip", configuration.Configuration.Server.Paths.Fixtures)
+			filename := fmt.Sprintf("%s/empty.zip", configuration.Configuration.Server.Debugging.Fixtures)
 			w, err = tape.Upload("/api/v1/courses/1/tasks/1/submission", filename, "application/zip", studentJWT)
 			g.Assert(err).Equal(nil)
 			g.Assert(w.Code).Equal(http.StatusOK)
@@ -174,7 +174,7 @@ func TestSubmission(t *testing.T) {
 			g.Assert(w.Code).Equal(http.StatusNotFound)
 
 			// upload
-			filename := fmt.Sprintf("%s/empty.zip", configuration.Configuration.Server.Paths.Fixtures)
+			filename := fmt.Sprintf("%s/empty.zip", configuration.Configuration.Server.Debugging.Fixtures)
 			w, err = tape.Upload("/api/v1/courses/1/tasks/1/submission", filename, "application/zip", studentJWT)
 
 			g.Assert(err).Equal(nil)
@@ -208,7 +208,7 @@ func TestSubmission(t *testing.T) {
 			g.Assert(helper.NewSubmissionFileHandle(3001).Exists()).Equal(false)
 
 			// upload
-			filename := fmt.Sprintf("%s/empty.zip", configuration.Configuration.Server.Paths.Fixtures)
+			filename := fmt.Sprintf("%s/empty.zip", configuration.Configuration.Server.Debugging.Fixtures)
 			w, err := tape.Upload("/api/v1/courses/1/tasks/1/submission", filename, "application/zip", studentJWT)
 			g.Assert(err).Equal(nil)
 			g.Assert(w.Code).Equal(http.StatusOK)
@@ -242,7 +242,7 @@ func TestSubmission(t *testing.T) {
 			g.Assert(helper.NewSubmissionFileHandle(3001).Exists()).Equal(false)
 
 			// upload
-			filename := fmt.Sprintf("%s/empty.zip", configuration.Configuration.Server.Paths.Fixtures)
+			filename := fmt.Sprintf("%s/empty.zip", configuration.Configuration.Server.Debugging.Fixtures)
 			w, err := tape.Upload("/api/v1/courses/1/tasks/1/submission", filename, "application/zip", studentJWT)
 			g.Assert(err).Equal(nil)
 			g.Assert(w.Code).Equal(http.StatusBadRequest)
@@ -285,7 +285,7 @@ func TestSubmission(t *testing.T) {
 			g.Assert(err).Equal(nil)
 
 			// upload
-			filename := fmt.Sprintf("%s/empty.zip", configuration.Configuration.Server.Paths.Fixtures)
+			filename := fmt.Sprintf("%s/empty.zip", configuration.Configuration.Server.Debugging.Fixtures)
 			w, err = tape.Upload("/api/v1/courses/1/tasks/1/submission", filename, "application/zip", studentJWT)
 			g.Assert(err).Equal(nil)
 			g.Assert(w.Code).Equal(http.StatusOK)
@@ -330,7 +330,7 @@ func TestSubmission(t *testing.T) {
 			g.Assert(err).Equal(nil)
 
 			// upload
-			filename := fmt.Sprintf("%s/empty.zip", configuration.Configuration.Server.Paths.Fixtures)
+			filename := fmt.Sprintf("%s/empty.zip", configuration.Configuration.Server.Debugging.Fixtures)
 			w, err := tape.Upload("/api/v1/courses/1/tasks/1/submission", filename, "application/zip", studentJWT)
 			g.Assert(err).Equal(nil)
 			g.Assert(w.Code).Equal(http.StatusOK)
@@ -378,7 +378,7 @@ func TestSubmission(t *testing.T) {
 			g.Assert(w.Code).Equal(http.StatusNotFound)
 
 			// upload
-			filename := fmt.Sprintf("%s/empty.zip", configuration.Configuration.Server.Paths.Fixtures)
+			filename := fmt.Sprintf("%s/empty.zip", configuration.Configuration.Server.Debugging.Fixtures)
 			params := map[string]string{
 				"user_id": "112",
 			}

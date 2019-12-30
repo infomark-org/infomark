@@ -169,7 +169,7 @@ func TestTask(t *testing.T) {
 			g.Assert(w.Code).Equal(http.StatusNotFound)
 
 			// public test
-			filename := fmt.Sprintf("%s/empty.zip", configuration.Configuration.Server.Paths.Fixtures)
+			filename := fmt.Sprintf("%s/empty.zip", configuration.Configuration.Server.Debugging.Fixtures)
 			w, err := tape.Upload("/api/v1/courses/1/tasks/1/public_file", filename, "application/zip", adminJWT)
 			g.Assert(err).Equal(nil)
 			g.Assert(w.Code).Equal(http.StatusOK)
@@ -200,7 +200,7 @@ func TestTask(t *testing.T) {
 			g.Assert(w.Code).Equal(http.StatusNotFound)
 
 			// public test
-			filename := fmt.Sprintf("%s/empty.zip", configuration.Configuration.Server.Paths.Fixtures)
+			filename := fmt.Sprintf("%s/empty.zip", configuration.Configuration.Server.Debugging.Fixtures)
 			w, err := tape.Upload("/api/v1/courses/1/tasks/1/private_file", filename, "application/zip", adminJWT)
 			g.Assert(err).Equal(nil)
 			g.Assert(w.Code).Equal(http.StatusOK)

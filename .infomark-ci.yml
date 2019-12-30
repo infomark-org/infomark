@@ -5,6 +5,7 @@ server:
     user_id: 1
     user_is_root: false
     log_level: debug
+    fixtures: /drone/src/files/fixtures
   http:
     use_https: false
     port: 3000
@@ -60,7 +61,6 @@ server:
     uploads: /drone/src/files/uploads
     common: /drone/src/files/common
     generated_files: /drone/src/files/generated_files
-    fixtures: /drone/src/files/fixtures
 worker:
   version: 1
   services:
