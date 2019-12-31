@@ -6,6 +6,7 @@ require (
 	github.com/alexedwards/scs v1.4.0
 	github.com/asaskevich/govalidator v0.0.0-20180720115003-f9ffefc3facf // indirect
 	github.com/coreos/go-semver v0.2.0
+	github.com/creasty/defaults v1.3.0
 	github.com/davecgh/go-spew v1.1.1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/docker/docker v0.7.3-0.20190817195342-4760db040282

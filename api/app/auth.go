@@ -209,13 +209,18 @@ func (rs *AuthResource) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// fmt.Println(potentialUser.ConfirmEmailToken)
-	// is the email address confirmed?
-	if potentialUser.ConfirmEmailToken.Valid {
-		// Valid is true if String is not NULL
-		// confirm token `potentialUser.ConfirmEmailToken.String` exists
-		render.Render(w, r, ErrBadRequestWithDetails(errors.New("email not confirmed")))
-		return
+	// Some edge-cases exists, where we do not need to verify the email.
+	// In the public demo, user can register as students and get directly a
+	// confirmed account.
+	if configuration.Configuration.Server.Authentication.Email.Verify {
+		// fmt.Println(potentialUser.ConfirmEmailToken)
+		// is the email address confirmed?
+		if potentialUser.ConfirmEmailToken.Valid {
+			// Valid is true if String is not NULL
+			// confirm token `potentialUser.ConfirmEmailToken.String` exists
+			render.Render(w, r, ErrBadRequestWithDetails(errors.New("email not confirmed")))
+			return
+		}
 	}
 
 	// user passed all tests

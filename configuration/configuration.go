@@ -25,6 +25,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/creasty/defaults"
 	"github.com/infomark-org/infomark/configuration/bytefmt"
 	"gopkg.in/yaml.v2"
 )
@@ -42,6 +43,10 @@ func (config *RabbitMQConfiguration) RabbitMQURL() string {
 }
 
 type AuthenticationConfiguration struct {
+	Email struct {
+		Verify bool `yaml:"verify" default:"true"`
+	} `yaml:"email"`
+
 	JWT struct {
 		Secret        string        `yaml:"secret"`
 		AccessExpiry  time.Duration `yaml:"access_expiry"`
@@ -83,17 +88,17 @@ type PathsConfiguration struct {
 type ServerConfigurationSchema struct {
 	Version   int `json:"version"`
 	Debugging struct {
-		Enabled     bool   `yaml:"enabled"`
+		Enabled     bool   `yaml:"enabled" default:"false"`
 		LoginID     int64  `yaml:"login_id"`
 		LoginIsRoot bool   `yaml:"login_is_root"`
 		LogLevel    string `yaml:"log_level"`
 		Fixtures    string `yaml:"fixtures"`
 	} `yaml:"debugging"`
 	HTTP struct {
-		UseHTTPS bool `yaml:"use_https"`
+		UseHTTPS bool `yaml:"use_https"  default:"false"`
 		// Host     string `yaml:"host"`
-		Port     int    `yaml:"port"`
-		Domain   string `yaml:"domain"`
+		Port     int    `yaml:"port"  default:"80"`
+		Domain   string `yaml:"domain"  default:"sub.domain.com"`
 		Timeouts struct {
 			Read  time.Duration `yaml:"read"`
 			Write time.Duration `yaml:"write"`
@@ -212,4 +217,15 @@ func MustFindAndReadConfiguration() {
 		panic(err)
 	}
 
+}
+
+func (s *ConfigurationSchema) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	defaults.Set(s)
+
+	type plain ConfigurationSchema
+	if err := unmarshal((*plain)(s)); err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -21,6 +21,8 @@ server:
       max_avatar: 1mb
   distribute_jobs: true
   authentication:
+    email:
+      verify: true
     jwt:
       secret: a88938917314301f9ed4b1395acccfef925168307fcabff368e949303a91dd22
       access_expiry: 15m0s

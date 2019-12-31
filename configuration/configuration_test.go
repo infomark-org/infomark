@@ -37,6 +37,7 @@ func TestConfiguration(t *testing.T) {
 			g.Assert(config.Server.HTTP.Port).Equal(3000)
 			g.Assert(config.Server.HTTP.Domain).Equal("sub.domain.com")
 
+			g.Assert(config.Server.Authentication.Email.Verify).Equal(true)
 			g.Assert(config.Server.Debugging.Enabled).Equal(false)
 			g.Assert(config.Server.Debugging.LoginID).Equal(int64(1))
 			g.Assert(config.Server.Debugging.LoginIsRoot).Equal(false)
