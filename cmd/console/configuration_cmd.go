@@ -183,18 +183,16 @@ var TestConfiguration = &cobra.Command{
 		}
 
 		// Try to connect to Redis
-		option, err := redis.ParseURL(config.Server.RedisURL())
-		showResult(report, err, "test redis url")
+		option, _ := redis.ParseURL(config.Server.RedisURL())
+
+		redisClient := redis.NewClient(option)
+		_, err = redisClient.Ping().Result()
+		showResult(report, err, "connect to redis url")
 
 		if err == nil {
-			redisClient := redis.NewClient(option)
-			_, err := redisClient.Ping().Result()
-			showResult(report, err, "ping redis")
-
-			if err == nil {
-				redisClient.Close()
-			}
+			redisClient.Close()
 		}
+
 		report.EndDescribe()
 
 		report.BeginDescribe("Test configuration paths")

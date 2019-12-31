@@ -68,7 +68,10 @@ func (config *ServerConfigurationSchema) URL() string {
 	if config.HTTP.UseHTTPS {
 		protocoll = "https"
 	}
-	return fmt.Sprintf("%s://%v", protocoll, config.HTTP.Domain)
+	if (config.HTTP.Port == 80 && protocoll == "http") || (config.HTTP.Port == 443 && protocoll == "https") {
+		return fmt.Sprintf("%s://%v", protocoll, config.HTTP.Domain)
+	}
+	return fmt.Sprintf("%s://%v:%v", protocoll, config.HTTP.Domain, config.HTTP.Port)
 }
 
 type PathsConfiguration struct {

@@ -63,7 +63,7 @@ func NewServer(config *configuration.ServerConfigurationSchema) (*Server, error)
 	RunInit()
 
 	app.InitSubmissionProducer()
-	log.Info("configuring server...")
+	log.WithField("url", config.URL()).Info("configuring server...")
 
 	if config.SendEmail() {
 		log.WithFields(logrus.Fields{"path": config.Email.SendmailBinary}).Info("found sendmail")
