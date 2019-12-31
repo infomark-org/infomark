@@ -34,33 +34,26 @@ import (
 
 // DockerService contains all settings to talk to the docker api
 type DockerService struct {
-	// the context docker is relate to
-	Context context.Context
-	// client is the interface to the docker runtime
-	Client *client.Client
-	Cancel context.CancelFunc
+	Client  *client.Client
+	Timeout time.Duration
 }
 
 func NewDockerServiceWithTimeout(timeout time.Duration) *DockerService {
-	// ctx := context.Background()
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	// defer cancel()
 	cli, err := client.NewClientWithOpts(client.WithAPIVersionNegotiation())
 	if err != nil {
 		panic(err)
 	}
 
 	return &DockerService{
-		Context: ctx,
+		Timeout: timeout,
 		Client:  cli,
-		Cancel:  cancel,
 	}
 }
 
 // ListContainers lists all docker containers
 func (ds *DockerService) ListContainers() {
-
-	containers, err := ds.Client.ContainerList(ds.Context, types.ContainerListOptions{})
+	ctx := context.Background()
+	containers, err := ds.Client.ContainerList(ctx, types.ContainerListOptions{})
 	if err != nil {
 		panic(err)
 	}
@@ -73,8 +66,9 @@ func (ds *DockerService) ListContainers() {
 
 // ListImages lists all docker images
 func (ds *DockerService) ListImages() {
+	ctx := context.Background()
 
-	images, err := ds.Client.ImageList(ds.Context, types.ImageListOptions{})
+	images, err := ds.Client.ImageList(ctx, types.ImageListOptions{})
 	if err != nil {
 		panic(err)
 	}
@@ -93,13 +87,12 @@ func (ds *DockerService) ListImages() {
 
 // Pull pulls a docker image
 func (ds *DockerService) Pull(image string) (string, error) {
+	ctx := context.Background()
 	// image example: "docker.io/library/alpine"
-	outputReader, err := ds.Client.ImagePull(ds.Context, image, types.ImagePullOptions{})
+	outputReader, err := ds.Client.ImagePull(ctx, image, types.ImagePullOptions{})
 	if err != nil {
 		return "", err
 	}
-	// io.Copy(os.Stdout, reader)
-
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(outputReader)
 
@@ -114,15 +107,8 @@ func (ds *DockerService) Run(
 	frameworkZipFile string,
 	DockerMemoryBytes int64,
 ) (string, int64, error) {
-	// create some context for docker
-
-	// fmt.Println("imageName", imageName)
-	// fmt.Println("submissionZipFile", submissionZipFile)
-	// fmt.Println("frameworkZipFile", frameworkZipFile)
-
-	// submissionZipFile := "/home/patwie/git/github.com/infomark-org/infomark/infomark-backend/.local/simple_ci_runner/submission.zip"
-	// frameworkZipFile := "/home/patwie/git/github.com/infomark-org/infomark/infomark-backend/.local/simple_ci_runner/unittest.zip"
-	defer ds.Cancel()
+	ctx, cancel := context.WithTimeout(context.Background(), ds.Timeout)
+	defer cancel()
 	cmds := []string{}
 
 	cfg := &container.Config{
@@ -133,15 +119,20 @@ func (ds *DockerService) Run(
 		AttachStdout:    true,
 		AttachStderr:    true,
 		NetworkDisabled: true, // no network activity required
-		// StopTimeout:
 	}
+
+	// See https://docs.docker.com/config/containers/resource_constraints/#cpu
+	// Each Worker gets something equivalent to 1 core. If you have 4 cores, this
+	// will allow each worker to get 100% (eg. 25% per core).
+	cpu_maximum := int64(100000)
 
 	hostCfg := &container.HostConfig{
 		Resources: container.Resources{
-			Memory:     DockerMemoryBytes, // 200mb
+			CPUPeriod:  cpu_maximum,
+			CPUQuota:   cpu_maximum,
+			Memory:     DockerMemoryBytes,
 			MemorySwap: 0,
 		},
-		// AutoRemove: true,
 		Mounts: []mount.Mount{
 			{
 				ReadOnly: true,
@@ -158,21 +149,24 @@ func (ds *DockerService) Run(
 		},
 	}
 
-	resp, err := ds.Client.ContainerCreate(ds.Context, cfg, hostCfg, nil, "")
+	resp, err := ds.Client.ContainerCreate(ctx, cfg, hostCfg, nil, "")
 	if err != nil {
 		return "", 0, err
 	}
 
-	defer ds.Client.ContainerRemove(ds.Context, resp.ID, types.ContainerRemoveOptions{})
+	defer ds.Client.ContainerRemove(ctx, resp.ID, types.ContainerRemoveOptions{})
 
-	if err := ds.Client.ContainerStart(ds.Context, resp.ID, types.ContainerStartOptions{}); err != nil {
+	if err := ds.Client.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
 		return "", 0, err
 	}
 
-	statusCh, errCh := ds.Client.ContainerWait(ds.Context, resp.ID, "")
+	statusCh, errCh := ds.Client.ContainerWait(ctx, resp.ID, "")
 	select {
 	case err := <-errCh:
 		if errors.Is(err, context.DeadlineExceeded) {
+			// Sometimes the container survive and are still runnning.
+			// We kill these containers.
+			ds.Client.ContainerKill(context.Background(), resp.ID, "9")
 			return "Execution took to long", 0, nil
 
 		}
@@ -180,7 +174,7 @@ func (ds *DockerService) Run(
 	case <-statusCh:
 	}
 
-	outputReader, err := ds.Client.ContainerLogs(ds.Context, resp.ID, types.ContainerLogsOptions{ShowStdout: true})
+	outputReader, err := ds.Client.ContainerLogs(ctx, resp.ID, types.ContainerLogsOptions{ShowStdout: true})
 	if err != nil {
 		return "", 0, err
 	}
@@ -188,6 +182,5 @@ func (ds *DockerService) Run(
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(outputReader)
 
-	// io.Copy(os.Stdout, outputReader)
 	return buf.String(), 0, nil
 }
