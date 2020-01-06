@@ -32,6 +32,8 @@ import (
 
 // -----------------------------------------------------------------------------
 
+// CreateUserAccountRequest represents the incoming request from a registration
+// form.
 type CreateUserAccountRequest struct {
 	User *struct {
 		FirstName     string `json:"first_name" example:"Max"`
@@ -49,6 +51,7 @@ type CreateUserAccountRequest struct {
 	} `json:"account" required:"true"`
 }
 
+// Validate validates a CreateUserAccountRequest.
 func (body *CreateUserAccountRequest) Validate() error {
 
 	body.User.FirstName = strings.TrimSpace(body.User.FirstName)
@@ -129,6 +132,7 @@ func (body *CreateUserAccountRequest) Bind(r *http.Request) (err error) {
 	return body.Validate()
 }
 
+// AccountRequest is the request when a password/email update is requested.
 type AccountRequest struct {
 	Account *struct {
 		Email             string `json:"email" required:"false" example:"other@example.com"`

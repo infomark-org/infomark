@@ -62,12 +62,15 @@ func (body *ResetPasswordRequest) Bind(r *http.Request) error {
 }
 
 // -----------------------------------------------------------------------------
+
+// UpdatePasswordRequest is the request for a password reset.
 type UpdatePasswordRequest struct {
 	Email              string `json:"email" example:"test@uni-tuebingen.de"`
 	ResetPasswordToken string `json:"reset_password_token" example:"SDFOI34FZH4HUFH"`
 	PlainPassword      string `json:"plain_password" example:"test"`
 }
 
+// Bind preprocesses a UpdatePasswordRequest.
 func (body *UpdatePasswordRequest) Bind(r *http.Request) error {
 	body.Email = strings.TrimSpace(body.Email)
 	body.Email = strings.ToLower(body.Email)
@@ -80,11 +83,14 @@ func (body *UpdatePasswordRequest) Bind(r *http.Request) error {
 }
 
 // -----------------------------------------------------------------------------
+
+// ConfirmEmailRequest is the request for email verification.
 type ConfirmEmailRequest struct {
 	Email             string `json:"email" example:"test@uni-tuebingen.de"`
 	ConfirmEmailToken string `json:"confirmation_token" example:"SDFOI34FZH4HUFH"`
 }
 
+// Bind preprocesses a ConfirmEmailRequest.
 func (body *ConfirmEmailRequest) Bind(r *http.Request) error {
 	body.Email = strings.TrimSpace(body.Email)
 	body.Email = strings.ToLower(body.Email)

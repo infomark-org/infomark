@@ -29,6 +29,7 @@ import (
 	"github.com/davecgh/go-spew/spew"
 )
 
+// Struct is a representation of Go structs.
 type Struct struct {
 	Name        string
 	Description string
@@ -38,6 +39,7 @@ type Struct struct {
 	Position    token.Position
 }
 
+// Field is a representation of fields in Go structs.
 type Field struct {
 	Tag    *Tag
 	Type   ast.Expr
@@ -45,6 +47,7 @@ type Field struct {
 	Depth  int
 }
 
+// IdentString will preprend some white-space before the string.
 func IdentString(str string, ch int) string {
 	preSpace := strings.Repeat(" ", ch)
 	lines := strings.Split(str, "\n")
@@ -55,6 +58,7 @@ func IdentString(str string, ch int) string {
 	return strings.Join(lines, "\n")
 }
 
+// ParseField will parse a field from a GO struct.
 func ParseField(fset *token.FileSet, n ast.Node, field *ast.Field, depth int) (*Field, error) {
 	result := &Field{}
 	result.Type = field.Type
@@ -97,6 +101,7 @@ func ParseField(fset *token.FileSet, n ast.Node, field *ast.Field, depth int) (*
 	return result, nil
 }
 
+// ParseStruct will parse a struct in a GO implementation.
 func ParseStruct(fset *token.FileSet, n ast.Node, structDecl *ast.StructType, name string, depth int) (*Struct, error) {
 	fields := structDecl.Fields.List
 

@@ -42,11 +42,13 @@ func init() {
 
 }
 
+// SubmissionCmd is the command all submission related actions.
 var SubmissionCmd = &cobra.Command{
 	Use:   "submission",
 	Short: "Management of submission",
 }
 
+// SubmissionTriggerCmd will enqeue a submitted submission again into the testing queue.
 var SubmissionTriggerCmd = &cobra.Command{
 	Use:   "trigger [submissionID]",
 	Short: "put submission into testing queue",
@@ -109,6 +111,7 @@ var SubmissionTriggerCmd = &cobra.Command{
 	},
 }
 
+// SubmissionRunCmd will run the docker test locally and print the result to stdout.
 var SubmissionRunCmd = &cobra.Command{
 	Use:   "run [submissionID]",
 	Short: "run tests for a submission without writing to db",
@@ -206,11 +209,15 @@ var SubmissionRunCmd = &cobra.Command{
 	},
 }
 
+// SubmissionWithGradeID represents a submission and the gradeID.
 type SubmissionWithGradeID struct {
 	*model.Submission
 	GradeID int64 `db:"grade_id"`
 }
 
+// SubmissionTriggerAllCmd will enqeue all submission for a given task into
+// the testing queue. This is useful, when something in the testing framework
+// has changed (eg. bug in the solution or a test case).
 var SubmissionTriggerAllCmd = &cobra.Command{
 	Use:   "trigger_all [taskID] [kind]",
 	Short: "trigger_all tests all submissions for a given task",

@@ -24,28 +24,34 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+// MaterialStore is the store for materials (slides, additional material) for a
+// lecture.
 type MaterialStore struct {
 	db *sqlx.DB
 }
 
+// NewMaterialStore creates a new material store.
 func NewMaterialStore(db *sqlx.DB) *MaterialStore {
 	return &MaterialStore{
 		db: db,
 	}
 }
 
+// GetAll returns all materials in the database.
 func (s *MaterialStore) GetAll() ([]model.Material, error) {
 	p := []model.Material{}
 	err := s.db.Select(&p, "SELECT * FROM materials;")
 	return p, err
 }
 
-func (s *MaterialStore) Get(sheetID int64) (*model.Material, error) {
-	p := model.Material{ID: sheetID}
+// Get returns a material for a given id.
+func (s *MaterialStore) Get(materialID int64) (*model.Material, error) {
+	p := model.Material{ID: materialID}
 	err := s.db.Get(&p, "SELECT * FROM materials WHERE id = $1 LIMIT 1;", p.ID)
 	return &p, err
 }
 
+// Create creates a material for a given course.
 func (s *MaterialStore) Create(p *model.Material, courseID int64) (*model.Material, error) {
 
 	newID, err := Insert(s.db, "materials", p)
@@ -67,15 +73,18 @@ VALUES
 	return s.Get(newID)
 }
 
+// Update updates a given material. The id of the material should be in the material model.
 func (s *MaterialStore) Update(p *model.Material) error {
 	return Update(s.db, "materials", p.ID, p)
 }
 
-func (s *MaterialStore) Delete(sheetID int64) error {
-	return Delete(s.db, "materials", sheetID)
+// Delete deletes a material for a given id.
+func (s *MaterialStore) Delete(materialID int64) error {
+	return Delete(s.db, "materials", materialID)
 }
 
-func (s *MaterialStore) MaterialsOfCourse(courseID int64, requiredRole int) ([]model.Material, error) {
+// MaterialsOfCourse returns all materials for a given course, which are visible for the given role.
+func (s *MaterialStore) MaterialsOfCourse(courseID int64, givenRole int) ([]model.Material, error) {
 	p := []model.Material{}
 
 	err := s.db.Select(&p, `
@@ -89,10 +98,11 @@ WHERE
 AND
   m.required_role <= $2
 ORDER BY
-  m.lecture_at ASC;`, courseID, requiredRole)
+  m.lecture_at ASC;`, courseID, givenRole)
 	return p, err
 }
 
+// IdentifyCourseOfMaterial returns the course, which is associated with the material.
 func (s *MaterialStore) IdentifyCourseOfMaterial(sheetID int64) (*model.Course, error) {
 
 	course := &model.Course{}
