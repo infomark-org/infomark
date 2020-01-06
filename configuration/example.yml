@@ -8,9 +8,8 @@ server:
     fixtures: /path/to/fixtures
   http:
     use_https: false
-    host: localhost
-    port: 3000
-    domain: sub.domain.com
+    port: 2020
+    domain: localhost
     timeouts:
       read: 30s
       write: 30s

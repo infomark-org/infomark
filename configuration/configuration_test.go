@@ -34,8 +34,8 @@ func TestConfiguration(t *testing.T) {
 
 			config, err := ParseConfiguration("example.yml")
 			g.Assert(err).Equal(nil)
-			g.Assert(config.Server.HTTP.Port).Equal(3000)
-			g.Assert(config.Server.HTTP.Domain).Equal("sub.domain.com")
+			g.Assert(config.Server.HTTP.Port).Equal(2020)
+			g.Assert(config.Server.HTTP.Domain).Equal("localhost")
 
 			g.Assert(config.Server.Authentication.Email.Verify).Equal(true)
 			g.Assert(config.Server.Debugging.Enabled).Equal(false)

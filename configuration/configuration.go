@@ -95,10 +95,9 @@ type ServerConfigurationSchema struct {
 		Fixtures    string `yaml:"fixtures"`
 	} `yaml:"debugging"`
 	HTTP struct {
-		UseHTTPS bool `yaml:"use_https"  default:"false"`
-		// Host     string `yaml:"host"`
-		Port     int    `yaml:"port"  default:"80"`
-		Domain   string `yaml:"domain"  default:"sub.domain.com"`
+		UseHTTPS bool   `yaml:"use_https"  default:"false"`
+		Port     int    `yaml:"port"  default:"2020"`
+		Domain   string `yaml:"domain"  default:"localhost"`
 		Timeouts struct {
 			Read  time.Duration `yaml:"read"`
 			Write time.Duration `yaml:"write"`

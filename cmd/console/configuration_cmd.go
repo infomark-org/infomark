@@ -23,6 +23,9 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"os"
+	"path"
+	"path/filepath"
 
 	"github.com/franela/goblin"
 	"github.com/infomark-org/infomark/auth"
@@ -76,8 +79,7 @@ func GenerateExampleConfiguration(domain string, root_path string) *configuratio
 	config.Server.Version = 1
 
 	config.Server.HTTP.UseHTTPS = false
-	// config.Server.HTTP.Host = "localhost"
-	config.Server.HTTP.Port = 3000
+	config.Server.HTTP.Port = 2020
 	config.Server.HTTP.Domain = domain
 	config.Server.HTTP.Timeouts.Read = DurationFromString("30s")
 	config.Server.HTTP.Timeouts.Write = DurationFromString("30s")
@@ -145,7 +147,14 @@ var CreateConfiguration = &cobra.Command{
 	Short: "will create and print a configuration to stdout",
 	Args:  cobra.ExactArgs(0),
 	Run: func(cmd *cobra.Command, args []string) {
-		config := GenerateExampleConfiguration("sub.domain.com", "/path/to")
+
+		ex, err := os.Executable()
+		if err != nil {
+			log.Fatalf("error: %v", err)
+		}
+		exPath := path.Join(filepath.Dir(ex), "files")
+
+		config := GenerateExampleConfiguration("localhost", exPath)
 		serialized_config, err := yaml.Marshal(&config)
 		if err != nil {
 			log.Fatalf("error: %v", err)
@@ -157,6 +166,8 @@ var CreateConfiguration = &cobra.Command{
 func showResult(report goblin.DetailedReporter, err error, text string) {
 	if err != nil {
 		report.ItFailed(text)
+		report.BeginDescribe(err.Error())
+		report.EndDescribe()
 	} else {
 		report.ItPassed(text)
 	}
@@ -168,17 +179,24 @@ var TestConfiguration = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 
+		status_code := 0
+
 		report := goblin.DetailedReporter{}
 		report.SetTextFancier(&goblin.TerminalFancier{})
 		report.BeginDescribe("Test configuration services")
 
 		config, err := configuration.ParseConfiguration(args[0])
 		showResult(report, err, "read configuration from file")
+		if err != nil {
+			status_code = -1
+		}
 
 		// Try to connect to postgres
 		db, err := sqlx.Connect("postgres", config.Server.PostgresURL())
 		showResult(report, err, "connect to postgres db")
-		if err == nil {
+		if err != nil {
+			status_code = -1
+		} else {
 			db.Close()
 		}
 
@@ -188,8 +206,9 @@ var TestConfiguration = &cobra.Command{
 		redisClient := redis.NewClient(option)
 		_, err = redisClient.Ping().Result()
 		showResult(report, err, "connect to redis url")
-
-		if err == nil {
+		if err != nil {
+			status_code = -1
+		} else {
 			redisClient.Close()
 		}
 
@@ -198,17 +217,31 @@ var TestConfiguration = &cobra.Command{
 		report.BeginDescribe("Test configuration paths")
 		err = fs.DirExists(config.Server.Paths.Common)
 		showResult(report, err, "common path readable")
+		if err != nil {
+			status_code = -1
+		}
 
 		err = fs.IsDirWriteable(config.Server.Paths.Uploads)
 		showResult(report, err, "upload path writeable")
+		if err != nil {
+			status_code = -1
+		}
 
 		err = fs.IsDirWriteable(config.Server.Paths.GeneratedFiles)
 		showResult(report, err, "generated_files path writeable")
+		if err != nil {
+			status_code = -1
+		}
 
 		privacyFile := fmt.Sprintf("%s/privacy_statement.md", config.Server.Paths.Common)
 		err = fs.FileExists(privacyFile)
 		showResult(report, err, fmt.Sprintf("Read privacy Statement from %s", privacyFile))
+		if err != nil {
+			status_code = -1
+		}
 		report.EndDescribe()
+
+		os.Exit(status_code)
 	},
 }
 
