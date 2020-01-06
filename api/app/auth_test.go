@@ -54,7 +54,7 @@ func TestAuth(t *testing.T) {
 
 		g.BeforeEach(func() {
 			tape.BeforeEach()
-			tape.Router, _ = New(tape.DB, false)
+			tape.Router, _ = New(tape.DB, EmptyHandler(), false)
 			stores = NewStores(tape.DB)
 			_ = stores
 		})

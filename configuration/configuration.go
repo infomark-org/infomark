@@ -125,8 +125,11 @@ type ServerConfigurationSchema struct {
 			Host     string `yaml:"host"`
 			Port     int    `yaml:"port"`
 			Database int    `yaml:"database"`
-			// Connection string `yaml:"connection"`
 		} `yaml:"redis"`
+		Prometheus struct {
+			User     string `yaml:"user"`
+			Password string `yaml:"password"`
+		} `yaml:"prometheus"`
 		RabbitMQ RabbitMQConfiguration `yaml:"rabbit_mq"`
 		Postgres struct {
 			// Connection string `yaml:"connection"`

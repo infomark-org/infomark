@@ -52,6 +52,12 @@ func (t *Tape) NewJWTRequest(loginID int64, root bool) JWTRequest {
 	}
 }
 
+func EmptyHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(""))
+	})
+}
+
 type Tape struct {
 	otape.Tape
 	DB        *sqlx.DB
@@ -103,6 +109,6 @@ func (t *Tape) BeforeEach() {
 		panic(err)
 	}
 
-	t.Router, _ = New(t.DB, false)
+	t.Router, _ = New(t.DB, EmptyHandler(), false)
 
 }

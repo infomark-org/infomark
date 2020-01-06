@@ -47,6 +47,9 @@ server:
       host: redis_service
       port: 6379
       database: 0
+    prometheus:
+      user: prometheus_user
+      password: 3a267976f71fad9fa1f8e8d1ff0ad5032d40c93fc91b5d1201b3ca68376eb2ae
     rabbit_mq:
       host: rabbitmq_service
       port: 5672

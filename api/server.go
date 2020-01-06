@@ -81,12 +81,10 @@ func NewServer(config *configuration.ServerConfigurationSchema) (*Server, error)
 
 	migration.UpdateDatabase(db, log)
 
-	handler, err := app.New(db, true)
+	handler, err := app.New(db, promhttp.Handler(), true)
 	if err != nil {
 		return nil, err
 	}
-
-	handler.Handle("/metrics", promhttp.Handler())
 
 	srv := http.Server{
 		Addr:           config.HTTPAddr(),

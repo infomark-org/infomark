@@ -21,9 +21,15 @@ type Routes struct {
 	Path   string
 }
 
+func EmptyHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(""))
+	})
+}
+
 func GetAllRoutes() []*Routes {
 	db, _ := sqlx.Open("sqlite3", ":memory:")
-	r, _ := app.New(db, false)
+	r, _ := app.New(db, EmptyHandler(), false)
 
 	routes := []*Routes{}
 
@@ -127,7 +133,7 @@ func main() {
 	f.WriteString(fmt.Sprintf("      email: Patrick.Wieschollek@uni-tuebingen.de\n"))
 	f.WriteString(fmt.Sprintf("      url: https://uni-tuebingen.de\n"))
 	f.WriteString(fmt.Sprintf("servers:\n"))
-	f.WriteString(fmt.Sprintf("  - url: http://localhost:3000/api/v1\n"))
+	f.WriteString(fmt.Sprintf("  - url: http://localhost:2020/api/v1\n"))
 	f.WriteString(fmt.Sprintf("security:\n"))
 	f.WriteString(fmt.Sprintf("  - bearerAuth: []\n"))
 	f.WriteString(fmt.Sprintf("  - cookieAuth: []\n"))

@@ -20,6 +20,7 @@
 package app
 
 import (
+	"crypto/subtle"
 	"errors"
 	"fmt"
 	"io"
@@ -32,6 +33,7 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
 	"github.com/go-chi/render"
+	"github.com/infomark-org/infomark/auth"
 	"github.com/infomark-org/infomark/auth/authenticate"
 	"github.com/infomark-org/infomark/auth/authorize"
 	"github.com/infomark-org/infomark/configuration"
@@ -90,6 +92,34 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+func BasicAuthMiddleware(realm string, credentials map[string]string) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Add("WWW-Authenticate", fmt.Sprintf(`Basic realm="%s"`, realm))
+			username, password, ok := r.BasicAuth()
+			if !ok {
+				w.Header().Add("WWW-Authenticate", fmt.Sprintf(`Basic realm="%s"`, realm))
+				render.Render(w, r, auth.ErrUnauthenticated)
+				return
+			}
+			validPassword, userFound := credentials[username]
+			if !userFound {
+				w.Header().Add("WWW-Authenticate", fmt.Sprintf(`Basic realm="%s"`, realm))
+				render.Render(w, r, auth.ErrUnauthenticated)
+				return
+			}
+
+			if subtle.ConstantTimeCompare([]byte(password), []byte(validPassword)) == 1 {
+				next.ServeHTTP(w, r)
+				return
+			}
+
+			w.Header().Add("WWW-Authenticate", fmt.Sprintf(`Basic realm="%s"`, realm))
+			render.Render(w, r, auth.ErrUnauthenticated)
+		})
+	}
+}
+
 // VersionMiddleware writes the current API version to the headers.
 func VersionMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -129,7 +159,7 @@ func NoCache(next http.Handler) http.Handler {
 }
 
 // New configures application resources and routes.
-func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
+func New(db *sqlx.DB, promhttp http.Handler, log bool) (*chi.Mux, error) {
 	logger := logrus.StandardLogger()
 
 	config := &configuration.Configuration.Server
@@ -169,6 +199,15 @@ func New(db *sqlx.DB, log bool) (*chi.Mux, error) {
 	}
 	r.Use(render.SetContentType(render.ContentTypeJSON))
 	r.Use(corsConfig().Handler)
+
+	basicAuth := BasicAuthMiddleware("Restricted", map[string]string{
+		configuration.Configuration.Server.Services.Prometheus.User: configuration.Configuration.Server.Services.Prometheus.Password,
+	})
+
+	r.Group(func(r chi.Router) {
+		r.Use(basicAuth)
+		r.Handle("/metrics", promhttp)
+	})
 
 	// r.Use(authenticate.AuthenticateAccessJWT)
 	r.Route("/api", func(r chi.Router) {

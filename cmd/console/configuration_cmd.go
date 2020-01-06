@@ -135,6 +135,9 @@ func GenerateExampleConfiguration(domain string, root_path string) *configuratio
 	config.Server.Services.Postgres.Database = "infomark"
 	config.Server.Services.Postgres.Password = auth.GenerateToken(32)
 
+	config.Server.Services.Prometheus.User = "prometheus_user"
+	config.Server.Services.Prometheus.Password = auth.GenerateToken(32)
+
 	config.Server.Paths.Uploads = root_path + "/uploads"
 	config.Server.Paths.Common = root_path + "/common"
 	config.Server.Paths.GeneratedFiles = root_path + "/generated_files"
