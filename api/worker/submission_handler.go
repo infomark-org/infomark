@@ -260,7 +260,11 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
 	}
 
 	// 5. run docker test
-	ds := service.NewDockerServiceWithTimeout(configuration.Configuration.Worker.Docker.Timeout)
+	ds, err := service.NewDockerServiceWithTimeout(configuration.Configuration.Worker.Docker.Timeout)
+	if err != nil {
+		DefaultLogger.Printf("error: %v\n", err)
+		return err
+	}
 	defer ds.Client.Close()
 
 	var exit int64

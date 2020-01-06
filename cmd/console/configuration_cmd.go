@@ -21,23 +21,26 @@ package console
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"log"
 	"os"
 	"path"
 	"path/filepath"
+	"text/template"
+	"time"
 
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/client"
 	"github.com/franela/goblin"
 	"github.com/infomark-org/infomark/auth"
 	"github.com/infomark-org/infomark/configuration"
 	"github.com/infomark-org/infomark/configuration/bytefmt"
 	"github.com/infomark-org/infomark/configuration/fs"
 	"github.com/spf13/cobra"
+	"github.com/streadway/amqp"
 	"gopkg.in/yaml.v2"
-
-	// "os"
-	"text/template"
-	"time"
 
 	redis "github.com/go-redis/redis"
 	"github.com/jmoiron/sqlx"
@@ -50,7 +53,10 @@ var ConfigurationCmd = &cobra.Command{
 	Short: "infomark configuration commands",
 }
 
+var test string
+
 func init() {
+	TestConfiguration.Flags().StringVarP(&test, "test", "t", "server", "Test target for configuration")
 	ConfigurationCmd.AddCommand(CreateConfiguration)
 	ConfigurationCmd.AddCommand(TestConfiguration)
 	ConfigurationCmd.AddCommand(CreateDockercompose)
@@ -178,68 +184,121 @@ var TestConfiguration = &cobra.Command{
 	Short: "will create and print a configuration to stdout",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
-
-		status_code := 0
-
 		report := goblin.DetailedReporter{}
 		report.SetTextFancier(&goblin.TerminalFancier{})
-		report.BeginDescribe("Test configuration services")
 
+		report.BeginDescribe("Test configuration")
+		status_code := 0
 		config, err := configuration.ParseConfiguration(args[0])
 		showResult(report, err, "read configuration from file")
 		if err != nil {
 			status_code = -1
 		}
-
-		// Try to connect to postgres
-		db, err := sqlx.Connect("postgres", config.Server.PostgresURL())
-		showResult(report, err, "connect to postgres db")
-		if err != nil {
-			status_code = -1
-		} else {
-			db.Close()
-		}
-
-		// Try to connect to Redis
-		option, _ := redis.ParseURL(config.Server.RedisURL())
-
-		redisClient := redis.NewClient(option)
-		_, err = redisClient.Ping().Result()
-		showResult(report, err, "connect to redis url")
-		if err != nil {
-			status_code = -1
-		} else {
-			redisClient.Close()
-		}
-
 		report.EndDescribe()
 
-		report.BeginDescribe("Test configuration paths")
-		err = fs.DirExists(config.Server.Paths.Common)
-		showResult(report, err, "common path readable")
-		if err != nil {
-			status_code = -1
-		}
+		if test == "server" {
 
-		err = fs.IsDirWriteable(config.Server.Paths.Uploads)
-		showResult(report, err, "upload path writeable")
-		if err != nil {
-			status_code = -1
-		}
+			report.BeginDescribe("Test services")
+			// Try to connect to postgres
+			db, err := sqlx.Connect("postgres", config.Server.PostgresURL())
+			showResult(report, err, "connect to postgres db")
+			if err != nil {
+				status_code = -1
+			} else {
+				db.Close()
+			}
 
-		err = fs.IsDirWriteable(config.Server.Paths.GeneratedFiles)
-		showResult(report, err, "generated_files path writeable")
-		if err != nil {
-			status_code = -1
-		}
+			// Try to connect to Redis
+			option, _ := redis.ParseURL(config.Server.RedisURL())
+			redisClient := redis.NewClient(option)
+			_, err = redisClient.Ping().Result()
+			showResult(report, err, "connect to redis url")
+			if err != nil {
+				status_code = -1
+			} else {
+				redisClient.Close()
+			}
 
-		privacyFile := fmt.Sprintf("%s/privacy_statement.md", config.Server.Paths.Common)
-		err = fs.FileExists(privacyFile)
-		showResult(report, err, fmt.Sprintf("Read privacy Statement from %s", privacyFile))
-		if err != nil {
-			status_code = -1
+			// Try to connect to RabbitMQ
+			mqConnection, err := amqp.Dial(config.Server.Services.RabbitMQ.URL())
+			showResult(report, err, "connect to rabbit mq")
+			if err != nil {
+				status_code = -1
+			} else {
+				mqConnection.Close()
+			}
+			report.EndDescribe()
+
+			report.BeginDescribe("Test paths")
+			err = fs.DirExists(config.Server.Paths.Common)
+			showResult(report, err, "common path readable")
+			if err != nil {
+				status_code = -1
+			}
+
+			err = fs.IsDirWriteable(config.Server.Paths.Uploads)
+			showResult(report, err, "upload path writeable")
+			if err != nil {
+				status_code = -1
+			}
+
+			err = fs.IsDirWriteable(config.Server.Paths.GeneratedFiles)
+			showResult(report, err, "generated_files path writeable")
+			if err != nil {
+				status_code = -1
+			}
+
+			privacyFile := fmt.Sprintf("%s/privacy_statement.md", config.Server.Paths.Common)
+			err = fs.FileExists(privacyFile)
+			showResult(report, err, fmt.Sprintf("Read privacy Statement from %s", privacyFile))
+			if err != nil {
+				status_code = -1
+			}
+			report.EndDescribe()
+
+		} else {
+			// Just test docker and rabbitMQ for worker
+
+			report.BeginDescribe("Test services")
+			// Try to connect to RabbitMQ
+			mqConnection, err := amqp.Dial(config.Server.Services.RabbitMQ.URL())
+			showResult(report, err, "connect to rabbit mq")
+			if err != nil {
+				status_code = -1
+			} else {
+				mqConnection.Close()
+			}
+
+			// Test docker "hello world"
+			dockerClient, err := client.NewClientWithOpts(client.WithAPIVersionNegotiation())
+			showResult(report, err, "create docker client")
+			if err != nil {
+				status_code = -1
+			} else {
+				ctx := context.Background()
+				resp, err := dockerClient.ContainerCreate(ctx, &container.Config{
+					Image:           "hello-world",
+					Cmd:             []string{},
+					Tty:             true,
+					AttachStdin:     false,
+					AttachStdout:    true,
+					AttachStderr:    true,
+					NetworkDisabled: true, // no network activity required
+				}, nil, nil, "")
+				showResult(report, err, "create docker container")
+
+				if err != nil {
+					status_code = -1
+				} else {
+					dockerClient.ContainerRemove(ctx, resp.ID, types.ContainerRemoveOptions{})
+
+				}
+
+				dockerClient.Close()
+			}
+			report.EndDescribe()
+
 		}
-		report.EndDescribe()
 
 		os.Exit(status_code)
 	},

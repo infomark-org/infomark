@@ -38,7 +38,7 @@ type RabbitMQConfiguration struct {
 	Key      string `yaml:"key"`
 }
 
-func (config *RabbitMQConfiguration) RabbitMQURL() string {
+func (config *RabbitMQConfiguration) URL() string {
 	return fmt.Sprintf("amqp://%s:%s@%s:%v/", config.User, config.Password, config.Host, config.Port)
 }
 

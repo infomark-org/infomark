@@ -49,7 +49,7 @@ func NewConfig(config *configuration.RabbitMQConfiguration) *Config {
 	return &Config{
 
 		Tag:          "SimpleSubmission",
-		Connection:   config.RabbitMQURL(),
+		Connection:   config.URL(),
 		Exchange:     "infomark-worker-exchange",
 		ExchangeType: "direct",
 		Queue:        "infomark-worker-submissions",

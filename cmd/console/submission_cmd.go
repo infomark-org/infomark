@@ -129,7 +129,10 @@ var SubmissionRunCmd = &cobra.Command{
 
 		log.Println("try starting docker...")
 
-		ds := service.NewDockerServiceWithTimeout(configuration.Configuration.Worker.Docker.Timeout)
+		ds, err := service.NewDockerServiceWithTimeout(configuration.Configuration.Worker.Docker.Timeout)
+		if err != nil {
+			log.Fatal(err)
+		}
 		defer ds.Client.Close()
 
 		var exit int64

@@ -38,16 +38,16 @@ type DockerService struct {
 	Timeout time.Duration
 }
 
-func NewDockerServiceWithTimeout(timeout time.Duration) *DockerService {
+func NewDockerServiceWithTimeout(timeout time.Duration) (*DockerService, error) {
 	cli, err := client.NewClientWithOpts(client.WithAPIVersionNegotiation())
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	return &DockerService{
 		Timeout: timeout,
 		Client:  cli,
-	}
+	}, nil
 }
 
 // ListContainers lists all docker containers
