@@ -62,14 +62,17 @@ func NewAccountResource(stores *Stores) *AccountResource {
 // The account will be created and a confirmation email will be sent.
 // There is no way to set an avatar here and root will be false by default.
 func (rs *AccountResource) CreateHandler(w http.ResponseWriter, r *http.Request) {
-	// start from empty Request
+	// Start from empty Request
 	data := &CreateUserAccountRequest{}
 
-	// parse JSON request into struct
+	// Parse JSON request into struct
 	if err := render.Bind(r, data); err != nil {
 		render.Render(w, r, ErrBadRequestWithDetails(err))
 		return
 	}
+
+	// We will ask the user to confirm their email address
+	token := null.StringFrom(auth.GenerateToken(32))
 
 	user := &model.User{
 		FirstName:         data.User.FirstName,
@@ -79,7 +82,7 @@ func (rs *AccountResource) CreateHandler(w http.ResponseWriter, r *http.Request)
 		Semester:          data.User.Semester,
 		Subject:           data.User.Subject,
 		Language:          data.User.Language,
-		ConfirmEmailToken: null.StringFrom(auth.GenerateToken(32)), // we will ask the user to confirm their email address
+		ConfirmEmailToken: token,
 		EncryptedPassword: data.Account.EncryptedPassword,
 		Root:              false,
 	}
@@ -99,10 +102,12 @@ func (rs *AccountResource) CreateHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	err = sendConfirmEmailForUser(configuration.Configuration.Server.Email.From, newUser)
-	if err != nil {
-		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-		return
+	if !configuration.Configuration.Server.Debugging.Enabled {
+		err = sendConfirmEmailForUser(configuration.Configuration.Server.Email.From, newUser)
+		if err != nil {
+			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+			return
+		}
 	}
 
 }

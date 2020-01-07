@@ -17,7 +17,7 @@ steps:
   image: golangci/golangci-lint:v1.21
   pull: true
   commands:
-    - golangci-lint run -D errcheck
+    - golangci-lint run -D errcheck --timeout=5m
 
 - name: build
   pull: default
@@ -152,6 +152,6 @@ services:
 
 ---
 kind: signature
-hmac: ce28f37ef529c27f24b637883e261322b11bedaf4b5ba27c046f553342ccf991
+hmac: aa0ec98aa78909f11ee2e78c02b525cde816d0434fc89bff8d91627f326c2574
 
 ...

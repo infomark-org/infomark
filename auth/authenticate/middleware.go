@@ -44,51 +44,40 @@ import (
 func RequiredValidAccessClaims(manager *scs.Manager, config *configuration.ServerConfigurationSchema) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-
 			accessClaims := &AccessClaims{}
 
-			if !config.Debugging.Enabled {
-				// first we test the JWT autorization
-				if HasHeaderToken(r) {
+			// first we test the JWT autorization
+			if HasHeaderToken(r) {
+				// parse token from from header
+				tokenStr := jwtauth.TokenFromHeader(r)
 
-					// parse token from from header
-					tokenStr := jwtauth.TokenFromHeader(r)
+				// ok, there is a access token in the header
+				err := accessClaims.ParseAccessClaimsFromToken(config.Authentication.JWT.Secret, tokenStr)
+				if err != nil {
+					// fmt.Println(err)
+					render.Render(w, r, auth.ErrUnauthorized)
+					return
+				}
 
-					// ok, there is a access token in the header
-					err := accessClaims.ParseAccessClaimsFromToken(config.Authentication.JWT.Secret, tokenStr)
+			} else {
+				// fmt.Println("no token, try session")
+				if HasSessionToken(manager, r) {
+					// session data is stored in cookie
+					err := accessClaims.ParseRefreshClaimsFromSession(manager, r)
 					if err != nil {
 						// fmt.Println(err)
 						render.Render(w, r, auth.ErrUnauthorized)
 						return
 					}
 
+					// session is valid --> we will extend the session
+					w = accessClaims.UpdateSession(manager, w, r)
 				} else {
-					// fmt.Println("no token, try session")
-					if HasSessionToken(manager, r) {
-						// fmt.Println("found session")
+					// fmt.Println("NO session found")
 
-						// session data is stored in cookie
-						err := accessClaims.ParseRefreshClaimsFromSession(manager, r)
-						if err != nil {
-							// fmt.Println(err)
-							render.Render(w, r, auth.ErrUnauthorized)
-							return
-						}
-
-						// session is valid --> we will extend the session
-						w = accessClaims.UpdateSession(manager, w, r)
-					} else {
-						// fmt.Println("NO session found")
-
-						render.Render(w, r, auth.ErrUnauthenticated)
-						return
-
-					}
-
+					render.Render(w, r, auth.ErrUnauthenticated)
+					return
 				}
-			} else {
-				accessClaims.LoginID = config.Debugging.LoginID
-				accessClaims.Root = config.Debugging.LoginIsRoot
 			}
 
 			// nothing given

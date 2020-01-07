@@ -26,38 +26,15 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"strings"
 
 	"github.com/infomark-org/infomark/api/helper"
 	"github.com/infomark-org/infomark/configuration"
 	"github.com/infomark-org/infomark/migration"
 	"github.com/jmoiron/sqlx"
-	"github.com/lib/pq"
+	_ "github.com/lib/pq"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
-
-func parseConnectionString(conn string) map[string]string {
-	if len(conn) == 0 {
-		log.Fatal("database_connection-string from config is empty")
-	}
-	connParts, err := pq.ParseURL(conn)
-	failWhenSmallestWhiff(err)
-	parts := strings.Split(connParts, " ")
-
-	infoMap := make(map[string]string)
-	for _, part := range parts {
-		v := strings.Split(part, "=")
-		if len(v) >= 2 {
-			switch v[0] {
-			case "dbname", "host", "password", "port", "user":
-				infoMap[v[0]] = v[1]
-			}
-		}
-
-	}
-	return infoMap
-}
 
 func init() {
 	DatabaseCmd.AddCommand(DatabaseRunCmd)
@@ -80,17 +57,16 @@ var DatabaseRunCmd = &cobra.Command{
 		sql := args[0]
 
 		configuration.MustFindAndReadConfiguration()
-		infoMap := parseConnectionString(configuration.Configuration.Server.PostgresURL())
 
 		// PGPASSWORD=pass psql -hlocalhost -Uuser -p5433 -d db -c "..."
 		shell := exec.Command("psql",
-			"-h", infoMap["host"],
-			"-U", infoMap["user"],
-			"-p", infoMap["port"],
-			"-d", infoMap["dbname"],
+			"-h", configuration.Configuration.Server.Services.Postgres.Host,
+			"-U", configuration.Configuration.Server.Services.Postgres.User,
+			"-p", fmt.Sprintf("%v", configuration.Configuration.Server.Services.Postgres.Port),
+			"-d", configuration.Configuration.Server.Services.Postgres.Database,
 			"-c", sql)
 		shell.Env = os.Environ()
-		shell.Env = append(shell.Env, fmt.Sprintf("PGPASSWORD=%s", infoMap["password"]))
+		shell.Env = append(shell.Env, fmt.Sprintf("PGPASSWORD=%s", configuration.Configuration.Server.Services.Postgres.Password))
 		out, err := shell.CombinedOutput()
 		fmt.Printf("%s", out)
 		if err != nil {
@@ -113,19 +89,18 @@ var DatabaseRestoreCmd = &cobra.Command{
 		}
 
 		configuration.MustFindAndReadConfiguration()
-		infoMap := parseConnectionString(configuration.Configuration.Server.PostgresURL())
 
 		// // dbname := args[1]
 
 		// dropdb -h ${POSTGRES_HOST} -p ${POSTGRES_PORT} -U ${POSTGRES_USER} db
 		// PGPASSWORD=pass dropdb -hlocalhost -Uuser -p5433 db
 		shell := exec.Command("dropdb",
-			"-h", infoMap["host"],
-			"-U", infoMap["user"],
-			"-p", infoMap["port"],
-			infoMap["dbname"])
+			"-h", configuration.Configuration.Server.Services.Postgres.Host,
+			"-U", configuration.Configuration.Server.Services.Postgres.User,
+			"-p", fmt.Sprintf("%v", configuration.Configuration.Server.Services.Postgres.Port),
+			configuration.Configuration.Server.Services.Postgres.Database)
 		shell.Env = os.Environ()
-		shell.Env = append(shell.Env, fmt.Sprintf("PGPASSWORD=%s", infoMap["password"]))
+		shell.Env = append(shell.Env, fmt.Sprintf("PGPASSWORD=%s", configuration.Configuration.Server.Services.Postgres.Password))
 		out, err := shell.CombinedOutput()
 		fmt.Printf("%s", out)
 		if err != nil {
@@ -135,13 +110,13 @@ var DatabaseRestoreCmd = &cobra.Command{
 		// createdb  -h ${POSTGRES_HOST} -p ${POSTGRES_PORT} -U ${POSTGRES_USER} --owner="${POSTGRES_USER}" ${POSTGRES_DB}
 		// PGPASSWORD=pass createdb -hlocalhost -Uuser -p5433 --owner=user db
 		shell = exec.Command("createdb",
-			"-h", infoMap["host"],
-			"-U", infoMap["user"],
-			"-p", infoMap["port"],
-			"--owner", infoMap["user"],
-			infoMap["dbname"])
+			"-h", configuration.Configuration.Server.Services.Postgres.Host,
+			"-U", configuration.Configuration.Server.Services.Postgres.User,
+			"-p", fmt.Sprintf("%v", configuration.Configuration.Server.Services.Postgres.Port),
+			"--owner", configuration.Configuration.Server.Services.Postgres.User,
+			configuration.Configuration.Server.Services.Postgres.Database)
 		shell.Env = os.Environ()
-		shell.Env = append(shell.Env, fmt.Sprintf("PGPASSWORD=%s", infoMap["password"]))
+		shell.Env = append(shell.Env, fmt.Sprintf("PGPASSWORD=%s", configuration.Configuration.Server.Services.Postgres.Password))
 		out, err = shell.CombinedOutput()
 		fmt.Printf("%s", out)
 		if err != nil {
@@ -152,12 +127,12 @@ var DatabaseRestoreCmd = &cobra.Command{
 		shell1 := exec.Command("gunzip",
 			"-c", file)
 		shell2 := exec.Command("psql",
-			"-h", infoMap["host"],
-			"-U", infoMap["user"],
-			"-p", infoMap["port"],
-			infoMap["dbname"])
+			"-h", configuration.Configuration.Server.Services.Postgres.Host,
+			"-U", configuration.Configuration.Server.Services.Postgres.User,
+			"-p", fmt.Sprintf("%v", configuration.Configuration.Server.Services.Postgres.Port),
+			configuration.Configuration.Server.Services.Postgres.Database)
 		shell2.Env = os.Environ()
-		shell2.Env = append(shell2.Env, fmt.Sprintf("PGPASSWORD=%s", infoMap["password"]))
+		shell2.Env = append(shell2.Env, fmt.Sprintf("PGPASSWORD=%s", configuration.Configuration.Server.Services.Postgres.Password))
 
 		r, w := io.Pipe()
 		shell1.Stdout = w
@@ -191,19 +166,18 @@ var DatabaseBackupCmd = &cobra.Command{
 		}
 
 		configuration.MustFindAndReadConfiguration()
-		infoMap := parseConnectionString(configuration.Configuration.Server.PostgresURL())
 
 		// export backup_filename="infomark_$(date +'%Y_%m_%dT%H_%M_%S').sql.gz"
 		// pg_dump -h ${POSTGRES_HOST} -U ${POSTGRES_USER} -d ${POSTGRES_DB} -p ${POSTGRES_PORT} | gzip > ${backup_filename}
 		// PGPASSWORD=pass pg_dump -h localhost -U user -d db -p 5433 | gzip > ${backup_filename}
 		// shell1 := exec.Command("echo", "hi")
 		shell1 := exec.Command("pg_dump",
-			"-h", infoMap["host"],
-			"-U", infoMap["user"],
-			"-p", infoMap["port"],
-			"-d", infoMap["dbname"])
+			"-h", configuration.Configuration.Server.Services.Postgres.Host,
+			"-U", configuration.Configuration.Server.Services.Postgres.User,
+			"-p", fmt.Sprintf("%v", configuration.Configuration.Server.Services.Postgres.Port),
+			"-d", configuration.Configuration.Server.Services.Postgres.Database)
 		shell1.Env = os.Environ()
-		shell1.Env = append(shell1.Env, fmt.Sprintf("PGPASSWORD=%s", infoMap["password"]))
+		shell1.Env = append(shell1.Env, fmt.Sprintf("PGPASSWORD=%s", configuration.Configuration.Server.Services.Postgres.Password))
 
 		shell2 := exec.Command("gzip")
 
@@ -214,11 +188,17 @@ var DatabaseBackupCmd = &cobra.Command{
 		var b2 bytes.Buffer
 		shell2.Stdout = &b2
 
-		shell1.Start()
+		err := shell1.Start()
+		if err != nil {
+			log.Fatalf("Cannot call pg_dump and gzip! Did your run 'sudo apt install postgresql-client gzip'\n")
+		}
 		shell2.Start()
-		shell1.Wait()
+		err = shell1.Wait()
+		if err != nil {
+			log.Fatalf("Cannot call pg_dump and gzip! Did your run 'sudo apt install postgresql-client gzip'\n")
+		}
 		w.Close()
-		err := shell2.Wait()
+		err = shell2.Wait()
 		if err != nil {
 			panic(err)
 		}
