@@ -163,6 +163,7 @@ func (sm *SendMailer) Send(e *Email) error {
 	pw.Write([]byte(fmt.Sprintf("From: %s\n", e.From)))
 	pw.Write([]byte(fmt.Sprintf("To: %s\n", e.To)))
 	pw.Write([]byte(fmt.Sprintf("Subject: %s\n", e.Subject)))
+	pw.Write([]byte(fmt.Sprintf("Content-Type: text/plain; charset=\"utf-8\"\n")))
 	pw.Write([]byte(fmt.Sprintf("\n"))) // blank line separating headers from body
 	pw.Write([]byte(e.Body))
 
