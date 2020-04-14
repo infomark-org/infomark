@@ -137,6 +137,7 @@ func (sm *TerminalMailer) Send(e *Email) error {
 	fmt.Printf("From: %s\n", e.From)
 	fmt.Printf("To: %s\n", e.To)
 	fmt.Printf("Subject: %s\n", e.Subject)
+	fmt.Printf("Content-Type: text/plain; charset=\"utf-8\"\n")
 	fmt.Printf("\n")
 	fmt.Printf("%s", e.Body)
 	return nil
