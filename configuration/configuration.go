@@ -86,7 +86,7 @@ func (config *ServerConfigurationSchema) ExternalURL() string {
 	if config.HTTP.UseHTTPS {
 		protocoll = "https"
 	}
-	return fmt.Sprintf("%s://%v:%v", protocoll, config.HTTP.Domain)
+	return fmt.Sprintf("%s://%v", protocoll, config.HTTP.Domain)
 }
 
 type PathsConfiguration struct {
