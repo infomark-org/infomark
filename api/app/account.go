@@ -123,7 +123,7 @@ func sendConfirmEmailForUser(from string, user *model.User) error {
 		map[string]string{
 			"first_name":            user.FirstName,
 			"last_name":             user.LastName,
-			"confirm_email_url":     fmt.Sprintf("%s/#/confirmation", configuration.Configuration.Server.URL()),
+			"confirm_email_url":     fmt.Sprintf("%s/#/confirmation", configuration.Configuration.Server.ExternalURL()),
 			"confirm_email_address": user.Email,
 			"confirm_email_token":   user.ConfirmEmailToken.String,
 		})

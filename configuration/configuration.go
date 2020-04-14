@@ -79,6 +79,16 @@ func (config *ServerConfigurationSchema) URL() string {
 	return fmt.Sprintf("%s://%v:%v", protocoll, config.HTTP.Domain, config.HTTP.Port)
 }
 
+func (config *ServerConfigurationSchema) ExternalURL() string {
+	// TODO(patwie): When hosted in a sub-path, this will not work.
+	//  In this case, consider to add an URL field.
+	protocoll := "http"
+	if config.HTTP.UseHTTPS {
+		protocoll = "https"
+	}
+	return fmt.Sprintf("%s://%v:%v", protocoll, config.HTTP.Domain)
+}
+
 type PathsConfiguration struct {
 	Uploads        string `yaml:"uploads"`
 	Common         string `yaml:"common"`
