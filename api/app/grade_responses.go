@@ -66,7 +66,7 @@ func newGradeResponse(p *model.Grade, courseID int64) *GradeResponse {
 	fileURL := ""
 	if helper.NewSubmissionFileHandle(p.ID).Exists() {
 		fileURL = fmt.Sprintf("%s/api/v1/courses/%d/submissions/%d/file",
-			configuration.Configuration.Server.URL(),
+			configuration.Configuration.Server.ExternalURL(),
 			courseID,
 			p.SubmissionID,
 		)

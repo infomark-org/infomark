@@ -147,7 +147,7 @@ func (rs *SubmissionResource) GetCollectionHandler(w http.ResponseWriter, r *htt
 	text := ""
 	if hnd.Exists() {
 		text = fmt.Sprintf("%s/courses/%d/tasks/%d/groups/%d/file",
-			configuration.Configuration.Server.URL(),
+			configuration.Configuration.Server.ExternalURL(),
 			course.ID, task.ID, group.ID,
 		)
 	}
@@ -396,7 +396,7 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
 
 		request := shared.NewSubmissionAMQPWorkerRequest(
 			course.ID, task.ID, submission.ID, grade.ID,
-			accessToken, configuration.Configuration.Server.URL(), task.PublicDockerImage.String, sha256, "public")
+			accessToken, configuration.Configuration.Server.ExternalURL(), task.PublicDockerImage.String, sha256, "public")
 
 		body, err := json.Marshal(request)
 		if err != nil {
@@ -423,7 +423,7 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
 
 		request := shared.NewSubmissionAMQPWorkerRequest(
 			course.ID, task.ID, submission.ID, grade.ID,
-			accessToken, configuration.Configuration.Server.URL(), task.PrivateDockerImage.String, sha256, "private")
+			accessToken, configuration.Configuration.Server.ExternalURL(), task.PrivateDockerImage.String, sha256, "private")
 
 		body, err := json.Marshal(request)
 		if err != nil {

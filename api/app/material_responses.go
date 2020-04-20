@@ -51,7 +51,7 @@ func (rs *MaterialResource) newMaterialResponse(p *model.Material, courseID int6
 		LectureAt:    p.LectureAt,
 		RequiredRole: p.RequiredRole,
 		FileURL: fmt.Sprintf("%s/api/v1/courses/%d/materials/%d/file",
-			configuration.Configuration.Server.URL(),
+			configuration.Configuration.Server.ExternalURL(),
 			courseID,
 			p.ID,
 		),

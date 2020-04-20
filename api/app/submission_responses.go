@@ -42,7 +42,7 @@ type SubmissionResponse struct {
 func newSubmissionResponse(p *model.Submission, courseID int64) *SubmissionResponse {
 	// this does always exists
 	fileURL := fmt.Sprintf("%s/api/v1/courses/%d/submissions/%d/file",
-		configuration.Configuration.Server.URL(),
+		configuration.Configuration.Server.ExternalURL(),
 		courseID,
 		p.ID,
 	)
