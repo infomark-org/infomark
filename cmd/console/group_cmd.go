@@ -322,8 +322,8 @@ var GroupReadBids = &cobra.Command{
 
 		f.WriteString(fmt.Sprintf("set group := g%s;\n", gids))
 		f.WriteString(fmt.Sprintf("set student := %s;\n", uids))
-		f.WriteString(fmt.Sprintf("\n"))
-		f.WriteString(fmt.Sprintf("param pref:\n"))
+		f.WriteString("\n")
+		f.WriteString("param pref:\n")
 		f.WriteString(fmt.Sprintf("     g%s:=\n", gids))
 
 		// this includes students without any selected preferences
@@ -362,12 +362,12 @@ ORDER BY
 				}
 				f.WriteString(fmt.Sprintf(" %v", bidValue))
 			}
-			f.WriteString(fmt.Sprintf("\n"))
+			f.WriteString("\n")
 		}
 
-		f.WriteString(fmt.Sprintf(";\n"))
-		f.WriteString(fmt.Sprintf("\n"))
-		f.WriteString(fmt.Sprintf("end;\n"))
+		f.WriteString(";\n")
+		f.WriteString("\n")
+		f.WriteString("end;\n")
 
 		// write mod
 		//
@@ -375,27 +375,27 @@ ORDER BY
 		failWhenSmallestWhiff(err)
 		defer fmod.Close()
 
-		fmod.WriteString(fmt.Sprintf("set student;\n"))
-		fmod.WriteString(fmt.Sprintf("set group;\n"))
-		fmod.WriteString(fmt.Sprintf("\n"))
-		fmod.WriteString(fmt.Sprintf("var assign{i in student, j in group} binary;\n"))
-		fmod.WriteString(fmt.Sprintf("param pref{i in student, j in group};\n"))
-		fmod.WriteString(fmt.Sprintf("\n"))
-		fmod.WriteString(fmt.Sprintf("maximize totalPref:\n"))
-		fmod.WriteString(fmt.Sprintf("    sum{i in student, j in group} pref[i,j]*assign[i,j];\n"))
-		fmod.WriteString(fmt.Sprintf("\n"))
-		fmod.WriteString(fmt.Sprintf("subject to exactly_one_group {i in student}:\n"))
-		fmod.WriteString(fmt.Sprintf("    sum {j in group} assign[i,j] =1;\n"))
-		fmod.WriteString(fmt.Sprintf("\n"))
-		fmod.WriteString(fmt.Sprintf("subject to min3{j in group}:\n"))
+		fmod.WriteString("set student;\n")
+		fmod.WriteString("set group;\n")
+		fmod.WriteString("\n")
+		fmod.WriteString("var assign{i in student, j in group} binary;\n")
+		fmod.WriteString("param pref{i in student, j in group};\n")
+		fmod.WriteString("\n")
+		fmod.WriteString("maximize totalPref:\n")
+		fmod.WriteString("    sum{i in student, j in group} pref[i,j]*assign[i,j];\n")
+		fmod.WriteString("\n")
+		fmod.WriteString("subject to exactly_one_group {i in student}:\n")
+		fmod.WriteString("    sum {j in group} assign[i,j] =1;\n")
+		fmod.WriteString("\n")
+		fmod.WriteString("subject to min3{j in group}:\n")
 		fmod.WriteString(fmt.Sprintf("    sum{i in student} assign[i,j]>=%v;\n", minPerGroup))
-		fmod.WriteString(fmt.Sprintf("\n"))
-		fmod.WriteString(fmt.Sprintf("subject to max4{j in group}:\n"))
+		fmod.WriteString("\n")
+		fmod.WriteString("subject to max4{j in group}:\n")
 		fmod.WriteString(fmt.Sprintf("    sum{i in student} assign[i,j]<=%v;\n", maxPerGroup))
-		fmod.WriteString(fmt.Sprintf("\n"))
-		fmod.WriteString(fmt.Sprintf("end;\n"))
-		fmod.WriteString(fmt.Sprintf("\n"))
-		fmod.WriteString(fmt.Sprintf("\n"))
+		fmod.WriteString("\n")
+		fmod.WriteString("end;\n")
+		fmod.WriteString("\n")
+		fmod.WriteString("\n")
 
 		fmt.Println("run the command")
 		fmt.Println("")
@@ -405,8 +405,8 @@ ORDER BY
 
 		fpar, err := os.Create(fmt.Sprintf("%s.par", args[1]))
 		failWhenSmallestWhiff(err)
-		fpar.WriteString(fmt.Sprintf("time_limit 50\n"))
-		fpar.WriteString(fmt.Sprintf("\n"))
+		fpar.WriteString("time_limit 50\n")
+		fpar.WriteString("\n")
 		defer fpar.Close()
 
 	},
