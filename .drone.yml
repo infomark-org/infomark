@@ -14,7 +14,7 @@ steps:
   - "[ 0 -eq `goimports -l . | wc -l` ]"
 
 - name: lint
-  image: golangci/golangci-lint:v1.21
+  image: golangci/golangci-lint:v1.24
   pull: true
   commands:
     - golangci-lint run -D errcheck --timeout=5m
@@ -152,6 +152,6 @@ services:
 
 ---
 kind: signature
-hmac: bb4e5158ca8bd3d069646516da55cf1f713bbf7ee436a69a0fbee6fabed7867a
+hmac: 07b0b91da04695f2bfbb3ccd85e9e8e9ff5be6adba4673be68f3be16e9464866
 
 ...
