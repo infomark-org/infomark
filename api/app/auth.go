@@ -292,7 +292,7 @@ func (rs *AuthResource) RequestPasswordResetHandler(w http.ResponseWriter, r *ht
 			"first_name":           user.FirstName,
 			"last_name":            user.LastName,
 			"email_address":        user.Email,
-			"reset_password_url":   fmt.Sprintf("%s/#/password_reset", configuration.Configuration.Server.URL()),
+			"reset_password_url":   fmt.Sprintf("%s/#/password_reset", configuration.Configuration.Server.ExternalURL()),
 			"reset_password_token": user.ResetPasswordToken.String,
 		})
 	if err != nil {
