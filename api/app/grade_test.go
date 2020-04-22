@@ -154,7 +154,7 @@ func TestGrade(t *testing.T) {
 			g.Assert(gradeActual.User.Email).Equal(gradeExpected.UserEmail)
 			g.Assert(gradeActual.SubmissionID).Equal(gradeExpected.SubmissionID)
 
-			url := configuration.Configuration.Server.URL()
+			url := configuration.Configuration.Server.ExternalURL()
 
 			g.Assert(gradeActual.FileURL).Equal(fmt.Sprintf("%s/api/v1/courses/1/submissions/1/file", url))
 

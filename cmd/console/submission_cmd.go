@@ -92,14 +92,14 @@ var SubmissionTriggerCmd = &cobra.Command{
 
 		bodyPublic, err := json.Marshal(shared.NewSubmissionAMQPWorkerRequest(
 			course.ID, task.ID, submission.ID, grade.ID,
-			accessToken, configuration.Configuration.Server.URL(), task.PublicDockerImage.String, sha256, "public"))
+			accessToken, configuration.Configuration.Server.ExternalURL(), task.PublicDockerImage.String, sha256, "public"))
 		if err != nil {
 			log.Fatalf("json.Marshal: %s", err)
 		}
 
 		bodyPrivate, err := json.Marshal(shared.NewSubmissionAMQPWorkerRequest(
 			course.ID, task.ID, submission.ID, grade.ID,
-			accessToken, configuration.Configuration.Server.URL(), task.PrivateDockerImage.String, sha256, "private"))
+			accessToken, configuration.Configuration.Server.ExternalURL(), task.PrivateDockerImage.String, sha256, "private"))
 		if err != nil {
 			log.Fatalf("json.Marshal: %s", err)
 		}
@@ -300,12 +300,12 @@ WHERE task_id = $1
 			if args[1] == "public" {
 				body, merr = json.Marshal(shared.NewSubmissionAMQPWorkerRequest(
 					course.ID, taskID, submissionWithGrade.ID, submissionWithGrade.GradeID,
-					accessToken, configuration.Configuration.Server.URL(), task.PublicDockerImage.String, sha256, "public"))
+					accessToken, configuration.Configuration.Server.ExternalURL(), task.PublicDockerImage.String, sha256, "public"))
 
 			} else {
 				body, merr = json.Marshal(shared.NewSubmissionAMQPWorkerRequest(
 					course.ID, taskID, submissionWithGrade.ID, submissionWithGrade.GradeID,
-					accessToken, configuration.Configuration.Server.URL(), task.PrivateDockerImage.String, sha256, "private"))
+					accessToken, configuration.Configuration.Server.ExternalURL(), task.PrivateDockerImage.String, sha256, "private"))
 			}
 			if merr != nil {
 				log.Fatalf("json.Marshal: %s", merr)
