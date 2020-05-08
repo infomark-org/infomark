@@ -74,6 +74,8 @@ func (job *SubmissionFileZipper) Run() {
 	//     touch generated/infomark-sheet{sheetID}-task{taskID}-group{groupID}-submissions.lock
 	//     create generated/infomark-sheet{sheetID}-task{taskID}-group{groupID}-submissions.zip
 	// zip nested task
+	fmt.Println("Start zipping all submissions to:", job.Directory)
+
 	sheets, _ := job.Stores.Sheet.GetAll()
 
 	for _, sheet := range sheets {

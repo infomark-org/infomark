@@ -49,7 +49,7 @@ func TestConfiguration(t *testing.T) {
 
 			config := &ServerConfigurationSchema{}
 			config.Cronjobs.ZipSubmissionsIntervall = 4 * time.Second
-			g.Assert(config.CronjobsZipSubmissionsIntervall()).Equal("@ every 4s")
+			g.Assert(config.CronjobsZipSubmissionsIntervall()).Equal("@every 4s")
 
 		})
 
