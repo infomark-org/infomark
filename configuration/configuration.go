@@ -181,7 +181,7 @@ func (config *ServerConfigurationSchema) HTTPAddr() string {
 }
 func (config *ServerConfigurationSchema) CronjobsZipSubmissionsIntervall() string {
 	secs := config.Cronjobs.ZipSubmissionsIntervall
-	return fmt.Sprintf("@ every %s", secs)
+	return fmt.Sprintf("@every %s", secs)
 }
 
 type WorkerConfigurationSchema struct {
