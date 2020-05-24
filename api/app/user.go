@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
@@ -120,6 +121,7 @@ func (rs *UserResource) Find(w http.ResponseWriter, r *http.Request) {
 	if query != "%%" {
 		query = fmt.Sprintf("%%%s%%", query)
 	}
+	query = strings.ToLower(query)
 	users, err := rs.Stores.User.Find(query)
 	if err != nil {
 		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
