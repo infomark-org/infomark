@@ -55,6 +55,8 @@ api.yaml
 *.tar.gz
 docker-compose.yml
 
+infomark-config.yml
+
 # static/
 # static
 
