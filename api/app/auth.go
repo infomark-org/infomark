@@ -278,6 +278,11 @@ func (rs *AuthResource) RequestPasswordResetHandler(w http.ResponseWriter, r *ht
 		return
 	}
 
+	if user.ConfirmEmailToken.Valid {
+		render.Render(w, r, ErrRender(errors.New("email not confirmed")))
+		return
+	}
+
 	user.ResetPasswordToken = null.StringFrom(auth.GenerateToken(32))
 	rs.Stores.User.Update(user)
 
