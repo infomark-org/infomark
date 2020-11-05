@@ -21,9 +21,9 @@ package app
 
 import (
 	"fmt"
-	"time"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/render"
 	"github.com/infomark-org/infomark/api/helper"
@@ -36,19 +36,19 @@ import (
 
 // GradeResponse is the response payload for Grade management.
 type GradeResponse struct {
-	ID                    int64  `json:"id" example:"1"`
+	ID                    int64     `json:"id" example:"1"`
 	UpdatedAt             time.Time `json:"updated_at" example:""`
-	PublicExecutionState  int    `json:"public_execution_state" example:"1"`
-	PrivateExecutionState int    `json:"private_execution_state" example:"1"`
-	PublicTestLog         string `json:"public_test_log" example:"Lorem Ipsum"`
-	PrivateTestLog        string `json:"private_test_log" example:"Lorem Ipsum"`
-	PublicTestStatus      int    `json:"public_test_status" example:"1"`
-	PrivateTestStatus     int    `json:"private_test_status" example:"0"`
-	AcquiredPoints        int    `json:"acquired_points" example:"19"`
-	Feedback              string `json:"feedback" example:"Some feedback"`
-	TutorID               int64  `json:"tutor_id" example:"2"`
-	SubmissionID          int64  `json:"submission_id" example:"31"`
-	FileURL               string `json:"file_url" example:"/api/v1/submissions/61/file"`
+	PublicExecutionState  int       `json:"public_execution_state" example:"1"`
+	PrivateExecutionState int       `json:"private_execution_state" example:"1"`
+	PublicTestLog         string    `json:"public_test_log" example:"Lorem Ipsum"`
+	PrivateTestLog        string    `json:"private_test_log" example:"Lorem Ipsum"`
+	PublicTestStatus      int       `json:"public_test_status" example:"1"`
+	PrivateTestStatus     int       `json:"private_test_status" example:"0"`
+	AcquiredPoints        int       `json:"acquired_points" example:"19"`
+	Feedback              string    `json:"feedback" example:"Some feedback"`
+	TutorID               int64     `json:"tutor_id" example:"2"`
+	SubmissionID          int64     `json:"submission_id" example:"31"`
+	FileURL               string    `json:"file_url" example:"/api/v1/submissions/61/file"`
 	User                  *struct {
 		ID        int64  `json:"id" example:"1"`
 		FirstName string `json:"first_name" example:"Max"`
@@ -118,19 +118,19 @@ func newGradeListResponse(Grades []model.Grade, courseID int64) []render.Rendere
 // for all submissions.
 type MissingGradeResponse struct {
 	Grade *struct {
-		ID                    int64  `json:"id" example:"1"`
+		ID                    int64     `json:"id" example:"1"`
 		UpdatedAt             time.Time `json:"updated_at" example:""`
-		PublicExecutionState  int    `json:"public_execution_state" example:"1"`
-		PrivateExecutionState int    `json:"private_execution_state" example:"1"`
-		PublicTestLog         string `json:"public_test_log" example:"Lorem Ipsum"`
-		PrivateTestLog        string `json:"private_test_log" example:"Lorem Ipsum"`
-		PublicTestStatus      int    `json:"public_test_status" example:"1"`
-		PrivateTestStatus     int    `json:"private_test_status" example:"0"`
-		AcquiredPoints        int    `json:"acquired_points" example:"19"`
-		Feedback              string `json:"feedback" example:"Some feedback"`
-		TutorID               int64  `json:"tutor_id" example:"2"`
-		SubmissionID          int64  `json:"submission_id" example:"31"`
-		FileURL               string `json:"file_url" example:"/api/v1/submissions/61/file"`
+		PublicExecutionState  int       `json:"public_execution_state" example:"1"`
+		PrivateExecutionState int       `json:"private_execution_state" example:"1"`
+		PublicTestLog         string    `json:"public_test_log" example:"Lorem Ipsum"`
+		PrivateTestLog        string    `json:"private_test_log" example:"Lorem Ipsum"`
+		PublicTestStatus      int       `json:"public_test_status" example:"1"`
+		PrivateTestStatus     int       `json:"private_test_status" example:"0"`
+		AcquiredPoints        int       `json:"acquired_points" example:"19"`
+		Feedback              string    `json:"feedback" example:"Some feedback"`
+		TutorID               int64     `json:"tutor_id" example:"2"`
+		SubmissionID          int64     `json:"submission_id" example:"31"`
+		FileURL               string    `json:"file_url" example:"/api/v1/submissions/61/file"`
 		User                  *struct {
 			ID        int64  `json:"id" example:"1"`
 			FirstName string `json:"first_name" example:"Max"`
@@ -168,19 +168,19 @@ func newMissingGradeResponse(p *model.MissingGrade) *MissingGradeResponse {
 	}
 
 	grade := &struct {
-		ID                    int64  `json:"id" example:"1"`
+		ID                    int64     `json:"id" example:"1"`
 		UpdatedAt             time.Time `json:"updated_at" example:""`
-		PublicExecutionState  int    `json:"public_execution_state" example:"1"`
-		PrivateExecutionState int    `json:"private_execution_state" example:"1"`
-		PublicTestLog         string `json:"public_test_log" example:"Lorem Ipsum"`
-		PrivateTestLog        string `json:"private_test_log" example:"Lorem Ipsum"`
-		PublicTestStatus      int    `json:"public_test_status" example:"1"`
-		PrivateTestStatus     int    `json:"private_test_status" example:"0"`
-		AcquiredPoints        int    `json:"acquired_points" example:"19"`
-		Feedback              string `json:"feedback" example:"Some feedback"`
-		TutorID               int64  `json:"tutor_id" example:"2"`
-		SubmissionID          int64  `json:"submission_id" example:"31"`
-		FileURL               string `json:"file_url" example:"/api/v1/submissions/61/file"`
+		PublicExecutionState  int       `json:"public_execution_state" example:"1"`
+		PrivateExecutionState int       `json:"private_execution_state" example:"1"`
+		PublicTestLog         string    `json:"public_test_log" example:"Lorem Ipsum"`
+		PrivateTestLog        string    `json:"private_test_log" example:"Lorem Ipsum"`
+		PublicTestStatus      int       `json:"public_test_status" example:"1"`
+		PrivateTestStatus     int       `json:"private_test_status" example:"0"`
+		AcquiredPoints        int       `json:"acquired_points" example:"19"`
+		Feedback              string    `json:"feedback" example:"Some feedback"`
+		TutorID               int64     `json:"tutor_id" example:"2"`
+		SubmissionID          int64     `json:"submission_id" example:"31"`
+		FileURL               string    `json:"file_url" example:"/api/v1/submissions/61/file"`
 		User                  *struct {
 			ID        int64  `json:"id" example:"1"`
 			FirstName string `json:"first_name" example:"Max"`
