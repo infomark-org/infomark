@@ -21,6 +21,7 @@ package app
 
 import (
 	"fmt"
+	"time"
 	"net/http"
 	"strconv"
 
@@ -36,6 +37,7 @@ import (
 // GradeResponse is the response payload for Grade management.
 type GradeResponse struct {
 	ID                    int64  `json:"id" example:"1"`
+	UpdatedAt             time.Time `json:"updated_at" example:""`
 	PublicExecutionState  int    `json:"public_execution_state" example:"1"`
 	PrivateExecutionState int    `json:"private_execution_state" example:"1"`
 	PublicTestLog         string `json:"public_test_log" example:"Lorem Ipsum"`
@@ -86,6 +88,7 @@ func newGradeResponse(p *model.Grade, courseID int64) *GradeResponse {
 
 	return &GradeResponse{
 		ID:                    p.ID,
+		UpdatedAt:             p.UpdatedAt,
 		PublicExecutionState:  p.PublicExecutionState,
 		PrivateExecutionState: p.PrivateExecutionState,
 		PublicTestLog:         p.PublicTestLog,
@@ -116,6 +119,7 @@ func newGradeListResponse(Grades []model.Grade, courseID int64) []render.Rendere
 type MissingGradeResponse struct {
 	Grade *struct {
 		ID                    int64  `json:"id" example:"1"`
+		UpdatedAt             time.Time `json:"updated_at" example:""`
 		PublicExecutionState  int    `json:"public_execution_state" example:"1"`
 		PrivateExecutionState int    `json:"private_execution_state" example:"1"`
 		PublicTestLog         string `json:"public_test_log" example:"Lorem Ipsum"`
@@ -165,6 +169,7 @@ func newMissingGradeResponse(p *model.MissingGrade) *MissingGradeResponse {
 
 	grade := &struct {
 		ID                    int64  `json:"id" example:"1"`
+		UpdatedAt             time.Time `json:"updated_at" example:""`
 		PublicExecutionState  int    `json:"public_execution_state" example:"1"`
 		PrivateExecutionState int    `json:"private_execution_state" example:"1"`
 		PublicTestLog         string `json:"public_test_log" example:"Lorem Ipsum"`
@@ -184,6 +189,7 @@ func newMissingGradeResponse(p *model.MissingGrade) *MissingGradeResponse {
 		} `json:"user"`
 	}{
 		ID:                    p.ID,
+		UpdatedAt:             p.UpdatedAt,
 		PublicExecutionState:  p.PublicExecutionState,
 		PrivateExecutionState: p.PrivateExecutionState,
 		PublicTestLog:         p.PublicTestLog,
