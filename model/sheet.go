@@ -38,6 +38,7 @@ type Sheet struct {
 // SheetPoints contains the performance of a specific student
 type SheetPoints struct {
 	AquiredPoints int `db:"acquired_points"`
+	SheetGraded   int `db:"sheet_graded"`
 	MaxPoints     int `db:"max_points"`
 	SheetID       int `db:"sheet_id"`
 }

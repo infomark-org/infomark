@@ -123,6 +123,7 @@ func (s *SheetStore) PointsForUser(userID int64, sheetID int64) ([]model.TaskPoi
 SELECT
   t.id task_id,
   g.acquired_points,
+  g.tutor_id <> 1 AS "graded",
   t.max_points
 FROM
   grades g

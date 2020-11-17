@@ -30,7 +30,7 @@ require (
 	github.com/streadway/amqp v0.0.0-20190225234609-30f8ed68076e
 	github.com/ulule/limiter/v3 v3.1.0
 	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
-	golang.org/x/tools v0.0.0-20201105001634-bc3cf281b174 // indirect
+	golang.org/x/tools v0.0.0-20201117021029-3c3a81204b10 // indirect
 	gopkg.in/guregu/null.v3 v3.4.0
 	gopkg.in/yaml.v2 v2.2.7
 )
