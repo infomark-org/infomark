@@ -247,6 +247,7 @@ func (s *CourseStore) PointsForUser(userID int64, courseID int64) ([]model.Sheet
 SELECT
   SUM(g.acquired_points) acquired_points,
   SUM(t.max_points) max_points,
+  COALESCE(SUM(t.max_points) FILTER(WHERE g.tutor_id <> 1), 0) AS "achievable_points",
   ts.sheet_id sheet_id
 FROM
   grades g

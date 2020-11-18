@@ -70,9 +70,10 @@ func (body *TaskRating) Validate() error {
 
 // TaskPoints is a performance summary of a student for a given task
 type TaskPoints struct {
-	AquiredPoints int `db:"acquired_points"`
-	MaxPoints     int `db:"max_points"`
-	TaskID        int `db:"task_id"`
+	AchievablePoints int `db:"achievable_points"`
+	AquiredPoints    int `db:"acquired_points"`
+	MaxPoints        int `db:"max_points"`
+	TaskID           int `db:"task_id"`
 }
 
 // Validate validates TaskPoints
