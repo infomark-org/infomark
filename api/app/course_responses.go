@@ -66,11 +66,10 @@ func (rs *CourseResource) newCourseListResponse(courses []model.Course) []render
 
 // SheetPointsResponse is response for performance on a specific exercise sheet
 type SheetPointsResponse struct {
-	AquiredPoints int  `json:"acquired_points" example:"58"`
-	Graded        bool `json:"graded" example:"true"`
-	SheetGraded   int  `json:"sheet_graded" example:"42"`
-	MaxPoints     int  `json:"max_points" example:"90"`
-	SheetID       int  `json:"sheet_id" example:"2"`
+	AquiredPoints    int `json:"acquired_points" example:"58"`
+	AchievablePoints int `json:"achievable_points" example:"42"`
+	MaxPoints        int `json:"max_points" example:"90"`
+	SheetID          int `json:"sheet_id" example:"2"`
 }
 
 // Render postprocesses a SheetPointsResponse before marshalling to JSON.
@@ -80,11 +79,10 @@ func (body *SheetPointsResponse) Render(w http.ResponseWriter, r *http.Request) 
 
 func newSheetPointsResponse(p *model.SheetPoints) *SheetPointsResponse {
 	return &SheetPointsResponse{
-		AquiredPoints: p.AquiredPoints,
-		Graded:        false,
-		SheetGraded:   p.SheetGraded,
-		MaxPoints:     p.MaxPoints,
-		SheetID:       p.SheetID,
+		AchievablePoints: p.AchievablePoints,
+		AquiredPoints:    p.AquiredPoints,
+		MaxPoints:        p.MaxPoints,
+		SheetID:          p.SheetID,
 	}
 }
 

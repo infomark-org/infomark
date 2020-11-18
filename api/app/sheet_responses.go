@@ -70,10 +70,10 @@ func (rs *SheetResource) newSheetListResponse(givenRole authorize.CourseRole, Sh
 
 // TaskPointsResponse returns a performance summary for a task and student
 type TaskPointsResponse struct {
-	AquiredPoints int  `json:"acquired_points" example:"58"`
-	Graded        bool `json:"graded" example:"true"`
-	MaxPoints     int  `json:"max_points" example:"90"`
-	TaskID        int  `json:"task_id" example:"2"`
+	AquiredPoints    int `json:"acquired_points" example:"58"`
+	AchievablePoints int `json:"achievable_points" example:"42"`
+	MaxPoints        int `json:"max_points" example:"90"`
+	TaskID           int `json:"task_id" example:"2"`
 }
 
 // Render post-processes a TaskPointsResponse.
@@ -83,10 +83,10 @@ func (body *TaskPointsResponse) Render(w http.ResponseWriter, r *http.Request) e
 
 func newTaskPointsResponse(p *model.TaskPoints) *TaskPointsResponse {
 	return &TaskPointsResponse{
-		AquiredPoints: p.AquiredPoints,
-		Graded:        p.Graded,
-		MaxPoints:     p.MaxPoints,
-		TaskID:        p.TaskID,
+		AquiredPoints:    p.AquiredPoints,
+		AchievablePoints: p.AchievablePoints,
+		MaxPoints:        p.MaxPoints,
+		TaskID:           p.TaskID,
 	}
 }
 
