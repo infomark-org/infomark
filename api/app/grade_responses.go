@@ -66,7 +66,7 @@ func (body *GradeResponse) Render(w http.ResponseWriter, r *http.Request) error 
 func newGradeResponse(p *model.Grade, courseID int64) *GradeResponse {
 
 	fileURL := ""
-	if helper.NewSubmissionFileHandle(p.ID).Exists() {
+	if helper.NewSubmissionFileHandle(p.SubmissionID).Exists() {
 		fileURL = fmt.Sprintf("%s/api/v1/courses/%d/submissions/%d/file",
 			configuration.Configuration.Server.ExternalURL(),
 			courseID,
