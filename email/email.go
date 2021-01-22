@@ -32,6 +32,7 @@ import (
 // Email contains all information to use sendmail
 type Email struct {
 	From    string
+	ReplyTo string
 	To      string
 	Subject string
 	Body    string
@@ -55,6 +56,7 @@ func NewEmail(from string, toEmail string, subject string, body string) *Email {
 func NewEmailFromUser(from string, toEmail string, subject string, body string, user *model.User) *Email {
 	email := &Email{
 		From:    from,
+		ReplyTo: user.Email,
 		To:      toEmail,
 		Subject: subject,
 		Body:    fmt.Sprintf("%s\n\n----------\nSender is %s\nSent via InfoMark\n", body, user.FullName()),
@@ -136,6 +138,9 @@ func BackgroundSend(emails <-chan *Email) {
 func (sm *TerminalMailer) Send(e *Email) error {
 	fmt.Printf("From: %s\n", e.From)
 	fmt.Printf("To: %s\n", e.To)
+	if e.ReplyTo != "" {
+		fmt.Printf("Reply-To: %s\n", e.ReplyTo)
+	}
 	fmt.Printf("Subject: %s\n", e.Subject)
 	fmt.Printf("Content-Type: text/plain; charset=\"utf-8\"\n")
 	fmt.Printf("\n")
@@ -162,6 +167,9 @@ func (sm *SendMailer) Send(e *Email) error {
 
 	pw.Write([]byte(fmt.Sprintf("From: %s\n", e.From)))
 	pw.Write([]byte(fmt.Sprintf("To: %s\n", e.To)))
+	if e.ReplyTo != "" {
+		pw.Write([]byte(fmt.Sprintf("Reply-To: %s\n", e.ReplyTo)))
+	}
 	pw.Write([]byte(fmt.Sprintf("Subject: %s\n", e.Subject)))
 	pw.Write([]byte("Content-Type: text/plain; charset=\"utf-8\"\n"))
 	pw.Write([]byte("\n")) // blank line separating headers from body
