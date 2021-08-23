@@ -274,14 +274,12 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
 	workerResp.EnqueuedAt = msg.EnqueuedAt
 	workerResp.StartedAt = time.Now()
 
-	fmt.Println("Running docker!")
 	stdout, exit, err = ds.Run(
 		msg.DockerImage,
 		submissionPath,
 		frameworkPath,
 		int64(configuration.Configuration.Worker.Docker.MaxMemory),
 	)
-	fmt.Println("stdout", stdout)
 	if err != nil {
 		DefaultLogger.WithFields(logrus.Fields{
 			"submissionID": msg.SubmissionID,
