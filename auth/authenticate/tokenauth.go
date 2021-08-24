@@ -23,7 +23,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-chi/jwtauth"
+	"github.com/go-chi/jwtauth/v5"
 	"github.com/infomark-org/infomark/configuration"
 )
 
@@ -54,7 +54,7 @@ func (a *TokenAuth) CreateAccessJWT(claims AccessClaims) (string, error) {
 	claims.StandardClaims.IssuedAt = time.Now().UTC().Unix()
 	claims.StandardClaims.ExpiresAt = time.Now().UTC().Unix() + int64(a.JwtAccessExpiry)
 
-	_, tokenString, err := a.JwtAuth.Encode(claims)
+	_, tokenString, err := a.JwtAuth.Encode(claims.ToMap())
 	return tokenString, err
 }
 
@@ -64,6 +64,6 @@ func (a *TokenAuth) CreateRefreshJWT(claims RefreshClaims) (string, error) {
 	claims.StandardClaims.IssuedAt = time.Now().UTC().Unix()
 	claims.StandardClaims.ExpiresAt = time.Now().UTC().Unix() + int64(a.JwtRefreshExpiry)
 
-	_, tokenString, err := a.JwtAuth.Encode(claims)
+	_, tokenString, err := a.JwtAuth.Encode(claims.ToMap())
 	return tokenString, err
 }

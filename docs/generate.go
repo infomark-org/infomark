@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5"
 	"github.com/infomark-org/infomark/api/app"
 	"github.com/infomark-org/infomark/configuration"
 	"github.com/infomark-org/infomark/docs/swagger"
@@ -42,13 +42,8 @@ func GetAllRoutes() []*Routes {
 		// f.WriteString(fmt.Sprintf("%s %s\n", method, route))
 
 		if len(route) > 1 && strings.HasPrefix(route, "/api/v1") {
-
-			if strings.HasSuffix(route, "/") {
-				route = route[:len(route)-1]
-			}
-
+			route = strings.TrimSuffix(route, "/")
 			routes = append(routes, &Routes{Method: strings.ToLower(method), Path: route[7:]})
-
 		}
 		return nil
 	}

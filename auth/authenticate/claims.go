@@ -20,11 +20,12 @@
 package authenticate
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 
 	"github.com/alexedwards/scs"
-	jwt "github.com/dgrijalva/jwt-go"
+	jwt "github.com/golang-jwt/jwt/v4"
 )
 
 // AccessClaims represent the claims parsed from JWT access token.
@@ -33,6 +34,13 @@ type AccessClaims struct {
 	AccessNotRefresh bool  `json:"anr"`      // to distinguish between access and refresh code
 	LoginID          int64 `json:"login_id"` // the id to get user information
 	Root             bool  `json:"root"`     // a global flag to bypass all permission checks
+}
+
+func (a *AccessClaims) ToMap() map[string]interface{} {
+	var inInterface map[string]interface{}
+	inrec, _ := json.Marshal(*a)
+	json.Unmarshal(inrec, &inInterface)
+	return inInterface
 }
 
 func NewAccessClaims(loginId int64, root bool) AccessClaims {
@@ -48,6 +56,13 @@ type RefreshClaims struct {
 	jwt.StandardClaims
 	AccessNotRefresh bool  `json:"anr"`
 	LoginID          int64 `json:"login_id"`
+}
+
+func (a *RefreshClaims) ToMap() map[string]interface{} {
+	var inInterface map[string]interface{}
+	inrec, _ := json.Marshal(*a)
+	json.Unmarshal(inrec, &inInterface)
+	return inInterface
 }
 
 func NewRefreshClaims(loginId int64) RefreshClaims {

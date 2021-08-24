@@ -149,7 +149,7 @@ func (ds *DockerService) Run(
 		},
 	}
 
-	resp, err := ds.Client.ContainerCreate(ctx, cfg, hostCfg, nil, "")
+	resp, err := ds.Client.ContainerCreate(ctx, cfg, hostCfg, nil, nil, "")
 	if err != nil {
 		return "", 0, err
 	}

@@ -26,15 +26,15 @@ import (
 	"strconv"
 
 	"github.com/alexedwards/scs"
-	"github.com/go-chi/jwtauth"
+	"github.com/go-chi/jwtauth/v5"
 	"github.com/go-chi/render"
 	"github.com/infomark-org/infomark/auth"
 	"github.com/infomark-org/infomark/configuration"
 	"github.com/infomark-org/infomark/symbol"
-	"github.com/ulule/limiter/v3"
 
-	// "github.com/ulule/limiter/v3/drivers/store/memory"
-	redis "github.com/go-redis/redis"
+	libredis "github.com/go-redis/redis/v8"
+
+	limiter "github.com/ulule/limiter/v3"
 	sredis "github.com/ulule/limiter/v3/drivers/store/redis"
 )
 
@@ -96,7 +96,7 @@ type LoginLimiter struct {
 	Store  *limiter.Store
 	Rate   *limiter.Rate
 	Prefix string
-	Redis  *redis.Client
+	Redis  *libredis.Client
 }
 
 type LoginLimiterKeyFromIP struct {
@@ -126,11 +126,11 @@ func NewLoginLimiter(prefix string, limit string, redisURL string) (*LoginLimite
 	}
 
 	// Create a redis client.
-	option, err := redis.ParseURL(redisURL)
+	option, err := libredis.ParseURL(redisURL)
 	if err != nil {
 		return nil, err
 	}
-	client := redis.NewClient(option)
+	client := libredis.NewClient(option)
 
 	// Create a store with the redis client.
 	store, err := sredis.NewStoreWithOptions(client, limiter.StoreOptions{

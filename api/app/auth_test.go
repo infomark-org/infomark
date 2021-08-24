@@ -20,12 +20,13 @@
 package app
 
 import (
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/franela/goblin"
-	redis "github.com/go-redis/redis"
+	redis "github.com/go-redis/redis/v8"
 	"github.com/infomark-org/infomark/auth"
 	"github.com/infomark-org/infomark/configuration"
 	"github.com/infomark-org/infomark/email"
@@ -241,7 +242,7 @@ func TestAuth(t *testing.T) {
 
 		g.AfterEach(func() {
 			tape.AfterEach()
-			err := redisClient.Set("infomark-logins:1.2.3.4-infomark-logins", "0", 0).Err()
+			err := redisClient.Set(context.Background(), "infomark-logins:1.2.3.4-infomark-logins", "0", 0).Err()
 			g.Assert(err).Equal(nil)
 		})
 

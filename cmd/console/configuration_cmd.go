@@ -42,7 +42,7 @@ import (
 	"github.com/streadway/amqp"
 	"gopkg.in/yaml.v2"
 
-	redis "github.com/go-redis/redis"
+	redis "github.com/go-redis/redis/v8"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )
@@ -172,7 +172,7 @@ var CreateConfiguration = &cobra.Command{
 	},
 }
 
-func showResult(report goblin.DetailedReporter, err error, text string) {
+func showResult(report *goblin.DetailedReporter, err error, text string) {
 	if err != nil {
 		report.ItFailed(text)
 		report.BeginDescribe(err.Error())
@@ -193,7 +193,7 @@ var TestConfiguration = &cobra.Command{
 		report.BeginDescribe("Test configuration")
 		status_code := 0
 		config, err := configuration.ParseConfiguration(args[0])
-		showResult(report, err, "read configuration from file")
+		showResult(&report, err, "read configuration from file")
 		if err != nil {
 			status_code = -1
 		}
@@ -204,7 +204,7 @@ var TestConfiguration = &cobra.Command{
 			report.BeginDescribe("Test services")
 			// Try to connect to postgres
 			db, err := sqlx.Connect("postgres", config.Server.PostgresURL())
-			showResult(report, err, "connect to postgres db")
+			showResult(&report, err, "connect to postgres db")
 			if err != nil {
 				status_code = -1
 			} else {
@@ -214,8 +214,8 @@ var TestConfiguration = &cobra.Command{
 			// Try to connect to Redis
 			option, _ := redis.ParseURL(config.Server.RedisURL())
 			redisClient := redis.NewClient(option)
-			_, err = redisClient.Ping().Result()
-			showResult(report, err, "connect to redis url")
+			_, err = redisClient.Ping(context.Background()).Result()
+			showResult(&report, err, "connect to redis url")
 			if err != nil {
 				status_code = -1
 			} else {
@@ -224,7 +224,7 @@ var TestConfiguration = &cobra.Command{
 
 			// Try to connect to RabbitMQ
 			mqConnection, err := amqp.Dial(config.Server.Services.RabbitMQ.URL())
-			showResult(report, err, "connect to rabbit mq")
+			showResult(&report, err, "connect to rabbit mq")
 			if err != nil {
 				status_code = -1
 			} else {
@@ -234,26 +234,26 @@ var TestConfiguration = &cobra.Command{
 
 			report.BeginDescribe("Test paths")
 			err = fs.DirExists(config.Server.Paths.Common)
-			showResult(report, err, "common path readable")
+			showResult(&report, err, "common path readable")
 			if err != nil {
 				status_code = -1
 			}
 
 			err = fs.IsDirWriteable(config.Server.Paths.Uploads)
-			showResult(report, err, "upload path writeable")
+			showResult(&report, err, "upload path writeable")
 			if err != nil {
 				status_code = -1
 			}
 
 			err = fs.IsDirWriteable(config.Server.Paths.GeneratedFiles)
-			showResult(report, err, "generated_files path writeable")
+			showResult(&report, err, "generated_files path writeable")
 			if err != nil {
 				status_code = -1
 			}
 
 			privacyFile := fmt.Sprintf("%s/privacy_statement.md", config.Server.Paths.Common)
 			err = fs.FileExists(privacyFile)
-			showResult(report, err, fmt.Sprintf("Read privacy Statement from %s", privacyFile))
+			showResult(&report, err, fmt.Sprintf("Read privacy Statement from %s", privacyFile))
 			if err != nil {
 				status_code = -1
 			}
@@ -265,7 +265,7 @@ var TestConfiguration = &cobra.Command{
 			report.BeginDescribe("Test services")
 			// Try to connect to RabbitMQ
 			mqConnection, err := amqp.Dial(config.Server.Services.RabbitMQ.URL())
-			showResult(report, err, "connect to rabbit mq")
+			showResult(&report, err, "connect to rabbit mq")
 			if err != nil {
 				status_code = -1
 			} else {
@@ -274,7 +274,7 @@ var TestConfiguration = &cobra.Command{
 
 			// Test docker "hello world"
 			dockerClient, err := client.NewClientWithOpts(client.WithAPIVersionNegotiation())
-			showResult(report, err, "create docker client")
+			showResult(&report, err, "create docker client")
 			if err != nil {
 				status_code = -1
 			} else {
@@ -287,8 +287,8 @@ var TestConfiguration = &cobra.Command{
 					AttachStdout:    true,
 					AttachStderr:    true,
 					NetworkDisabled: true, // no network activity required
-				}, nil, nil, "")
-				showResult(report, err, "create docker container")
+				}, nil, nil, nil, "")
+				showResult(&report, err, "create docker container")
 
 				if err != nil {
 					status_code = -1

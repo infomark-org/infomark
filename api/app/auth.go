@@ -25,7 +25,7 @@ import (
 	"net/http"
 
 	"github.com/alexedwards/scs"
-	"github.com/go-chi/jwtauth"
+	"github.com/go-chi/jwtauth/v5"
 	"github.com/go-chi/render"
 	"github.com/infomark-org/infomark/auth"
 	"github.com/infomark-org/infomark/auth/authenticate"
