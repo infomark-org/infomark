@@ -454,9 +454,9 @@ var GroupParseBidsSolution = &cobra.Command{
 				break
 			}
 			// parse line
-			string := fmt.Sprintf("%s", line)
-			if strings.HasPrefix(string, "assign[") {
-				parts := strings.Split(string, "[")
+			line_string := string(line)
+			if strings.HasPrefix(line_string, "assign[") {
+				parts := strings.Split(line_string, "[")
 				parts = strings.Split(parts[1], "]")
 				parts = strings.Split(parts[0], ",")
 
