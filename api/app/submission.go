@@ -393,10 +393,9 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
 
 	if task.PublicDockerImage.Valid && helper.NewPublicTestFileHandle(task.ID).Exists() {
 		// enqueue public test
-
 		request := shared.NewSubmissionAMQPWorkerRequest(
 			course.ID, task.ID, submission.ID, grade.ID,
-			accessToken, configuration.Configuration.Server.ExternalURL(), task.PublicDockerImage.String, sha256, "public")
+			accessToken, configuration.Configuration.Server.URL(), task.PublicDockerImage.String, sha256, "public")
 
 		body, err := json.Marshal(request)
 		if err != nil {
@@ -423,7 +422,7 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
 
 		request := shared.NewSubmissionAMQPWorkerRequest(
 			course.ID, task.ID, submission.ID, grade.ID,
-			accessToken, configuration.Configuration.Server.ExternalURL(), task.PrivateDockerImage.String, sha256, "private")
+			accessToken, configuration.Configuration.Server.URL(), task.PrivateDockerImage.String, sha256, "private")
 
 		body, err := json.Marshal(request)
 		if err != nil {
