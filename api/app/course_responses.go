@@ -36,6 +36,7 @@ type CourseResponse struct {
 	BeginsAt           time.Time `json:"begins_at" example:"auto"`
 	EndsAt             time.Time `json:"ends_at" example:"auto"`
 	RequiredPercentage int       `json:"required_percentage" example:"80"`
+	MaxTeamSize        int       `json:"max_team_size" example:"3"`
 }
 
 // Render post-processes a CourseResponse.
@@ -52,6 +53,7 @@ func (rs *CourseResource) newCourseResponse(p *model.Course) *CourseResponse {
 		BeginsAt:           p.BeginsAt,
 		EndsAt:             p.EndsAt,
 		RequiredPercentage: p.RequiredPercentage,
+		MaxTeamSize:        p.MaxTeamSize,
 	}
 }
 

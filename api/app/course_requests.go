@@ -34,6 +34,7 @@ type CourseRequest struct {
 	BeginsAt           time.Time `json:"begins_at" example:"auto"`
 	EndsAt             time.Time `json:"ends_at" example:"auto"`
 	RequiredPercentage int       `json:"required_percentage" example:"80"`
+	MaxTeamSize        int       `json:"max_team_size" example:"3"`
 }
 
 // Bind preprocesses a CourseRequest.
@@ -72,6 +73,10 @@ func (body *CourseRequest) Validate() error {
 		validation.Field(
 			&body.RequiredPercentage,
 			validation.Min(0),
+		),
+		validation.Field(
+			&body.MaxTeamSize,
+			validation.Min(1),
 		),
 	)
 }
