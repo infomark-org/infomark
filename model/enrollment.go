@@ -43,4 +43,7 @@ type UserCourse struct {
 	Semester      int         `db:"semester"`
 	Subject       string      `db:"subject"`
 	Language      string      `db:"language"`
+
+	TeamID        null.Int `db:"team_id"`
+	TeamConfirmed bool     `db:"confirmed_team"`
 }

@@ -86,6 +86,7 @@ def create_course(fake, name):
       ('begins_at', time_stamp(datetime.datetime(2019, 2, 1, 1, 2, 3))),
       ('ends_at', time_stamp(datetime.datetime(2019, 7, 30, 23, 59, 59))),
       ('required_percentage', fake.random_int(10, 100)),
+      ('max_team_size', fake.random_int(1, 4)),
   ])
 
   return data
@@ -97,6 +98,8 @@ def create_user_course(user_id, course_id, role):
       ('user_id', user_id),
       ('course_id', course_id),
       ('role', role),
+      ('team_id', VAL.NULL),
+      ('confirmed_team', VAL.FALSE),
   ])
 
   return data

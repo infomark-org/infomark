@@ -2,7 +2,7 @@
 //            distributing exercise sheets and testing exercise submissions
 // Copyright (C) 2019 ComputerGraphics Tuebingen
 //               2020-present InfoMark.org
-// Authors: Patrick Wieschollek
+// Authors: Raphael Braun
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -19,22 +19,8 @@
 
 package model
 
-import (
-	"time"
-)
-
-// Course holds specific application settings linked to an entity, which
-// represents a course
-type Course struct {
-	ID        int64     `db:"id"`
-	CreatedAt time.Time `db:"created_at,omitempty"`
-	UpdatedAt time.Time `db:"updated_at,omitempty"`
-
-	Name               string    `db:"name"`
-	Description        string    `db:"description"`
-	BeginsAt           time.Time `db:"begins_at"`
-	EndsAt             time.Time `db:"ends_at"`
-	RequiredPercentage int       `db:"required_percentage"`
-	MaxTeamSize int `db:"max_team_size"`
-
+// A team consist just of the key of the team and is referenced by the
+// enrollment to a course
+type Team struct {
+	ID int64 `db:"id"`
 }

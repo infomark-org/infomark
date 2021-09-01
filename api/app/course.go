@@ -171,6 +171,7 @@ func (rs *CourseResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 	course.BeginsAt = data.BeginsAt
 	course.EndsAt = data.EndsAt
 	course.RequiredPercentage = data.RequiredPercentage
+	course.MaxTeamSize = data.MaxTeamSize
 
 	// update database entry
 	if err := rs.Stores.Course.Update(course); err != nil {
@@ -196,8 +197,9 @@ func (rs *CourseResource) DeleteHandler(w http.ResponseWriter, r *http.Request) 
 	course := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
 
 	// Warning: There is more to do! Currently we just dis-enroll all students,
-	// remove all sheets and delete the course it self FROM THE DATABASE.
-	// This does not remove gradings and the sheets or touches any file!
+	// remove all teams, remove all sheets and delete the course it self FROM THE
+	// DATABASE. This does not remove gradings and the sheets or touches any
+	// file!
 
 	// update database entry
 	if err := rs.Stores.Course.Delete(course.ID); err != nil {
