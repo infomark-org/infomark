@@ -83,6 +83,7 @@ type CourseStore interface {
 	PointsForUser(userID int64, courseID int64) ([]model.SheetPoints, error)
 	RoleInCourse(userID int64, courseID int64) (authorize.CourseRole, error)
 	UpdateRole(courseID, userID int64, role int) error
+	ExerciseGroupCount(userID int64, courseID int64) (int64, error)
 }
 
 // SheetStore specifies required database queries for Sheet management.

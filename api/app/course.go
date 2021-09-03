@@ -658,3 +658,35 @@ func (rs *CourseResource) RoleContext(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
+
+//..............................................................................
+
+// TeamCountHandler is public endpoint for
+// URL: /courses/{course_id}/teamcount
+// URLPARAM: course_id,integer
+// METHOD: get
+// TAG: courses
+// RESPONSE: 200,TeamCountResponse
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  get the number of teams in the course for admin / group of the tutor
+func (rs *CourseResource) TeamCountHandler(w http.ResponseWriter, r *http.Request) {
+	course := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
+	accessClaims := r.Context().Value(symbol.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+
+	teamCount, err := rs.Stores.Course.ExerciseGroupCount(accessClaims.LoginID, course.ID)
+	if err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
+
+	resp := &TeamCountResponse{TeamCount: teamCount}
+	// resp := &SheetPointsResponse{SheetPoints: sheetPoints}
+
+	if err := render.Render(w, r, resp); err != nil {
+		render.Render(w, r, ErrRender(err))
+		return
+	}
+
+	render.Status(r, http.StatusOK)
+}

@@ -192,3 +192,14 @@ func newEnrollmentListResponse(enrollments []model.UserCourse) []render.Renderer
 
 	return list
 }
+
+//..............................................................................
+
+type TeamCountResponse struct {
+	TeamCount int64 `json:"team_count" example 123`
+}
+// Render post-processes a TeamCountResponse.
+func (body *TeamCountResponse) Render(w http.ResponseWriter, r *http.Request) error {
+	return nil
+}
+
