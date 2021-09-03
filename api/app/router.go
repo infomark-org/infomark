@@ -262,6 +262,7 @@ func New(db *sqlx.DB, promhttp http.Handler, log bool) (*chi.Mux, error) {
 						r.Use(appAPI.Course.Context)
 						r.Use(appAPI.Course.RoleContext)
 
+
 						r.Post("/enrollments", appAPI.Course.EnrollHandler)
 
 						r.Route("/", func(r chi.Router) {
@@ -270,11 +271,17 @@ func New(db *sqlx.DB, promhttp http.Handler, log bool) (*chi.Mux, error) {
 							r.Get("/", appAPI.Course.GetHandler)
 
 							r.Route("/", func(r chi.Router) {
-								r.Use(authorize.RequiresAtLeastCourseRole(authorize.ADMIN))
+								r.Use(authorize.RequiresAtLeastCourseRole(authorize.TUTOR))
 
-								r.Post("/emails", appAPI.Course.SendEmailHandler)
-								r.Put("/", appAPI.Course.EditHandler)
-								r.Delete("/", appAPI.Course.DeleteHandler)
+								r.Get("/teamcount", appAPI.Course.TeamCountHandler)
+
+								r.Route("/", func(r chi.Router) {
+									r.Use(authorize.RequiresAtLeastCourseRole(authorize.ADMIN))
+
+									r.Post("/emails", appAPI.Course.SendEmailHandler)
+									r.Put("/", appAPI.Course.EditHandler)
+									r.Delete("/", appAPI.Course.DeleteHandler)
+								})
 							})
 
 							r.Get("/enrollments", appAPI.Course.IndexEnrollmentsHandler)

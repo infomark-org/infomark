@@ -300,3 +300,65 @@ AND
 	}
 
 }
+
+
+func (s *CourseStore) ExerciseGroupCount(userID int64, courseID int64) (int64, error) {
+	var role_int int
+
+	err := s.db.Get(&role_int, `
+SELECT
+  role
+FROM
+  user_course
+WHERE
+  user_id = $1
+AND
+  course_id = $2`,
+		userID, courseID,
+	)
+	var team_count int64
+	if err != nil {
+		// meaning there is no entry
+		return 0, err
+	} else {
+		switch role_int {
+		case 2:
+			err := s.db.Get(&team_count, `
+SELECT COUNT(*)
+FROM (
+	SELECT team_id as team_count
+	FROM user_course
+	WHERE course_id = $1
+	AND team_id IS DISTINCT FROM NULL
+	GROUP BY team_id
+) AS unique_teams;
+	`, courseID)
+			if err != nil {
+				// meaning there is no entry
+				return 0, nil
+			}
+			break
+		case 1:
+			err := s.db.Get(&team_count, `
+SELECT COUNT(*)
+FROM (
+	SELECT e.team_id 
+	FROM user_course as e, user_group as ug, groups as g
+	WHERE e.course_id = 1
+	AND g.course_id = 1
+	AND ug.user_id = 4
+	AND g.id = ug.group_id
+	AND e.team_id IS DISTINCT FROM NULL
+GROUP BY e.team_id) AS unique_teams;
+	`, courseID, userID)
+			if err != nil {
+				// meaning there is no entry
+				return 0, nil
+			}
+			break
+		default:
+			return 0, nil
+		}
+	}
+	return team_count, err
+}

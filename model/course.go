@@ -35,6 +35,5 @@ type Course struct {
 	BeginsAt           time.Time `db:"begins_at"`
 	EndsAt             time.Time `db:"ends_at"`
 	RequiredPercentage int       `db:"required_percentage"`
-	MaxTeamSize int `db:"max_team_size"`
-
+	MaxTeamSize        int       `db:"max_team_size"`
 }
