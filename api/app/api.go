@@ -27,6 +27,8 @@ import (
 	"github.com/infomark-org/infomark/model"
 	"github.com/infomark-org/infomark/symbol"
 	"github.com/jmoiron/sqlx"
+
+	null "gopkg.in/guregu/null.v3"
 )
 
 // UserStore defines user related database queries
@@ -195,6 +197,17 @@ type GradeStore interface {
 	GetOverviewGrades(courseID int64, groupID int64) ([]model.OverviewGrade, error)
 }
 
+// UserStore defines user related database queries
+type TeamStore interface {
+	Get(teamID int64) (*model.Team, error)
+	GetAll(courseID int64) ([][]model.User, error)
+	GetAllInGroup(groupID int64) ([]model.TeamRecord, error)
+	GetUnaryTeamsInGroup(groupID int64) ([]model.TeamRecord, error)
+	GetTeamMembers(teamID int64) (*model.TeamRecord, error)
+	GetTeamMembersOfUser(user_id int64, course_id int64) (*model.TeamRecord, error)
+	TeamID(user_id int64, course_id int64) (null.Int, error)
+}
+
 // API provides application resources and handlers.
 type API struct {
 	User       *UserResource
@@ -210,6 +223,7 @@ type API struct {
 	Grade      *GradeResource
 	Common     *CommonResource
 	Exam       *ExamResource
+	Team       *TeamResource
 }
 
 // Stores is the collection of stores. We use this struct to express a kind of
@@ -224,6 +238,7 @@ type Stores struct {
 	Material   MaterialStore
 	Grade      GradeStore
 	Exam       ExamStore
+	Team       TeamStore
 }
 
 // NewStores build all stores and connect them to a database.
@@ -238,6 +253,7 @@ func NewStores(db *sqlx.DB) *Stores {
 		Material:   database.NewMaterialStore(db),
 		Grade:      database.NewGradeStore(db),
 		Exam:       database.NewExamStore(db),
+		Team:       database.NewTeamStore(db),
 	}
 }
 
@@ -259,6 +275,7 @@ func NewAPI(db *sqlx.DB, tokenAuth *authenticate.TokenAuth, sessionAuth *scs.Man
 		Grade:      NewGradeResource(stores),
 		Common:     NewCommonResource(stores),
 		Exam:       NewExamResource(stores),
+		Team:       NewTeamResource(stores),
 	}
 	return api, nil
 }

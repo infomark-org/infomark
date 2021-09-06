@@ -19,8 +19,19 @@
 
 package model
 
+import (
+	null "gopkg.in/guregu/null.v3"
+)
+
 // A team consist just of the key of the team and is referenced by the
 // enrollment to a course
 type Team struct {
 	ID int64 `db:"id"`
+}
+
+// Model representations of a Teams for query
+type TeamRecord struct {
+	ID null.Int `db:"id"`
+	UserID int64 `db:"user_id"`
+	Members []string `db:"members"`
 }
