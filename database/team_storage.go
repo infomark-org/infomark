@@ -22,6 +22,7 @@ package database
 import (
 	"github.com/infomark-org/infomark/model"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 
 	null "gopkg.in/guregu/null.v3"
 )
@@ -56,7 +57,7 @@ GROUP BY e.team_id
 }
 
 func (s *TeamStore) GetTeamMembers(teamID int64) (*model.TeamRecord, error) {
-	p := model.TeamRecord{ID: null.NewInt(0, false), UserID: 0, Members: []string{}}
+	p := model.TeamRecord{ID: null.NewInt(0, false), UserID: 0, Members: pq.StringArray{}}
 	err := s.db.Select(&p, `
 SELECT $1 as id, 0 as user_id, array_agg(u.first_name || ' ' || u.last_name)
 FROM users as u, user_course as e
@@ -68,9 +69,9 @@ GROUP BY e.team_id
 }
 
 func (s *TeamStore) GetTeamMembersOfUser(user_id int64, course_id int64) (*model.TeamRecord, error) {
-	p := model.TeamRecord{ID: null.NewInt(0, false), UserID:user_id, Members: []string{}}
+	p := []model.TeamRecord{}
 	err := s.db.Select(&p, `
-SELECT e.team_id as id, e.user_id, array_agg(uo.first_name || ' ' || uo.last_name)
+SELECT e.team_id as id, 0 AS user_id, array_agg(uo.first_name || ' ' || uo.last_name) as members
 FROM users as u, user_course as e, users as uo, user_course as eo
 WHERE u.id = e.user_id
 AND e.course_id = $2
@@ -81,26 +82,40 @@ AND e.team_id IS DISTINCT FROM NULL
 AND eo.team_id = e.team_id
 GROUP BY e.team_id
 `, user_id, course_id)
+	if err != nil {
+		return nil, err
+	}
+	if len(p) < 1 {
+		// User has no team
+		team := model.TeamRecord{ID: null.NewInt(0, false), UserID:user_id, Members: pq.StringArray{}}
+		return &team, nil
+	}
 
-	return &p, err
+	return &p[0], err
 }
 
 func (s *TeamStore) TeamID(userID int64, courseID int64) (null.Int, error) {
-	p := null.Int{}
+	p := []null.Int{}
 	err := s.db.Select(&p, `
 	SELECT team_id
 	FROM user_course
 	WHERE user_id = $1 AND course_id = $2
 	LIMIT 1;
 	`, userID, courseID)
-	return p, err
+	if err != nil {
+		return null.NewInt(0, false), err
+	}
+	if len(p) < 1 {
+		return null.NewInt(0, false), nil
+	}
+	return p[0], err
 }
 
 func (s *TeamStore) GetAllInGroup(groupID int64) ([]model.TeamRecord, error) {
 	p := []model.TeamRecord{}
 	err := s.db.Select(&p, `
 	SELECT e.team_id AS id, 0 as user_id, array_agg(uo.first_name || ' ' || uo.last_name) AS members
-	FROM user_course as e, users as u, user_group as g, user as uo, user_course AS eo, user_group AS go
+	FROM user_course as e, users as u, user_group as g, users as uo, user_course AS eo, user_group AS go
 	WHERE u.id = e.user_id
 	AND u.id = g.user_id
 	AND uo.id = eo.user_id
@@ -111,7 +126,7 @@ func (s *TeamStore) GetAllInGroup(groupID int64) ([]model.TeamRecord, error) {
 	AND e.team_confirmed = 'false'
 	AND eo.team_confirmed = 'false'
 	GROUP BY e.team_id
-	ORDER BY u.last_name
+	ORDER BY e.team_id
 	`, groupID)
 	return p, err
 }

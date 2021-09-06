@@ -20,6 +20,7 @@
 package app
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/go-chi/render"
@@ -58,15 +59,18 @@ func (rs *TeamResource) IndexTeamHandler(w http.ResponseWriter, r *http.Request)
 	teamID, err := rs.Stores.Team.TeamID(accessClaims.LoginID, course.ID)
 	if err != nil {
 		render.Render(w, r, ErrRender(err))
+		return
 	}
 	team, err := rs.Stores.Team.GetTeamMembersOfUser(accessClaims.LoginID, course.ID)
 	if err != nil {
 		render.Render(w, r, ErrRender(err))
+		return
 	}
 
 	// render JSON response
 	if err = render.Render(w, r, rs.newTeamResponse(teamID, accessClaims.LoginID, team.Members)); err != nil {
 		render.Render(w, r, ErrRender(err))
+		return
 	}
 }
 
@@ -88,18 +92,22 @@ func (rs *TeamResource) IncompleteTeamsHandler(w http.ResponseWriter, r *http.Re
 	groupEnrollment, err := rs.Stores.Group.GetGroupEnrollmentOfUserInCourse(accessClaims.LoginID, course.ID)
 	if err != nil {
 		render.Render(w, r, ErrRender(err))
+		return
 	}
 
 	// Get Users in group without a team
 	noTeams, err := rs.Stores.Team.GetUnaryTeamsInGroup(groupEnrollment.GroupID)
 	if err != nil {
 		render.Render(w, r, ErrRender(err))
+		return
 	}
 
 	// get all teams in group
 	teams, err := rs.Stores.Team.GetAllInGroup(groupEnrollment.GroupID)
 	if err != nil {
+		fmt.Println("DEBUG: GetAllInGroup --------------------", noTeams, err)
 		render.Render(w, r, ErrRender(err))
+		return
 	}
 
 	// combine unary teams with not complete teams
@@ -108,8 +116,8 @@ func (rs *TeamResource) IncompleteTeamsHandler(w http.ResponseWriter, r *http.Re
 	// render the groups that are not maxed out already
 	list := []render.Renderer{}
 	for k := range teams {
-		teamRecord:= teams[k]
-		if (len(teamRecord.Members) < course.MaxTeamSize) {
+		teamRecord := teams[k]
+		if len(teamRecord.Members) < course.MaxTeamSize {
 			// incomplete team
 			var teamResponse = rs.newTeamResponse(teamRecord.ID, teamRecord.UserID, teamRecord.Members)
 			list = append(list, teamResponse)
@@ -119,6 +127,7 @@ func (rs *TeamResource) IncompleteTeamsHandler(w http.ResponseWriter, r *http.Re
 	// render JSON response
 	if err = render.RenderList(w, r, list); err != nil {
 		render.Render(w, r, ErrRender(err))
+		return
 	}
 
 }
