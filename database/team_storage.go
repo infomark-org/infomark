@@ -50,37 +50,42 @@ FROM users as u, user_course as e
 WHERE e.course_id = $1
 AND e.user_id = u.id
 GROUP BY e.team_id
-`, courseID)
-// TODO: users without team missing
+;`, courseID)
+	// TODO: users without team missing
 	return p, err
 }
 
-func (s *TeamStore) GetTeamMembers(teamID int64) ([]model.User, error) {
-	p:= []model.User{}
+func (s *TeamStore) GetTeamMembers(teamID int64) (*model.TeamRecord, error) {
+	p := model.TeamRecord{ID: null.NewInt(0, false), UserID: 0, Members: []string{}}
 	err := s.db.Select(&p, `
-SELECT u.*
+SELECT $1 as id, 0 as user_id, array_agg(u.first_name || ' ' || u.last_name)
 FROM users as u, user_course as e
 WHERE u.id = e.user_id
-AND e.team_id = $1;
-`, teamID)
-	return p, err
+AND e.team_id = $1
+GROUP BY e.team_id
+;`, teamID)
+	return &p, err
 }
 
-func (s *TeamStore) GetTeamMembersOfUser(user_id int64, course_id int64) ([]model.User, error) {
-	p:= []model.User{}
+func (s *TeamStore) GetTeamMembersOfUser(user_id int64, course_id int64) (*model.TeamRecord, error) {
+	p := model.TeamRecord{ID: null.NewInt(0, false), UserID:user_id, Members: []string{}}
 	err := s.db.Select(&p, `
-SELECT u.*
-FROM users as u, user_course as e
+SELECT e.team_id as id, e.user_id, array_agg(uo.first_name || ' ' || uo.last_name)
+FROM users as u, user_course as e, users as uo, user_course as eo
 WHERE u.id = e.user_id
-AND u.id = $1
 AND e.course_id = $2
+AND uo.id = eo.user_id
+AND eo.course_id = $2
+AND u.id = $1
 AND e.team_id IS DISTINCT FROM NULL
-AND e.team_id = (SELECT team_id FROM user_course WHERE user_id = $1 AND course_id = $2);
+AND eo.team_id = e.team_id
+GROUP BY e.team_id
 `, user_id, course_id)
-	return p, err
+
+	return &p, err
 }
 
-func (s *TeamStore) HasTeam(userID int64, courseID int64) (bool, error) {
+func (s *TeamStore) TeamID(userID int64, courseID int64) (null.Int, error) {
 	p := null.Int{}
 	err := s.db.Select(&p, `
 	SELECT team_id
@@ -88,6 +93,40 @@ func (s *TeamStore) HasTeam(userID int64, courseID int64) (bool, error) {
 	WHERE user_id = $1 AND course_id = $2
 	LIMIT 1;
 	`, userID, courseID)
-	return p.Valid, err
+	return p, err
 }
 
+func (s *TeamStore) GetAllInGroup(groupID int64) ([]model.TeamRecord, error) {
+	p := []model.TeamRecord{}
+	err := s.db.Select(&p, `
+	SELECT e.team_id AS id, 0 as user_id, array_agg(uo.first_name || ' ' || uo.last_name) AS members
+	FROM user_course as e, users as u, user_group as g, user as uo, user_course AS eo, user_group AS go
+	WHERE u.id = e.user_id
+	AND u.id = g.user_id
+	AND uo.id = eo.user_id
+	AND uo.id = go.user_id
+	AND go.group_id = g.group_id
+	AND g.group_id = $1
+	AND eo.team_id = e.team_id
+	AND e.team_confirmed = 'false'
+	AND eo.team_confirmed = 'false'
+	GROUP BY e.team_id
+	ORDER BY u.last_name
+	`, groupID)
+	return p, err
+}
+
+func (s *TeamStore) GetUnaryTeamsInGroup(groupID int64) ([]model.TeamRecord, error) {
+	p := []model.TeamRecord{}
+	err := s.db.Select(&p, `
+	SELECT e.team_id AS id, u.id as user_id, ARRAY[u.first_name || ' ' || u.last_name] AS members
+	FROM user_course as e, users as u, user_group as g
+	WHERE u.id = e.user_id
+	AND u.id = g.user_id
+	AND g.group_id = $1
+	AND e.team_id IS NULL
+	AND e.team_confirmed = 'false'
+	ORDER BY u.last_name
+	`, groupID)
+	return p, err
+}

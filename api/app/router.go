@@ -284,6 +284,9 @@ func New(db *sqlx.DB, promhttp http.Handler, log bool) (*chi.Mux, error) {
 								})
 							})
 
+							r.Get("/team", appAPI.Team.IndexTeamHandler)
+							r.Get("/teams", appAPI.Team.IncompleteTeamsHandler)
+
 							r.Get("/enrollments", appAPI.Course.IndexEnrollmentsHandler)
 							r.Delete("/enrollments", appAPI.Course.DisenrollHandler)
 							r.Get("/points", appAPI.Course.PointsHandler)
