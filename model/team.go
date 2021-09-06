@@ -21,6 +21,7 @@ package model
 
 import (
 	null "gopkg.in/guregu/null.v3"
+	"github.com/lib/pq"
 )
 
 // A team consist just of the key of the team and is referenced by the
@@ -33,5 +34,5 @@ type Team struct {
 type TeamRecord struct {
 	ID null.Int `db:"id"`
 	UserID int64 `db:"user_id"`
-	Members []string `db:"members"`
+	Members pq.StringArray `db:"members"`
 }
