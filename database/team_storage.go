@@ -177,6 +177,15 @@ func (s *TeamStore) UserConfirmed(userID int64, courseID int64) (*model.BoolReco
 	return &p, err
 }
 
+func (s *TeamStore) UserConfirm(userID int64, courseID int64) (error) {
+	_, err := s.db.Exec(`
+	UPDATE user_course
+	SET team_confirmed = CAST(1 as BOOLEAN)
+	WHERE user_id = $1
+	AND course_id = $2;`, userID, courseID)
+	return err
+}
+
 func (s *TeamStore) UnconfirmMembers(teamID int64) (error) {
 	_, err := s.db.Exec(`
 	UPDATE user_course
@@ -190,7 +199,7 @@ func (s *TeamStore) UpdateTeam(userID int64, courseID int64, teamID null.Int, co
 	_, err := s.db.Exec(`
 	UPDATE user_course
 	SET team_id = $1,
-	    team_confirmed = $2
+	    team_confirmed = CAST($2 as BOOLEAN)
 	WHERE user_id = $3
 	AND course_id = $4;
 	`, teamID, confirmed, userID, courseID)

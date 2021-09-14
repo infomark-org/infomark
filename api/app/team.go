@@ -190,6 +190,50 @@ func (rs *TeamResource) UserConfirmedHandler(w http.ResponseWriter, r *http.Requ
 	}
 }
 
+// UserConfirmedHandlerPut is public endpoint for
+// URL: /courses/{course_id}/team/{team_id}/userconfirmed
+// METHOD: get
+// TAG: team
+// RESPONSE: 200,TeamResponse
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  Confirm choice of team for user.
+func (rs *TeamResource) ConfirmTeamForUserHandler(w http.ResponseWriter, r *http.Request) {
+	// get current course
+	course := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
+	accessClaims := r.Context().Value(symbol.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+
+	// check if user has a team
+	teamID, err := rs.Stores.Team.TeamID(accessClaims.LoginID, course.ID)
+	if err != nil {
+		render.Render(w, r, ErrRender(err))
+		return
+	}
+	if !teamID.Valid {
+		render.Render(w, r, ErrBadRequestWithDetails(errors.New("No team to confirm")))
+		return
+	}
+
+	err = rs.Stores.Team.UserConfirm(accessClaims.LoginID, course.ID)
+	if err != nil {
+		render.Render(w, r, ErrRender(err))
+		return
+	}
+
+	isConfirmed, err := rs.Stores.Team.UserConfirmed(accessClaims.LoginID, course.ID)
+	if err != nil {
+		render.Render(w, r, ErrRender(err))
+		return
+	}
+
+	// render JSON response
+	if err = render.Render(w, r, rs.newBoolResponse(isConfirmed)); err != nil {
+		render.Render(w, r, ErrRender(err))
+		return
+	}
+}
+
 // TeamJoinHandler is public endpoint for
 // URL: /courses/{course_id}/team/{team_id}/join
 // METHOD: put

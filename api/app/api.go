@@ -207,6 +207,7 @@ type TeamStore interface {
 	TeamID(user_id int64, course_id int64) (null.Int, error)
 	Confirmed(teamID int64, courseID int64) (*model.BoolRecord, error)
 	UserConfirmed(userID int64, courseID int64) (*model.BoolRecord, error)
+	UserConfirm(userID int64, courseID int64) (error)
 	UnconfirmMembers(teamID int64) (error)
 	UpdateTeam(userID int64, courseID int64, teamID null.Int, confirmed bool) (error)
 	Delete(teamID int64) (error)
