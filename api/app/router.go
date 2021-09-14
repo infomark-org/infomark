@@ -294,6 +294,7 @@ func New(db *sqlx.DB, promhttp http.Handler, log bool) (*chi.Mux, error) {
 							r.Route("/team", func(r chi.Router) {
 								r.Get("/", appAPI.Team.IndexTeamHandler)
 								r.Get("/userconfirmed", appAPI.Team.UserConfirmedHandler)
+								r.Put("/userconfirmed", appAPI.Team.ConfirmTeamForUserHandler)
 								r.Put("/join", appAPI.Team.TeamJoinHandler)
 								r.Post("/form", appAPI.Team.TeamFormHandler)
 								r.Put("/leave", appAPI.Team.TeamLeaveHandler)
