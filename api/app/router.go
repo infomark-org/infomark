@@ -284,13 +284,27 @@ func New(db *sqlx.DB, promhttp http.Handler, log bool) (*chi.Mux, error) {
 								})
 							})
 
-							r.Get("/team", appAPI.Team.IndexTeamHandler)
-							r.Get("/teams", appAPI.Team.IncompleteTeamsHandler)
 
 							r.Get("/enrollments", appAPI.Course.IndexEnrollmentsHandler)
 							r.Delete("/enrollments", appAPI.Course.DisenrollHandler)
 							r.Get("/points", appAPI.Course.PointsHandler)
 							r.Get("/bids", appAPI.Course.BidsHandler)
+
+							r.Get("/teams", appAPI.Team.IncompleteTeamsHandler)
+							r.Route("/team", func(r chi.Router) {
+								r.Get("/", appAPI.Team.IndexTeamHandler)
+								r.Get("/userconfirmed", appAPI.Team.UserConfirmedHandler)
+								r.Put("/join", appAPI.Team.TeamJoinHandler)
+								r.Post("/form", appAPI.Team.TeamFormHandler)
+								r.Put("/leave", appAPI.Team.TeamLeaveHandler)
+
+								r.Route("/{team_id}", func(r chi.Router) {
+									r.Use(authorize.RequiresAtLeastCourseRole(authorize.STUDENT))
+									r.Use(appAPI.Team.Context)
+									r.Get("/confirmed", appAPI.Team.TeamConfirmedHandler)
+								})
+							})
+
 
 							r.Route("/enrollments/{user_id}", func(r chi.Router) {
 								r.Use(authorize.RequiresAtLeastCourseRole(authorize.ADMIN))

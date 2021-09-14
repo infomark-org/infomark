@@ -200,12 +200,17 @@ type GradeStore interface {
 // UserStore defines user related database queries
 type TeamStore interface {
 	Get(teamID int64) (*model.Team, error)
-	GetAll(courseID int64) ([][]model.User, error)
 	GetAllInGroup(groupID int64) ([]model.TeamRecord, error)
-	GetUnaryTeamsInGroup(groupID int64) ([]model.TeamRecord, error)
+	GetOtherUnaryTeamsInGroup(userID int64, groupID int64) ([]model.TeamRecord, error)
 	GetTeamMembers(teamID int64) (*model.TeamRecord, error)
 	GetTeamMembersOfUser(user_id int64, course_id int64) (*model.TeamRecord, error)
 	TeamID(user_id int64, course_id int64) (null.Int, error)
+	Confirmed(teamID int64, courseID int64) (*model.BoolRecord, error)
+	UserConfirmed(userID int64, courseID int64) (*model.BoolRecord, error)
+	UnconfirmMembers(teamID int64) (error)
+	UpdateTeam(userID int64, courseID int64, teamID null.Int, confirmed bool) (error)
+	Delete(teamID int64) (error)
+	Create() (*model.Team, error)
 }
 
 // API provides application resources and handlers.
