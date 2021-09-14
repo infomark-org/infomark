@@ -111,7 +111,7 @@ func (s *TeamStore) TeamID(userID int64, courseID int64) (null.Int, error) {
 func (s *TeamStore) GetAllInGroup(groupID int64) ([]model.TeamRecord, error) {
 	p := []model.TeamRecord{}
 	err := s.db.Select(&p, `
-	SELECT e.team_id AS id, 0 as user_id, array_agg(uo.first_name || ' ' || uo.last_name) AS members
+	SELECT e.team_id AS id, 0 as user_id, array_agg(DISTINCT uo.first_name || ' ' || uo.last_name) AS members
 	FROM user_course as e, users as u, user_group as g, users as uo, user_course AS eo, user_group AS go
 	WHERE u.id = e.user_id
 	AND u.id = g.user_id
