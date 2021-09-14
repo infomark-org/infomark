@@ -20,6 +20,9 @@
 package app
 
 import (
+	"errors"
+	validation "github.com/go-ozzo/ozzo-validation"
+	"github.com/infomark-org/infomark/model"
 	null "gopkg.in/guregu/null.v3"
 	"net/http"
 )
@@ -43,4 +46,68 @@ func (rs *TeamResource) newTeamResponse(teamID null.Int, userID int64, members [
 		UserID:  userID,
 		Members: members,
 	}
+}
+
+// BoolResponse is the response payload for booleans.
+type BoolResponse struct {
+	Bool bool `json:"bool" example:"true"`
+}
+
+// Render post-processes a TeamResponse.
+func (body *BoolResponse) Render(w http.ResponseWriter, r *http.Request) error {
+	return nil
+}
+
+// newTeamResponse creates a response from a course model.
+func (rs *TeamResource) newBoolResponse(boolRecord *model.BoolRecord) *BoolResponse {
+	return &BoolResponse{
+		Bool: boolRecord.Bool,
+	}
+}
+
+// TeamJoinRequest is the request payload for joining an existing team.
+type TeamJoinRequest struct {
+	TeamID int64 `json:"team_id" example:"23"`
+}
+
+// TeamJoinRequest is the request payload for forming a new team.
+type TeamFormRequest struct {
+	UserID int64 `json:"user_id" example:"12"`
+}
+
+
+// Bind preprocesses a TeamJoinRequest.
+func (body *TeamJoinRequest) Bind(r *http.Request) error {
+
+	if body == nil {
+		return errors.New("missing \"team_id\" in data")
+	}
+
+	return body.Validate()
+}
+
+func (body *TeamJoinRequest) Validate() error {
+	return validation.ValidateStruct(body,
+		validation.Field(
+			&body.TeamID,
+			validation.Required,
+		))
+}
+
+// Bind preprocesses a TeamFormRequest.
+func (body *TeamFormRequest) Bind(r *http.Request) error {
+
+	if body == nil {
+		return errors.New("missing \"user_id\" in data")
+	}
+
+	return body.Validate()
+}
+
+func (body *TeamFormRequest) Validate() error {
+	return validation.ValidateStruct(body,
+		validation.Field(
+			&body.UserID,
+			validation.Required,
+		))
 }

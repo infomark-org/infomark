@@ -23,6 +23,7 @@ import (
 	"github.com/infomark-org/infomark/model"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
+	"errors"
 
 	null "gopkg.in/guregu/null.v3"
 )
@@ -43,29 +44,25 @@ func (s *TeamStore) Get(teamID int64) (*model.Team, error) {
 	return &p, err
 }
 
-func (s *TeamStore) GetAll(courseID int64) ([][]model.User, error) {
-	p := [][]model.User{}
-	err := s.db.Select(p, `
-SELECT array_agg(u.*)
-FROM users as u, user_course as e
-WHERE e.course_id = $1
-AND e.user_id = u.id
-GROUP BY e.team_id
-;`, courseID)
-	// TODO: users without team missing
-	return p, err
-}
-
 func (s *TeamStore) GetTeamMembers(teamID int64) (*model.TeamRecord, error) {
-	p := model.TeamRecord{ID: null.NewInt(0, false), UserID: 0, Members: pq.StringArray{}}
+	p := []model.TeamRecord{}
 	err := s.db.Select(&p, `
-SELECT $1 as id, 0 as user_id, array_agg(u.first_name || ' ' || u.last_name)
+SELECT CAST($1 AS INT) as id, 0 as user_id, array_agg(u.first_name || ' ' || u.last_name) as members
 FROM users as u, user_course as e
 WHERE u.id = e.user_id
 AND e.team_id = $1
 GROUP BY e.team_id
 ;`, teamID)
-	return &p, err
+	if err != nil {
+		return nil, err
+	}
+	if len(p) < 1 {
+		// Team has no members
+		team := model.TeamRecord{ID: null.NewInt(0, false), UserID: 0, Members: pq.StringArray{}}
+		return &team, nil
+	}
+
+	return &p[0], err
 }
 
 func (s *TeamStore) GetTeamMembersOfUser(user_id int64, course_id int64) (*model.TeamRecord, error) {
@@ -120,18 +117,19 @@ func (s *TeamStore) GetAllInGroup(groupID int64) ([]model.TeamRecord, error) {
 	AND u.id = g.user_id
 	AND uo.id = eo.user_id
 	AND uo.id = go.user_id
+	AND u.id != uo.id
 	AND go.group_id = g.group_id
 	AND g.group_id = $1
 	AND eo.team_id = e.team_id
-	AND e.team_confirmed = 'false'
-	AND eo.team_confirmed = 'false'
+	AND NOT e.team_confirmed
+	AND NOT eo.team_confirmed
 	GROUP BY e.team_id
-	ORDER BY e.team_id
+	ORDER BY e.team_id, members
 	`, groupID)
 	return p, err
 }
 
-func (s *TeamStore) GetUnaryTeamsInGroup(groupID int64) ([]model.TeamRecord, error) {
+func (s *TeamStore) GetOtherUnaryTeamsInGroup(userID int64, groupID int64) ([]model.TeamRecord, error) {
 	p := []model.TeamRecord{}
 	err := s.db.Select(&p, `
 	SELECT e.team_id AS id, u.id as user_id, ARRAY[u.first_name || ' ' || u.last_name] AS members
@@ -140,8 +138,78 @@ func (s *TeamStore) GetUnaryTeamsInGroup(groupID int64) ([]model.TeamRecord, err
 	AND u.id = g.user_id
 	AND g.group_id = $1
 	AND e.team_id IS NULL
-	AND e.team_confirmed = 'false'
+	AND u.id != $2
 	ORDER BY u.last_name
-	`, groupID)
+	`, groupID, userID)
 	return p, err
+}
+
+func (s *TeamStore) Confirmed(teamID int64, courseID int64) (*model.BoolRecord, error) {
+	p := []model.BoolRecord{}
+	err := s.db.Select(&p, `
+	SELECT BOOL_AND(e.team_confirmed) as bool
+	FROM user_course as e
+	WHERE e.team_id = $1
+	AND e.course_id = $2
+	GROUP BY e.team_id
+	LIMIT 1;
+	`, teamID, courseID)
+	if err != nil {
+		return nil, err
+	}
+	if len(p) < 1 {
+		// This should never happen
+		return nil, errors.New("Failed to aggregate team confirmed state")
+	}
+
+	return &p[0], err
+}
+
+func (s *TeamStore) UserConfirmed(userID int64, courseID int64) (*model.BoolRecord, error) {
+	p := model.BoolRecord{Bool: false}
+	err := s.db.Get(&p, `
+	SELECT e.team_confirmed as bool
+	FROM user_course as e
+	WHERE e.user_id = $1
+	AND e.course_id = $2
+	LIMIT 1
+	`, userID, courseID)
+	return &p, err
+}
+
+func (s *TeamStore) UnconfirmMembers(teamID int64) (error) {
+	_, err := s.db.Exec(`
+	UPDATE user_course
+	SET team_confirmed = CAST(0 as BOOLEAN)
+	WHERE team_id = $1;
+	`, teamID)
+	return err
+}
+
+func (s *TeamStore) UpdateTeam(userID int64, courseID int64, teamID null.Int, confirmed bool) (error) {
+	_, err := s.db.Exec(`
+	UPDATE user_course
+	SET team_id = $1,
+	    team_confirmed = $2
+	WHERE user_id = $3
+	AND course_id = $4;
+	`, teamID, confirmed, userID, courseID)
+	return err
+}
+
+func (s *TeamStore) Delete(teamID int64) (error) {
+	_, err := s.db.Exec(`
+	DELETE FROM teams
+	WHERE id = $1;
+	`, teamID)
+	return err
+}
+
+func (s *TeamStore) Create() (*model.Team, error) {
+	var newTeamID int64
+	err := s.db.QueryRow("INSERT INTO teams VALUES (DEFAULT) RETURNING id;").Scan(&newTeamID)
+	if err != nil {
+		return nil, err
+	}
+	return s.Get(newTeamID)
 }

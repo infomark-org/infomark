@@ -20,13 +20,17 @@
 package app
 
 import (
-	"fmt"
+	"context"
+	"errors"
 	"net/http"
+	"strconv"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	"github.com/infomark-org/infomark/auth/authenticate"
 	"github.com/infomark-org/infomark/model"
 	"github.com/infomark-org/infomark/symbol"
+	null "gopkg.in/guregu/null.v3"
 )
 
 // TeamResource specifies team management handler.
@@ -95,8 +99,8 @@ func (rs *TeamResource) IncompleteTeamsHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	// Get Users in group without a team
-	noTeams, err := rs.Stores.Team.GetUnaryTeamsInGroup(groupEnrollment.GroupID)
+	// Get other Users in group without a team
+	noTeams, err := rs.Stores.Team.GetOtherUnaryTeamsInGroup(accessClaims.LoginID, groupEnrollment.GroupID)
 	if err != nil {
 		render.Render(w, r, ErrRender(err))
 		return
@@ -105,13 +109,13 @@ func (rs *TeamResource) IncompleteTeamsHandler(w http.ResponseWriter, r *http.Re
 	// get all teams in group
 	teams, err := rs.Stores.Team.GetAllInGroup(groupEnrollment.GroupID)
 	if err != nil {
-		fmt.Println("DEBUG: GetAllInGroup --------------------", noTeams, err)
 		render.Render(w, r, ErrRender(err))
 		return
 	}
 
 	// combine unary teams with not complete teams
 	teams = append(noTeams, teams...)
+
 
 	// render the groups that are not maxed out already
 	list := []render.Renderer{}
@@ -130,4 +134,262 @@ func (rs *TeamResource) IncompleteTeamsHandler(w http.ResponseWriter, r *http.Re
 		return
 	}
 
+}
+
+// TeamConfirmedHandler is public endpoint for
+// URL: /courses/{course_id}/team/{team_id}/confirmed
+// METHOD: get
+// TAG: team
+// RESPONSE: 200,TeamResponse
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  Did all users in the team confirm the team
+func (rs *TeamResource) TeamConfirmedHandler(w http.ResponseWriter, r *http.Request) {
+	// get current course
+	course := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
+	team := r.Context().Value(symbol.CtxKeyTeam).(*model.Team)
+	isConfirmed, err := rs.Stores.Team.Confirmed(team.ID, course.ID)
+
+	if err != nil {
+		render.Render(w, r, ErrRender(err))
+		return
+	}
+
+	// render JSON response
+	if err = render.Render(w, r, rs.newBoolResponse(isConfirmed)); err != nil {
+		render.Render(w, r, ErrRender(err))
+		return
+	}
+}
+
+// UserConfirmedHandler is public endpoint for
+// URL: /courses/{course_id}/team/{team_id}/userconfirmed
+// METHOD: get
+// TAG: team
+// RESPONSE: 200,TeamResponse
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// RESPONSE: 403,Unauthorized
+// SUMMARY:  Did user confirm the team
+func (rs *TeamResource) UserConfirmedHandler(w http.ResponseWriter, r *http.Request) {
+	// get current course
+	course := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
+	accessClaims := r.Context().Value(symbol.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+
+	isConfirmed, err := rs.Stores.Team.UserConfirmed(accessClaims.LoginID, course.ID)
+	if err != nil {
+		render.Render(w, r, ErrRender(err))
+		return
+	}
+
+	// render JSON response
+	if err = render.Render(w, r, rs.newBoolResponse(isConfirmed)); err != nil {
+		render.Render(w, r, ErrRender(err))
+		return
+	}
+}
+
+// TeamJoinHandler is public endpoint for
+// URL: /courses/{course_id}/team/{team_id}/join
+// METHOD: put
+// TAG: team
+// REQUEST:  TeamJoinRequest
+// RESPONSE: 204,NoContent
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// SUMMARY:  updating the enrollment record to join the team
+func (rs *TeamResource) TeamJoinHandler(w http.ResponseWriter, r *http.Request) {
+	accessClaims := r.Context().Value(symbol.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+	course := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
+
+	data := &TeamJoinRequest{}
+
+	// parse JSON request into struct
+	if err := render.Bind(r, data); err != nil {
+		render.Render(w, r, ErrBadRequestWithDetails(err))
+		return
+	}
+
+	// make sure the team with the id actually exists in the database
+	team, err := rs.Stores.Team.Get(data.TeamID)
+	if err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
+	// check whether team is full
+	teamRecord, err := rs.Stores.Team.GetTeamMembers(team.ID)
+	if err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
+	if len(teamRecord.Members) >= course.MaxTeamSize {
+		render.Render(w, r, ErrBadRequestWithDetails(errors.New("Group is already full")))
+	}
+	// Set confirmed to false for all existing members in team
+	rs.Stores.Team.UnconfirmMembers(team.ID)
+	// join the team (confirmed choice)
+	err = rs.Stores.Team.UpdateTeam(accessClaims.LoginID, course.ID, null.IntFrom(team.ID), true)
+	if err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
+
+	// collect all team members for response
+	teamMembers, err := rs.Stores.Team.GetTeamMembers(team.ID)
+	if err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
+
+	// render JSON response
+	if err = render.Render(w, r, rs.newTeamResponse(null.NewInt(team.ID, true), accessClaims.LoginID, teamMembers.Members)); err != nil {
+		render.Render(w, r, ErrRender(err))
+		return
+	}
+}
+
+// TeamFormHandler is public endpoint for
+// URL: /courses/{course_id}/team/{team_id}/join
+// METHOD: put
+// TAG: team
+// REQUEST:  TeamFormRequest
+// RESPONSE: 204,NoContent
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// SUMMARY:  Create new team and updating the enrollment records to join the team
+func (rs *TeamResource) TeamFormHandler(w http.ResponseWriter, r *http.Request) {
+	accessClaims := r.Context().Value(symbol.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+	course := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
+
+	data := &TeamFormRequest{}
+
+	// parse JSON request into struct
+	if err := render.Bind(r, data); err != nil {
+		render.Render(w, r, ErrBadRequestWithDetails(err))
+		return
+	}
+
+	// Make sure the user exists
+	user, err := rs.Stores.User.Get(data.UserID)
+	if err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
+	// Create Team
+	team, err := rs.Stores.Team.Create()
+	if err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
+	// Add the two users to the team
+	// join the team (confirmed choice)
+	err = rs.Stores.Team.UpdateTeam(accessClaims.LoginID, course.ID, null.IntFrom(team.ID), true)
+	if err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
+	err = rs.Stores.Team.UpdateTeam(user.ID, course.ID, null.IntFrom(team.ID), false)
+	if err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
+
+	// collect all team members for response
+	teamMembers, err := rs.Stores.Team.GetTeamMembers(team.ID)
+	if err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
+
+	// render JSON response
+	if err = render.Render(w, r, rs.newTeamResponse(null.NewInt(team.ID, true), accessClaims.LoginID, teamMembers.Members)); err != nil {
+		render.Render(w, r, ErrRender(err))
+		return
+	}
+}
+
+// TeamLeaveHandler is public endpoint for
+// URL: /courses/{course_id}/team/leave
+// METHOD: put
+// TAG: team
+// REQUEST:  -
+// RESPONSE: 204,NoContent
+// RESPONSE: 400,BadRequest
+// RESPONSE: 401,Unauthenticated
+// SUMMARY:  Removes user from its current team
+func (rs *TeamResource) TeamLeaveHandler(w http.ResponseWriter, r *http.Request) {
+	accessClaims := r.Context().Value(symbol.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+	course := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
+
+	// Get current team of user
+	teamID, err := rs.Stores.Team.TeamID(accessClaims.LoginID, course.ID)
+	if err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
+	if !teamID.Valid {
+		render.Render(w, r, ErrBadRequestWithDetails(errors.New("User has no team to leave")))
+		return
+	}
+
+	// Set confirmed to false for all members in team
+	rs.Stores.Team.UnconfirmMembers(teamID.Int64)
+
+	// leave the team
+	err = rs.Stores.Team.UpdateTeam(accessClaims.LoginID, course.ID, null.NewInt(0, false), false)
+	if err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
+
+	// delete team if only one person is remaining
+	teamMembers, err := rs.Stores.Team.GetTeamMembers(teamID.Int64)
+	if err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
+	if len(teamMembers.Members) < 2 {
+		rs.Stores.Team.Delete(teamID.Int64)
+		if err != nil {
+			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+			return
+		}
+	}
+
+	// render JSON response
+	if err = render.Render(w, r,
+		rs.newTeamResponse(null.NewInt(0, false), accessClaims.LoginID, []string{})); err != nil {
+		render.Render(w, r, ErrRender(err))
+		return
+	}
+}
+
+// .............................................................................
+// Context middleware is used to load a Team object from
+// the URL parameter `teamID` passed through as the request. In case
+// the Team could not be found, we stop here and return a 404.
+// We do NOT check whether the user is authorized to get this team.
+func (rs *TeamResource) Context(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var teamID int64
+		var err error
+
+		// try to get id from URL
+		if teamID, err = strconv.ParseInt(chi.URLParam(r, "team_id"), 10, 64); err != nil {
+			render.Render(w, r, ErrNotFound)
+			return
+		}
+
+		// find specific team in database
+		team, err := rs.Stores.Team.Get(teamID)
+		if err != nil {
+			render.Render(w, r, ErrNotFound)
+			return
+		}
+
+		// serve next
+		ctx := context.WithValue(r.Context(), symbol.CtxKeyTeam, team)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }

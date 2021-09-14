@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS teams (
 ALTER TABLE user_course ADD COLUMN team_confirmed BOOLEAN DEFAULT FALSE;
 ALTER TABLE user_course ADD COLUMN team_id INT DEFAULT NULL;
 ALTER TABLE user_course ADD CONSTRAINT FK_UserCourseTeam
-FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE;
+FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE SET DEFAULT;
 
 -- Add team size to course
 ALTER TABLE courses ADD COLUMN max_team_size INT DEFAULT 1;

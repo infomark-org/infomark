@@ -36,3 +36,8 @@ type TeamRecord struct {
 	UserID int64 `db:"user_id"`
 	Members pq.StringArray `db:"members"`
 }
+
+// Model representations of a boolean for query
+type BoolRecord struct {
+	Bool bool `db:"bool"`
+}
