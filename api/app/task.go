@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"errors"
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
@@ -356,7 +357,7 @@ func (rs *TaskResource) GetSubmissionResultHandler(w http.ResponseWriter, r *htt
 	givenRole := r.Context().Value(symbol.CtxKeyCourseRole).(authorize.CourseRole)
 	course := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
 	if givenRole != authorize.STUDENT {
-		render.Render(w, r, ErrBadRequest)
+		render.Render(w, r, ErrBadRequestWithDetails(errors.New("This endpoint is ment for students only")))
 		return
 	}
 
