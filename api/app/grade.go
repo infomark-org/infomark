@@ -86,6 +86,18 @@ func (rs *GradeResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 
 	currentGrade.TutorID = accessClaims.LoginID
 
+	// TODO update / create all team members grades
+	// Cases:
+	// * other team members have a submission. During submission the team member
+	// submissions should be synced, so this should be the default case.
+	// 		* retrieve the submissions of the team members.
+	//    *  Check whether they have the same date!.
+	//    	* Yes: Add the feedback to all of them.
+	//    	* No: Don't update.
+	// * one or multiple of the members do not have a submission.
+	// 		create submission for the members.
+	//    create grade from currentGrade with that submission in submission_id
+
 	// update database entry
 	if err := rs.Stores.Grade.Update(currentGrade); err != nil {
 		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
