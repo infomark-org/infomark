@@ -117,6 +117,7 @@ type TaskStore interface {
 	CreateRating(p *model.TaskRating) (*model.TaskRating, error)
 	UpdateRating(p *model.TaskRating) error
 	GetAllMissingTasksForUser(userID int64) ([]model.MissingTask, error)
+	GetAllMissingTasksForTeam(teamID int64) ([]model.MissingTask, error)
 }
 
 // GroupStore specifies required database queries for Task management.
