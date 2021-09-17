@@ -102,15 +102,12 @@ func (rs *TaskResource) MissingIndexHandler(w http.ResponseWriter, r *http.Reque
 		if errConfirm != nil || !isConfirmed.Bool {
 			// team is not confirmed
 			tasks, err = rs.Stores.Task.GetAllMissingTasksForUser(accessClaims.LoginID)
-			fmt.Println("DEBUG: team exists, not confirmed though, missing tasks are:", tasks)
 		} else {
 			// check if team has missing tasks
 			tasks, err = rs.Stores.Task.GetAllMissingTasksForTeam(teamID.Int64)
-			fmt.Println("DEBUG: team exists, missing tasks are:", tasks)
 		}
 	} else {
 		tasks, err = rs.Stores.Task.GetAllMissingTasksForUser(accessClaims.LoginID)
-		fmt.Println("DEBUG: team does not exist, missing tasks are:", tasks)
 	}
 
 	// TODO empty list
