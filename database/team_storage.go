@@ -139,6 +139,7 @@ func (s *TeamStore) GetOtherUnaryTeamsInGroup(userID int64, groupID int64) ([]mo
 	AND g.group_id = $1
 	AND e.team_id IS NULL
 	AND u.id != $2
+	AND e.role = 0
 	ORDER BY u.last_name
 	`, groupID, userID)
 	return p, err
