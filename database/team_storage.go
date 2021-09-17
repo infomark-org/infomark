@@ -159,7 +159,7 @@ func (s *TeamStore) Confirmed(teamID int64, courseID int64) (*model.BoolRecord, 
 		return nil, err
 	}
 	if len(p) < 1 {
-		// This should never happen
+		// This should never happen for valid teamIDs
 		return nil, errors.New("Failed to aggregate team confirmed state")
 	}
 
@@ -222,4 +222,18 @@ func (s *TeamStore) Create() (*model.Team, error) {
 		return nil, err
 	}
 	return s.Get(newTeamID)
+}
+
+func (s *TeamStore) GetUsers(teamID int64) ([]model.User, error) {
+	r := []model.User{}
+	err := s.db.Select(r, `
+	SELECT u.*
+	FROM
+		users AS u,
+		user_course as e
+	WHERE
+		e.team_id = $1
+		e.user_id = u.id
+	`, teamID)
+	return r, err
 }

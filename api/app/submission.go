@@ -315,138 +315,173 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
 	// TODO: synchronize this submission with the team (do all of this for all
 	// team members) -- From here ------------------------------->
 	// create submission if not exists
-	submission, err := rs.Stores.Submission.GetByUserAndTask(usedUserID, task.ID)
-	if err != nil {
-		// no such submission
-		submission, err = rs.Stores.Submission.Create(&model.Submission{UserID: usedUserID, TaskID: task.ID})
-		if err != nil {
-			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-			return
-		}
-
-		// create also empty grade, which will be filled in later
-		grade = &model.Grade{
-			PublicExecutionState:  0,
-			PrivateExecutionState: 0,
-			PublicTestLog:         defaultPublicTestLog,
-			PrivateTestLog:        defaultPrivateTestLog,
-			PublicTestStatus:      0,
-			PrivateTestStatus:     0,
-			AcquiredPoints:        0,
-			Feedback:              "",
-			TutorID:               1,
-			SubmissionID:          submission.ID,
-		}
-
-		// fetch id from grade as we need it
-		grade, err = rs.Stores.Grade.Create(grade)
-		if err != nil {
-			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-			return
-		}
-
-	} else {
-		// submission exists, we only need to get the grade
-		grade, err = rs.Stores.Grade.GetForSubmission(submission.ID)
-		if err != nil {
-			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-			return
-		}
-
-		// and update the grade
-		grade.PublicExecutionState = 0
-		grade.PrivateExecutionState = 0
-		grade.PublicTestLog = defaultPublicTestLog
-		grade.PrivateTestLog = defaultPrivateTestLog
-
-		err = rs.Stores.Grade.Update(grade)
-		if err != nil {
-			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-			return
-		}
-
-	}
-
-	// the file will be located
-	if _, err := helper.NewSubmissionFileHandle(submission.ID).WriteToDisk(r, "file_data"); err != nil {
-		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-		return
-	}
-
-	sha256, err := helper.NewSubmissionFileHandle(submission.ID).Sha256()
+	// is user in a team?
+	teamID, err := rs.Stores.Team.TeamID(usedUserID, course.ID)
 	if err != nil {
 		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
 		return
 	}
-
-	// enqueue file into testing queue
-	// By definition user with id 1 is the system itself with root access
-	tokenManager := rs.TokenAuth
-	if err != nil {
-		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-		return
-	}
-	accessToken, err := tokenManager.CreateAccessJWT(
-		authenticate.NewAccessClaims(1, true))
-	if err != nil {
-		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-		return
-	}
-
-	if task.PublicDockerImage.Valid && helper.NewPublicTestFileHandle(task.ID).Exists() {
-		// enqueue public test
-		request := shared.NewSubmissionAMQPWorkerRequest(
-			course.ID, task.ID, submission.ID, grade.ID,
-			accessToken, configuration.Configuration.Server.URL(), task.PublicDockerImage.String, sha256, "public")
-
-		body, err := json.Marshal(request)
+	teamUserList := []model.User{}
+	var isUserInConfirmedTeam = false
+	if teamID.Valid {
+		// There is a team - is it confirmed
+		isConfirmed, err := rs.Stores.Team.Confirmed(teamID.Int64, course.ID)
 		if err != nil {
 			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
 			return
 		}
-
-		err = DefaultSubmissionProducer.Publish(body)
+		isUserInConfirmedTeam = isConfirmed.Bool
+	}
+	if isUserInConfirmedTeam {
+		teamUserList, err = rs.Stores.Team.GetUsers(teamID.Int64)
 		if err != nil {
 			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
 			return
 		}
 	} else {
-		grade.PublicTestLog = "No public dockerimage was specified --> will not run any public test"
-		err = rs.Stores.Grade.Update(grade)
+		user, err := rs.Stores.User.Get(usedUserID)
 		if err != nil {
 			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
 			return
 		}
+		teamUserList = append(teamUserList, *user)
 	}
 
-	if task.PrivateDockerImage.Valid && helper.NewPrivateTestFileHandle(task.ID).Exists() {
-		// enqueue private test
+	for _, user := range teamUserList {
+		usedUserID = user.ID
+		submission, err := rs.Stores.Submission.GetByUserAndTask(usedUserID, task.ID)
+		if err != nil {
+			// no such submission
+			submission, err = rs.Stores.Submission.Create(&model.Submission{UserID: usedUserID, TaskID: task.ID})
+			if err != nil {
+				render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+				return
+			}
 
-		request := shared.NewSubmissionAMQPWorkerRequest(
-			course.ID, task.ID, submission.ID, grade.ID,
-			accessToken, configuration.Configuration.Server.URL(), task.PrivateDockerImage.String, sha256, "private")
+			// create also empty grade, which will be filled in later
+			grade = &model.Grade{
+				PublicExecutionState:  0,
+				PrivateExecutionState: 0,
+				PublicTestLog:         defaultPublicTestLog,
+				PrivateTestLog:        defaultPrivateTestLog,
+				PublicTestStatus:      0,
+				PrivateTestStatus:     0,
+				AcquiredPoints:        0,
+				Feedback:              "",
+				TutorID:               1,
+				SubmissionID:          submission.ID,
+			}
 
-		body, err := json.Marshal(request)
+			// fetch id from grade as we need it
+			grade, err = rs.Stores.Grade.Create(grade)
+			if err != nil {
+				render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+				return
+			}
+
+		} else {
+			// submission exists, we only need to get the grade
+			grade, err = rs.Stores.Grade.GetForSubmission(submission.ID)
+			if err != nil {
+				render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+				return
+			}
+
+			// and update the grade
+			grade.PublicExecutionState = 0
+			grade.PrivateExecutionState = 0
+			grade.PublicTestLog = defaultPublicTestLog
+			grade.PrivateTestLog = defaultPrivateTestLog
+
+			err = rs.Stores.Grade.Update(grade)
+			if err != nil {
+				render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+				return
+			}
+
+		}
+
+		// the file will be located
+		if _, err := helper.NewSubmissionFileHandle(submission.ID).WriteToDisk(r, "file_data"); err != nil {
+			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+			return
+		}
+
+		sha256, err := helper.NewSubmissionFileHandle(submission.ID).Sha256()
 		if err != nil {
 			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
 			return
 		}
 
-		err = DefaultSubmissionProducer.Publish(body)
+		// enqueue file into testing queue
+		// By definition user with id 1 is the system itself with root access
+		tokenManager := rs.TokenAuth
 		if err != nil {
 			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
 			return
 		}
-	} else {
-		grade.PrivateTestLog = "No private dockerimage was specified --> will not run any private test"
-		err = rs.Stores.Grade.Update(grade)
+		accessToken, err := tokenManager.CreateAccessJWT(
+			authenticate.NewAccessClaims(1, true))
 		if err != nil {
 			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
 			return
 		}
+
+		if task.PublicDockerImage.Valid && helper.NewPublicTestFileHandle(task.ID).Exists() {
+			// enqueue public test
+			request := shared.NewSubmissionAMQPWorkerRequest(
+				course.ID, task.ID, submission.ID, grade.ID,
+				accessToken, configuration.Configuration.Server.URL(), task.PublicDockerImage.String, sha256, "public")
+
+			body, err := json.Marshal(request)
+			if err != nil {
+				render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+				return
+			}
+
+			err = DefaultSubmissionProducer.Publish(body)
+			if err != nil {
+				render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+				return
+			}
+		} else {
+			grade.PublicTestLog = "No public dockerimage was specified --> will not run any public test"
+			err = rs.Stores.Grade.Update(grade)
+			if err != nil {
+				render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+				return
+			}
+		}
+
+		if task.PrivateDockerImage.Valid && helper.NewPrivateTestFileHandle(task.ID).Exists() {
+			// enqueue private test
+
+			request := shared.NewSubmissionAMQPWorkerRequest(
+				course.ID, task.ID, submission.ID, grade.ID,
+				accessToken, configuration.Configuration.Server.URL(), task.PrivateDockerImage.String, sha256, "private")
+
+			body, err := json.Marshal(request)
+			if err != nil {
+				render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+				return
+			}
+
+			err = DefaultSubmissionProducer.Publish(body)
+			if err != nil {
+				render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+				return
+			}
+		} else {
+			grade.PrivateTestLog = "No private dockerimage was specified --> will not run any private test"
+			err = rs.Stores.Grade.Update(grade)
+			if err != nil {
+				render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+				return
+			}
+		}
+
+		totalSubmissionCounterVec.WithLabelValues(fmt.Sprintf("%d", task.ID)).Inc()
 	}
-
-	totalSubmissionCounterVec.WithLabelValues(fmt.Sprintf("%d", task.ID)).Inc()
 	// TODO <---------------------- to here
 
 	render.Status(r, http.StatusOK)

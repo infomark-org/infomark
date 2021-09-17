@@ -94,7 +94,8 @@ func (rs *GradeResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 	//    *  Check whether they have the same date!.
 	//    	* Yes: Add the feedback to all of them.
 	//    	* No: Don't update.
-	// * one or multiple of the members do not have a submission.
+	// * one or multiple of the members do not have a submission (user joins team
+	// after the submission).
 	// 		create submission for the members.
 	//    create grade from currentGrade with that submission in submission_id
 
