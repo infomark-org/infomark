@@ -213,6 +213,7 @@ type TeamStore interface {
 	UpdateTeam(userID int64, courseID int64, teamID null.Int, confirmed bool) (error)
 	Delete(teamID int64) (error)
 	Create() (*model.Team, error)
+	GetUsers(teamID int64) ([]model.User, error)
 }
 
 // API provides application resources and handlers.
