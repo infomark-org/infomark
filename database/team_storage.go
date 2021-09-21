@@ -239,7 +239,7 @@ func (s *TeamStore) GetUsers(teamID int64) ([]model.User, error) {
 
 func (s *TeamStore) TeamFromGrade(gradeID int64) (*model.Team, error) {
 	r := model.Team{}
-	err := s.db.Select(&r, `
+	err := s.db.Get(&r, `
 SELECT t.*
 FROM grades AS g,
 	   submissions AS s,
