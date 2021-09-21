@@ -70,23 +70,28 @@ func (rs *GradeResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	fmt.Println("DEBUG1")
+
 	task, err := rs.Stores.Grade.IdentifyTaskOfGrade(currentGrade.ID)
 	if err != nil {
 		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
 		return
 	}
 
+	fmt.Println("DEBUG2")
 	if data.AcquiredPoints > task.MaxPoints {
 		render.Render(w, r, ErrBadRequestWithDetails(fmt.Errorf("acquired points is larger than max-points %v is more than %v", data.AcquiredPoints, task.MaxPoints)))
 		return
 	}
+	fmt.Println("DEBUG3")
 
 	// get the team of the user that is graded
 	team, err := rs.Stores.Team.TeamFromGrade(currentGrade.ID)
 	if err != nil {
-		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-		return
+		// there is no team
+		team = nil
 	}
+	fmt.Println("DEBUG4")
 	// check if team is valid
 	var isUserInConfirmedTeam = false
 	if team != nil {
@@ -98,6 +103,7 @@ func (rs *GradeResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		isUserInConfirmedTeam = isConfirmed.Bool
 	}
+	fmt.Println("DEBUG5", team, isUserInConfirmedTeam)
 	// collect all team members
 	teamUserList := []model.User{}
 	if isUserInConfirmedTeam {
@@ -110,19 +116,23 @@ func (rs *GradeResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 		// student is alone - no team
 		user, err := rs.Stores.User.GetFromGrade(currentGrade.ID)
 		if err != nil {
+			fmt.Println("DEBUG5.5", user, err)
 			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
 			return
 		}
 		teamUserList = append(teamUserList, *user)
 	}
+	fmt.Println("DEBUG6")
 	// we collected the user(s) whose grades must be updated
 	for _, user := range teamUserList {
 		// get submission of that user for this task
+		fmt.Println("DEBUG7", user.FirstName, user.LastName)
 		submission, err := rs.Stores.Submission.GetByUserAndTask(user.ID, task.ID)
 		if err != nil {
 			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
 			return
 		}
+		fmt.Println("DEBUG8")
 		if submission == nil {
 			fmt.Println("Grade: Teammember has no submission... skipping team member")
 			continue

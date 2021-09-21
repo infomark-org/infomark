@@ -101,11 +101,11 @@ WHERE
 
 func (s *UserStore) GetFromGrade(gradeID int64) (*model.User, error) {
 	r := model.User{}
-	err := s.db.Select(&r, `
+	err := s.db.Get(&r, `
 SELECT u.*
 FROM grades AS g,
 	   submissions AS s,
-		 user AS u
+		 users AS u
 WHERE g.id = $1
 AND g.submission_id = s.id
 AND s.user_id = u.id
