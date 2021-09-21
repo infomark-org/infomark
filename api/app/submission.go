@@ -312,8 +312,6 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
 		defaultPrivateTestLog = "no unit tests for this task are available"
 	}
 
-	// TODO: synchronize this submission with the team (do all of this for all
-	// team members) -- From here ------------------------------->
 	// create submission if not exists
 	// is user in a team?
 	teamID, err := rs.Stores.Team.TeamID(usedUserID, course.ID)
@@ -346,7 +344,6 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
 		}
 		teamUserList = append(teamUserList, *user)
 	}
-
 	for _, user := range teamUserList {
 		usedUserID = user.ID
 		submission, err := rs.Stores.Submission.GetByUserAndTask(usedUserID, task.ID)
@@ -482,7 +479,6 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
 
 		totalSubmissionCounterVec.WithLabelValues(fmt.Sprintf("%d", task.ID)).Inc()
 	}
-	// TODO <---------------------- to here
 
 	render.Status(r, http.StatusOK)
 }

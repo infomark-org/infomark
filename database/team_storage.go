@@ -226,14 +226,31 @@ func (s *TeamStore) Create() (*model.Team, error) {
 
 func (s *TeamStore) GetUsers(teamID int64) ([]model.User, error) {
 	r := []model.User{}
-	err := s.db.Select(r, `
+	err := s.db.Select(&r, `
 	SELECT u.*
 	FROM
 		users AS u,
-		user_course as e
-	WHERE
-		e.team_id = $1
-		e.user_id = u.id
+		user_course AS e
+	WHERE e.team_id = $1
+	AND e.user_id = u.id
 	`, teamID)
 	return r, err
+}
+
+func (s *TeamStore) TeamFromGrade(gradeID int64) (*model.Team, error) {
+	r := model.Team{}
+	err := s.db.Select(&r, `
+SELECT t.*
+FROM grades AS g,
+	   submissions AS s,
+		 user_course AS e,
+		 teams AS t
+WHERE g.id = $1
+AND g.submission_id = s.id
+AND s.user_id = e.user_id
+AND t.id = e.team_id
+AND e.team_id is NOT NULL
+LIMIT 1;
+`, gradeID)
+	return &r, err
 }
