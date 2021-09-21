@@ -41,6 +41,7 @@ type UserStore interface {
 	FindByEmail(email string) (*model.User, error)
 	Find(query string) ([]model.User, error)
 	GetEnrollments(userID int64) ([]model.Enrollment, error)
+	GetFromGrade(gradeID int64) (*model.User, error)
 }
 
 // ExamStore defines exam related database queries
@@ -214,6 +215,7 @@ type TeamStore interface {
 	Delete(teamID int64) (error)
 	Create() (*model.Team, error)
 	GetUsers(teamID int64) ([]model.User, error)
+	TeamFromGrade(gradeID int64) (*model.Team, error)
 }
 
 // API provides application resources and handlers.
