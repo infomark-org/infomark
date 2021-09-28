@@ -196,7 +196,7 @@ func newEnrollmentListResponse(enrollments []model.UserCourse) []render.Renderer
 //..............................................................................
 
 type TeamCountResponse struct {
-	TeamCount int64 `json:"team_count" example 123`
+	TeamCount int64 `json:"team_count" example:"123"`
 }
 
 // Render post-processes a TeamCountResponse.

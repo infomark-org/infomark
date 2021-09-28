@@ -96,7 +96,7 @@ func (rs *TaskResource) MissingIndexHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	tasks := []model.MissingTask{}
+	var tasks []model.MissingTask
 	if teamID.Valid {
 		isConfirmed, errConfirm := rs.Stores.Team.Confirmed(teamID.Int64, course.ID)
 		if errConfirm != nil || !isConfirmed.Bool {
