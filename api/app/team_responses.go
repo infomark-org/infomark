@@ -21,10 +21,11 @@ package app
 
 import (
 	"errors"
+	"net/http"
+
 	validation "github.com/go-ozzo/ozzo-validation"
 	"github.com/infomark-org/infomark/model"
 	null "gopkg.in/guregu/null.v3"
-	"net/http"
 )
 
 // TeamResponse is the response payload for team management.
@@ -74,7 +75,6 @@ type TeamJoinRequest struct {
 type TeamFormRequest struct {
 	UserID int64 `json:"user_id" example:"12"`
 }
-
 
 // Bind preprocesses a TeamJoinRequest.
 func (body *TeamJoinRequest) Bind(r *http.Request) error {

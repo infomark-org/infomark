@@ -20,10 +20,11 @@
 package database
 
 import (
+	"errors"
+
 	"github.com/infomark-org/infomark/model"
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
-	"errors"
 
 	null "gopkg.in/guregu/null.v3"
 )
@@ -84,7 +85,7 @@ GROUP BY e.team_id
 	}
 	if len(p) < 1 {
 		// User has no team
-		team := model.TeamRecord{ID: null.NewInt(0, false), UserID:user_id, Members: pq.StringArray{}}
+		team := model.TeamRecord{ID: null.NewInt(0, false), UserID: user_id, Members: pq.StringArray{}}
 		return &team, nil
 	}
 
@@ -178,7 +179,7 @@ func (s *TeamStore) UserConfirmed(userID int64, courseID int64) (*model.BoolReco
 	return &p, err
 }
 
-func (s *TeamStore) UserConfirm(userID int64, courseID int64) (error) {
+func (s *TeamStore) UserConfirm(userID int64, courseID int64) error {
 	_, err := s.db.Exec(`
 	UPDATE user_course
 	SET team_confirmed = CAST(1 as BOOLEAN)
@@ -187,7 +188,7 @@ func (s *TeamStore) UserConfirm(userID int64, courseID int64) (error) {
 	return err
 }
 
-func (s *TeamStore) UnconfirmMembers(teamID int64) (error) {
+func (s *TeamStore) UnconfirmMembers(teamID int64) error {
 	_, err := s.db.Exec(`
 	UPDATE user_course
 	SET team_confirmed = CAST(0 as BOOLEAN)
@@ -196,7 +197,7 @@ func (s *TeamStore) UnconfirmMembers(teamID int64) (error) {
 	return err
 }
 
-func (s *TeamStore) UpdateTeam(userID int64, courseID int64, teamID null.Int, confirmed bool) (error) {
+func (s *TeamStore) UpdateTeam(userID int64, courseID int64, teamID null.Int, confirmed bool) error {
 	_, err := s.db.Exec(`
 	UPDATE user_course
 	SET team_id = $1,
@@ -207,7 +208,7 @@ func (s *TeamStore) UpdateTeam(userID int64, courseID int64, teamID null.Int, co
 	return err
 }
 
-func (s *TeamStore) Delete(teamID int64) (error) {
+func (s *TeamStore) Delete(teamID int64) error {
 	_, err := s.db.Exec(`
 	DELETE FROM teams
 	WHERE id = $1;

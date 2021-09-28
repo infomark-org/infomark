@@ -301,7 +301,6 @@ AND
 
 }
 
-
 func (s *CourseStore) ExerciseGroupCount(userID int64, courseID int64) (int64, error) {
 	var role_int int
 
