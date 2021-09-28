@@ -116,7 +116,6 @@ func (rs *TeamResource) IncompleteTeamsHandler(w http.ResponseWriter, r *http.Re
 	// combine unary teams with not complete teams
 	teams = append(noTeams, teams...)
 
-
 	// render the groups that are not maxed out already
 	list := []render.Renderer{}
 	for k := range teams {
@@ -261,6 +260,17 @@ func (rs *TeamResource) TeamJoinHandler(w http.ResponseWriter, r *http.Request) 
 		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
 		return
 	}
+	// check if team is already confirmed
+	isConfirmed, err := rs.Stores.Team.Confirmed(team.ID, course.ID)
+	if err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
+	if isConfirmed.Bool {
+		render.Render(w, r, ErrBadRequestWithDetails(errors.New("The team is already confirmed.")))
+		return
+	}
+
 	// check whether team is full
 	teamRecord, err := rs.Stores.Team.GetTeamMembers(team.ID)
 	if err != nil {
@@ -268,7 +278,8 @@ func (rs *TeamResource) TeamJoinHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	if len(teamRecord.Members) >= course.MaxTeamSize {
-		render.Render(w, r, ErrBadRequestWithDetails(errors.New("Group is already full")))
+		render.Render(w, r, ErrBadRequestWithDetails(errors.New("Team is already full")))
+		return
 	}
 	// Set confirmed to false for all existing members in team
 	rs.Stores.Team.UnconfirmMembers(team.ID)
@@ -314,12 +325,23 @@ func (rs *TeamResource) TeamFormHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// Make sure the user exists
+	// Make sure the other user exists
 	user, err := rs.Stores.User.Get(data.UserID)
 	if err != nil {
 		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
 		return
 	}
+	// Make sure the other user is not already in a team
+	maybeTeamID, err := rs.Stores.Team.TeamID(user.ID, course.ID)
+	if err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
+	if maybeTeamID.Valid {
+		render.Render(w, r, ErrBadRequestWithDetails(errors.New("User is already in another Team.")))
+		return
+	}
+
 	// Create Team
 	team, err := rs.Stores.Team.Create()
 	if err != nil {
@@ -327,12 +349,13 @@ func (rs *TeamResource) TeamFormHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	// Add the two users to the team
-	// join the team (confirmed choice)
+	// join the team and confirmed choice
 	err = rs.Stores.Team.UpdateTeam(accessClaims.LoginID, course.ID, null.IntFrom(team.ID), true)
 	if err != nil {
 		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
 		return
 	}
+	// Add other user to the team but without confirming the choice
 	err = rs.Stores.Team.UpdateTeam(user.ID, course.ID, null.IntFrom(team.ID), false)
 	if err != nil {
 		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
