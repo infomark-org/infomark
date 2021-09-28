@@ -336,7 +336,6 @@ FROM (
 				// meaning there is no entry
 				return 0, nil
 			}
-			break
 		case 1:
 			err := s.db.Get(&team_count, `
 SELECT COUNT(*)
@@ -354,7 +353,6 @@ GROUP BY e.team_id) AS unique_teams;
 				// meaning there is no entry
 				return 0, nil
 			}
-			break
 		default:
 			return 0, nil
 		}
