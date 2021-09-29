@@ -71,6 +71,18 @@ func (rs *TeamResource) IndexTeamHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	// add mail addresses if team is confirmed
+	if teamID.Valid {
+		isConfirmed, err := rs.Stores.Team.Confirmed(teamID.Int64, course.ID)
+		if err != nil {
+			render.Render(w, r, ErrRender(err))
+			return
+		}
+		if isConfirmed.Bool {
+
+		}
+	}
+
 	// render JSON response
 	if err = render.Render(w, r, rs.newTeamResponse(teamID, accessClaims.LoginID, team.Members)); err != nil {
 		render.Render(w, r, ErrRender(err))

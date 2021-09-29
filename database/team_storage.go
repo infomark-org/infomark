@@ -48,7 +48,8 @@ func (s *TeamStore) Get(teamID int64) (*model.Team, error) {
 func (s *TeamStore) GetTeamMembers(teamID int64) (*model.TeamRecord, error) {
 	p := []model.TeamRecord{}
 	err := s.db.Select(&p, `
-SELECT CAST($1 AS INT) as id, 0 as user_id, array_agg(u.first_name || ' ' || u.last_name) as members
+SELECT CAST($1 AS INT) as id, 0 as user_id, array_agg(u.first_name || ' ' || u.last_name) as members,
+array_agg(u.email) as mails
 FROM users as u, user_course as e
 WHERE u.id = e.user_id
 AND e.team_id = $1
@@ -59,7 +60,7 @@ GROUP BY e.team_id
 	}
 	if len(p) < 1 {
 		// Team has no members
-		team := model.TeamRecord{ID: null.NewInt(0, false), UserID: 0, Members: pq.StringArray{}}
+		team := model.TeamRecord{ID: null.NewInt(0, false), UserID: 0, Members: pq.StringArray{}, Mails: pq.StringArray{}}
 		return &team, nil
 	}
 
@@ -69,7 +70,8 @@ GROUP BY e.team_id
 func (s *TeamStore) GetTeamMembersOfUser(user_id int64, course_id int64) (*model.TeamRecord, error) {
 	p := []model.TeamRecord{}
 	err := s.db.Select(&p, `
-SELECT e.team_id as id, 0 AS user_id, array_agg(uo.first_name || ' ' || uo.last_name) as members
+SELECT e.team_id as id, 0 AS user_id, array_agg(uo.first_name || ' ' || uo.last_name) as members,
+array_agg(uo.email) as mails
 FROM users as u, user_course as e, users as uo, user_course as eo
 WHERE u.id = e.user_id
 AND e.course_id = $2
@@ -85,7 +87,7 @@ GROUP BY e.team_id
 	}
 	if len(p) < 1 {
 		// User has no team
-		team := model.TeamRecord{ID: null.NewInt(0, false), UserID: user_id, Members: pq.StringArray{}}
+		team := model.TeamRecord{ID: null.NewInt(0, false), UserID: user_id, Members: pq.StringArray{}, Mails: pq.StringArray{}}
 		return &team, nil
 	}
 
@@ -112,7 +114,8 @@ func (s *TeamStore) TeamID(userID int64, courseID int64) (null.Int, error) {
 func (s *TeamStore) GetAllInGroup(groupID int64) ([]model.TeamRecord, error) {
 	p := []model.TeamRecord{}
 	err := s.db.Select(&p, `
-	SELECT e.team_id AS id, 0 as user_id, array_agg(DISTINCT uo.first_name || ' ' || uo.last_name) AS members
+	SELECT e.team_id AS id, 0 as user_id, array_agg(DISTINCT uo.first_name || ' ' || uo.last_name) AS members,
+	array_agg(DISTINCT uo.email) AS mails
 	FROM user_course as e, users as u, user_group as g, users as uo, user_course AS eo, user_group AS go
 	WHERE u.id = e.user_id
 	AND u.id = g.user_id
@@ -122,8 +125,7 @@ func (s *TeamStore) GetAllInGroup(groupID int64) ([]model.TeamRecord, error) {
 	AND go.group_id = g.group_id
 	AND g.group_id = $1
 	AND eo.team_id = e.team_id
-	AND NOT e.team_confirmed
-	AND NOT eo.team_confirmed
+	AND (NOT e.team_confirmed OR NOT eo.team_confirmed)
 	GROUP BY e.team_id
 	ORDER BY e.team_id, members
 	`, groupID)
@@ -133,7 +135,8 @@ func (s *TeamStore) GetAllInGroup(groupID int64) ([]model.TeamRecord, error) {
 func (s *TeamStore) GetOtherUnaryTeamsInGroup(userID int64, groupID int64) ([]model.TeamRecord, error) {
 	p := []model.TeamRecord{}
 	err := s.db.Select(&p, `
-	SELECT e.team_id AS id, u.id as user_id, ARRAY[u.first_name || ' ' || u.last_name] AS members
+	SELECT e.team_id AS id, u.id as user_id, ARRAY[u.first_name || ' ' || u.last_name] AS members,
+	ARRAY[u.email] AS mails
 	FROM user_course as e, users as u, user_group as g
 	WHERE u.id = e.user_id
 	AND u.id = g.user_id
