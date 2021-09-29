@@ -35,6 +35,7 @@ type TeamRecord struct {
 	ID      null.Int       `db:"id"`
 	UserID  int64          `db:"user_id"`
 	Members pq.StringArray `db:"members"`
+	Mails   pq.StringArray `db:"mails"`
 }
 
 // Model representations of a boolean for query

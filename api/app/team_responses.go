@@ -30,9 +30,10 @@ import (
 
 // TeamResponse is the response payload for team management.
 type TeamResponse struct {
-	ID      null.Int `json:"id" example:"1"`
-	UserID  int64    `json:"user_id" example:"1"`
-	Members []string `json:"members" example:"['Jon Doe', 'Jane Doe'}]"`
+	ID          null.Int `json:"id" example:"1"`
+	UserID      int64    `json:"user_id" example:"1"`
+	Members     []string `json:"members" example:"['Jon Doe', 'Jane Doe'}]"`
+	MemberMails []string `json:"member_mails" example:"['jon.joe@mail.com', 'jane.doe@mail.com'}]"`
 }
 
 // Render post-processes a TeamResponse.
@@ -43,9 +44,20 @@ func (body *TeamResponse) Render(w http.ResponseWriter, r *http.Request) error {
 // newTeamResponse creates a response from a course model.
 func (rs *TeamResource) newTeamResponse(teamID null.Int, userID int64, members []string) *TeamResponse {
 	return &TeamResponse{
-		ID:      teamID,
-		UserID:  userID,
-		Members: members,
+		ID:          teamID,
+		UserID:      userID,
+		Members:     members,
+		MemberMails: nil,
+	}
+}
+
+// newTeamResponse creates a response from a course model.
+func (rs *TeamResource) newTeamResponseWithMails(teamID null.Int, userID int64, members []string, mails []string) *TeamResponse {
+	return &TeamResponse{
+		ID:          teamID,
+		UserID:      userID,
+		Members:     members,
+		MemberMails: mails,
 	}
 }
 
@@ -59,7 +71,7 @@ func (body *BoolResponse) Render(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-// newTeamResponse creates a response from a course model.
+// newBoolResponse creates a response from a course model.
 func (rs *TeamResource) newBoolResponse(boolRecord *model.BoolRecord) *BoolResponse {
 	return &BoolResponse{
 		Bool: boolRecord.Bool,
