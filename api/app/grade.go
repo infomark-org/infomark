@@ -120,8 +120,8 @@ func (rs *GradeResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 		// get submission of that user for this task
 		submission, err := rs.Stores.Submission.GetByUserAndTask(user.ID, task.ID)
 		if err != nil {
-			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-			return
+			fmt.Println("Grade: Teammember has no submission... skipping team member")
+			continue
 		}
 		if submission == nil {
 			fmt.Println("Grade: Teammember has no submission... skipping team member")
