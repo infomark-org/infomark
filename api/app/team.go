@@ -79,10 +79,15 @@ func (rs *TeamResource) IndexTeamHandler(w http.ResponseWriter, r *http.Request)
 			return
 		}
 		if isConfirmed.Bool {
-
+			// render JSON response
+			if err = render.Render(w, r, rs.newTeamResponseWithMails(teamID, accessClaims.LoginID, team.Members, team.Mails)); err != nil {
+				render.Render(w, r, ErrRender(err))
+				return
+			}
+			return
 		}
 	}
-
+	// otherwise just return team members without emails
 	// render JSON response
 	if err = render.Render(w, r, rs.newTeamResponse(teamID, accessClaims.LoginID, team.Members)); err != nil {
 		render.Render(w, r, ErrRender(err))
@@ -151,7 +156,7 @@ func (rs *TeamResource) IncompleteTeamsHandler(w http.ResponseWriter, r *http.Re
 // URL: /courses/{course_id}/team/{team_id}/confirmed
 // METHOD: get
 // TAG: team
-// RESPONSE: 200,TeamResponse
+// RESPONSE: 200,BoolResponse
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
 // RESPONSE: 403,Unauthorized
@@ -178,7 +183,7 @@ func (rs *TeamResource) TeamConfirmedHandler(w http.ResponseWriter, r *http.Requ
 // URL: /courses/{course_id}/team/{team_id}/userconfirmed
 // METHOD: get
 // TAG: team
-// RESPONSE: 200,TeamResponse
+// RESPONSE: 200,BoolResponse
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
 // RESPONSE: 403,Unauthorized
@@ -203,9 +208,9 @@ func (rs *TeamResource) UserConfirmedHandler(w http.ResponseWriter, r *http.Requ
 
 // UserConfirmedHandlerPut is public endpoint for
 // URL: /courses/{course_id}/team/{team_id}/userconfirmed
-// METHOD: get
+// METHOD: put
 // TAG: team
-// RESPONSE: 200,TeamResponse
+// RESPONSE: 200,BoolResponse
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
 // RESPONSE: 403,Unauthorized
@@ -250,6 +255,7 @@ func (rs *TeamResource) ConfirmTeamForUserHandler(w http.ResponseWriter, r *http
 // METHOD: put
 // TAG: team
 // REQUEST:  TeamJoinRequest
+// RESPONSE: 200,TeamResponse
 // RESPONSE: 204,NoContent
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
@@ -321,6 +327,7 @@ func (rs *TeamResource) TeamJoinHandler(w http.ResponseWriter, r *http.Request) 
 // METHOD: put
 // TAG: team
 // REQUEST:  TeamFormRequest
+// RESPONSE: 200,TeamResponse
 // RESPONSE: 204,NoContent
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
@@ -393,6 +400,7 @@ func (rs *TeamResource) TeamFormHandler(w http.ResponseWriter, r *http.Request) 
 // METHOD: put
 // TAG: team
 // REQUEST:  -
+// RESPONSE: 200,TeamResponse
 // RESPONSE: 204,NoContent
 // RESPONSE: 400,BadRequest
 // RESPONSE: 401,Unauthenticated
