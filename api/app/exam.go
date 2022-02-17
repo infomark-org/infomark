@@ -54,7 +54,8 @@ func NewExamResource(stores *Stores) *ExamResource {
 // SUMMARY:  list all exams
 func (rs *ExamResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 	// fetch collection of exams from database
-	exams, err := rs.Stores.Exam.GetAll()
+	course := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
+	exams, err := rs.Stores.Exam.ExamsOfCourse(course.ID)
 	if err != nil {
 		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
 		return
