@@ -349,11 +349,12 @@ ORDER BY
 			f.WriteString(fmt.Sprintf("u%s", uid))
 
 			// make sure all students have a bid
-			// students without any preference for a course are given a 5
-			// 0 means no interests, 10 means absolute favourite
-			// default is maximum to prefer students
+			// students without any preference for a group are given a 1
+			// 1 means no interests, 10 means absolute favourite
+            // default is minimum as that is what is shown in the frontend for
+            // groups for which no preferences were set.
 			for _, group := range groups {
-				bidValue := 10
+				bidValue := 1
 				for _, bid := range bids {
 					if bid.GroupID == group.ID {
 						bidValue = bid.Bid
