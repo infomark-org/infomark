@@ -26,7 +26,7 @@ import (
 
 	"github.com/go-chi/render"
 	"github.com/infomark-org/infomark/auth/authorize"
-	"github.com/infomark-org/infomark/configuration"
+	// "github.com/infomark-org/infomark/configuration"
 	"github.com/infomark-org/infomark/model"
 )
 
@@ -50,11 +50,15 @@ func (rs *MaterialResource) newMaterialResponse(p *model.Material, courseID int6
 		PublishAt:    p.PublishAt,
 		LectureAt:    p.LectureAt,
 		RequiredRole: p.RequiredRole,
-		FileURL: fmt.Sprintf("%s/api/v1/courses/%d/materials/%d/file",
-			configuration.Configuration.Server.ExternalURL(),
+		FileURL: fmt.Sprintf("/api/v1/courses/%d/materials/%d/file",
 			courseID,
 			p.ID,
 		),
+		// FileURL: fmt.Sprintf("%s/api/v1/courses/%d/materials/%d/file",
+		// 	configuration.Configuration.Server.ExternalURL(),
+		// 	courseID,
+		// 	p.ID,
+		// ),
 	}
 }
 
