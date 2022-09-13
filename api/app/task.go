@@ -383,13 +383,7 @@ func (rs *TaskResource) GetSubmissionResultHandler(w http.ResponseWriter, r *htt
 	task := r.Context().Value(symbol.CtxKeyTask).(*model.Task)
 	accessClaims := r.Context().Value(symbol.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 
-	submission, err := rs.Stores.Submission.GetByUserAndTask(accessClaims.LoginID, task.ID)
-	if err != nil {
-		render.Render(w, r, ErrNotFound)
-		return
-	}
-
-	grade, err := rs.Stores.Grade.GetForSubmission(submission.ID)
+	grade, err := rs.Stores.Grade.GetForTaskForUser(task.ID, accessClaims.LoginID)
 	if err != nil {
 		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
 		return

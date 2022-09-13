@@ -135,15 +135,17 @@ func (s *TeamStore) GetAllInGroup(groupID int64) ([]model.TeamRecord, error) {
 func (s *TeamStore) GetOtherUnaryTeamsInGroup(userID int64, groupID int64) ([]model.TeamRecord, error) {
 	p := []model.TeamRecord{}
 	err := s.db.Select(&p, `
+	WITH team AS (SELECT team_id FROM user_course c, user_group g, groups gg WHERE c.user_id = $2 AND g.user_id = $2 AND g.group_id = $1 AND gg.id = g.group_id AND gg.course_id = c.course_id)
 	SELECT e.team_id AS id, u.id as user_id, ARRAY[u.first_name || ' ' || u.last_name] AS members,
 	ARRAY[u.email] AS mails
 	FROM user_course as e, users as u, user_group as g
 	WHERE u.id = e.user_id
 	AND u.id = g.user_id
 	AND g.group_id = $1
-	AND e.team_id IS NULL
+	AND (e.team_id IS NULL) -- OR NOT e.team_confirmed)
 	AND u.id != $2
 	AND e.role = 0
+	AND COALESCE(e.team_id <> (SELECT * FROM team), true)
 	ORDER BY u.last_name
 	`, groupID, userID)
 	return p, err
@@ -237,6 +239,15 @@ func (s *TeamStore) GetUsers(teamID int64) ([]model.User, error) {
 		user_course AS e
 	WHERE e.team_id = $1
 	AND e.user_id = u.id
+
+		UNION
+
+	SELECT u.*
+	FROM
+		users AS u,
+		grades AS g
+	WHERE g.team_id = $1
+	AND   g.user_id = u.id
 	`, teamID)
 	return r, err
 }
@@ -246,14 +257,10 @@ func (s *TeamStore) TeamFromGrade(gradeID int64) (*model.Team, error) {
 	err := s.db.Get(&r, `
 SELECT t.*
 FROM grades AS g,
-	   submissions AS s,
-		 user_course AS e,
 		 teams AS t
 WHERE g.id = $1
-AND g.submission_id = s.id
-AND s.user_id = e.user_id
-AND t.id = e.team_id
-AND e.team_id is NOT NULL
+AND t.id = g.team_id
+AND g.team_id is NOT NULL
 LIMIT 1;
 `, gradeID)
 	return &r, err

@@ -47,7 +47,7 @@ INNER JOIN task_sheet ts ON ts.task_id = t.id
 INNER JOIN sheet_course sc ON sc.sheet_id = ts.sheet_id
 WHERE
   t.id NOT IN (
-    SELECT task_id FROM submissions s WHERE s.user_id = $1
+    SELECT task_id FROM submissions s, grades g WHERE s.id = g.submission_id and g.user_id = $1
   );
     `, userID)
 	return p, err
@@ -63,7 +63,7 @@ SELECT
 FROM
 	tasks AS t,
 	task_sheet as ts,
-	sheet_course as sc,
+	sheet_course as sc
 WHERE
 	ts.task_id = t.id
 AND
@@ -73,11 +73,14 @@ AND
 		SELECT to.task_id as task_id
 		FROM
 			submissions AS s,
-			user_course as e
+			user_course as e,
+			grades AS g
 		WHERE
 			e.team_id = $1
 		AND
-			s.user_id = e.user_id
+			g.user_id = e.user_id
+		AND
+			s.id = g.submission_id
 	);
     `, teamID)
 	return p, err

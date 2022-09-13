@@ -131,7 +131,7 @@ INNER JOIN submissions sub ON g.submission_id = sub.id
 INNER JOIN tasks t ON sub.task_id = t.id
 INNER JOIN task_sheet ts ON ts.task_id = t.id
 WHERE
-  sub.user_id = $1
+  g.user_id = $1
 AND
   ts.sheet_id = $2
 ORDER BY

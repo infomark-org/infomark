@@ -48,20 +48,39 @@ type SubmissionFileZipper struct {
 // StudentSubmission is a view from the database used to identify which
 // submissions should be included in the final zip file
 type StudentSubmission struct {
-	ID               int64  `db:"id"`
-	StudentFirstName string `db:"first_name"`
-	StudentLastName  string `db:"last_name"`
+	ID              int64  `db:"id"`
+	StudentLastName string `db:"last_name"`
 }
 
 // FetchStudentSubmissions queries the database to gather all submissions for a given group and task
 func FetchStudentSubmissions(db *sqlx.DB, groupID int64, taskID int64) ([]StudentSubmission, error) {
 	p := []StudentSubmission{}
+	// 	err := db.Select(&p, `
+	// SELECT s.id, u.first_name, u.last_name FROM submissions s
+	//   INNER JOIN user_group ug ON ug.user_id = s.user_id
+	//   INNER JOIN users u ON u.id  = s.user_id
+	//   WHERE  ug.group_id = $1
+	//   AND s.task_id = $2`, groupID, taskID)
+
 	err := db.Select(&p, `
-SELECT s.id, u.first_name, u.last_name FROM submissions s
-  INNER JOIN user_group ug ON ug.user_id = s.user_id
-  INNER JOIN users u ON u.id  = s.user_id
-  WHERE  ug.group_id = $1
-  AND s.task_id = $2`, groupID, taskID)
+SELECT s.id, string_agg(last_names, '-') AS last_name
+FROM   submissions AS s, LATERAL
+       (SELECT DISTINCT ON (g.id) u.last_name
+        FROM  users AS u,
+              user_group AS ug,
+              user_course AS uc,
+              grades AS g
+        WHERE  u.id = g.user_id
+        AND    s.team_id = uc.team_id
+        AND    s.id = g.submission_id
+        AND    s.team_id = g.team_id
+        AND    u.id = uc.user_id
+        AND    u.id = g.user_id
+        AND    uc.team_confirmed
+        AND    ug.group_id = $1) AS _(last_names)
+WHERE  s.task_id = $2
+GROUP BY s.id
+	`, groupID, taskID)
 	return p, err
 }
 
@@ -169,7 +188,7 @@ func (job *SubmissionFileZipper) Run() {
 
 									// Using FileInfoHeader() above only uses the basename of the file. If we want
 									// to preserve the folder structure we can overwrite this with the full path.
-									header.Name = fmt.Sprintf("%s-%s.zip", submission.StudentLastName, submission.StudentFirstName)
+									header.Name = fmt.Sprintf("%s.zip", submission.StudentLastName)
 
 									// Change to deflate to gain better compression
 									// see http://golang.org/pkg/archive/zip/#pkg-constants

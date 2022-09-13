@@ -390,7 +390,9 @@ func TestSubmission(t *testing.T) {
 
 			createdSubmission, err := stores.Submission.GetByUserAndTask(112, 1)
 			g.Assert(err).Equal(nil)
-			g.Assert(createdSubmission.UserID).Equal(int64(112))
+			createdGrading, err := stores.Grade.GetForSubmissionForUser(createdSubmission.ID, 112)
+			g.Assert(err).Equal(nil)
+			g.Assert(createdGrading.UserID).Equal(int64(112))
 
 			g.Assert(helper.NewSubmissionFileHandle(createdSubmission.ID).Exists()).Equal(true)
 			defer helper.NewSubmissionFileHandle(createdSubmission.ID).Delete()

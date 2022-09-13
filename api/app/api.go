@@ -166,8 +166,10 @@ type MaterialStore interface {
 type SubmissionStore interface {
 	Get(submissionID int64) (*model.Submission, error)
 	GetByUserAndTask(userID int64, taskID int64) (*model.Submission, error)
+	GetByTeamID(teamID int64, taskID int64) (*model.Submission, error)
 	Create(p *model.Submission) (*model.Submission, error)
 	GetFiltered(filterCourseID, filterGroupID, filterUserID, filterSheetID, filterTaskID int64) ([]model.Submission, error)
+	Update(p *model.Submission) error
 }
 
 // GradeStore defines grades related database queries
@@ -187,7 +189,9 @@ type GradeStore interface {
 		privateExecutationState int,
 	) ([]model.Grade, error)
 	Get(id int64) (*model.Grade, error)
-	GetForSubmission(id int64) (*model.Grade, error)
+	GetForSubmission(id int64) ([]model.Grade, error)
+	GetForSubmissionForUser(submissionID int64, userID int64) (*model.Grade, error)
+	GetForTaskForUser(id int64, userID int64) (*model.Grade, error)
 	Update(p *model.Grade) error
 	IdentifyCourseOfGrade(gradeID int64) (*model.Course, error)
 	GetAllMissingGrades(courseID int64, tutorID int64, groupID int64) ([]model.MissingGrade, error)

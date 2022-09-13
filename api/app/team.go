@@ -180,7 +180,7 @@ func (rs *TeamResource) TeamConfirmedHandler(w http.ResponseWriter, r *http.Requ
 }
 
 // UserConfirmedHandler is public endpoint for
-// URL: /courses/{course_id}/team/{team_id}/userconfirmed
+// URL: /courses/{course_id}/team/userconfirmed
 // METHOD: get
 // TAG: team
 // RESPONSE: 200,BoolResponse
@@ -272,6 +272,13 @@ func (rs *TeamResource) TeamJoinHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	// Get current team of user
+	teamID, err := rs.Stores.Team.TeamID(accessClaims.LoginID, course.ID)
+	if err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
+
 	// make sure the team with the id actually exists in the database
 	team, err := rs.Stores.Team.Get(data.TeamID)
 	if err != nil {
@@ -315,6 +322,22 @@ func (rs *TeamResource) TeamJoinHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	if teamID.Valid {
+		// delete team if only one person is remaining
+		teamMembersOld, err := rs.Stores.Team.GetTeamMembers(teamID.Int64)
+		if err != nil {
+			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+			return
+		}
+		if len(teamMembersOld.Members) < 2 {
+			rs.Stores.Team.Delete(teamID.Int64)
+			if err != nil {
+				render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+				return
+			}
+		}
+	}
+
 	// render JSON response
 	if err = render.Render(w, r, rs.newTeamResponse(null.NewInt(team.ID, true), accessClaims.LoginID, teamMembers.Members)); err != nil {
 		render.Render(w, r, ErrRender(err))
@@ -323,8 +346,8 @@ func (rs *TeamResource) TeamJoinHandler(w http.ResponseWriter, r *http.Request) 
 }
 
 // TeamFormHandler is public endpoint for
-// URL: /courses/{course_id}/team/{team_id}/join
-// METHOD: put
+// URL: /courses/{course_id}/team/{user_id}/form
+// METHOD: post
 // TAG: team
 // REQUEST:  TeamFormRequest
 // RESPONSE: 200,TeamResponse
@@ -361,6 +384,13 @@ func (rs *TeamResource) TeamFormHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	// Get current team of user
+	teamID, err := rs.Stores.Team.TeamID(accessClaims.LoginID, course.ID)
+	if err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
+	}
+
 	// Create Team
 	team, err := rs.Stores.Team.Create()
 	if err != nil {
@@ -386,6 +416,22 @@ func (rs *TeamResource) TeamFormHandler(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
 		return
+	}
+
+	if teamID.Valid {
+		// delete team if only one person is remaining
+		teamMembersOld, err := rs.Stores.Team.GetTeamMembers(teamID.Int64)
+		if err != nil {
+			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+			return
+		}
+		if len(teamMembersOld.Members) < 2 {
+			rs.Stores.Team.Delete(teamID.Int64)
+			if err != nil {
+				render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+				return
+			}
+		}
 	}
 
 	// render JSON response
