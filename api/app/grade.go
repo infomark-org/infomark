@@ -115,26 +115,61 @@ func (rs *GradeResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		teamUserList = append(teamUserList, *user)
 	}
+
+	// get submission of that user for this task
+	submission, err := rs.Stores.Submission.GetByTeamID(team.ID, task.ID)
+	if err != nil {
+		fmt.Println("Grade: Teammember has no submission... skipping team member")
+	}
+	if submission == nil {
+		fmt.Println("Grade: Teammember has no submission... skipping team member")
+	}
+
 	// we collected the user(s) whose grades must be updated
 	for _, user := range teamUserList {
-		// get submission of that user for this task
-		submission, err := rs.Stores.Submission.GetByUserAndTask(user.ID, task.ID)
-		if err != nil {
-			fmt.Println("Grade: Teammember has no submission... skipping team member")
-			continue
-		}
-		if submission == nil {
-			fmt.Println("Grade: Teammember has no submission... skipping team member")
-			continue
-		}
+		fmt.Printf("%d, %d", submission.ID, user.ID)
 		// and the grade (should exist from submission)
-		gradeOfTeammember, err := rs.Stores.Grade.GetForSubmission(submission.ID)
+		gradeOfTeammember, err := rs.Stores.Grade.GetForSubmissionForUser(submission.ID, user.ID)
 		if err != nil {
 			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
 			return
 		}
 		if gradeOfTeammember == nil {
-			fmt.Println("Grade: Submission has no grade... skipping team member")
+			// Check if user already has a grading from another team
+			// This can only happen, when a team change happened, and the tutor
+			// of the new team changes a past grading.
+			checkGrade, err := rs.Stores.Grade.GetForTaskForUser(submission.TaskID, user.ID)
+
+			// if err != nil {
+			// 	render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+			// 	return
+			// }
+
+			if checkGrade != nil && checkGrade.TeamID != submission.TeamID || err != nil {
+				fmt.Println("Grade: Do not change existing grading from another team")
+				continue
+			}
+
+			// create a grade entry for team member
+			grade := &model.Grade{
+				PublicExecutionState:  0,
+				PrivateExecutionState: 0,
+				PublicTestLog:         "",
+				PrivateTestLog:        "",
+				PublicTestStatus:      0,
+				PrivateTestStatus:     0,
+				AcquiredPoints:        data.AcquiredPoints,
+				Feedback:              data.Feedback,
+				TutorID:               accessClaims.LoginID,
+				SubmissionID:          submission.ID,
+				UserID:                user.ID,
+				TeamID:                submission.TeamID,
+			}
+
+			_, err = rs.Stores.Grade.Create(grade)
+			if err != nil {
+				render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+			}
 			continue
 		}
 		// update the existing grade (created during submission)
@@ -176,9 +211,9 @@ func (rs *GradeResource) GetByIDHandler(w http.ResponseWriter, r *http.Request) 
 }
 
 // PublicResultEditHandler is public endpoint for
-// URL: /courses/{course_id}/grades/{grade_id}/public_result
+// URL: /courses/{course_id}/grades/{submission_id}/public_result
 // URLPARAM: course_id,integer
-// URLPARAM: grade_id,integer
+// URLPARAM: submission_id,integer
 // METHOD: post
 // TAG: internal
 // REQUEST: GradeFromWorkerRequest
@@ -196,9 +231,9 @@ func (rs *GradeResource) PublicResultEditHandler(w http.ResponseWriter, r *http.
 		return
 	}
 
-	currentGrade := r.Context().Value(symbol.CtxKeyGrade).(*model.Grade)
+	currentSubmission := r.Context().Value(symbol.CtxKeyGrade).(*model.Grade)
 
-	submission, err := rs.Stores.Submission.Get(currentGrade.SubmissionID)
+	submission, err := rs.Stores.Submission.Get(currentSubmission.ID)
 	if err != nil {
 		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
 		return
@@ -242,17 +277,24 @@ func (rs *GradeResource) PublicResultEditHandler(w http.ResponseWriter, r *http.
 	render.Status(r, http.StatusNoContent)
 
 	// update database entry
-	if err := rs.Stores.Grade.UpdatePublicTestInfo(currentGrade.ID, data.Log, data.Status); err != nil {
+	grades, err := rs.Stores.Grade.GetForSubmission(submission.ID)
+	if err != nil {
 		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
 		return
 	}
 
+	for _, grade := range grades {
+		if err := rs.Stores.Grade.UpdatePublicTestInfo(grade.ID, data.Log, data.Status); err != nil {
+			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+			return
+		}
+	}
 }
 
 // PrivateResultEditHandler is public endpoint for
-// URL: /courses/{course_id}/grades/{grade_id}/private_result
+// URL: /courses/{course_id}/grades/{submission_id}/private_result
 // URLPARAM: course_id,integer
-// URLPARAM: grade_id,integer
+// URLPARAM: submission_id,integer
 // METHOD: post
 // TAG: internal
 // REQUEST: GradeFromWorkerRequest
@@ -270,9 +312,9 @@ func (rs *GradeResource) PrivateResultEditHandler(w http.ResponseWriter, r *http
 		return
 	}
 
-	currentGrade := r.Context().Value(symbol.CtxKeyGrade).(*model.Grade)
+	currentSubmission := r.Context().Value(symbol.CtxKeyGrade).(*model.Grade)
 
-	submission, err := rs.Stores.Submission.Get(currentGrade.SubmissionID)
+	submission, err := rs.Stores.Submission.Get(currentSubmission.ID)
 	if err != nil {
 		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
 		return
@@ -321,9 +363,17 @@ func (rs *GradeResource) PrivateResultEditHandler(w http.ResponseWriter, r *http
 	render.Status(r, http.StatusNoContent)
 
 	// update database entry
-	if err := rs.Stores.Grade.UpdatePrivateTestInfo(currentGrade.ID, data.Log, data.Status); err != nil {
+	grades, err := rs.Stores.Grade.GetForSubmission(submission.ID)
+	if err != nil {
 		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
 		return
+	}
+
+	for _, grade := range grades {
+		if err := rs.Stores.Grade.UpdatePrivateTestInfo(grade.ID, data.Log, data.Status); err != nil {
+			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+			return
+		}
 	}
 
 }
@@ -389,8 +439,32 @@ func (rs *GradeResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	gradeResponses := []render.Renderer{}
+
+	for _, submission := range submissions {
+		grade, err := rs.Stores.Grade.GetForSubmission(submission.SubmissionID)
+		if err != nil {
+			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+			return
+		}
+
+		users := []User{}
+
+		for _, g := range grade {
+			users = append(users, User{ID: g.UserID, FirstName: g.UserFirstName, LastName: g.UserLastName, Email: g.UserEmail})
+		}
+
+		gradeResponses = append(gradeResponses, newGradeResponseUsers(&submission, users, course.ID))
+
+	}
+
 	// render JSON response
-	if err = render.RenderList(w, r, newGradeListResponse(submissions, course.ID)); err != nil {
+	// if err = render.RenderList(w, r, newGradeListResponse(submissions, course.ID)); err != nil {
+	// 	render.Render(w, r, ErrRender(err))
+	// 	return
+	// }
+
+	if err = render.RenderList(w, r, gradeResponses); err != nil {
 		render.Render(w, r, ErrRender(err))
 		return
 	}

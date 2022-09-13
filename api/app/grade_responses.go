@@ -49,12 +49,15 @@ type GradeResponse struct {
 	TutorID               int64     `json:"tutor_id" example:"2"`
 	SubmissionID          int64     `json:"submission_id" example:"31"`
 	FileURL               string    `json:"file_url" example:"/api/v1/submissions/61/file"`
-	User                  *struct {
-		ID        int64  `json:"id" example:"1"`
-		FirstName string `json:"first_name" example:"Max"`
-		LastName  string `json:"last_name" example:"Mustermensch"`
-		Email     string `json:"email" example:"test@unit-tuebingen.de"`
-	} `json:"user"`
+	TeamID                int64     `json:"team_id" example:"2"`
+	Users                 []User    `json:"users"`
+}
+
+type User struct {
+	ID        int64  `json:"id" example:"1"`
+	FirstName string `json:"first_name" example:"Max"`
+	LastName  string `json:"last_name" example:"Mustermensch"`
+	Email     string `json:"email" example:"test@unit-tuebingen.de"`
 }
 
 // Render post-processes a GradeResponse.
@@ -86,6 +89,9 @@ func newGradeResponse(p *model.Grade, courseID int64) *GradeResponse {
 		Email:     p.UserEmail,
 	}
 
+	users := []User{}
+	users = append(users, *user)
+
 	return &GradeResponse{
 		ID:                    p.ID,
 		UpdatedAt:             p.UpdatedAt,
@@ -98,7 +104,36 @@ func newGradeResponse(p *model.Grade, courseID int64) *GradeResponse {
 		AcquiredPoints:        p.AcquiredPoints,
 		Feedback:              p.Feedback,
 		TutorID:               p.TutorID,
-		User:                  user,
+		Users:                 users,
+		SubmissionID:          p.SubmissionID,
+		FileURL:               fileURL,
+	}
+}
+
+func newGradeResponseUsers(p *model.Grade, users []User, courseID int64) *GradeResponse {
+
+	fileURL := ""
+	if helper.NewSubmissionFileHandle(p.SubmissionID).Exists() {
+		fileURL = fmt.Sprintf("%s/api/v1/courses/%d/submissions/%d/file",
+			configuration.Configuration.Server.ExternalURL(),
+			courseID,
+			p.SubmissionID,
+		)
+	}
+
+	return &GradeResponse{
+		ID:                    p.ID,
+		UpdatedAt:             p.UpdatedAt,
+		PublicExecutionState:  p.PublicExecutionState,
+		PrivateExecutionState: p.PrivateExecutionState,
+		PublicTestLog:         p.PublicTestLog,
+		PrivateTestLog:        p.PrivateTestLog,
+		PublicTestStatus:      p.PublicTestStatus,
+		PrivateTestStatus:     p.PrivateTestStatus,
+		AcquiredPoints:        p.AcquiredPoints,
+		Feedback:              p.Feedback,
+		TutorID:               p.TutorID,
+		Users:                 users,
 		SubmissionID:          p.SubmissionID,
 		FileURL:               fileURL,
 	}

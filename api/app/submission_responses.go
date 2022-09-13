@@ -33,7 +33,7 @@ import (
 // SubmissionResponse is the response payload for Submission management.
 type SubmissionResponse struct {
 	ID      int64  `json:"id" example:"61"`
-	UserID  int64  `json:"user_id" example:"357"`
+	TeamID  int64  `json:"team_id" example:"357"`
 	TaskID  int64  `json:"task_id" example:"12"`
 	FileURL string `json:"file_url" example:"/api/v1/submissions/61/file"`
 }
@@ -49,7 +49,7 @@ func newSubmissionResponse(p *model.Submission, courseID int64) *SubmissionRespo
 
 	sr := &SubmissionResponse{
 		ID:      p.ID,
-		UserID:  p.UserID,
+		TeamID:  p.TeamID,
 		TaskID:  p.TaskID,
 		FileURL: fileURL,
 	}

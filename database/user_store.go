@@ -108,7 +108,7 @@ FROM grades AS g,
 		 users AS u
 WHERE g.id = $1
 AND g.submission_id = s.id
-AND s.user_id = u.id
+AND g.user_id = u.id
 LIMIT 1;
 `, gradeID)
 	return &r, err

@@ -44,15 +44,34 @@ func (s *SubmissionStore) GetByUserAndTask(userID int64, taskID int64) (*model.S
 	p := model.Submission{}
 	err := s.db.Get(&p, `
 SELECT
-  *
+  s.*, g.user_id AS "user_id"
 FROM
-  submissions
+  submissions s, grades g
 WHERE
-  user_id = $1
+  s.id = g.submission_id
 AND
-  task_id = $2
+  g.user_id = $1
+AND
+  s.task_id = $2
 LIMIT 1;`,
 		userID, taskID)
+	return &p, err
+}
+
+func (s *SubmissionStore) GetByTeamID(teamID int64, taskID int64) (*model.Submission, error) {
+	p := model.Submission{}
+	err := s.db.Get(&p, `
+SELECT
+  s.*
+FROM
+  submissions s, teams t
+WHERE
+  s.team_id = t.id
+AND
+  s.task_id = $2
+AND
+  t.id = $1
+		`, teamID, taskID)
 	return &p, err
 }
 
@@ -72,12 +91,13 @@ func (s *SubmissionStore) GetFiltered(filterCourseID, filterGroupID, filterUserI
 SELECT
   s.*
 FROM
-  submissions s
-INNER JOIN user_group ug ON ug.user_id = s.user_id
-INNER JOIN groups g ON g.id = ug.group_id
+  grades g
+INNER JOIN submissions s ON g.submission_id = s.id
+INNER JOIN user_group ug ON ug.user_id = g.user_id
+INNER JOIN groups gr ON gr.id = ug.group_id
 INNEr JOIN task_sheet ts ON ts.task_id = s.task_id
 WHERE
-  ($1 = 0 or s.user_id = $1)
+  ($1 = 0 or g.user_id = $1)
 AND
   ($2 = 0 or s.task_id = $2)
 AND
@@ -85,8 +105,12 @@ AND
 AND
   ($4 = 0 or ts.sheet_id = $4)
 AND
-  ($5 = 0 or g.course_id = $5)
+  ($5 = 0 or gr.course_id = $5)
 `,
 		filterUserID, filterTaskID, filterGroupID, filterSheetID, filterCourseID)
 	return p, err
+}
+
+func (s *SubmissionStore) Update(p *model.Submission) error {
+	return Update(s.db, "submissions", p.ID, p)
 }

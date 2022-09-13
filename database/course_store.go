@@ -257,7 +257,7 @@ INNER JOIN task_sheet ts ON ts.task_id = t.id
 INNER JOIN sheet_course sc ON sc.sheet_id = ts.sheet_id
 INNER JOIN courses c ON c.id = sc.course_id
 WHERE
-  sub.user_id = $1
+  g.user_id = $1
 AND
   c.id = $2
 GROUP BY
@@ -340,7 +340,7 @@ FROM (
 			err := s.db.Get(&team_count, `
 SELECT COUNT(*)
 FROM (
-	SELECT e.team_id 
+	SELECT e.team_id
 	FROM user_course as e, user_group as ug, groups as g
 	WHERE e.course_id = 1
 	AND g.course_id = 1

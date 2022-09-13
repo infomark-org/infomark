@@ -68,6 +68,12 @@ func (rs *SubmissionResource) GetFileHandler(w http.ResponseWriter, r *http.Requ
 	accessClaims := r.Context().Value(symbol.CtxKeyAccessClaims).(*authenticate.AccessClaims)
 	givenRole := r.Context().Value(symbol.CtxKeyCourseRole).(authorize.CourseRole)
 
+	grade, err := rs.Stores.Grade.GetForTaskForUser(task.ID, accessClaims.LoginID)
+	if err != nil {
+		render.Render(w, r, ErrRender(err))
+		return
+	}
+
 	submission, err := rs.Stores.Submission.GetByUserAndTask(accessClaims.LoginID, task.ID)
 	if err != nil {
 		render.Render(w, r, ErrNotFound)
@@ -75,7 +81,7 @@ func (rs *SubmissionResource) GetFileHandler(w http.ResponseWriter, r *http.Requ
 	}
 
 	// students can only access their own files
-	if submission.UserID != accessClaims.LoginID {
+	if grade.UserID != accessClaims.LoginID {
 		if givenRole == authorize.STUDENT {
 			render.Render(w, r, ErrUnauthorized)
 			return
@@ -239,9 +245,15 @@ func (rs *SubmissionResource) GetFileByIDHandler(w http.ResponseWriter, r *http.
 		return
 	}
 
-	// students can only access their own files
-	if submission.UserID != accessClaims.LoginID {
-		if givenRole == authorize.STUDENT {
+	if givenRole == authorize.STUDENT {
+		grade, err := rs.Stores.Grade.GetForSubmissionForUser(submission.ID, accessClaims.LoginID)
+		if err != nil {
+			render.Render(w, r, ErrNotFound)
+			return
+		}
+
+		// students can only access their own files
+		if grade.UserID != accessClaims.LoginID {
 			render.Render(w, r, ErrUnauthorized)
 			return
 		}
@@ -329,6 +341,9 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
 			return
 		}
 		isUserInConfirmedTeam = isConfirmed.Bool
+	} else {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(fmt.Errorf("You need a team to upload.")))
+		return
 	}
 	if isUserInConfirmedTeam {
 		teamUserList, err = rs.Stores.Team.GetUsers(teamID.Int64)
@@ -344,16 +359,60 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
 		}
 		teamUserList = append(teamUserList, *user)
 	}
-	for _, user := range teamUserList {
-		usedUserID = user.ID
-		submission, err := rs.Stores.Submission.GetByUserAndTask(usedUserID, task.ID)
+
+	submission, err := rs.Stores.Submission.GetByTeamID(teamID.Int64, task.ID)
+	submissionExists := true
+	// if err != nil {
+	// 	render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+	// 	return
+	// }
+
+	if err != nil {
+		//no such submission
+		submissionModel := &model.Submission{
+			TeamID:       teamID.Int64,
+			TaskID:       task.ID,
+			UploadUserID: usedUserID,
+		}
+		submission, err = rs.Stores.Submission.Create(submissionModel)
 		if err != nil {
-			// no such submission
-			submission, err = rs.Stores.Submission.Create(&model.Submission{UserID: usedUserID, TaskID: task.ID})
+			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+			return
+		}
+		submissionExists = false
+	} else {
+		//submission exists
+		if submission.UploadUserID != usedUserID {
+			submission.UploadUserID = usedUserID
+			err = rs.Stores.Submission.Update(submission)
+
 			if err != nil {
 				render.Render(w, r, ErrInternalServerErrorWithDetails(err))
 				return
 			}
+		}
+	}
+
+	for _, user := range teamUserList {
+		usedUserID = user.ID
+
+		// Check if user has a grade from another team already
+
+		checkGrade, err := rs.Stores.Grade.GetForTaskForUser(task.ID, usedUserID)
+
+		// if err != nil {
+		// 	render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		// 	return
+		// }
+
+		// submission, err := rs.Stores.Submission.GetByUserAndTask(usedUserID, task.ID)
+		if !submissionExists && err != nil {
+			// no such submission
+			// submission, err = rs.Stores.Submission.Create(&model.Submission{TeamID: teamID.Int64, TaskID: task.ID})
+			// if err != nil {
+			// 	render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+			// 	return
+			// }
 
 			// create also empty grade, which will be filled in later
 			grade = &model.Grade{
@@ -367,6 +426,8 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
 				Feedback:              "",
 				TutorID:               1,
 				SubmissionID:          submission.ID,
+				UserID:                usedUserID,
+				TeamID:                teamID.Int64,
 			}
 
 			// fetch id from grade as we need it
@@ -378,22 +439,38 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
 
 		} else {
 			// submission exists, we only need to get the grade
-			grade, err = rs.Stores.Grade.GetForSubmission(submission.ID)
+
+			// Check if there exists a grade for user from another team.
+			// If so, a team change happened. Change grading to the new team.
+
+			if checkGrade != nil {
+				checkGrade.TeamID = teamID.Int64
+				checkGrade.SubmissionID = submission.ID
+				err = rs.Stores.Grade.Update(checkGrade)
+				if err != nil {
+					render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+					return
+				}
+			}
+
+			grades, err := rs.Stores.Grade.GetForSubmission(submission.ID)
 			if err != nil {
 				render.Render(w, r, ErrInternalServerErrorWithDetails(err))
 				return
 			}
 
-			// and update the grade
-			grade.PublicExecutionState = 0
-			grade.PrivateExecutionState = 0
-			grade.PublicTestLog = defaultPublicTestLog
-			grade.PrivateTestLog = defaultPrivateTestLog
+			for _, grade := range grades {
+				// and update the grade
+				grade.PublicExecutionState = 0
+				grade.PrivateExecutionState = 0
+				grade.PublicTestLog = defaultPublicTestLog
+				grade.PrivateTestLog = defaultPrivateTestLog
 
-			err = rs.Stores.Grade.Update(grade)
-			if err != nil {
-				render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-				return
+				err = rs.Stores.Grade.Update(&grade)
+				if err != nil {
+					render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+					return
+				}
 			}
 
 		}
@@ -427,7 +504,7 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
 		if task.PublicDockerImage.Valid && helper.NewPublicTestFileHandle(task.ID).Exists() {
 			// enqueue public test
 			request := shared.NewSubmissionAMQPWorkerRequest(
-				course.ID, task.ID, submission.ID, grade.ID,
+				course.ID, task.ID, submission.ID,
 				accessToken, configuration.Configuration.Server.URL(), task.PublicDockerImage.String, sha256, "public")
 
 			body, err := json.Marshal(request)
@@ -442,11 +519,19 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
 				return
 			}
 		} else {
-			grade.PublicTestLog = "No public dockerimage was specified --> will not run any public test"
-			err = rs.Stores.Grade.Update(grade)
+			grades, err := rs.Stores.Grade.GetForSubmission(submission.ID)
 			if err != nil {
 				render.Render(w, r, ErrInternalServerErrorWithDetails(err))
 				return
+			}
+
+			for _, grade := range grades {
+				grade.PublicTestLog = "No public dockerimage was specified --> will not run any public test"
+				err = rs.Stores.Grade.Update(&grade)
+				if err != nil {
+					render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+					return
+				}
 			}
 		}
 
@@ -454,7 +539,7 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
 			// enqueue private test
 
 			request := shared.NewSubmissionAMQPWorkerRequest(
-				course.ID, task.ID, submission.ID, grade.ID,
+				course.ID, task.ID, submission.ID,
 				accessToken, configuration.Configuration.Server.URL(), task.PrivateDockerImage.String, sha256, "private")
 
 			body, err := json.Marshal(request)
@@ -469,11 +554,19 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
 				return
 			}
 		} else {
-			grade.PrivateTestLog = "No private dockerimage was specified --> will not run any private test"
-			err = rs.Stores.Grade.Update(grade)
+			grades, err := rs.Stores.Grade.GetForSubmission(submission.ID)
 			if err != nil {
 				render.Render(w, r, ErrInternalServerErrorWithDetails(err))
 				return
+			}
+
+			for _, grade := range grades {
+				grade.PrivateTestLog = "No private dockerimage was specified --> will not run any private test"
+				err = rs.Stores.Grade.Update(&grade)
+				if err != nil {
+					render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+					return
+				}
 			}
 		}
 

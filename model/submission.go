@@ -30,6 +30,7 @@ type Submission struct {
 	CreatedAt time.Time `db:"created_at,omitempty"`
 	UpdatedAt time.Time `db:"updated_at,omitempty"`
 
-	UserID int64 `db:"user_id"`
-	TaskID int64 `db:"task_id"`
+	TaskID       int64 `db:"task_id"`
+	TeamID       int64 `db:"team_id"`
+	UploadUserID int64 `db:"upload_user_id"`
 }

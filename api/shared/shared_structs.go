@@ -47,7 +47,7 @@ type SubmissionAMQPWorkerRequest struct {
 
 // NewSubmissionAMQPWorkerRequest creates a new message for the workers
 func NewSubmissionAMQPWorkerRequest(
-	courseID int64, taskID int64, submissionID int64, gradeID int64,
+	courseID int64, taskID int64, submissionID int64,
 	accessToken string, url string, dockerimage string, sha256 string, visibility string) *SubmissionAMQPWorkerRequest {
 
 	return &SubmissionAMQPWorkerRequest{
@@ -66,7 +66,7 @@ func NewSubmissionAMQPWorkerRequest(
 		ResultEndpointURL: fmt.Sprintf("%s/api/v1/courses/%d/grades/%d/%s_result",
 			url,
 			courseID,
-			gradeID,
+			submissionID,
 			visibility),
 		DockerImage: dockerimage,
 		Sha256:      sha256,

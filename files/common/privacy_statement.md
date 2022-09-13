@@ -20,8 +20,13 @@ Im Folgenden unterrichten wir Sie über Art, Umfang und Zweck der Erhebung, Vera
 
 Ansprechpartner für den Datenschutz
 ```
-FILL ME
+Datenschutzbeauftragter
+Geschwister-Scholl-Platz
+72074 Tübingen
+E-Mail: datenschutz@uni-tuebingen.de
+Telefon: +49 70 71 29-0
 ```
+[Website des Datenschutzbeauftragten](https://uni-tuebingen.de/einrichtungen/personalvertretungen-beratung-beauftragte/datenschutzbeauftragter/)
 
 
 ## Umfang der Datenerhebung, -verarbeitung und -nutzung

@@ -46,14 +46,13 @@ func (s *GradeStore) Get(id int64) (*model.Grade, error) {
 	err := s.db.Get(&p, `
 SELECT
   g.*,
-  s.user_id,
   u.last_name user_last_name,
   u.first_name user_first_name,
   u.email user_email
 FROM
   grades g
 INNER JOIN submissions s ON g.submission_id = s.id
-INNER JOIN users u ON s.user_id = u.id
+INNER JOIN users u ON g.user_id = u.id
 WHERE
   g.id = $1 LIMIT 1
 `, p.ID)
@@ -94,9 +93,35 @@ WHERE
 	return err
 }
 
-func (s *GradeStore) GetForSubmission(id int64) (*model.Grade, error) {
+func (s *GradeStore) GetForSubmission(id int64) ([]model.Grade, error) {
+	p := []model.Grade{}
+	err := s.db.Select(&p, `
+	SELECT g.*,
+				 u.last_name user_last_name,
+				 u.first_name user_first_name,
+				 u.email user_email
+	FROM grades AS g, users AS u
+	WHERE g.submission_id = $1
+	AND   g.user_id = u.id;`, id)
+	return p, err
+}
+
+func (s *GradeStore) GetForSubmissionForUser(submissionID int64, userID int64) (*model.Grade, error) {
 	p := model.Grade{}
-	err := s.db.Get(&p, "SELECT * FROM grades WHERE submission_id = $1 LIMIT 1;", id)
+	err := s.db.Get(&p, "SELECT * FROM grades WHERE submission_id = $1 AND user_id = $2;", submissionID, userID)
+	return &p, err
+}
+
+func (s *GradeStore) GetForTaskForUser(id int64, userID int64) (*model.Grade, error) {
+	p := model.Grade{}
+	err := s.db.Get(&p, `
+SELECT g.*
+FROM grades g,
+     submissions s
+WHERE g.submission_id = s.id
+AND   s.task_id = $1
+AND   g.user_id = $2
+`, id, userID)
 	return &p, err
 }
 
@@ -105,7 +130,7 @@ func (s *GradeStore) GetOverviewGrades(courseID int64, groupID int64) ([]model.O
 	err := s.db.Select(&p, `
 SELECT
   sum(g.acquired_points) points,
-  s.user_id,
+  g.user_id,
   ts.sheet_id,
   sh.name,
   u.first_name user_first_name,
@@ -120,10 +145,10 @@ INNER JOIn task_sheet ts ON t.id = ts.task_id
 INNER JOIn sheets sh ON ts.sheet_id = sh.id
 INNER JOIN sheet_course sc ON ts.sheet_id = sc.sheet_id
 INNEr JOIN courses c ON sc.course_id = c.id
-INNER JOIN user_course uc ON s.user_id = uc.user_id
-INNER JOIN user_group ug ON  s.user_id = ug.user_id
+INNER JOIN user_course uc ON g.user_id = uc.user_id
+INNER JOIN user_group ug ON  g.user_id = ug.user_id
 INNER JOIN groups gs ON  ug.group_id = gs.id
-INNER JOIN users u ON  s.user_id = u.id
+INNER JOIN users u ON  g.user_id = u.id
 WHERE
   c.ID = $1
 AND
@@ -135,9 +160,9 @@ AND
 AND
   ($2 = 0 OR gs.id = $2)
 GROUP BY
-  s.user_id, ts.sheet_id, sh.name, u.first_name, u.last_name, u.student_number, u.email
+  g.user_id, ts.sheet_id, sh.name, u.first_name, u.last_name, u.student_number, u.email
 ORDER BY
-  s.user_id
+  g.user_id
 `, courseID, groupID)
 	return p, err
 }
@@ -152,7 +177,6 @@ SELECT
   ts.task_id,
   ts.sheet_id,
   sg.course_id,
-  s.user_id,
   u.last_name user_last_name,
   u.first_name user_first_name,
   u.email user_email
@@ -161,7 +185,7 @@ FROM
 INNER JOIN submissions s ON s.id = g.submission_id
 INNER JOIN task_sheet ts ON ts.task_id = s.task_id
 INNER JOIN sheet_course sg ON sg.sheet_id = ts.sheet_id
-INNER JOIN users u ON s.user_id = u.id
+INNER JOIN users u ON g.user_id = u.id
 INNER JOIN user_group ug ON ug.user_id = u.id
 WHERE
   g.feedback like '' and g.tutor_id = $1
@@ -195,8 +219,8 @@ func (s *GradeStore) GetFiltered(
 	p := []model.Grade{}
 	err := s.db.Select(&p,
 		`
-SELECT
-  g.*, s.user_id,
+SELECT DISTINCT ON(g.submission_id)
+  g.*,
   u.last_name user_last_name,
   u.first_name user_first_name,
   u.email user_email
@@ -205,8 +229,8 @@ FROM
 INNER JOIN submissions s ON s.id = g.submission_id
 INNER JOIN task_sheet ts ON ts.task_id = s.task_id
 INNER JOIN sheet_course sc ON sc.sheet_id = ts.sheet_id
-INNER JOIN user_group ug ON ug.user_id = s.user_id
-INNER JOIN users u ON s.user_id = u.id
+INNER JOIN user_group ug ON ug.user_id = g.user_id
+INNER JOIN users u ON g.user_id = u.id
 WHERE
   course_id = $1
 AND
