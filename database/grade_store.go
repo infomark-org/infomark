@@ -129,7 +129,7 @@ func (s *GradeStore) GetOverviewGrades(courseID int64, groupID int64) ([]model.O
 	p := []model.OverviewGrade{}
 	err := s.db.Select(&p, `
 SELECT
-  sum(g.acquired_points) FILTER (WHERE NOT g.plagiat) points,
+  sum(g.acquired_points) points,
   g.user_id,
   ts.sheet_id,
   sh.name,
