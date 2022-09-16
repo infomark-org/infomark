@@ -61,7 +61,7 @@ func NewGradeResource(stores *Stores) *GradeResource {
 // SUMMARY:  edit a grade
 func (rs *GradeResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 	accessClaims := r.Context().Value(symbol.CtxKeyAccessClaims).(*authenticate.AccessClaims)
-	course := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
+	// course := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
 	currentGrade := r.Context().Value(symbol.CtxKeyGrade).(*model.Grade)
 	data := &GradeRequest{}
 	// parse JSON request into struct
@@ -81,108 +81,23 @@ func (rs *GradeResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// get the team of the user that is graded
-	team, err := rs.Stores.Team.TeamFromGrade(currentGrade.ID)
+	grade, err := rs.Stores.Grade.Get(currentGrade.ID)
 	if err != nil {
-		// there is no team
-		team = nil
-	}
-	// check if team is valid
-	var isUserInConfirmedTeam = false
-	if team != nil {
-		// There is a team - is it confirmed?
-		isConfirmed, err := rs.Stores.Team.Confirmed(team.ID, course.ID)
-		if err != nil {
-			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-			return
-		}
-		isUserInConfirmedTeam = isConfirmed.Bool
-	}
-	// collect all team members
-	teamUserList := []model.User{}
-	if isUserInConfirmedTeam {
-		teamUserList, err = rs.Stores.Team.GetUsers(team.ID)
-		if err != nil {
-			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-			return
-		}
-	} else {
-		// student is alone - no team
-		user, err := rs.Stores.User.GetFromGrade(currentGrade.ID)
-		if err != nil {
-			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-			return
-		}
-		teamUserList = append(teamUserList, *user)
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
 	}
 
-	// get submission of that user for this task
-	submission, err := rs.Stores.Submission.GetByTeamID(team.ID, task.ID)
-	if err != nil {
-		fmt.Println("Grade: Teammember has no submission... skipping team member")
+	// update the existing grade (created during submission)
+	grade.Feedback = data.Feedback
+	grade.AcquiredPoints = data.AcquiredPoints
+	grade.TutorID = accessClaims.LoginID
+
+	// update database entry
+	if err := rs.Stores.Grade.Update(grade); err != nil {
+		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		return
 	}
-	if submission == nil {
-		fmt.Println("Grade: Teammember has no submission... skipping team member")
-	}
 
-	// we collected the user(s) whose grades must be updated
-	for _, user := range teamUserList {
-		fmt.Printf("%d, %d", submission.ID, user.ID)
-		// and the grade (should exist from submission)
-		gradeOfTeammember, err := rs.Stores.Grade.GetForSubmissionForUser(submission.ID, user.ID)
-		if err != nil {
-			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-			return
-		}
-		if gradeOfTeammember == nil {
-			// Check if user already has a grading from another team
-			// This can only happen, when a team change happened, and the tutor
-			// of the new team changes a past grading.
-			checkGrade, err := rs.Stores.Grade.GetForTaskForUser(submission.TaskID, user.ID)
-
-			// if err != nil {
-			// 	render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-			// 	return
-			// }
-
-			if checkGrade != nil && checkGrade.TeamID != submission.TeamID || err != nil {
-				fmt.Println("Grade: Do not change existing grading from another team")
-				continue
-			}
-
-			// create a grade entry for team member
-			grade := &model.Grade{
-				PublicExecutionState:  0,
-				PrivateExecutionState: 0,
-				PublicTestLog:         "",
-				PrivateTestLog:        "",
-				PublicTestStatus:      0,
-				PrivateTestStatus:     0,
-				AcquiredPoints:        data.AcquiredPoints,
-				Feedback:              data.Feedback,
-				TutorID:               accessClaims.LoginID,
-				SubmissionID:          submission.ID,
-				UserID:                user.ID,
-				TeamID:                submission.TeamID,
-			}
-
-			_, err = rs.Stores.Grade.Create(grade)
-			if err != nil {
-				render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-			}
-			continue
-		}
-		// update the existing grade (created during submission)
-		gradeOfTeammember.Feedback = data.Feedback
-		gradeOfTeammember.AcquiredPoints = data.AcquiredPoints
-		gradeOfTeammember.TutorID = accessClaims.LoginID
-
-		// update database entry
-		if err := rs.Stores.Grade.Update(gradeOfTeammember); err != nil {
-			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-			return
-		}
-	}
 	render.Status(r, http.StatusOK)
 }
 
