@@ -198,7 +198,14 @@ AND
 }
 
 func (s *GradeStore) Update(p *model.Grade) error {
-	return Update(s.db, "grades", p.ID, p)
+	_, err := s.db.Exec(`
+    UPDATE grades
+      SET feedback = $1,
+          tutor_id = $3,
+          acquired_points = $4
+      WHERE submission_id = $2
+	`, p.Feedback, p.SubmissionID, p.TutorID, p.AcquiredPoints)
+	return err
 }
 
 func (s *GradeStore) GetFiltered(
