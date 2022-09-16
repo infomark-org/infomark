@@ -122,7 +122,7 @@ func (s *SheetStore) PointsForUser(userID int64, sheetID int64) ([]model.TaskPoi
 	err := s.db.Select(&p, `
 SELECT
   t.id task_id,
-  g.acquired_points,
+  CASE g.plagiat WHEN true THEN 0 ELSE g.acquired_points END,
   CASE g.tutor_id <> 1 WHEN TRUE THEN t.max_points ELSE 0 END AS "achievable_points",
   t.max_points
 FROM

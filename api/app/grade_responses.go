@@ -51,6 +51,7 @@ type GradeResponse struct {
 	FileURL               string    `json:"file_url" example:"/api/v1/submissions/61/file"`
 	TeamID                int64     `json:"team_id" example:"2"`
 	Users                 []User    `json:"users"`
+	Plagiat               bool      `json:"plagiat"`
 }
 
 type User struct {
@@ -107,6 +108,7 @@ func newGradeResponse(p *model.Grade, courseID int64) *GradeResponse {
 		Users:                 users,
 		SubmissionID:          p.SubmissionID,
 		FileURL:               fileURL,
+		Plagiat:               p.Plagiat,
 	}
 }
 
@@ -136,6 +138,7 @@ func newGradeResponseUsers(p *model.Grade, users []User, courseID int64) *GradeR
 		Users:                 users,
 		SubmissionID:          p.SubmissionID,
 		FileURL:               fileURL,
+		Plagiat:               p.Plagiat,
 	}
 }
 

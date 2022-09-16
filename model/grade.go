@@ -48,6 +48,7 @@ type Grade struct {
 	UserFirstName         string `db:"user_first_name,readonly"`
 	UserLastName          string `db:"user_last_name,readonly"`
 	UserEmail             string `db:"user_email,readonly"`
+	Plagiat               bool   `db:"plagiat"`
 }
 
 // MissingGrade is a database view containing all grades which are finished

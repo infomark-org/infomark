@@ -245,7 +245,7 @@ func (s *CourseStore) PointsForUser(userID int64, courseID int64) ([]model.Sheet
 
 	err := s.db.Select(&p, `
 SELECT
-  SUM(g.acquired_points) acquired_points,
+  COALESCE(SUM(g.acquired_points) FILTER (WHERE NOT g.plagiat), 0) acquired_points,
   SUM(t.max_points) max_points,
   COALESCE(SUM(t.max_points) FILTER(WHERE g.tutor_id <> 1), 0) AS "achievable_points",
   ts.sheet_id sheet_id
