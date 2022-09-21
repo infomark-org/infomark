@@ -192,17 +192,10 @@ func (rs *GradeResource) PublicResultEditHandler(w http.ResponseWriter, r *http.
 	render.Status(r, http.StatusNoContent)
 
 	// update database entry
-	grades, err := rs.Stores.Grade.GetForSubmission(submission.ID)
+	err = rs.Stores.Grade.UpdatePublicTestInfo(submission.ID, data.Log, data.Status)
 	if err != nil {
 		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
 		return
-	}
-
-	for _, grade := range grades {
-		if err := rs.Stores.Grade.UpdatePublicTestInfo(grade.ID, data.Log, data.Status); err != nil {
-			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-			return
-		}
 	}
 }
 
@@ -278,19 +271,11 @@ func (rs *GradeResource) PrivateResultEditHandler(w http.ResponseWriter, r *http
 	render.Status(r, http.StatusNoContent)
 
 	// update database entry
-	grades, err := rs.Stores.Grade.GetForSubmission(submission.ID)
+	err = rs.Stores.Grade.UpdatePrivateTestInfo(submission.ID, data.Log, data.Status)
 	if err != nil {
 		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
 		return
 	}
-
-	for _, grade := range grades {
-		if err := rs.Stores.Grade.UpdatePrivateTestInfo(grade.ID, data.Log, data.Status); err != nil {
-			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
-			return
-		}
-	}
-
 }
 
 // IndexHandler is public endpoint for

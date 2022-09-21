@@ -67,7 +67,7 @@ func (s *GradeStore) Create(p *model.Grade) (*model.Grade, error) {
 	return s.Get(newID)
 }
 
-func (s *GradeStore) UpdatePrivateTestInfo(gradeID int64, log string, status symbol.TestingResult) error {
+func (s *GradeStore) UpdatePrivateTestInfo(submissionID int64, log string, status symbol.TestingResult) error {
 	_, err := s.db.Exec(`
 UPDATE grades
 SET
@@ -75,12 +75,12 @@ SET
   private_test_log=$2,
   private_test_status=$3
 WHERE
-  id = $1
-    `, gradeID, log, status, symbol.TestingStateFinished)
+  submission_id = $1
+    `, submissionID, log, status, symbol.TestingStateFinished)
 	return err
 }
 
-func (s *GradeStore) UpdatePublicTestInfo(gradeID int64, log string, status symbol.TestingResult) error {
+func (s *GradeStore) UpdatePublicTestInfo(submissionID int64, log string, status symbol.TestingResult) error {
 	_, err := s.db.Exec(`
 UPDATE grades
 SET
@@ -88,8 +88,8 @@ SET
   public_test_log=$2,
   public_test_status=$3
 WHERE
-  id = $1
-    `, gradeID, log, status, symbol.TestingStateFinished)
+  submission_id = $1
+    `, submissionID, log, status, symbol.TestingStateFinished)
 	return err
 }
 
@@ -202,9 +202,14 @@ func (s *GradeStore) Update(p *model.Grade) error {
     UPDATE grades
       SET feedback = $1,
           tutor_id = $3,
-          acquired_points = $4
+          acquired_points = $4,
+          public_execution_state = $5,
+          private_execution_state = $6,
+          public_test_log = $7,
+          private_test_log = $8,
+          updated_at = now()
       WHERE submission_id = $2
-	`, p.Feedback, p.SubmissionID, p.TutorID, p.AcquiredPoints)
+	`, p.Feedback, p.SubmissionID, p.TutorID, p.AcquiredPoints, p.PublicExecutionState, p.PrivateExecutionState, p.PublicTestLog, p.PrivateTestLog)
 	return err
 }
 
