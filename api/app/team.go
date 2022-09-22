@@ -124,10 +124,8 @@ func (rs *TeamResource) IncompleteTeamsHandler(w http.ResponseWriter, r *http.Re
 	// Get other Users in group without a team
 	noTeams, err := rs.Stores.Team.GetOtherUnaryTeamsInGroup(accessClaims.LoginID, groupEnrollment.GroupID)
 	if err == sql.ErrNoRows {
-		render.RenderList(w, r, []render.Renderer{})
-		return
-	}
-	if err != nil {
+		noTeams = []model.TeamRecord{}
+	} else if err != nil {
 		render.Render(w, r, ErrRender(err))
 		return
 	}
@@ -135,10 +133,8 @@ func (rs *TeamResource) IncompleteTeamsHandler(w http.ResponseWriter, r *http.Re
 	// get all teams in group
 	teams, err := rs.Stores.Team.GetAllInGroup(groupEnrollment.GroupID)
 	if err == sql.ErrNoRows {
-		render.RenderList(w, r, []render.Renderer{})
-		return
-	}
-	if err != nil {
+		teams = []model.TeamRecord{}
+	} else if err != nil {
 		render.Render(w, r, ErrRender(err))
 		return
 	}
