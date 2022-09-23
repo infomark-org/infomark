@@ -218,7 +218,7 @@ func (rs *AuthResource) LoginHandler(w http.ResponseWriter, r *http.Request) {
 		if potentialUser.ConfirmEmailToken.Valid {
 			// Valid is true if String is not NULL
 			// confirm token `potentialUser.ConfirmEmailToken.String` exists
-			render.Render(w, r, ErrBadRequestWithDetails(errors.New("email not confirmed")))
+			render.Render(w, r, ErrRender(errors.New("email not confirmed")))
 			return
 		}
 	}
