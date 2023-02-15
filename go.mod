@@ -26,7 +26,7 @@ require (
 	github.com/markbates/pkger v0.15.1
 	github.com/mattn/go-sqlite3 v1.14.8
 	github.com/moby/term v0.0.0-20210619224110-3f7ff695adc6 // indirect
-	github.com/prometheus/client_golang v1.11.0
+	github.com/prometheus/client_golang v1.11.1
 	github.com/robfig/cron v1.2.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/cobra v1.2.1
