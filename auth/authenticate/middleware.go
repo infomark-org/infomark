@@ -32,7 +32,7 @@ import (
 	"github.com/infomark-org/infomark/configuration"
 	"github.com/infomark-org/infomark/symbol"
 
-	libredis "github.com/go-redis/redis/v8"
+	libredis "github.com/redis/go-redis/v9"
 
 	limiter "github.com/ulule/limiter/v3"
 	sredis "github.com/ulule/limiter/v3/drivers/store/redis"

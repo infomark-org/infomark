@@ -42,7 +42,7 @@ import (
 	"github.com/streadway/amqp"
 	"gopkg.in/yaml.v2"
 
-	redis "github.com/go-redis/redis/v8"
+	redis "github.com/redis/go-redis/v9"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )

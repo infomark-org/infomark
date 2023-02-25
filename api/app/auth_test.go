@@ -26,7 +26,7 @@ import (
 	"testing"
 
 	"github.com/franela/goblin"
-	redis "github.com/go-redis/redis/v8"
+	redis "github.com/redis/go-redis/v9"
 	"github.com/infomark-org/infomark/auth"
 	"github.com/infomark-org/infomark/configuration"
 	"github.com/infomark-org/infomark/email"

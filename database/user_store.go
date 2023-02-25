@@ -36,13 +36,13 @@ func NewUserStore(db *sqlx.DB) *UserStore {
 
 func (s *UserStore) Get(userID int64) (*model.User, error) {
 	p := model.User{ID: userID}
-	err := s.db.Get(&p, "SELECT * FROM users WHERE id = $1 LIMIT 1;", p.ID)
+	err := s.db.Get(&p, "SELECT * FROM users WHERE id = $1 LIMIT 1", p.ID)
 	return &p, err
 }
 
 func (s *UserStore) FindByEmail(email string) (*model.User, error) {
 	p := model.User{Email: email}
-	err := s.db.Get(&p, "SELECT * FROM users WHERE email = $1 LIMIT 1;", p.Email)
+	err := s.db.Get(&p, "SELECT * FROM users WHERE email = $1 LIMIT 1", p.Email)
 	return &p, err
 }
 
@@ -64,7 +64,7 @@ OR
 
 func (s *UserStore) GetAll() ([]model.User, error) {
 	p := []model.User{}
-	err := s.db.Select(&p, "SELECT * FROM users;")
+	err := s.db.Select(&p, "SELECT * FROM users")
 	return p, err
 }
 
