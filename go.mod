@@ -32,7 +32,7 @@ require (
 	github.com/spf13/cobra v1.2.1
 	github.com/streadway/amqp v1.0.0
 	github.com/ulule/limiter/v3 v3.8.0
-	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
+	golang.org/x/crypto v0.1.0
 	gopkg.in/guregu/null.v3 v3.5.0
 	gopkg.in/yaml.v2 v2.4.0
 	gotest.tools/v3 v3.0.3 // indirect
