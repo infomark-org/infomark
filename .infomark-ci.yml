@@ -5,7 +5,7 @@ server:
     user_id: 1
     user_is_root: false
     log_level: debug
-    fixtures: /drone/src/files/fixtures
+    fixtures: /home/runner/work/infomark/infomark/files/fixtures
   http:
     use_https: false
     port: 3000
@@ -23,11 +23,11 @@ server:
     email:
       verify: true
     jwt:
-      secret: 4b86a7b05ddf6c8f27ca57078b02c086e5ecdb7737c019c8286c7f71e86e4fbe
+      secret: 4b86a7b05
       access_expiry: 15m0s
       refresh_expiry: 10h0m0s
     session:
-      secret: d28a1b649f96340c6831d198e78ea08894c30aaa32fccc02e35c1ac32eff908a
+      secret: d28a1b649f
       cookies:
         secure: false
         lifetime: 24h0m0s
@@ -38,47 +38,47 @@ server:
   cronjobs:
     zip_submissions_intervall: 5m0s
   email:
-    send: true
+    send: false
     sendmail_binary: /usr/sbin/sendmail
     from: no-reply@sub.domain.com
     channel_size: 300
   services:
     redis:
-      host: redis_service
+      host: localhost
       port: 6379
       database: 0
-    prometheus:
-      user: prometheus_user
-      password: prometheus_password
-    rabbit_mq:
-      host: localhost
-      port: 5672
-      user: user
-      password: password
-      key: rabbitmq_key
-    database:
-      host: database
-      port: 5432
-      database: infomark
-      user: postgres
-      password: postgres
-      debug: false
-  paths:
-    uploads: /drone/src/files/uploads
-    common: /drone/src/files/common
-    generated_files: /drone/src/files/generated_files
-worker:
-  version: 1
-  services:
+    # prometheus:
+    #   user: prometheus_user
+    #   password: prometheus_password
     rabbit_mq:
       host: localhost
       port: 5672
       user: rabbitmq_user
-      password: password
+      password: rabbitmq_pass
       key: rabbitmq_key
-  workdir: /tmp
-  void: false
-  docker:
-    max_memory: 500mb
-    timeout: 5m0s
-
+    database:
+      host: localhost
+      port: 5432
+      database: db_name
+      user: db_user
+      password: db_pass
+      debug: false
+  paths:
+    uploads: /home/runner/work/infomark/infomark/files/uploads
+    common: /home/runner/work/infomark/infomark/files/common
+    generated_files: /home/runner/work/infomark/infomark/files/generated_files
+# worker:
+#   version: 1
+#   services:
+#     rabbit_mq:
+#       host: localhost
+#       port: 5672
+#       user: rabbitmq_user
+#       password: password
+#       key: rabbitmq_key
+#   workdir: /tmp
+#   void: false
+#   docker:
+#     max_memory: 500mb
+#     timeout: 5m0s
+#
