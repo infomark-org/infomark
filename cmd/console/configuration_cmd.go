@@ -42,9 +42,9 @@ import (
 	"github.com/streadway/amqp"
 	"gopkg.in/yaml.v2"
 
-	redis "github.com/redis/go-redis/v9"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	redis "github.com/redis/go-redis/v9"
 )
 
 // ConfigurationCmd starts the infomark configuration
@@ -294,6 +294,9 @@ var TestConfiguration = &cobra.Command{
 					status_code = -1
 				} else {
 					dockerClient.ContainerRemove(ctx, resp.ID, types.ContainerRemoveOptions{})
+					if err != nil {
+						status_code = -1
+					}
 
 				}
 

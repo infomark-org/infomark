@@ -232,7 +232,9 @@ func MustFindAndReadConfiguration() {
 }
 
 func (s *ConfigurationSchema) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	defaults.Set(s)
+	if err := defaults.Set(s); err != nil {
+		return err
+	}
 
 	type plain ConfigurationSchema
 	if err := unmarshal((*plain)(s)); err != nil {
