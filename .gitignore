@@ -64,3 +64,5 @@ infomark-config.yml
 pkged.go
 migration/mock/mock.sql
 migration/mock/mock.sql
+
+dist/
