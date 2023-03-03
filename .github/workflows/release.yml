@@ -1,0 +1,110 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  # This is a huuuuge hack and work around. As checkout@v3 cannot be used
+  # within the elm build (that one is based on an old Node8 docker image with
+  # an too git version. Therefore, we use a separate job to get all submodules,
+  # compress these files and extract them later in the elm build job.
+  clone-recursive:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          submodules: true
+
+      - name: Initialize submodules in UI
+        run: |
+          cd ui
+          git submodule update --init --recursive
+          tar -czvf elm-mdc.tar.gz ./elm-mdc
+
+      - name: Archive Submodules
+        uses: actions/upload-artifact@v3
+        with:
+          name: elm-mdc
+          path: |
+            ui/elm-mdc.tar.gz
+          retention-days: 1
+
+  build-frontend:
+    needs: clone-recursive
+    runs-on: ubuntu-latest
+    container:
+      image: infomark/elm:0.19.0
+
+    steps:
+      - uses: actions/checkout@v1
+        with:
+          submodules: true
+
+      - name: Download elm-mdc
+        uses: actions/download-artifact@v3
+        with:
+          name: elm-mdc
+
+      - name: Extract artifact
+        run: |
+          cd ui
+          tar xvf ../elm-mdc.tar.gz
+
+      - name: Run build
+        run: |
+          cd ui
+          elm-app build
+
+      - name: Copy static assets
+        run: |
+          cp -r ui/build/* static
+
+      - name: Archive static files
+        uses: actions/upload-artifact@v3
+        with:
+          name: static-assets
+          path: |
+            static
+          retention-days: 1
+
+  build:
+    needs: build-frontend
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+        with:
+          submodules: true
+
+      - name: Download static assets
+        uses: actions/download-artifact@v3
+        with:
+          name: static-assets
+
+      - name: Set up Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.19
+
+      - name: Fill in version
+        run: sed -i 's/"YXZ"/"${GITHUB_SHA}"/g' symbol/version.go
+
+      - name: Pack files
+        run: |
+          go install github.com/markbates/pkger/cmd/pkger
+          pkger list
+          pkger
+
+      - name: Build binary
+        run: |
+          go build
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v4
+        with:
+          version: latest
+          args: release --snapshot --skip-publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
