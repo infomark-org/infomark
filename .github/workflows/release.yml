@@ -82,6 +82,7 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: static-assets
+          path: static
 
       - name: Set up Go
         uses: actions/setup-go@v3
