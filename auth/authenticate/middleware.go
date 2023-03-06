@@ -28,6 +28,7 @@ import (
 	"github.com/alexedwards/scs"
 	"github.com/go-chi/jwtauth/v5"
 	"github.com/go-chi/render"
+	jwt "github.com/golang-jwt/jwt/v4"
 	"github.com/infomark-org/infomark/auth"
 	"github.com/infomark-org/infomark/configuration"
 	"github.com/infomark-org/infomark/symbol"
@@ -46,37 +47,46 @@ func RequiredValidAccessClaims(manager *scs.Manager, config *configuration.Serve
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			accessClaims := &AccessClaims{}
 
-			// first we test the JWT autorization
-			if HasHeaderToken(r) {
-				// parse token from from header
-				tokenStr := jwtauth.TokenFromHeader(r)
-
-				// ok, there is a access token in the header
-				err := accessClaims.ParseAccessClaimsFromToken(config.Authentication.JWT.Secret, tokenStr)
-				if err != nil {
-					// fmt.Println(err)
-					render.Render(w, r, auth.ErrUnauthorized)
-					return
+			if configuration.Configuration.Server.Debugging.Enabled {
+				accessClaims = &AccessClaims{
+					StandardClaims:   jwt.StandardClaims{},
+					AccessNotRefresh: false,
+					LoginID:          configuration.Configuration.Server.Debugging.LoginID,
+					Root:             configuration.Configuration.Server.Debugging.LoginIsRoot,
 				}
-
 			} else {
-				// fmt.Println("no token, try session")
-				if HasSessionToken(manager, r) {
-					// session data is stored in cookie
-					err := accessClaims.ParseRefreshClaimsFromSession(manager, r)
+				// first we test the JWT autorization
+				if HasHeaderToken(r) {
+					// parse token from from header
+					tokenStr := jwtauth.TokenFromHeader(r)
+
+					// ok, there is a access token in the header
+					err := accessClaims.ParseAccessClaimsFromToken(config.Authentication.JWT.Secret, tokenStr)
 					if err != nil {
 						// fmt.Println(err)
 						render.Render(w, r, auth.ErrUnauthorized)
 						return
 					}
 
-					// session is valid --> we will extend the session
-					w = accessClaims.UpdateSession(manager, w, r)
 				} else {
-					// fmt.Println("NO session found")
+					// fmt.Println("no token, try session")
+					if HasSessionToken(manager, r) {
+						// session data is stored in cookie
+						err := accessClaims.ParseRefreshClaimsFromSession(manager, r)
+						if err != nil {
+							// fmt.Println(err)
+							render.Render(w, r, auth.ErrUnauthorized)
+							return
+						}
 
-					render.Render(w, r, auth.ErrUnauthenticated)
-					return
+						// session is valid --> we will extend the session
+						w = accessClaims.UpdateSession(manager, w, r)
+					} else {
+						// fmt.Println("NO session found")
+
+						render.Render(w, r, auth.ErrUnauthenticated)
+						return
+					}
 				}
 			}
 
