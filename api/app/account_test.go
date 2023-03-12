@@ -282,6 +282,25 @@ func TestAccount(t *testing.T) {
 			g.Assert(isPasswordValid).Equal(true)
 			g.Assert(userAfter.ConfirmEmailToken.Valid).Equal(false)
 		})
+		g.It("Should only change password when new password is long enough ", func() {
+
+			data := H{
+				"account": H{
+					"plain_password": "f",
+				},
+				"old_plain_password": "test",
+			}
+
+			w := tape.Patch("/api/v1/account", data, adminJWT)
+			g.Assert(w.Code).Equal(http.StatusBadRequest)
+
+			userAfter, err := stores.User.Get(1)
+			g.Assert(err).Equal(nil)
+			g.Assert(userAfter.Email).Equal("test@uni-tuebingen.de")
+
+			isPasswordValid := auth.CheckPasswordHash("test", userAfter.EncryptedPassword)
+			g.Assert(isPasswordValid).Equal(true)
+		})
 
 		g.It("should change avatar (jpg)", func() {
 			defer helper.NewAvatarFileHandle(1).Delete()

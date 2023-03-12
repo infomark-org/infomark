@@ -155,6 +155,10 @@ func (body *AccountRequest) Bind(r *http.Request) error {
 
 	// encrypt new password, when given
 	if body.Account.PlainPassword != "" {
+		// check password length
+		if len(body.Account.PlainPassword) < configuration.Configuration.Server.Authentication.Password.MinLength {
+			return errors.New("password too short")
+		}
 		hash, err := auth.HashPassword(body.Account.PlainPassword)
 		body.Account.EncryptedPassword = hash
 		return err
