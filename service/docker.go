@@ -22,7 +22,6 @@ package service
 import (
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"time"
 
@@ -154,22 +153,19 @@ func (ds *DockerService) Run(
 		return "", 0, err
 	}
 
-	defer ds.Client.ContainerRemove(ctx, resp.ID, types.ContainerRemoveOptions{})
+	defer ds.Client.ContainerRemove(ctx, resp.ID, types.ContainerRemoveOptions{Force:true})
 
 	if err := ds.Client.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
 		return "", 0, err
 	}
 
+	defer ds.Client.ContainerKill(context.Background(), resp.ID, "9")
+
 	statusCh, errCh := ds.Client.ContainerWait(ctx, resp.ID, "")
 	select {
+	case <-ctx.Done():
+		return "Execution took too long (Timeout: "+ds.Timeout.String()+")", 0, nil
 	case err := <-errCh:
-		if errors.Is(err, context.DeadlineExceeded) {
-			// Sometimes the container survive and are still runnning.
-			// We kill these containers.
-			ds.Client.ContainerKill(context.Background(), resp.ID, "9")
-			return "Execution took to long", 0, nil
-
-		}
 		return err.Error(), 0, err
 	case <-statusCh:
 	}
@@ -180,7 +176,13 @@ func (ds *DockerService) Run(
 	}
 
 	buf := new(bytes.Buffer)
-	buf.ReadFrom(outputReader)
+	len, err := buf.ReadFrom(outputReader)
+
+	// avoid submitting large outputs to the database
+	// postgres will not accept more than 64kB and we don't want that much either
+	if (len > 32*1024) {
+		return "Output too large (you're printing too much stuff)", 0, nil
+	}
 
 	return buf.String(), 0, nil
 }
