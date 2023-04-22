@@ -82,8 +82,6 @@ Eine Übermittlung an Dritte bzw. eine Weitergabe Ihrer durch uns erhobenen, ver
 ## Auskunftsrecht
 Webseitenbesucher unseres Onlineauftritts haben gemäß Art. 15 DSGVO das Recht, auf Anfrage, jederzeit und kostenfrei Auskunft über Ihre an der im Infomark-System zu Ihrer Person verarbeiteten Daten zu erhalten. Der Umfang der Auskunft ergibt sich aus Art. 15 DSGVO.
 
-Ihr Auskunftsbegehren richten Sie bitte via E-Mail an folgende Adresse (harald.gerstberger@informatik.uni-tuebingen.de ).
-
 ### Recht auf Berichtigung Ihrer Daten
 Sie haben gemäß Art. 16 DSGVO das Recht, bei Vorliegen unrichtiger oder unvollständiger Daten über Sie, die Berichtigung oder Vervollständigung dieser zu verlangen. Wir werden entsprechende Anfragen prüfen und in berechtigten Fällen die erforderlichen Maßnahmen ergreifen.
 
