@@ -102,7 +102,7 @@ Sie haben gemäß Art. 18 DSGVO das Recht, von uns die Einschränkung der Verarb
 Sie haben gemäß Art. 20 DSGVO das Recht, Ihre von uns verarbeiteten Daten in einem strukturierten, gängigen und maschinenlesbaren Format zu erhalten. Auf Ihren ausdrücklichen Wunsch hin, werden wir Ihre Daten, an die von Ihnen eindeutig benannten Stellen übermitteln, soweit wir dies technisch leisten können und dies datenschutzrechtlich zulässig ist.
 
 ### Widerrufs- und Widerspruchsrecht
-Sie haben das Recht, jederzeit und ohne Angabe von Gründen kostenfrei die uns von Ihnen erteilte Einwilligung zur Erhebung, Verarbeitung und Nutzung Ihrer Daten für die Zukunft zu widerrufen bzw. gemäß Art. 21 DSGVO Widerspruch gegen die Verarbeitung Ihrer Daten einzulegen. Ihren Widerruf Ihrer Einwilligung bzw. Widerspruch richten Sie bitte via E-Mail an folgende Adresse (harald.gerstberger@informatik.uni-tuebingen.de ).
+Sie haben das Recht, jederzeit und ohne Angabe von Gründen kostenfrei die uns von Ihnen erteilte Einwilligung zur Erhebung, Verarbeitung und Nutzung Ihrer Daten für die Zukunft zu widerrufen bzw. gemäß Art. 21 DSGVO Widerspruch gegen die Verarbeitung Ihrer Daten einzulegen.
 
 ### Recht auf Beschwerde bei einer Aufsichtsbehörde
 Sie haben gemäß Art. 14 i.V.m. Art. 77 DSGVO das Recht auf Beschwerde bei einer Aufsichtsbehörde für den Datenschutz, sofern Sie der Ansicht sind, dass die Verarbeitung Ihrer Daten gegen die DSGVO verstößt. Die zuständige Aufsichtsbehörde ist das Ministerium für Wissenschaft, Forschung und Kunst Baden Württemberg.
