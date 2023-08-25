@@ -87,28 +87,10 @@ func (rs *TaskResource) IndexHandler(w http.ResponseWriter, r *http.Request) {
 // RESPONSE: 401,Unauthenticated
 // SUMMARY:  Get all tasks which are not solved by the request identity
 func (rs *TaskResource) MissingIndexHandler(w http.ResponseWriter, r *http.Request) {
-	course := r.Context().Value(symbol.CtxKeyCourse).(*model.Course)
-	accessClaims := r.Context().Value(symbol.CtxKeyAccessClaims).(*authenticate.AccessClaims)
-	// check if there is a team
-	teamID, err := rs.Stores.Team.TeamID(accessClaims.LoginID, course.ID)
-	if err != nil {
-		render.Render(w, r, ErrBadRequestWithDetails(err))
-		return
-	}
 
-	var tasks []model.MissingTask
-	if teamID.Valid {
-		isConfirmed, errConfirm := rs.Stores.Team.Confirmed(teamID.Int64, course.ID)
-		if errConfirm != nil || !isConfirmed.Bool {
-			// team is not confirmed
-			tasks, err = rs.Stores.Task.GetAllMissingTasksForUser(accessClaims.LoginID)
-		} else {
-			// check if team has missing tasks
-			tasks, err = rs.Stores.Task.GetAllMissingTasksForTeam(teamID.Int64)
-		}
-	} else {
-		tasks, err = rs.Stores.Task.GetAllMissingTasksForUser(accessClaims.LoginID)
-	}
+	accessClaims := r.Context().Value(symbol.CtxKeyAccessClaims).(*authenticate.AccessClaims)
+
+	tasks, err := rs.Stores.Task.GetAllMissingTasksForUser(accessClaims.LoginID)
 
 	// TODO empty list
 	if err != nil {

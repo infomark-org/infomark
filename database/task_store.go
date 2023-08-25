@@ -53,39 +53,6 @@ WHERE
 	return p, err
 }
 
-func (s *TaskStore) GetAllMissingTasksForTeam(teamID int64) ([]model.MissingTask, error) {
-	p := []model.MissingTask{}
-	err := s.db.Select(&p, `
-SELECT
-	t.*,
-	ts.sheet_id,
-	sc.course_id
-FROM
-	tasks AS t,
-	task_sheet as ts,
-	sheet_course as sc
-WHERE
-	ts.task_id = t.id
-AND
-	ts.sheet_id = sc.sheet_id
-AND
-	t.id NOT IN (
-		SELECT to.task_id as task_id
-		FROM
-			submissions AS s,
-			user_course as e,
-			grades AS g
-		WHERE
-			e.team_id = $1
-		AND
-			g.user_id = e.user_id
-		AND
-			s.id = g.submission_id
-	);
-    `, teamID)
-	return p, err
-}
-
 func (s *TaskStore) Get(taskID int64) (*model.Task, error) {
 	p := model.Task{ID: taskID}
 	err := s.db.Get(&p, "SELECT * FROM tasks WHERE id = $1 LIMIT 1;", p.ID)
