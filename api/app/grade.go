@@ -468,7 +468,9 @@ func (rs *GradeResource) Context(next http.Handler) http.Handler {
 		}
 
 		// find specific course in database
-		grade, err := rs.Stores.Grade.Get(gradeID)
+		// FIXME: now, we're dealing with submissions... rewrite the whole thing!
+		// grade, err := rs.Stores.Grade.Get(gradeID)
+		grade, err := rs.Stores.Submission.Get(gradeID)
 		if err != nil {
 			render.Render(w, r, ErrNotFound)
 			return
