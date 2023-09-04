@@ -171,7 +171,7 @@ func (rs *CourseResource) EditHandler(w http.ResponseWriter, r *http.Request) {
 	course.BeginsAt = data.BeginsAt
 	course.EndsAt = data.EndsAt
 	course.RequiredPercentage = data.RequiredPercentage
-	course.MaxTeamSize = data.MaxTeamSize
+	course.MaxTeamSize = data.MaxTeamSize // FIXME: data is missing in the frontend - this update resets the max team size to 0.
 
 	// update database entry
 	if err := rs.Stores.Course.Update(course); err != nil {

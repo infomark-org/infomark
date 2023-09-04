@@ -169,6 +169,7 @@ type SubmissionStore interface {
 	Create(p *model.Submission) (*model.Submission, error)
 	GetFiltered(filterCourseID, filterGroupID, filterUserID, filterSheetID, filterTaskID int64) ([]model.Submission, error)
 	Update(p *model.Submission) error
+	IdentifyCourseOfSubmission(submissionID int64) (*model.Course, error)
 }
 
 // GradeStore defines grades related database queries
