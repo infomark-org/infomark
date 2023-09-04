@@ -115,7 +115,7 @@ func (s *SubmissionStore) Update(p *model.Submission) error {
 	return Update(s.db, "submissions", p.ID, p)
 }
 
-func (s *GradeStore) IdentifyCourseOfSubmission(submissionID int64) (*model.Course, error) {
+func (s *SubmissionStore) IdentifyCourseOfSubmission(submissionID int64) (*model.Course, error) {
 
 	course := &model.Course{}
 	err := s.db.Get(course,
