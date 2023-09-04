@@ -460,6 +460,7 @@ func (rs *GradeResource) Context(next http.Handler) http.Handler {
 
 		var gradeID int64
 		var err error
+		var course *model.Course
 
 		// try to get id from URL
 		if gradeID, err = strconv.ParseInt(chi.URLParam(r, "grade_id"), 10, 64); err != nil {
@@ -476,14 +477,14 @@ func (rs *GradeResource) Context(next http.Handler) http.Handler {
 			//render.Render(w, r, ErrNotFound)
 			//return
 			ctx = context.WithValue(ctx, symbol.CtxKeyGrade, grade)
-			course, err := rs.Stores.Submission.IdentifyCourseOfSubmission(grade.ID)
+			course, err = rs.Stores.Submission.IdentifyCourseOfSubmission(grade.ID)
 		}
 		submission, err := rs.Stores.Submission.Get(gradeID)
 		if err == nil {
 			//render.Render(w, r, ErrNotFound)
 			//return
 			ctx = context.WithValue(ctx, symbol.CtxKeySubmission, submission)
-			course, err := rs.Stores.Submission.IdentifyCourseOfSubmission(submission.ID)
+			course, err = rs.Stores.Submission.IdentifyCourseOfSubmission(submission.ID)
 		}
 
 		// serve next
