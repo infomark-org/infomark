@@ -114,3 +114,25 @@ AND
 func (s *SubmissionStore) Update(p *model.Submission) error {
 	return Update(s.db, "submissions", p.ID, p)
 }
+
+func (s *GradeStore) IdentifyCourseOfSubmission(submissionID int64) (*model.Course, error) {
+
+	course := &model.Course{}
+	err := s.db.Get(course,
+		`
+SELECT
+  c.*
+FROM
+  submissions s
+INNER JOIN task_sheet ts ON ts.task_id = s.task_id
+INNER JOIN sheet_course sc ON sc.sheet_id = ts.sheet_id
+INNER JOIN courses c ON sc.course_id = c.id
+WHERE
+  s.id = $1`,
+		submissionID)
+	if err != nil {
+		return nil, err
+	}
+
+	return course, err
+}

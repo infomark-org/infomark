@@ -470,19 +470,20 @@ func (rs *GradeResource) Context(next http.Handler) http.Handler {
 		// find specific course in database
 		// FIXME: now, we're dealing with submissions... rewrite the whole thing!
 		// grade, err := rs.Stores.Grade.Get(gradeID)
-		grade, err := rs.Stores.Submission.Get(gradeID)
+		submission, err := rs.Stores.Submission.Get(gradeID)
 		if err != nil {
 			render.Render(w, r, ErrNotFound)
 			return
 		}
 
 		// serve next
-		ctx := context.WithValue(r.Context(), symbol.CtxKeyGrade, grade)
+		ctx := context.WithValue(r.Context(), symbol.CtxKeyGrade, submission)
 
 		// when there is a gradeID in the url, there is NOT a courseID in the url,
 		// BUT: when there is a grade, there is a course
 
-		course, err := rs.Stores.Grade.IdentifyCourseOfGrade(grade.ID)
+		//course, err := rs.Stores.Grade.IdentifyCourseOfGrade(grade.ID)
+		course, err := rs.Stores.Submission.IdentifyCourseOfSubmission(submission.ID)
 		if err != nil {
 			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
 			return
