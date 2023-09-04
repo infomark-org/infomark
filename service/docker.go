@@ -172,7 +172,7 @@ func (ds *DockerService) Run(
 
 	outputReader, err := ds.Client.ContainerLogs(ctx, resp.ID, types.ContainerLogsOptions{ShowStdout: true})
 	if err != nil {
-		return "", 0, err
+		return "Failed to retrieve test logs.", 0, err
 	}
 
 	buf := new(bytes.Buffer)

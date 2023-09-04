@@ -280,6 +280,7 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
 		frameworkPath,
 		int64(configuration.Configuration.Worker.Docker.MaxMemory),
 	)
+	/*
 	if err != nil {
 		DefaultLogger.WithFields(logrus.Fields{
 			"submissionID": msg.SubmissionID,
@@ -289,12 +290,13 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
 		}).Warn(err)
 		return err
 	}
+	*/
 
-	if exit == symbol.TestingResultSuccess.AsInt64() {
+	if err == nil && exit == symbol.TestingResultSuccess.AsInt64() {
 		stdout = cleanDockerOutput(stdout)
 		// 3. push result back to server
 		workerResp.Log = stdout
-		workerResp.Status = symbol.TestingResult(exit)
+		workerResp.Status = symbol.TestingResultSuccess
 		workerResp.FinishedAt = time.Now()
 
 	} else {
@@ -307,9 +309,9 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
 		}).Warn(err)
 
 		workerResp.Log = fmt.Sprintf(`There has been an issue during testing your upload (The ID is %v).
-        The testing-framework has failed (not the server).\n`,
-			msg.SubmissionID)
-		workerResp.Status = symbol.TestingResult(exit)
+        The testing-framework has failed (not the server).\nError code: %v\n`,
+			msg.SubmissionID, exit)
+		workerResp.Status = symbol.TestingResultFailed
 		workerResp.FinishedAt = time.Now()
 
 	}
