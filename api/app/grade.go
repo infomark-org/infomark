@@ -469,6 +469,8 @@ func (rs *GradeResource) Context(next http.Handler) http.Handler {
 
 		ctx := r.Context()
 
+		course, err := nil, nil
+
 		// find specific course in database
 		// FIXME: now, we're dealing with submissions... rewrite the whole thing!
 		grade, err := rs.Stores.Grade.Get(gradeID)
@@ -476,20 +478,15 @@ func (rs *GradeResource) Context(next http.Handler) http.Handler {
 			//render.Render(w, r, ErrNotFound)
 			//return
 			ctx = context.WithValue(ctx, symbol.CtxKeyGrade, grade)
-			course, err := rs.Stores.Submission.IdentifyCourseOfSubmission(grade.ID)
+			course, err = rs.Stores.Submission.IdentifyCourseOfSubmission(grade.ID)
 		}
-		else
-			grade = nil
 		submission, err := rs.Stores.Submission.Get(gradeID)
 		if err == nil {
 			//render.Render(w, r, ErrNotFound)
 			//return
 			ctx = context.WithValue(ctx, symbol.CtxKeySubmission, submission)
-			if (grade == nil)
-				course, err := rs.Stores.Submission.IdentifyCourseOfSubmission(submission.ID)
+			course, err = rs.Stores.Submission.IdentifyCourseOfSubmission(submission.ID)
 		}
-		else
-			submission = nil
 
 		// serve next
 
