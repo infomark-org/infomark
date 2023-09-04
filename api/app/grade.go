@@ -146,7 +146,7 @@ func (rs *GradeResource) PublicResultEditHandler(w http.ResponseWriter, r *http.
 		return
 	}
 
-	currentSubmission := r.Context().Value(symbol.CtxKeyGrade).(*model.Grade)
+	currentSubmission := r.Context().Value(symbol.CtxKeySubmission).(*model.Submission)
 
 	submission, err := rs.Stores.Submission.Get(currentSubmission.ID)
 	if err != nil {
@@ -220,7 +220,7 @@ func (rs *GradeResource) PrivateResultEditHandler(w http.ResponseWriter, r *http
 		return
 	}
 
-	currentSubmission := r.Context().Value(symbol.CtxKeyGrade).(*model.Grade)
+	currentSubmission := r.Context().Value(symbol.CtxKeySubmission).(*model.Submission)
 
 	submission, err := rs.Stores.Submission.Get(currentSubmission.ID)
 	if err != nil {
@@ -467,23 +467,37 @@ func (rs *GradeResource) Context(next http.Handler) http.Handler {
 			return
 		}
 
+		ctx := r.Context()
+
 		// find specific course in database
 		// FIXME: now, we're dealing with submissions... rewrite the whole thing!
-		// grade, err := rs.Stores.Grade.Get(gradeID)
-		submission, err := rs.Stores.Submission.Get(gradeID)
-		if err != nil {
-			render.Render(w, r, ErrNotFound)
-			return
+		grade, err := rs.Stores.Grade.Get(gradeID)
+        if err == nil {
+			//render.Render(w, r, ErrNotFound)
+			//return
+			ctx = context.WithValue(ctx, symbol.CtxKeyGrade, grade)
+			course, err := rs.Stores.Submission.IdentifyCourseOfSubmission(grade.ID)
 		}
+		else
+			grade = nil
+		submission, err := rs.Stores.Submission.Get(gradeID)
+		if err == nil {
+			//render.Render(w, r, ErrNotFound)
+			//return
+			ctx = context.WithValue(ctx, symbol.CtxKeySubmission, submission)
+			if (grade == nil)
+				course, err := rs.Stores.Submission.IdentifyCourseOfSubmission(submission.ID)
+		}
+		else
+			submission = nil
 
 		// serve next
-		ctx := context.WithValue(r.Context(), symbol.CtxKeyGrade, submission)
+
 
 		// when there is a gradeID in the url, there is NOT a courseID in the url,
 		// BUT: when there is a grade, there is a course
 
 		//course, err := rs.Stores.Grade.IdentifyCourseOfGrade(grade.ID)
-		course, err := rs.Stores.Submission.IdentifyCourseOfSubmission(submission.ID)
 		if err != nil {
 			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
 			return
