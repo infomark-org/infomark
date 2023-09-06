@@ -461,6 +461,8 @@ func (rs *GradeResource) Context(next http.Handler) http.Handler {
 		var gradeID int64
 		var err error
 		var course *model.Course
+		var grade *model.Grade
+		var submission *model.Submission
 
 		// try to get id from URL
 		if gradeID, err = strconv.ParseInt(chi.URLParam(r, "grade_id"), 10, 64); err != nil {
@@ -469,17 +471,20 @@ func (rs *GradeResource) Context(next http.Handler) http.Handler {
 		}
 
 		ctx := r.Context()
+		submission = nil
+		grade = nil
+		course = nil
 
 		// find specific course in database
 		// FIXME: now, we're dealing with submissions... rewrite the whole thing!
-		grade, err := rs.Stores.Grade.Get(gradeID)
+		grade, err = rs.Stores.Grade.Get(gradeID)
         if err == nil {
 			//render.Render(w, r, ErrNotFound)
 			//return
 			ctx = context.WithValue(ctx, symbol.CtxKeyGrade, grade)
-			course, err = rs.Stores.Submission.IdentifyCourseOfSubmission(grade.ID)
+			course, err = rs.Stores.Grade.IdentifyCourseOfGrade(grade.ID)
 		}
-		submission, err := rs.Stores.Submission.Get(gradeID)
+		submission, err = rs.Stores.Submission.Get(gradeID)
 		if err == nil {
 			//render.Render(w, r, ErrNotFound)
 			//return
@@ -494,12 +499,10 @@ func (rs *GradeResource) Context(next http.Handler) http.Handler {
 		// BUT: when there is a grade, there is a course
 
 		//course, err := rs.Stores.Grade.IdentifyCourseOfGrade(grade.ID)
-		/*
-		if err != nil {
-			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
+		if submission == nil && grade == nil {
+			render.Render(w, r, ErrInternalServerErrorWithDetails(fmt.Errorf("could not identify grade or submission with the given id")))
 			return
 		}
-		*/
 
 		if courseFromURL.ID != course.ID {
 			render.Render(w, r, ErrNotFound)
