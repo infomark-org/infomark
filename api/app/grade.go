@@ -494,10 +494,12 @@ func (rs *GradeResource) Context(next http.Handler) http.Handler {
 		// BUT: when there is a grade, there is a course
 
 		//course, err := rs.Stores.Grade.IdentifyCourseOfGrade(grade.ID)
+		/*
 		if err != nil {
 			render.Render(w, r, ErrInternalServerErrorWithDetails(err))
 			return
 		}
+		*/
 
 		if courseFromURL.ID != course.ID {
 			render.Render(w, r, ErrNotFound)
