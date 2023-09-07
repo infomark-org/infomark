@@ -346,6 +346,8 @@ func (rs *SubmissionResource) UploadFileHandler(w http.ResponseWriter, r *http.R
 		return
 	}
 	if isUserInConfirmedTeam {
+		// FIXME: this includes removed team members that have been there in a previous task!
+		// NOTE: as a workaround, never re-use team ids, when the team changes.
 		teamUserList, err = rs.Stores.Team.GetUsers(teamID.Int64)
 		if err != nil {
 			render.Render(w, r, ErrInternalServerErrorWithDetails(err))

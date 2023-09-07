@@ -309,7 +309,8 @@ func (h *RealSubmissionHandler) Handle(body []byte) error {
 		}).Warn(err)
 
 		workerResp.Log = fmt.Sprintf(`There has been an issue during testing your upload (The ID is %v).
-        The testing-framework has failed (not the server).\nError code: %v\n`,
+The testing-framework has failed (not the server).
+Error code: %v`,
 			msg.SubmissionID, exit)
 		workerResp.Status = symbol.TestingResultFailed
 		workerResp.FinishedAt = time.Now()

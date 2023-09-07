@@ -180,7 +180,7 @@ func (ds *DockerService) Run(
 
 	// avoid submitting large outputs to the database
 	// postgres will not accept more than 64kB and we don't want that much either
-	if (len > 32*1024) {
+	if (len > 60*1024) {
 		return "Output too large (you're printing too much stuff)", 0, nil
 	}
 
