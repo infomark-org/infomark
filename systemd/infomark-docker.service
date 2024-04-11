@@ -1,0 +1,22 @@
+[Unit]
+Description=infomark docker
+
+After=local-fs.target multi-user.target docker.service
+Requires=local-fs.target multi-user.target docker.service
+
+[Service]
+# User=nobody
+Group=infomark
+SupplementaryGroups=docker
+DynamicUser=Yes
+Type=simple
+WorkingDirectory=/var/www/infomark
+ExecStart=/usr/bin/docker-compose up
+Restart=on-failure
+RestartSec=5s
+
+ProtectSystem=strict
+ReadOnlyPaths=/var/www/infomark
+
+[Install]
+WantedBy=multi-user.target
