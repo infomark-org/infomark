@@ -44,7 +44,7 @@ jobs:
           submodules: true
 
       - name: Download elm-mdc
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4.1.7
         with:
           name: elm-mdc
 
@@ -79,7 +79,7 @@ jobs:
           submodules: true
 
       - name: Download static assets
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4.1.7
         with:
           name: static-assets
           path: static
