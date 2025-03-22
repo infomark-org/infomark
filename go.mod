@@ -30,7 +30,7 @@ require (
 	github.com/spf13/cobra v1.6.1
 	github.com/streadway/amqp v1.0.0
 	github.com/ulule/limiter/v3 v3.11.0
-	golang.org/x/crypto v0.21.0
+	golang.org/x/crypto v0.35.0
 	gopkg.in/guregu/null.v3 v3.5.0
 	gopkg.in/yaml.v2 v2.4.0
 )
@@ -75,8 +75,8 @@ require (
 	github.com/segmentio/asm v1.2.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	golang.org/x/mod v0.8.0 // indirect
-	golang.org/x/net v0.23.0 // indirect
-	golang.org/x/sys v0.18.0 // indirect
+	golang.org/x/net v0.36.0 // indirect
+	golang.org/x/sys v0.30.0 // indirect
 	golang.org/x/time v0.1.0 // indirect
 	golang.org/x/tools v0.6.0 // indirect
 	google.golang.org/protobuf v1.33.0 // indirect
@@ -85,3 +85,4 @@ require (
 )
 
 go 1.19
+toolchain go1.24.1
