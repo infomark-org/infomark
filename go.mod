@@ -8,7 +8,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/docker/docker v24.0.9+incompatible
 	github.com/franela/goblin v0.0.0-20211003143422-0a4f594942bf
-	github.com/go-chi/chi/v5 v5.2.2
+	github.com/go-chi/chi/v5 v5.2.4
 	github.com/go-chi/cors v1.2.1
 	github.com/go-chi/jwtauth/v5 v5.1.0
 	github.com/go-chi/render v1.0.2
@@ -84,4 +84,4 @@ require (
 	gotest.tools/v3 v3.1.0 // indirect
 )
 
-go 1.19
+go 1.22
