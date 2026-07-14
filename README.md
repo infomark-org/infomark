@@ -13,10 +13,20 @@ includes a [Quickstart Guide](https://infomark.org/guides/overview/).
 Run once
 
 ```bash
+go build -o infomark .
 ./infomark console configuration create > infomark-test-config.yml
-./infomark console configuration create-compose infomark-config.yml > docker-compose.yml
+./infomark console configuration create-compose infomark-test-config.yml > docker-compose.yml
+# The generated config disables email verification and allows 100
+# requests per minute, but the test suite expects CI semantics:
+# set authentication.email.verify to true and
+# authentication.total_requests_per_minute to 10 in infomark-test-config.yml.
+
 # Test run against an actual database and redis.
-sudo docker-compose up
+sudo docker-compose up -d
+
+# Create the database schema.
+export INFOMARK_CONFIG_FILE=`realpath infomark-test-config.yml`
+./infomark console database migrate
 
 # We mock some data to test against.
 cd migration/mock
@@ -28,8 +38,12 @@ cd ../../
 ```
 
 Tests can run multiple-times as we rollback all changes to the database.
+The redis-backed rate limiter keeps its counters between runs, so flush
+redis before each run or the login rate-limit test will produce spurious
+429 failures:
 
 ```bash
+redis-cli flushall  # or: docker exec <redis-container> redis-cli flushall
 export INFOMARK_CONFIG_FILE=`realpath infomark-test-config.yml`
 go test ./... -cover -v --goblin.timeout 15s -coverprofile coverage.out
 ```
