@@ -180,6 +180,66 @@ func TestAuth(t *testing.T) {
 			g.Assert(userAfter.Email).Equal("test@uni-tuebingen.de")
 		})
 
+		g.It("Password-Reset is denied when no reset was requested", func() {
+
+			// The stored token is null, which decodes to the empty string.
+			// Neither an empty request token (blocked by request validation)
+			// nor an arbitrary one (blocked by the handler guard) may reset
+			// the password, otherwise any account could be taken over.
+			userBefore, err := stores.User.Get(1)
+			g.Assert(err).Equal(nil)
+			g.Assert(userBefore.ResetPasswordToken.Valid).Equal(false)
+
+			w = tape.Post("/api/v1/auth/update_password",
+				H{
+					"reset_password_token": "",
+					"plain_password":       "new_password",
+					"email":                "test@uni-tuebingen.de",
+				},
+			)
+			g.Assert(w.Code).Equal(http.StatusBadRequest)
+
+			w = tape.Post("/api/v1/auth/update_password",
+				H{
+					"reset_password_token": "attacker_guess",
+					"plain_password":       "new_password",
+					"email":                "test@uni-tuebingen.de",
+				},
+			)
+			g.Assert(w.Code).Equal(http.StatusBadRequest)
+
+			// The password must be unchanged after both attempts.
+			userAfter, err := stores.User.Get(1)
+			g.Assert(err).Equal(nil)
+			g.Assert(auth.CheckPasswordHash("test", userAfter.EncryptedPassword)).Equal(true)
+		})
+
+		g.It("Email confirmation is denied when account is already confirmed", func() {
+
+			// A confirmed account carries a null confirmation token, which
+			// decodes to the empty string. An empty request token must not
+			// pass the comparison against it.
+			userBefore, err := stores.User.Get(1)
+			g.Assert(err).Equal(nil)
+			g.Assert(userBefore.ConfirmEmailToken.Valid).Equal(false)
+
+			w = tape.Post("/api/v1/auth/confirm_email",
+				H{
+					"email":              "test@uni-tuebingen.de",
+					"confirmation_token": "",
+				},
+			)
+			g.Assert(w.Code).Equal(http.StatusBadRequest)
+
+			w = tape.Post("/api/v1/auth/confirm_email",
+				H{
+					"email":              "test@uni-tuebingen.de",
+					"confirmation_token": "attacker_guess",
+				},
+			)
+			g.Assert(w.Code).Equal(http.StatusBadRequest)
+		})
+
 		g.It("Invalid Email-Confirmation-Token is denied", func() {
 
 			// setup confirmation token

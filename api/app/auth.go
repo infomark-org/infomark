@@ -336,6 +336,15 @@ func (rs *AuthResource) UpdatePasswordHandler(w http.ResponseWriter, r *http.Req
 		return
 	}
 
+	// A reset must have been requested first. Without this guard a cleared
+	// (null) stored token decodes to the empty string, and although request
+	// validation currently rejects empty tokens, relying on that alone would
+	// make an account takeover possible if the validation rule ever changes.
+	if !user.ResetPasswordToken.Valid {
+		render.Render(w, r, ErrBadRequest)
+		return
+	}
+
 	// compare token in constant time so the response latency does not reveal
 	// how much of the reset token an attacker has guessed correctly.
 	if !auth.ConstantTimeTokenCompare(user.ResetPasswordToken.String, data.ResetPasswordToken) {
@@ -379,6 +388,15 @@ func (rs *AuthResource) ConfirmEmailHandler(w http.ResponseWriter, r *http.Reque
 	// does such a user exists with request email address?
 	user, err := rs.Stores.User.FindByEmail(data.Email)
 	if err != nil {
+		render.Render(w, r, ErrBadRequest)
+		return
+	}
+
+	// An unconfirmed account must actually carry a pending confirmation
+	// token. A cleared (null) stored token decodes to the empty string, so
+	// without this guard an already-confirmed account could be "confirmed"
+	// again if request validation ever stopped rejecting empty tokens.
+	if !user.ConfirmEmailToken.Valid {
 		render.Render(w, r, ErrBadRequest)
 		return
 	}
