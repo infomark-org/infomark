@@ -66,10 +66,13 @@ func TestConfigurationURLs(t *testing.T) {
 			g.Assert(config.URL()).Equal("http://example.org:8080")
 		})
 
-		// NOTE: documents current (arguably wrong) behavior: URL() only omits the
-		// port when it matches the protocol's default. Port 443 while UseHTTPS is
-		// false is not the http default (80), so it is rendered explicitly as an
-		// http URL on port 443.
+		// URL() only omits the port when it is the default for the active
+		// protocol (80 for http, 443 for https). With UseHTTPS false and port
+		// 443, the protocol is http but 443 is not http's default port, so the
+		// port MUST be rendered: "http://example.org" would otherwise be
+		// interpreted as port 80 and point at the wrong endpoint. Emitting
+		// "http://example.org:443" is therefore the correct, unambiguous URL for
+		// plain http served on port 443.
 		g.It("Should include port 443 when https is disabled", func() {
 			config := &ServerConfigurationSchema{}
 			config.HTTP.UseHTTPS = false

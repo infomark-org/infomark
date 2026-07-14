@@ -48,23 +48,17 @@ func TestTapeHelpers(t *testing.T) {
 			g.Assert(request.Body == nil).IsFalse()
 		})
 
-		// NOTE: documents current (arguably wrong) behavior: passing a nil data
-		// map does not yield a bodyless request. The builder assigns a typed-nil
-		// *bytes.Buffer to the io.Reader argument of http.NewRequest, producing a
-		// non-nil interface wrapping a nil pointer; http.NewRequest then calls
-		// Len() on that nil buffer and panics. Callers must pass an (empty) map
-		// instead of nil, which the exported Get/Delete helpers already do.
-		g.It("Should panic when given a nil data map", func() {
-			didPanic := false
-			func() {
-				defer func() {
-					if recovered := recover(); recovered != nil {
-						didPanic = true
-					}
-				}()
-				BuildDataRequest("GET", "http://example.org/api/v1/ping", nil)
-			}()
-			g.Assert(didPanic).IsTrue()
+		// A nil data map means "no body". The builder now leaves the io.Reader
+		// as a nil interface value, so http.NewRequest yields a request without
+		// a body instead of panicking on a typed-nil *bytes.Buffer.
+		g.It("Should yield a bodyless request when given a nil data map", func() {
+			request := BuildDataRequest("GET", "http://example.org/api/v1/ping", nil)
+			g.Assert(request.Method).Equal("GET")
+			g.Assert(request.URL.Path).Equal("/api/v1/ping")
+			// A nil data map must not produce a request body.
+			g.Assert(request.Body == nil).IsTrue()
+			// The standard headers are still set regardless of the body.
+			g.Assert(request.Header.Get("Content-Type")).Equal("application/json")
 		})
 
 		// An explicitly empty (non-nil) map is the supported bodyless form and

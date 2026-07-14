@@ -62,11 +62,14 @@ func ErrUnauthenticatedWithDetails(err error) render.Renderer {
 	}
 }
 
-// ErrUnauthorizedWithDetails renders status 403 Unauthorized with custom error message.
-// The request is issued with credential, but these are invalid or not sufficient
-// to gain access to a ressource.
+// ErrUnauthorizedWithDetails renders status 401 Unauthorized with a custom
+// error message. It is used when a request carried credentials (for example a
+// JWT) but they turned out to be invalid, expired or otherwise unverifiable,
+// which is an authentication failure. This differs from the prebuilt
+// ErrUnauthorized value below, which renders 403 Forbidden for a request whose
+// identity is known but lacks the privilege for the resource.
 func ErrUnauthorizedWithDetails(err error) render.Renderer {
-	// StatusForbidden                     = 403 // RFC 7231, 6.5.3
+	// StatusUnauthorized                  = 401 // RFC 7235, 3.1
 	return &ErrResponse{
 		Err:            err,
 		HTTPStatusCode: http.StatusUnauthorized,

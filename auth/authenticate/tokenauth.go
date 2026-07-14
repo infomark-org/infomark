@@ -52,13 +52,13 @@ func (a *TokenAuth) Verifier() func(http.Handler) http.Handler {
 
 // CreateAccessJWT returns an access token for provided account claims.
 func (a *TokenAuth) CreateAccessJWT(claims AccessClaims) (string, error) {
-	claims.RegisteredClaims.IssuedAt = jwt.NewNumericDate(time.Now().UTC())
-	// NOTE: int64(a.JwtAccessExpiry) is a nanosecond count that is added to a
-	// second-based unix timestamp, so a small configured expiry yields a token
-	// valid far into the future. This is a documented pre-existing quirk (see
-	// SESSION.md). The jwt/v5 port keeps the exact same numeric exp claim by
-	// wrapping that integer, unchanged, in a NumericDate.
-	claims.RegisteredClaims.ExpiresAt = jwt.NewNumericDate(time.Unix(time.Now().UTC().Unix()+int64(a.JwtAccessExpiry), 0))
+	now := time.Now().UTC()
+	claims.RegisteredClaims.IssuedAt = jwt.NewNumericDate(now)
+	// JwtAccessExpiry is a time.Duration, so it must be added to the current
+	// time with time.Add rather than to a unix-seconds count. The previous code
+	// added int64(duration) -- a nanosecond count -- to a seconds-based
+	// timestamp, which turned a 1s configured expiry into roughly 31 years.
+	claims.RegisteredClaims.ExpiresAt = jwt.NewNumericDate(now.Add(a.JwtAccessExpiry))
 
 	_, tokenString, err := a.JwtAuth.Encode(claims.ToMap())
 	return tokenString, err
@@ -66,11 +66,11 @@ func (a *TokenAuth) CreateAccessJWT(claims AccessClaims) (string, error) {
 
 // CreateRefreshJWT returns a refresh token for provided token Claims.
 func (a *TokenAuth) CreateRefreshJWT(claims RefreshClaims) (string, error) {
-
-	claims.RegisteredClaims.IssuedAt = jwt.NewNumericDate(time.Now().UTC())
-	// The same nanosecond-as-seconds computation as CreateAccessJWT applies
-	// here. The numeric exp value is preserved verbatim across the upgrade.
-	claims.RegisteredClaims.ExpiresAt = jwt.NewNumericDate(time.Unix(time.Now().UTC().Unix()+int64(a.JwtRefreshExpiry), 0))
+	now := time.Now().UTC()
+	claims.RegisteredClaims.IssuedAt = jwt.NewNumericDate(now)
+	// Same fix as CreateAccessJWT: add the configured duration to the current
+	// time so the refresh token expires exactly JwtRefreshExpiry from now.
+	claims.RegisteredClaims.ExpiresAt = jwt.NewNumericDate(now.Add(a.JwtRefreshExpiry))
 
 	_, tokenString, err := a.JwtAuth.Encode(claims.ToMap())
 	return tokenString, err

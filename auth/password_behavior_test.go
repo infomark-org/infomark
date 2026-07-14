@@ -157,9 +157,11 @@ func TestErrorRenderers(t *testing.T) {
 			g.Assert(response.StatusText).Equal(http.StatusText(http.StatusUnauthorized))
 		})
 
-		// NOTE: documents current (arguably wrong) behavior: ErrUnauthorizedWithDetails
-		// is named as though it produces a 403 Forbidden (and its doc comment says so),
-		// but it actually returns HTTP 401 Unauthorized.
+		// ErrUnauthorizedWithDetails is an authentication-failure helper: a
+		// request carried credentials but they were invalid, so it renders 401
+		// Unauthorized (matching its corrected doc comment). It is distinct from
+		// the prebuilt ErrUnauthorized value, which renders 403 Forbidden for a
+		// known identity that lacks privilege.
 		g.It("Should build a 401 renderer for the unauthorized-with-details helper", func() {
 			renderer := ErrUnauthorizedWithDetails(ErrTokenUnauthorized)
 			response, ok := renderer.(*ErrResponse)

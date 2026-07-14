@@ -35,8 +35,9 @@ const testJWTSecret = "unit-test-secret-do-not-use-in-production"
 // testLoginID is a representative non-zero account identifier carried in claims.
 const testLoginID int64 = 42
 
-// oneYearInSeconds is used to demonstrate that a tiny configured expiry still
-// produces a token valid for far longer than a year (see the unit-bug note).
+// oneYearInSeconds is an upper bound used both to craft clearly-expired tokens
+// and to assert that a tiny configured expiry stays far below a year, proving
+// the expiry is computed as a real duration rather than a nanosecond count.
 const oneYearInSeconds int64 = 365 * 24 * 60 * 60
 
 // newTestTokenAuth builds a TokenAuth from an in-memory configuration so the
@@ -155,16 +156,16 @@ func TestTokenAuth(t *testing.T) {
 
 	g.Describe("Access token expiry unit", func() {
 
-		// NOTE: documents current (arguably wrong) behavior: CreateAccessJWT
-		// computes ExpiresAt as now (in seconds) plus int64(JwtAccessExpiry),
-		// where the duration is measured in nanoseconds. A configured expiry of
-		// one second therefore adds 1e9 to the second-based unix timestamp, so
-		// the token stays valid for roughly 31 years instead of one second.
-		g.It("Should treat the configured duration as seconds-worth of nanoseconds", func() {
+		// CreateAccessJWT must treat the configured expiry as a real duration:
+		// a one-second configured expiry produces a token whose exp claim is
+		// about one second after issuance, not decades away. This pins the fix
+		// for the nanoseconds-added-to-seconds bug documented in SESSION.md.
+		g.It("Should expire one second after issuance for a 1s config", func() {
 			tokenAuth := newTestTokenAuth()
 			before := time.Now().UTC().Unix()
 			tokenString, err := tokenAuth.CreateAccessJWT(NewAccessClaims(testLoginID, false))
 			g.Assert(err).Equal(nil)
+			after := time.Now().UTC().Unix()
 
 			// Decode the token independently to inspect the raw exp claim.
 			decoded := &AccessClaims{}
@@ -173,9 +174,13 @@ func TestTokenAuth(t *testing.T) {
 			})
 			g.Assert(parseErr).Equal(nil)
 
-			// A one-second configured expiry must not resolve to roughly one
-			// second; here it lands more than a year into the future.
-			g.Assert(decoded.RegisteredClaims.ExpiresAt.Unix() > before+oneYearInSeconds).IsTrue()
+			// The 1s configured expiry must land within one second of issuance.
+			// It must be at least the issuance time and at most one second past
+			// the latest possible issuance, and nowhere near a year away.
+			expiresAt := decoded.RegisteredClaims.ExpiresAt.Unix()
+			g.Assert(expiresAt >= before).IsTrue()
+			g.Assert(expiresAt <= after+1).IsTrue()
+			g.Assert(expiresAt < before+oneYearInSeconds).IsTrue()
 		})
 	})
 }

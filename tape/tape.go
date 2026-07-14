@@ -109,19 +109,22 @@ func CreateFileRequestBody(path, contentType string, params map[string]string) (
 // BuildDataRequest creates a request
 func BuildDataRequest(method, url string, data map[string]interface{}) *http.Request {
 
-	var payloadJson *bytes.Buffer
+	// body is kept as an io.Reader interface. When data is nil we leave it as a
+	// nil interface value so http.NewRequest produces a request without a body.
+	// Storing a typed-nil *bytes.Buffer here instead would yield a non-nil
+	// io.Reader wrapping a nil pointer, and http.NewRequest would call Len() on
+	// that nil buffer and panic.
+	var body io.Reader
 
 	if data != nil {
 		dat, err := json.Marshal(data)
 		if err != nil {
 			panic(err)
 		}
-		payloadJson = bytes.NewBuffer(dat)
-	} else {
-		payloadJson = nil
+		body = bytes.NewBuffer(dat)
 	}
 
-	r, err := http.NewRequest(method, url, payloadJson)
+	r, err := http.NewRequest(method, url, body)
 	if err != nil {
 		panic(err)
 	}
