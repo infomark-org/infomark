@@ -21,11 +21,11 @@ require (
 	github.com/markbates/pkger v0.17.1
 	github.com/mattn/go-sqlite3 v1.14.47
 	github.com/prometheus/client_golang v1.23.2
+	github.com/rabbitmq/amqp091-go v1.12.0
 	github.com/redis/go-redis/v9 v9.21.0
 	github.com/robfig/cron v1.2.0
 	github.com/sirupsen/logrus v1.9.4
 	github.com/spf13/cobra v1.10.2
-	github.com/streadway/amqp v1.0.0
 	github.com/ulule/limiter/v3 v3.11.2
 	golang.org/x/crypto v0.53.0
 	gopkg.in/guregu/null.v3 v3.5.0

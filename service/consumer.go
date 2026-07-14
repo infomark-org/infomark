@@ -23,7 +23,7 @@ import (
 	"fmt"
 
 	"github.com/sirupsen/logrus"
-	"github.com/streadway/amqp"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 // Consumer is an object which can act on AMPQ messages

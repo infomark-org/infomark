@@ -39,7 +39,7 @@ import (
 	"github.com/infomark-org/infomark/configuration/bytefmt"
 	"github.com/infomark-org/infomark/configuration/fs"
 	"github.com/spf13/cobra"
-	"github.com/streadway/amqp"
+	amqp "github.com/rabbitmq/amqp091-go"
 	"gopkg.in/yaml.v2"
 
 	"github.com/jmoiron/sqlx"

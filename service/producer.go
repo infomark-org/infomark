@@ -22,7 +22,7 @@ package service
 import (
 	"fmt"
 
-	"github.com/streadway/amqp"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 // Producer is an object which can emit a AMPQ messages
