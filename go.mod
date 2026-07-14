@@ -16,13 +16,10 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/golang-migrate/migrate/v4 v4.14.1
 	github.com/google/uuid v1.3.0
-	// Cannot be changed to v1.3 as this breaks the JOIN
-	// https://github.com/jmoiron/sqlx/issues/755
-	// https://github.com/jmoiron/sqlx/pull/754
-	github.com/jmoiron/sqlx v1.2.0
-	github.com/lib/pq v1.10.7
+	github.com/jmoiron/sqlx v1.4.0
+	github.com/lib/pq v1.10.9
 	github.com/markbates/pkger v0.17.1
-	github.com/mattn/go-sqlite3 v1.14.10
+	github.com/mattn/go-sqlite3 v1.14.22
 	github.com/prometheus/client_golang v1.14.0
 	github.com/redis/go-redis/v9 v9.0.2
 	github.com/robfig/cron v1.2.0

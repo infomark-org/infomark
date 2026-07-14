@@ -30,8 +30,12 @@ type Enrollment struct {
 
 // UserCourse gives enrollment information for multiple users
 type UserCourse struct {
-	UserID int64 `db:"id"`
-	ID     int64 `db:"id"`
+	// Both a user id and an enrollment id used to be mapped onto the same
+	// db:"id" column via two struct fields. sqlx v1.3+ resolves duplicate
+	// db tags to the first declared field (previously the last), which
+	// silently redirected the scan target. The queries only select the
+	// user id (u.id), so a single field is correct.
+	ID int64 `db:"id"`
 
 	Role int64 `db:"role"`
 
