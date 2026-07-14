@@ -1,0 +1,6 @@
+[install]
+# Supply-chain safety: refuse to install any package version published less
+# than 7 days ago. Newly published versions are the primary vector for
+# compromised-package attacks, so a cool-down window gives the ecosystem time
+# to detect and yank malicious releases before we depend on them.
+minimumReleaseAge = 604800

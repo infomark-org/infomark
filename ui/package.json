@@ -1,0 +1,43 @@
+{
+  "name": "infomark-ui-react",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "build:embed": "tsc --noEmit && vite build --outDir ../static --emptyOutDir && touch ../static/.keep",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@ant-design/v5-patch-for-react-19": "^1.0.3",
+    "antd": "^5.28.0",
+    "axios": "^1.13.1",
+    "dayjs": "^1.11.19",
+    "i18next": "^25.6.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-i18next": "^16.2.4",
+    "react-router-dom": "^7.9.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@testing-library/jest-dom": "6.9.1",
+    "@testing-library/react": "16.3.2",
+    "@testing-library/user-event": "14.6.1",
+    "@types/node": "^24.10.0",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "@vitejs/plugin-react": "^5.1.0",
+    "eslint": "10.6.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "globals": "17.7.0",
+    "jsdom": "29.1.1",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "8.63.0",
+    "vite": "^7.1.12",
+    "vitest": "4.1.10"
+  }
+}

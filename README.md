@@ -51,6 +51,19 @@ go test ./... -cover -v --goblin.timeout 15s -coverprofile coverage.out
 
 ### Building
 
-You will either need to download the [UI](https://github.com/infomark-org/infomark-ui)
-from the release page or build it yourself. The ui has to be copied to the static
-folder. ([details](https://github.com/infomark-org/infomark/blob/master/.drone.yml#L85-L101))
+The React UI lives in `ui/` and is compiled into the `static/` folder,
+which the Go binary embeds at compile time via `go:embed`. Build the UI
+first, then the server:
+
+```bash
+cd ui
+bun install
+bun run build:embed   # typechecks, builds, and writes to ../static
+cd ..
+go build -o infomark .
+```
+
+The resulting binary serves the UI at the site root and the API under
+`/api/v1`. For UI development use `bun run dev` in `ui/`, which starts a
+dev server on port 3000 that proxies `/api` to a locally running backend
+on port 2020.
