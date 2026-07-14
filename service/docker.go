@@ -25,8 +25,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/client"
 )
@@ -52,7 +52,7 @@ func NewDockerServiceWithTimeout(timeout time.Duration) (*DockerService, error) 
 // ListContainers lists all docker containers
 func (ds *DockerService) ListContainers() {
 	ctx := context.Background()
-	containers, err := ds.Client.ContainerList(ctx, types.ContainerListOptions{})
+	containers, err := ds.Client.ContainerList(ctx, container.ListOptions{})
 	if err != nil {
 		panic(err)
 	}
@@ -67,7 +67,7 @@ func (ds *DockerService) ListContainers() {
 func (ds *DockerService) ListImages() {
 	ctx := context.Background()
 
-	images, err := ds.Client.ImageList(ctx, types.ImageListOptions{})
+	images, err := ds.Client.ImageList(ctx, image.ListOptions{})
 	if err != nil {
 		panic(err)
 	}
@@ -85,10 +85,10 @@ func (ds *DockerService) ListImages() {
 }
 
 // Pull pulls a docker image
-func (ds *DockerService) Pull(image string) (string, error) {
+func (ds *DockerService) Pull(imageName string) (string, error) {
 	ctx := context.Background()
-	// image example: "docker.io/library/alpine"
-	outputReader, err := ds.Client.ImagePull(ctx, image, types.ImagePullOptions{})
+	// imageName example: "docker.io/library/alpine"
+	outputReader, err := ds.Client.ImagePull(ctx, imageName, image.PullOptions{})
 	if err != nil {
 		return "", err
 	}
@@ -153,9 +153,9 @@ func (ds *DockerService) Run(
 		return "", 0, err
 	}
 
-	defer ds.Client.ContainerRemove(ctx, resp.ID, types.ContainerRemoveOptions{Force:true})
+	defer ds.Client.ContainerRemove(ctx, resp.ID, container.RemoveOptions{Force: true})
 
-	if err := ds.Client.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
+	if err := ds.Client.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
 		return "", 0, err
 	}
 
@@ -170,7 +170,7 @@ func (ds *DockerService) Run(
 	case <-statusCh:
 	}
 
-	outputReader, err := ds.Client.ContainerLogs(ctx, resp.ID, types.ContainerLogsOptions{ShowStdout: true})
+	outputReader, err := ds.Client.ContainerLogs(ctx, resp.ID, container.LogsOptions{ShowStdout: true})
 	if err != nil {
 		return "", 0, err
 	}

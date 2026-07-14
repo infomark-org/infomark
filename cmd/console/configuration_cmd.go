@@ -30,7 +30,6 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
 	"github.com/franela/goblin"
@@ -293,7 +292,7 @@ var TestConfiguration = &cobra.Command{
 				if err != nil {
 					status_code = -1
 				} else {
-					dockerClient.ContainerRemove(ctx, resp.ID, types.ContainerRemoveOptions{})
+					dockerClient.ContainerRemove(ctx, resp.ID, container.RemoveOptions{})
 					if err != nil {
 						status_code = -1
 					}
