@@ -25,12 +25,12 @@ import (
 	"net/http"
 
 	"github.com/alexedwards/scs"
-	jwt "github.com/golang-jwt/jwt/v4"
+	jwt "github.com/golang-jwt/jwt/v5"
 )
 
 // AccessClaims represent the claims parsed from JWT access token.
 type AccessClaims struct {
-	jwt.StandardClaims
+	jwt.RegisteredClaims
 	AccessNotRefresh bool  `json:"anr"`      // to distinguish between access and refresh code
 	LoginID          int64 `json:"login_id"` // the id to get user information
 	Root             bool  `json:"root"`     // a global flag to bypass all permission checks
@@ -53,7 +53,7 @@ func NewAccessClaims(loginId int64, root bool) AccessClaims {
 
 // RefreshClaims represent the claims parsed from JWT refresh token.
 type RefreshClaims struct {
-	jwt.StandardClaims
+	jwt.RegisteredClaims
 	AccessNotRefresh bool  `json:"anr"`
 	LoginID          int64 `json:"login_id"`
 }

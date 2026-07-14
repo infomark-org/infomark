@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/go-chi/jwtauth/v5"
+	jwt "github.com/golang-jwt/jwt/v5"
 	"github.com/infomark-org/infomark/configuration"
 )
 
@@ -51,8 +52,13 @@ func (a *TokenAuth) Verifier() func(http.Handler) http.Handler {
 
 // CreateAccessJWT returns an access token for provided account claims.
 func (a *TokenAuth) CreateAccessJWT(claims AccessClaims) (string, error) {
-	claims.StandardClaims.IssuedAt = time.Now().UTC().Unix()
-	claims.StandardClaims.ExpiresAt = time.Now().UTC().Unix() + int64(a.JwtAccessExpiry)
+	claims.RegisteredClaims.IssuedAt = jwt.NewNumericDate(time.Now().UTC())
+	// NOTE: int64(a.JwtAccessExpiry) is a nanosecond count that is added to a
+	// second-based unix timestamp, so a small configured expiry yields a token
+	// valid far into the future. This is a documented pre-existing quirk (see
+	// SESSION.md). The jwt/v5 port keeps the exact same numeric exp claim by
+	// wrapping that integer, unchanged, in a NumericDate.
+	claims.RegisteredClaims.ExpiresAt = jwt.NewNumericDate(time.Unix(time.Now().UTC().Unix()+int64(a.JwtAccessExpiry), 0))
 
 	_, tokenString, err := a.JwtAuth.Encode(claims.ToMap())
 	return tokenString, err
@@ -61,8 +67,10 @@ func (a *TokenAuth) CreateAccessJWT(claims AccessClaims) (string, error) {
 // CreateRefreshJWT returns a refresh token for provided token Claims.
 func (a *TokenAuth) CreateRefreshJWT(claims RefreshClaims) (string, error) {
 
-	claims.StandardClaims.IssuedAt = time.Now().UTC().Unix()
-	claims.StandardClaims.ExpiresAt = time.Now().UTC().Unix() + int64(a.JwtRefreshExpiry)
+	claims.RegisteredClaims.IssuedAt = jwt.NewNumericDate(time.Now().UTC())
+	// The same nanosecond-as-seconds computation as CreateAccessJWT applies
+	// here. The numeric exp value is preserved verbatim across the upgrade.
+	claims.RegisteredClaims.ExpiresAt = jwt.NewNumericDate(time.Unix(time.Now().UTC().Unix()+int64(a.JwtRefreshExpiry), 0))
 
 	_, tokenString, err := a.JwtAuth.Encode(claims.ToMap())
 	return tokenString, err

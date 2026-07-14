@@ -24,7 +24,7 @@ import (
 	"time"
 
 	"github.com/franela/goblin"
-	jwt "github.com/golang-jwt/jwt/v4"
+	jwt "github.com/golang-jwt/jwt/v5"
 	"github.com/infomark-org/infomark/configuration"
 )
 
@@ -110,8 +110,11 @@ func TestTokenAuth(t *testing.T) {
 		g.It("Should reject an expired access token", func() {
 			tokenAuth := newTestTokenAuth()
 			claims := NewAccessClaims(testLoginID, false)
-			claims.StandardClaims.IssuedAt = time.Now().UTC().Unix() - 2*oneYearInSeconds
-			claims.StandardClaims.ExpiresAt = time.Now().UTC().Unix() - oneYearInSeconds
+			// jwt/v5 models the standard iat/exp claims as NumericDate values
+			// instead of raw int64 seconds. Wrapping whole-second unix
+			// timestamps preserves the exact numeric claims this test crafts.
+			claims.RegisteredClaims.IssuedAt = jwt.NewNumericDate(time.Unix(time.Now().UTC().Unix()-2*oneYearInSeconds, 0))
+			claims.RegisteredClaims.ExpiresAt = jwt.NewNumericDate(time.Unix(time.Now().UTC().Unix()-oneYearInSeconds, 0))
 
 			_, tokenString, err := tokenAuth.JwtAuth.Encode(claims.ToMap())
 			g.Assert(err).Equal(nil)
@@ -172,7 +175,7 @@ func TestTokenAuth(t *testing.T) {
 
 			// A one-second configured expiry must not resolve to roughly one
 			// second; here it lands more than a year into the future.
-			g.Assert(decoded.StandardClaims.ExpiresAt > before+oneYearInSeconds).IsTrue()
+			g.Assert(decoded.RegisteredClaims.ExpiresAt.Unix() > before+oneYearInSeconds).IsTrue()
 		})
 	})
 }
