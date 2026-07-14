@@ -33,7 +33,7 @@ import (
 	"github.com/infomark-org/infomark/migration"
 	"github.com/jmoiron/sqlx"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/robfig/cron"
+	"github.com/robfig/cron/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -94,12 +94,19 @@ func NewServer(config *configuration.ServerConfigurationSchema) (*Server, error)
 		MaxHeaderBytes: int(config.HTTP.Limits.MaxHeader),
 	}
 
+	// cron/v3 returns the scheduled entry id together with an error when the
+	// schedule spec cannot be parsed. The v1 API silently ignored parse
+	// failures, but propagating the error here surfaces a misconfigured
+	// interval at startup instead of leaving the zipper job silently
+	// unscheduled.
 	c := cron.New()
-	c.AddJob(config.CronjobsZipSubmissionsIntervall(), &cronjob.SubmissionFileZipper{
+	if _, err := c.AddJob(config.CronjobsZipSubmissionsIntervall(), &cronjob.SubmissionFileZipper{
 		Stores:    app.NewStores(db),
 		DB:        db,
 		Directory: config.Paths.GeneratedFiles,
-	})
+	}); err != nil {
+		return nil, err
+	}
 
 	return &Server{
 		HTTP:           &srv,
