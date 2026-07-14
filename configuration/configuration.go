@@ -20,7 +20,6 @@ package configuration
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"time"
@@ -205,7 +204,7 @@ type ConfigurationSchema struct {
 var Configuration *ConfigurationSchema
 
 func ParseConfiguration(filename string) (*ConfigurationSchema, error) {
-	yamlFile, err := ioutil.ReadFile(filename)
+	yamlFile, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}

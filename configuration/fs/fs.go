@@ -21,7 +21,6 @@ package fs
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 )
@@ -59,7 +58,7 @@ func FileExists(file string) error {
 
 func IsDirWriteable(dir string) error {
 	f := filepath.Join(dir, ".check_if_writeable")
-	if err := ioutil.WriteFile(f, []byte(""), PrivateFileMode); err != nil {
+	if err := os.WriteFile(f, []byte(""), PrivateFileMode); err != nil {
 		return err
 	}
 	return os.Remove(f)

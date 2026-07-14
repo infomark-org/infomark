@@ -21,8 +21,8 @@ package app
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/go-chi/render"
@@ -77,7 +77,7 @@ func (rs *CommonResource) VersionHandler(w http.ResponseWriter, r *http.Request)
 // SUMMARY:  the privacy statement
 func (rs *CommonResource) PrivacyStatementHandler(w http.ResponseWriter, r *http.Request) {
 
-	buf, err := ioutil.ReadFile(fmt.Sprintf("%s/privacy_statement.md", configuration.Configuration.Server.Paths.Common)) // just pass the file name
+	buf, err := os.ReadFile(fmt.Sprintf("%s/privacy_statement.md", configuration.Configuration.Server.Paths.Common)) // just pass the file name
 	if err != nil {
 		render.Render(w, r, ErrInternalServerErrorWithDetails(err))
 		return

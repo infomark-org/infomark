@@ -20,7 +20,6 @@
 package tape
 
 import (
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -119,12 +118,12 @@ func TestTapeHelpers(t *testing.T) {
 		// return a multipart content type carrying a boundary, plus a body that
 		// embeds the file field and an extra form parameter.
 		g.It("Should build a multipart body from a file", func() {
-			temporaryDirectory, err := ioutil.TempDir("", "infomark-tape-test")
+			temporaryDirectory, err := os.MkdirTemp("", "infomark-tape-test")
 			g.Assert(err).Equal(nil)
 			defer os.RemoveAll(temporaryDirectory)
 
 			filePath := filepath.Join(temporaryDirectory, "payload.txt")
-			err = ioutil.WriteFile(filePath, []byte("hello world"), 0644)
+			err = os.WriteFile(filePath, []byte("hello world"), 0644)
 			g.Assert(err).Equal(nil)
 
 			body, contentType, err := CreateFileRequestBody(filePath, "text/plain", map[string]string{"extra": "field-value"})
