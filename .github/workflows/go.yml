@@ -10,20 +10,38 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
-        with:
-          submodules: true
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Fill in version
         run: sed -i 's/"YXZ"/"${GITHUB_SHA}"/g' symbol/version.go
 
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
         with:
-          go-version: 1.19
+          go-version-file: go.mod
 
       - name: Build
         run: go build -v ./...
+
+  ui:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile --ignore-scripts
+        working-directory: ui
+
+      - name: Typecheck, lint, test and build
+        run: |
+          bunx tsc --noEmit
+          bun run lint
+          bun run test
+          bun run build
+        working-directory: ui
 
   test:
     needs: build
@@ -38,7 +56,6 @@ jobs:
         ports:
           - 5672:5672
       redis:
-        # Docker Hub image
         image: redis
         ports:
           - 6379:6379
@@ -63,23 +80,15 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
-
     steps:
-      - uses: actions/checkout@v1
-        with:
-          submodules: true
-
-      - name: debug
-        run: |
-          printenv
-          pwd
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Set up Python 3
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6.3.0
         with:
-          python-version: 3.8
+          python-version: "3.12"
 
-      - name: Install dependencies
+      - name: Generate mock data
         run: |
           python -m pip install --upgrade pip
           cd migration/mock
@@ -87,9 +96,9 @@ jobs:
           python mock.py
 
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
         with:
-          go-version: 1.19
+          go-version-file: go.mod
 
       - name: Build
         run: go build
@@ -109,4 +118,3 @@ jobs:
         run: |
           export INFOMARK_CONFIG_FILE=`realpath .infomark-ci.yml`
           go test ./... -cover -v --goblin.timeout 15s -coverprofile coverage.out
-

@@ -6,101 +6,37 @@ on:
       - '*'
 
 jobs:
-  # This is a huuuuge hack and work around. As checkout@v3 cannot be used
-  # within the elm build (that one is based on an old Node8 docker image with
-  # an too git version. Therefore, we use a separate job to get all submodules,
-  # compress these files and extract them later in the elm build job.
-  clone-recursive:
+  release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           fetch-depth: 0
-          submodules: true
 
-      - name: Initialize submodules in UI
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+
+      - name: Build UI into static
         run: |
-          cd ui
-          git submodule update --init --recursive
-          tar -czvf elm-mdc.tar.gz ./elm-mdc
-
-      - name: Archive Submodules
-        uses: actions/upload-artifact@v3
-        with:
-          name: elm-mdc
-          path: |
-            ui/elm-mdc.tar.gz
-          retention-days: 1
-
-  build-frontend:
-    needs: clone-recursive
-    runs-on: ubuntu-latest
-    container:
-      image: infomark/elm:0.19.0
-
-    steps:
-      - uses: actions/checkout@v1
-        with:
-          submodules: true
-
-      - name: Download elm-mdc
-        uses: actions/download-artifact@v4.1.7
-        with:
-          name: elm-mdc
-
-      - name: Extract artifact
-        run: |
-          cd ui
-          tar xvf ../elm-mdc.tar.gz
-
-      - name: Run build
-        run: |
-          cd ui
-          elm-app build
-
-      - name: Copy static assets
-        run: |
-          cp -r ui/build/* static
-
-      - name: Archive static files
-        uses: actions/upload-artifact@v3
-        with:
-          name: static-assets
-          path: |
-            static
-          retention-days: 1
-
-  build:
-    needs: build-frontend
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v1
-        with:
-          submodules: true
-
-      - name: Download static assets
-        uses: actions/download-artifact@v4.1.7
-        with:
-          name: static-assets
-          path: static
+          bun install --frozen-lockfile --ignore-scripts
+          bun run build:embed
+        working-directory: ui
 
       - name: Set up Go
-        uses: actions/setup-go@v3
+        uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
         with:
-          go-version: 1.19
+          go-version-file: go.mod
 
       - name: Fill in version
         run: sed -i 's/"YXZ"/"${GITHUB_SHA}"/g' symbol/version.go
 
-      - name: Build binary
-        run: |
-          go build
-
       - name: Run GoReleaser
-        uses: goreleaser/goreleaser-action@v4
+        uses: goreleaser/goreleaser-action@f06c13b6b1a9625abc9e6e439d9c05a8f2190e94 # v7.2.3
         with:
           version: latest
-          # We do some UI building, making the git state dirty.
-          args: release --skip-validate
+          # The UI build and version stamping dirty the git state on purpose.
+          args: release --skip=validate
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
