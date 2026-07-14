@@ -22,9 +22,13 @@ package symbol
 type key int
 
 // to replace
-//   context.WithValue(ctx, "course", course)
+//
+//	context.WithValue(ctx, "course", course)
+//
 // and
-//   r.Context().Value(symbol.CtxKeyCourse)
+//
+//	r.Context().Value(symbol.CtxKeyCourse)
+//
 // TODO(): create a shared context-key package
 const (
 	CtxKeyAccessClaims key = iota // must be 0 to work with the auth-package

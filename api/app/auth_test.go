@@ -26,10 +26,10 @@ import (
 	"testing"
 
 	"github.com/franela/goblin"
-	redis "github.com/redis/go-redis/v9"
 	"github.com/infomark-org/infomark/auth"
 	"github.com/infomark-org/infomark/configuration"
 	"github.com/infomark-org/infomark/email"
+	redis "github.com/redis/go-redis/v9"
 
 	null "github.com/guregu/null/v6"
 )

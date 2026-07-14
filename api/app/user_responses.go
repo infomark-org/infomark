@@ -23,8 +23,8 @@ import (
 	"net/http"
 
 	"github.com/go-chi/render"
-	"github.com/infomark-org/infomark/model"
 	null "github.com/guregu/null/v6"
+	"github.com/infomark-org/infomark/model"
 )
 
 // .............................................................................

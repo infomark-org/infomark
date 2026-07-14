@@ -27,12 +27,12 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
+	null "github.com/guregu/null/v6"
 	"github.com/infomark-org/infomark/api/helper"
 	"github.com/infomark-org/infomark/auth/authenticate"
 	"github.com/infomark-org/infomark/auth/authorize"
 	"github.com/infomark-org/infomark/model"
 	"github.com/infomark-org/infomark/symbol"
-	null "github.com/guregu/null/v6"
 )
 
 // TaskResource specifies Task management handler.

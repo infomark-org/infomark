@@ -24,8 +24,8 @@ import (
 	"time"
 
 	"github.com/go-chi/render"
-	"github.com/infomark-org/infomark/model"
 	null "github.com/guregu/null/v6"
+	"github.com/infomark-org/infomark/model"
 )
 
 // CourseResponse is the response payload for course management.

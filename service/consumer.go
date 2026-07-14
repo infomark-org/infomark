@@ -22,8 +22,8 @@ package service
 import (
 	"fmt"
 
-	"github.com/sirupsen/logrus"
 	amqp "github.com/rabbitmq/amqp091-go"
+	"github.com/sirupsen/logrus"
 )
 
 // Consumer is an object which can act on AMPQ messages

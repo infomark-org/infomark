@@ -37,8 +37,8 @@ import (
 	"github.com/infomark-org/infomark/configuration"
 	"github.com/infomark-org/infomark/configuration/bytefmt"
 	"github.com/infomark-org/infomark/configuration/fs"
-	"github.com/spf13/cobra"
 	amqp "github.com/rabbitmq/amqp091-go"
+	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 
 	"github.com/jmoiron/sqlx"

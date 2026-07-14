@@ -27,12 +27,12 @@ import (
 	"github.com/alexedwards/scs"
 	"github.com/go-chi/jwtauth/v5"
 	"github.com/go-chi/render"
+	null "github.com/guregu/null/v6"
 	"github.com/infomark-org/infomark/auth"
 	"github.com/infomark-org/infomark/auth/authenticate"
 	"github.com/infomark-org/infomark/configuration"
 	"github.com/infomark-org/infomark/email"
 	"github.com/infomark-org/infomark/symbol"
-	null "github.com/guregu/null/v6"
 )
 
 // AuthResource specifies user management handler.

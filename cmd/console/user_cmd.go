@@ -24,10 +24,10 @@ import (
 	"log"
 
 	"github.com/go-ozzo/ozzo-validation/v4/is"
+	null "github.com/guregu/null/v6"
 	"github.com/infomark-org/infomark/configuration"
 	"github.com/infomark-org/infomark/model"
 	"github.com/spf13/cobra"
-	null "github.com/guregu/null/v6"
 )
 
 func init() {

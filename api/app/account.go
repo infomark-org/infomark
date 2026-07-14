@@ -26,6 +26,7 @@ import (
 	"strconv"
 
 	"github.com/go-chi/render"
+	null "github.com/guregu/null/v6"
 	"github.com/infomark-org/infomark/api/helper"
 	"github.com/infomark-org/infomark/auth"
 	"github.com/infomark-org/infomark/auth/authenticate"
@@ -33,7 +34,6 @@ import (
 	"github.com/infomark-org/infomark/email"
 	"github.com/infomark-org/infomark/model"
 	"github.com/infomark-org/infomark/symbol"
-	null "github.com/guregu/null/v6"
 )
 
 // AccountResource specifies user management handler.

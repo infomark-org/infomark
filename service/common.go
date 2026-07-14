@@ -24,8 +24,8 @@ import (
 
 	"github.com/infomark-org/infomark/configuration"
 
-	"github.com/sirupsen/logrus"
 	amqp "github.com/rabbitmq/amqp091-go"
+	"github.com/sirupsen/logrus"
 )
 
 // Worker is a description for an object getting messages over AMPQ

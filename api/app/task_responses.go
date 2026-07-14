@@ -23,9 +23,9 @@ import (
 	"net/http"
 
 	"github.com/go-chi/render"
+	null "github.com/guregu/null/v6"
 	"github.com/infomark-org/infomark/auth/authorize"
 	"github.com/infomark-org/infomark/model"
-	null "github.com/guregu/null/v6"
 )
 
 // .............................................................................
