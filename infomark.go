@@ -21,8 +21,31 @@
 
 package main
 
-import "github.com/infomark-org/infomark/cmd"
+import (
+	"embed"
+	"io/fs"
+
+	"github.com/infomark-org/infomark/api/app"
+	"github.com/infomark-org/infomark/cmd"
+)
+
+// staticFiles embeds the compiled single-page UI from the repository-root
+// static directory. This package is the only one positioned above that
+// directory, and go:embed cannot reach into parent directories, so the embed
+// declaration has to live here.
+//
+//go:embed all:static
+var staticFiles embed.FS
 
 func main() {
+	// Strip the leading "static/" path segment so the assets are served from
+	// the site root, exactly as the previous pkger.Dir("/static") handler did,
+	// then hand the filesystem to the app package before any command runs.
+	staticRoot, err := fs.Sub(staticFiles, "static")
+	if err != nil {
+		panic(err)
+	}
+	app.StaticFiles = staticRoot
+
 	cmd.Execute()
 }

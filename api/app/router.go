@@ -21,9 +21,11 @@ package app
 
 import (
 	"crypto/subtle"
+	"embed"
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"os"
 	"strings"
@@ -39,9 +41,17 @@ import (
 	"github.com/infomark-org/infomark/configuration"
 	"github.com/infomark-org/infomark/symbol"
 	"github.com/jmoiron/sqlx"
-	"github.com/markbates/pkger"
 	"github.com/sirupsen/logrus"
 )
+
+// StaticFiles is the embedded single-page UI served at the site root. Only the
+// top-level main package sits above the repository-root static directory, so
+// it is the sole package that can embed those assets; it injects the
+// prefix-stripped filesystem here before any command runs. The zero-value
+// empty embed.FS is used as a default so unit tests and the docs generator,
+// which never request static assets, still initialise routing and serve a
+// clean 404 for asset paths.
+var StaticFiles fs.FS = embed.FS{}
 
 // LimitedDecoder limits the amount of data a client can send in a JSON data request.
 // The golang fork-join multi-threading allows no easy way to cancel started requests.
@@ -462,7 +472,7 @@ func New(db *sqlx.DB, promhttp http.Handler, log bool) (*chi.Mux, error) {
 		})
 	})
 
-	FileServer(r, "/", pkger.Dir("/static"))
+	FileServer(r, "/", http.FS(StaticFiles))
 
 	return r, nil
 }

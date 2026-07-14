@@ -92,12 +92,6 @@ jobs:
       - name: Fill in version
         run: sed -i 's/"YXZ"/"${GITHUB_SHA}"/g' symbol/version.go
 
-      - name: Pack files
-        run: |
-          go install github.com/markbates/pkger/cmd/pkger
-          pkger list
-          pkger
-
       - name: Build binary
         run: |
           go build
