@@ -24,7 +24,7 @@ import (
 	"net/http"
 	"time"
 
-	validation "github.com/go-ozzo/ozzo-validation"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
 // MaterialRequest is the request payload for Material management.

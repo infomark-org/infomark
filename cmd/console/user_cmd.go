@@ -23,7 +23,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/go-ozzo/ozzo-validation/is"
+	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/infomark-org/infomark/configuration"
 	"github.com/infomark-org/infomark/model"
 	"github.com/spf13/cobra"

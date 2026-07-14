@@ -22,7 +22,7 @@ package model
 import (
 	"time"
 
-	validation "github.com/go-ozzo/ozzo-validation"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	null "gopkg.in/guregu/null.v3"
 )
 

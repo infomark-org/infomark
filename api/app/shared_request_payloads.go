@@ -22,7 +22,7 @@ package app
 import (
 	"net/http"
 
-	validation "github.com/go-ozzo/ozzo-validation"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
 // EmailRequest is the request payload containing email information.
