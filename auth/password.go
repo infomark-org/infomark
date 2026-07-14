@@ -21,6 +21,8 @@ package auth
 
 import (
 	"crypto/rand"
+	"crypto/sha256"
+	"crypto/subtle"
 	"fmt"
 
 	"golang.org/x/crypto/bcrypt"
@@ -44,4 +46,27 @@ func GenerateToken(length int) string {
 	b := make([]byte, length)
 	rand.Read(b)
 	return fmt.Sprintf("%x", b)
+}
+
+// ConstantTimeTokenCompare reports whether an attacker-supplied token equals
+// the trusted token stored server-side, without leaking information through
+// timing.
+//
+// Email-confirmation and password-reset tokens are secrets that arrive
+// straight from the request body. A naive `trusted == supplied` returns as
+// soon as the first differing byte is found, so the time to reject a guess
+// grows with the length of the matching prefix. An attacker who can measure
+// that timing can recover the token one byte at a time, defeating its secrecy
+// entirely.
+//
+// crypto/subtle.ConstantTimeCompare removes the early-exit, but it also
+// reveals whether the two inputs have equal length (it returns 0 immediately
+// for a length mismatch). Because the supplied token is attacker-controlled
+// its length is arbitrary, so we first reduce both sides to a fixed-length
+// SHA-256 digest. The subsequent comparison then always runs over equal-length
+// inputs, leaking neither the token bytes nor the trusted token's length.
+func ConstantTimeTokenCompare(trusted, supplied string) bool {
+	trustedDigest := sha256.Sum256([]byte(trusted))
+	suppliedDigest := sha256.Sum256([]byte(supplied))
+	return subtle.ConstantTimeCompare(trustedDigest[:], suppliedDigest[:]) == 1
 }

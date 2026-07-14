@@ -101,6 +101,44 @@ func TestPassword(t *testing.T) {
 			g.Assert(firstToken == secondToken).IsFalse()
 		})
 	})
+
+	g.Describe("ConstantTimeTokenCompare", func() {
+
+		// The positive case: the exact same token on both sides must match.
+		// This proves the constant-time rewrite did not break the accept path
+		// used by the email-confirmation and password-reset flows.
+		g.It("Should accept a token that matches exactly", func() {
+			token := GenerateToken(32)
+			g.Assert(ConstantTimeTokenCompare(token, token)).IsTrue()
+		})
+
+		// The negative case: any differing token must be rejected, including a
+		// token that shares a long common prefix (the case a timing attack would
+		// otherwise exploit).
+		g.It("Should reject a token that differs", func() {
+			trusted := "abcdef0123456789abcdef0123456789"
+			wrongLastByte := "abcdef0123456789abcdef0123456780"
+			g.Assert(ConstantTimeTokenCompare(trusted, wrongLastByte)).IsFalse()
+			g.Assert(ConstantTimeTokenCompare(trusted, "completely-different")).IsFalse()
+		})
+
+		// A supplied token of a different length must be rejected. Hashing both
+		// sides first means length differences do not short-circuit the
+		// comparison, but the result must still be a rejection.
+		g.It("Should reject a token of a different length", func() {
+			trusted := GenerateToken(32)
+			g.Assert(ConstantTimeTokenCompare(trusted, trusted+"extra")).IsFalse()
+			g.Assert(ConstantTimeTokenCompare(trusted, "")).IsFalse()
+		})
+
+		// Two empty tokens hash to the same digest and therefore compare equal,
+		// exactly as the previous `==` comparison did. This documents that the
+		// rewrite preserves behavior; the empty-token acceptance risk in the
+		// handlers is tracked separately in SESSION.md.
+		g.It("Should treat two empty tokens as equal", func() {
+			g.Assert(ConstantTimeTokenCompare("", "")).IsTrue()
+		})
+	})
 }
 
 func TestErrorRenderers(t *testing.T) {

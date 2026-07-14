@@ -336,8 +336,9 @@ func (rs *AuthResource) UpdatePasswordHandler(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	// compare token
-	if user.ResetPasswordToken.String != data.ResetPasswordToken {
+	// compare token in constant time so the response latency does not reveal
+	// how much of the reset token an attacker has guessed correctly.
+	if !auth.ConstantTimeTokenCompare(user.ResetPasswordToken.String, data.ResetPasswordToken) {
 		render.Render(w, r, ErrBadRequest)
 		return
 	}
@@ -382,8 +383,9 @@ func (rs *AuthResource) ConfirmEmailHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	// compare token
-	if user.ConfirmEmailToken.String != data.ConfirmEmailToken {
+	// compare token in constant time so the response latency does not reveal
+	// how much of the confirmation token an attacker has guessed correctly.
+	if !auth.ConstantTimeTokenCompare(user.ConfirmEmailToken.String, data.ConfirmEmailToken) {
 		render.Render(w, r, ErrBadRequest)
 		return
 	}
