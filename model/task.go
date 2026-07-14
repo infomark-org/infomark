@@ -23,7 +23,7 @@ import (
 	"time"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	null "gopkg.in/guregu/null.v3"
+	null "github.com/guregu/null/v6"
 )
 
 // Task is part of an exercise sheet

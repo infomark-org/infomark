@@ -19,7 +19,7 @@
 
 package model
 
-import null "gopkg.in/guregu/null.v3"
+import null "github.com/guregu/null/v6"
 
 // Enrollment represents a an enrollment-type of a given user
 type Enrollment struct {

@@ -31,7 +31,7 @@ import (
 	"github.com/infomark-org/infomark/configuration"
 	"github.com/infomark-org/infomark/email"
 
-	null "gopkg.in/guregu/null.v3"
+	null "github.com/guregu/null/v6"
 )
 
 func TestAuth(t *testing.T) {

@@ -16,6 +16,7 @@ require (
 	github.com/golang-jwt/jwt/v4 v4.5.2
 	github.com/golang-migrate/migrate/v4 v4.14.1
 	github.com/google/uuid v1.6.0
+	github.com/guregu/null/v6 v6.0.0
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/lib/pq v1.12.3
 	github.com/markbates/pkger v0.17.1
@@ -28,7 +29,6 @@ require (
 	github.com/spf13/cobra v1.10.2
 	github.com/ulule/limiter/v3 v3.11.2
 	golang.org/x/crypto v0.53.0
-	gopkg.in/guregu/null.v3 v3.5.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 

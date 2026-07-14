@@ -34,7 +34,7 @@ import (
 	"github.com/infomark-org/infomark/email"
 	"github.com/infomark-org/infomark/model"
 
-	null "gopkg.in/guregu/null.v3"
+	null "github.com/guregu/null/v6"
 )
 
 func copyFile(src, dst string) (int64, error) {

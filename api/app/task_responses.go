@@ -25,7 +25,7 @@ import (
 	"github.com/go-chi/render"
 	"github.com/infomark-org/infomark/auth/authorize"
 	"github.com/infomark-org/infomark/model"
-	null "gopkg.in/guregu/null.v3"
+	null "github.com/guregu/null/v6"
 )
 
 // .............................................................................

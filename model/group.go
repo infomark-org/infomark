@@ -22,7 +22,7 @@ package model
 import (
 	"time"
 
-	null "gopkg.in/guregu/null.v3"
+	null "github.com/guregu/null/v6"
 )
 
 // Group is a database view for a group entity

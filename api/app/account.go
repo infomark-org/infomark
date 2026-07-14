@@ -33,7 +33,7 @@ import (
 	"github.com/infomark-org/infomark/email"
 	"github.com/infomark-org/infomark/model"
 	"github.com/infomark-org/infomark/symbol"
-	null "gopkg.in/guregu/null.v3"
+	null "github.com/guregu/null/v6"
 )
 
 // AccountResource specifies user management handler.

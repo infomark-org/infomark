@@ -27,7 +27,7 @@ import (
 	"github.com/infomark-org/infomark/configuration"
 	"github.com/infomark-org/infomark/model"
 	"github.com/spf13/cobra"
-	null "gopkg.in/guregu/null.v3"
+	null "github.com/guregu/null/v6"
 )
 
 func init() {

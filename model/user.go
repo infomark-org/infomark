@@ -23,7 +23,7 @@ import (
 	"fmt"
 	"time"
 
-	null "gopkg.in/guregu/null.v3"
+	null "github.com/guregu/null/v6"
 )
 
 // User holds specific application settings linked to an entity, who can login.

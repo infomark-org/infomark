@@ -32,7 +32,7 @@ import (
 	"strings"
 	"sync"
 
-	null "gopkg.in/guregu/null.v3"
+	null "github.com/guregu/null/v6"
 )
 
 const tagName = "db"
