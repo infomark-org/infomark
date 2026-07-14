@@ -22,7 +22,7 @@ import (
 	"testing"
 
 	"github.com/franela/goblin"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 func TestConfiguration(t *testing.T) {

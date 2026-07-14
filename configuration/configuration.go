@@ -27,7 +27,7 @@ import (
 
 	"github.com/creasty/defaults"
 	"github.com/infomark-org/infomark/configuration/bytefmt"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 type RabbitMQConfiguration struct {
