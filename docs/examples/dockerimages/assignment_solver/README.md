@@ -1,0 +1,1 @@
+This directory contains the docker file to solve the Integer-Program assign students to exercise groups. It also contains an synthetic example.

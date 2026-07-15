@@ -1,0 +1,73 @@
+\documentclass{simplefig}
+
+\PreviewEnvironment{tikzpicture}
+
+
+\begin{document}
+
+\begin{tikzpicture}[
+  instance/.style={draw=imR, fill=white},
+  bg/.style={draw=imR, fill=imR!20!white},
+  flow/.style={thick, -latex},
+  docker/.style={draw=imB, fill=imB!20!white},
+]
+\draw[bg] (3,-2) rectangle (10, 2);
+\node at (3.5,-1.5) {Go};
+
+\node[instance] (ui)  {infomark-ui};
+
+\node[instance, right = 2.5cm of ui] (backend) {infomark serve};
+
+\draw[flow, draw=imR] (ui) edge[out=0, in=180] node[above]{POST zip} (backend);
+
+\node[instance, right = 2cm of backend] (worker0) {infomark work};
+\node[instance, above = 0.7cm of worker0] (worker1) {infomark work};
+\node[instance, below = 0.7cm of worker0] (worker2) {infomark work};
+
+\draw[flow, draw=imR,latex-latex] (backend) edge[out=30, in=180] node[sloped,above]{async} (worker1);
+\draw[flow, draw=imR,latex-latex] (backend) edge[out=0, in=180] node[sloped,below]{async} (worker0);
+\draw[flow, draw=imR,latex-latex] (backend) edge[out=-30, in=180] node[sloped,below]{async} (worker2);
+
+
+\draw[docker]  (10.2, -2.5) rectangle (12.5,2.5);
+
+\node[instance, right = 0cm and 0.7cm of worker0] (run0) {unit test};
+\node[instance, above = 0.1cm of run0] (run1) {unit test};
+\node[ below = 0.1cm of run0] (run2) {\ldots};
+
+\draw[flow, draw=imB,latex-latex] (worker0) -- (run0.west);
+\draw[flow, draw=imB,latex-latex] (worker0) -- (run1.west);
+\draw[flow, draw=imB,latex-latex] (worker0) -- (run2.west);
+
+
+\node[instance, above right = 0.1cm and 0.7cm of worker1] (run4) {unit test};
+\node[instance, above = 0.1cm of run4] (run5) {unit test};
+\node[ below = 0.1cm of run4] (run3) {\ldots};
+
+\draw[flow, draw=imB,latex-latex] (worker1) -- (run3.west);
+\draw[flow, draw=imB,latex-latex] (worker1) -- (run4.west);
+\draw[flow, draw=imB,latex-latex] (worker1) -- (run5.west);
+
+\node[instance, right = 0.05cm and 0.7cm of worker2] (run6) {unit test};
+\node[instance, below = 0.1cm of run6] (run7) {unit test};
+\node[below = 0.1cm of run7] (run8) {\ldots};
+
+\draw[flow, draw=imB,latex-latex] (worker2) -- (run6.west);
+\draw[flow, draw=imB,latex-latex] (worker2) -- (run7.west);
+\draw[flow, draw=imB,latex-latex] (worker2) -- (run8.west);
+
+
+
+\node[right = 6.5cm of backend, rotate=90,  anchor=north, minimum width=4cm] (docker) {docker engine};
+
+
+
+
+
+
+
+\draw[flow, draw=imR, dashed] (backend)  edge[out=-150, in=-40] node[below] {GET} (ui);
+
+
+\end{tikzpicture}
+\end{document}

@@ -335,4 +335,4 @@ The metrics for [Prometheus](https://prometheus.io/) are served under
 using a reverse proxy such as NGINX.
 
 To visualize these metrics, we have assembled a
-[custom Grafana board](https://github.com/infomark-org/infomark-docs/tree/master/metrics).
+[custom Grafana board](../grafana/infomark-dashboard.json).

@@ -55,7 +55,7 @@ echo "this line will be ignored"
 ```
 
 as an entry point. Please either use
-[one of our predefined test examples](https://github.com/infomark-org/infomark-docs/tree/master/unittests)
+[one of our predefined test examples](../examples/unittests)
 or create your own. By design, we assume that:
 
 * The testing framework, for example JUnit, ensures that all stdout from the
@@ -75,7 +75,7 @@ and simulate the test result locally using the correct Docker image.
 Furthermore, specifying the Docker image in the *Makefile* helps you set up the
 task in InfoMark, since you need to specify it there when creating a new
 exercise task. An
-[example Makefile](https://github.com/infomark-org/infomark-docs/blob/master/unittests/python/makefile)
+[example Makefile](../examples/unittests/python/makefile)
 is provided in our repository.
 
 InfoMark is language-agnostic. The system only records the Docker output. All
@@ -86,15 +86,15 @@ We provide several testing templates and examples:
 
 | Language   |      Dockerimage  (hub.docker.com)     |  Test Example | Dockerfile |
 |----------|:-------------|:-------:|:------:|
-| Java 11 |  [patwie/test_java_submission:latest](https://hub.docker.com/r/patwie/test_java_submission) | [yes](https://github.com/infomark-org/infomark-docs/tree/master/unittests/java) | [yes](https://github.com/infomark-org/infomark-docs/tree/master/dockerimages/unittests/java) |
-| Python3 |  [patwie/test_python3_submission:latest](https://hub.docker.com/r/patwie/test_python3_submission) | [yes](https://github.com/infomark-org/infomark-docs/tree/master/unittests/python) | [yes](https://github.com/infomark-org/infomark-docs/tree/master/dockerimages/unittests/python) |
-| C++ |  [patwie/test_cpp_submission:latest](https://hub.docker.com/r/patwie/test_cpp_submission) | [yes](https://github.com/infomark-org/infomark-docs/tree/master/unittests/cpp) | [yes](https://github.com/infomark-org/infomark-docs/tree/master/dockerimages/unittests/cpp) |
+| Java 11 |  [patwie/test_java_submission:latest](https://hub.docker.com/r/patwie/test_java_submission) | [yes](../examples/unittests/java) | [yes](../examples/dockerimages/unittests/java) |
+| Python3 |  [patwie/test_python3_submission:latest](https://hub.docker.com/r/patwie/test_python3_submission) | [yes](../examples/unittests/python) | [yes](../examples/dockerimages/unittests/python) |
+| C++ |  [patwie/test_cpp_submission:latest](https://hub.docker.com/r/patwie/test_cpp_submission) | [yes](../examples/unittests/cpp) | [yes](../examples/dockerimages/unittests/cpp) |
 
 
 ## Java 11
 
 We suggest using our
-[Docker image](https://github.com/infomark-org/infomark-docs/tree/master/dockerimages/unittests)
+[Docker image](../examples/dockerimages/unittests)
 and following the guide below.
 
 We use the following directory structure to reduce the effort of writing
@@ -130,7 +130,7 @@ exercises
 
 where `[a.b]` represents the exercise-task number. A working example can be
 found in the
-[InfoMark repository](https://github.com/infomark-org/infomark-docs/tree/master/unittests).
+[InfoMark repository](../examples/unittests).
 
 ### Student template
 
@@ -188,7 +188,7 @@ We suggest having two subtypes of tests:
 - value tests
 
 We have put together a
-[Helper.java](https://github.com/infomark-org/infomark-docs/blob/master/unittests/java/unittest_private_0.1/src/__unittest/Helper.java)
+[Helper.java](../examples/unittests/java/unittest_private_0.1/src/__unittest/Helper.java)
 file to ease the work with reflection when checking the solutions to the
 exercise tasks.
 
@@ -331,7 +331,7 @@ good candidate for a private test would be:
 
 We provide a very basic but working test set for checking Python programming
 assignment solutions in our
-[git repository](https://github.com/infomark-org/infomark-docs/tree/master/unittests/python).
+[git repository](../examples/unittests/python).
 
 The basic idea is that each upload is unzipped into a directory together with
 the unit test:
@@ -402,7 +402,7 @@ FAILED (failures=1)
 
 Testing in C++ is a bit tricky, as reflection is difficult. A basic example is
 provided in our
-[git repository](https://github.com/infomark-org/infomark-docs/tree/master/unittests/cpp).
+[git repository](../examples/unittests/cpp).
 The final directory structure *inside* the Docker container is:
 
 ```
