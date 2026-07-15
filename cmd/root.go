@@ -35,7 +35,7 @@ online course management system supporting auto-testing/grading of
 programming assignments and distributing exercise sheets.
 The infomark-server is the REST api backend for the course distributing system.
 
-Complete documentation is available at https://infomark.org/.
+Complete documentation is available at https://github.com/infomark-org/infomark.
 	`,
 }
 
