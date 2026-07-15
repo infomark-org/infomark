@@ -32,6 +32,18 @@ background worker that executes submission tests.
 - Single-binary deployment: the compiled React UI is embedded into the
   Go binary, which serves both the UI and the REST API under `/api/v1`.
 
+## Documentation
+
+The [`docs/guides`](docs/guides/README.md) directory holds the full
+documentation as a set of interlinked Markdown files. It starts with an
+[overview](docs/guides/overview.md) of the system and then splits by
+audience: an [administrator's guide](docs/guides/administrator.md) for
+installing and running a server, a [tutor's guide](docs/guides/tutor.md) for
+writing auto-tests, and a [developer's guide](docs/guides/developer.md) for
+building from source. Reference material covers the
+[server console](docs/guides/console.md) and useful
+[SQL queries](docs/guides/queries.md).
+
 ## Architecture
 
 - `api/` — chi-based REST backend (sessions + JWT auth, rate limiting,
